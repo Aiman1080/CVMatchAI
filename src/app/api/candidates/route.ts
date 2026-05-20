@@ -1,0 +1,23 @@
+import { NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import prisma from '@/lib/prisma'
+
+export async function GET(req: Request) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { searchParams } = new URL(req.url)
+  const vacancyId = searchParams.get('vacancyId')
+  const status = searchParams.get('status')
+  const userId = (session.user as any).id
+  const isAdmin = (session.user as any).role === 'admin'
+  const where: any = isAdmin ? {} : { userId }
+  if (vacancyId) where.vacancyId = vacancyId
+  if (status) where.status = status
+  const candidates = await prisma.candidate.findMany({
+    where,
+    include: { vacancy: { select: { title: true, company: true } } },
+    orderBy: [{ matchScore: 'desc' }, { createdAt: 'desc' }],
+  })
+  return NextResponse.json(candidates)
+}
