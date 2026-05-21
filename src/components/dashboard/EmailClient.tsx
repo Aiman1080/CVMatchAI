@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Mail, Plus, Loader2, CheckCircle, AlertCircle, Scan, Info, Trash2, RefreshCw, Zap } from 'lucide-react'
+import { Mail, Plus, Loader2, CheckCircle, AlertCircle, Scan, Info, Trash2, RefreshCw, Zap, Eraser } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -35,6 +35,7 @@ export function EmailClient() {
   const [connecting, setConnecting] = useState(false)
   const [scanning, setScanning] = useState<string | null>(null)
   const [demoScanning, setDemoScanning] = useState(false)
+  const [cleaning, setCleaning] = useState(false)
   const [inboxes, setInboxes] = useState<Inbox[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -108,6 +109,22 @@ export function EmailClient() {
     } finally { setDemoScanning(false) }
   }
 
+  const cleanDuplicates = async () => {
+    setCleaning(true)
+    try {
+      const res = await fetch('/api/admin/cleanup', { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      if (data.deleted > 0) {
+        toast({ title: 'Duplicates removed', description: `${data.deleted} duplicate candidate(s) deleted from your database.` })
+      } else {
+        toast({ title: 'No duplicates found', description: 'Your database is already clean.' })
+      }
+    } catch (err: any) {
+      toast({ title: 'Cleanup failed', description: err.message, variant: 'destructive' })
+    } finally { setCleaning(false) }
+  }
+
   const handleDelete = async (inboxId: string) => {
     await fetch('/api/email/connect', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: inboxId }) })
     setInboxes(prev => prev.filter(i => i.id !== inboxId))
@@ -127,7 +144,7 @@ export function EmailClient() {
         </div>
       </div>
 
-      {/* Demo scan — manual only, safe to click multiple times (upsert prevents duplicates) */}
+      {/* Demo scan — manual only, global email dedup prevents any duplicates */}
       <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 flex items-center gap-4">
         <div className="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center shrink-0">
           <Zap className="w-5 h-5 text-white" />
@@ -145,6 +162,28 @@ export function EmailClient() {
           className="gradient-bg shrink-0 gap-1.5"
         >
           {demoScanning ? <><Loader2 size={13} className="animate-spin" /> Scanning...</> : <><Scan size={13} /> Run Demo Scan</>}
+        </Button>
+      </div>
+
+      {/* One-click duplicate cleanup — fixes databases that accumulated duplicates before the dedup fix */}
+      <div className="p-4 rounded-xl bg-amber-50 border border-amber-100 flex items-center gap-4">
+        <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center shrink-0">
+          <Eraser className="w-5 h-5 text-white" />
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-semibold text-amber-800">Clean Duplicate Candidates</p>
+          <p className="text-sm text-amber-700">
+            If you see the same candidate multiple times, click here to remove all duplicates in one click.
+          </p>
+        </div>
+        <Button
+          onClick={cleanDuplicates}
+          disabled={cleaning}
+          size="sm"
+          variant="outline"
+          className="border-amber-300 text-amber-700 hover:bg-amber-100 shrink-0 gap-1.5"
+        >
+          {cleaning ? <><Loader2 size={13} className="animate-spin" /> Cleaning...</> : <><Eraser size={13} /> Clean Duplicates</>}
         </Button>
       </div>
 

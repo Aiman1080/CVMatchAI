@@ -193,9 +193,22 @@ export async function POST() {
     })
   }
 
+  // Load all existing demo candidate emails in one query — used to skip duplicates.
+  // We check by sender email globally (not per vacancy) because the scoring function
+  // can pick a different vacancy on each run, which would otherwise create two rows
+  // for the same real person under different vacancies.
+  const existingEmails = new Set(
+    (await prisma.candidate.findMany({
+      where: { userId, email: { in: DEMO_EMAILS.map(e => e.sender) } },
+      select: { email: true },
+    })).map(c => c.email)
+  )
+
   for (const email of DEMO_EMAILS) {
+    // Skip globally — same sender already exists under any vacancy for this user
+    if (existingEmails.has(email.sender)) continue
+
     // Select the vacancy whose full text best matches this CV's domain keywords.
-    // Falls back to the first active vacancy when nothing scores above 0.
     const cvLower = email.cvText.toLowerCase()
     const scored = vacancies.map(v => ({ v, score: scoreVacancyForCV(cvLower, email.domainKeywords, v) }))
     scored.sort((a, b) => b.score - a.score)
@@ -209,20 +222,11 @@ export async function POST() {
       email.motivationText || undefined,
     )
 
-    // Always use email.sender as the stored email — this is the dedup key.
-    // Using analysis.email could differ from sender and break the unique constraint check.
-    const candidateEmail = email.sender
-
-    // upsert: if this email+vacancy combination already exists, skip (update: {}).
-    // This is safe under concurrent requests because the DB unique constraint
-    // guarantees exactly one row even if two requests race.
-    const result = await prisma.candidate.upsert({
-      where: { email_vacancyId: { email: candidateEmail, vacancyId: vacancy.id } },
-      update: {},
-      create: {
+    await prisma.candidate.create({
+      data: {
         firstName: analysis.firstName || email.sender.split('@')[0].split('.')[0],
         lastName: analysis.lastName || email.sender.split('@')[0].split('.').slice(1).join(' ') || 'Demo',
-        email: candidateEmail,
+        email: email.sender,
         phone: analysis.phone,
         cvContent: email.cvText,
         motivationText: email.motivationText || null,
@@ -254,8 +258,7 @@ export async function POST() {
       },
     })
 
-    // upsert returns the record whether created or updated — track only new inserts
-    if (result.analyzedAt && Date.now() - result.analyzedAt.getTime() < 60_000) processed++
+    processed++
   }
 
   return NextResponse.json({ scanned: DEMO_EMAILS.length, relevant: DEMO_EMAILS.length, processed })
