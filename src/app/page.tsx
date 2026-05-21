@@ -1,10 +1,11 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Zap, ArrowRight, CheckCircle, Upload, Brain, BarChart3, Mail, Shield, Users, Briefcase } from 'lucide-react'
+import { Zap, ArrowRight, CheckCircle, Upload, Brain, BarChart3, Mail, Shield, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
-import { useLanguage } from '@/contexts/LanguageContext'
+import { translations, Locale } from '@/lib/i18n'
 
 const featureIcons = [Brain, Upload, Mail, BarChart3, Users, Shield]
 const featureColors = [
@@ -14,7 +15,20 @@ const featureColors = [
 ]
 
 export default function LandingPage() {
-  const { t } = useLanguage()
+  const [locale, setLocaleState] = useState<Locale>('en')
+
+  // Restore saved language preference on first render
+  useEffect(() => {
+    const saved = localStorage.getItem('cvmatch-locale') as Locale
+    if (saved && ['en', 'nl', 'fr'].includes(saved)) setLocaleState(saved)
+  }, [])
+
+  const setLocale = (l: Locale) => {
+    setLocaleState(l)
+    localStorage.setItem('cvmatch-locale', l)
+  }
+
+  const t = translations[locale]
 
   return (
     <div className="min-h-screen bg-white">
@@ -33,7 +47,7 @@ export default function LandingPage() {
             <a href="#pricing" className="hover:text-gray-900 transition-colors">{t.nav.pricing}</a>
           </div>
           <div className="flex items-center gap-3">
-            <LanguageSwitcher />
+            <LanguageSwitcher locale={locale} setLocale={setLocale} />
             <Link href="/login"><Button variant="ghost" size="sm">{t.nav.signIn}</Button></Link>
             <Link href="/register"><Button size="sm" className="gradient-bg">{t.nav.startFree}</Button></Link>
           </div>
@@ -67,7 +81,6 @@ export default function LandingPage() {
               </Button>
             </Link>
             <Link href="/login">
-              {/* bg-white/10 ensures the button is visible on the dark hero background */}
               <Button size="lg" variant="outline" className="border-white/30 text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm">
                 {t.hero.viewDemo}
               </Button>
@@ -228,7 +241,7 @@ export default function LandingPage() {
             <a href="#" className="hover:text-white">{t.footer.privacy}</a>
             <a href="#" className="hover:text-white">{t.footer.terms}</a>
             <a href="#" className="hover:text-white">{t.footer.contact}</a>
-            <LanguageSwitcher />
+            <LanguageSwitcher locale={locale} setLocale={setLocale} />
           </div>
         </div>
       </footer>

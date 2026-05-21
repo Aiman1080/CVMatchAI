@@ -28,6 +28,8 @@ interface Inbox {
   createdAt: string
 }
 
+const DEMO_SCAN_INTERVAL_MS = 3 * 60 * 60 * 1000 // 3 hours
+
 export function EmailClient() {
   const [showConnect, setShowConnect] = useState(false)
   const [provider, setProvider] = useState('gmail')
@@ -37,9 +39,19 @@ export function EmailClient() {
   const [demoScanning, setDemoScanning] = useState(false)
   const [inboxes, setInboxes] = useState<Inbox[]>([])
   const [loading, setLoading] = useState(true)
+  const [lastDemoScan, setLastDemoScan] = useState<Date | null>(null)
 
-  // Load inboxes on mount — passwords are never returned by the API
-  useEffect(() => { fetchInboxes() }, [])
+  // Load inboxes on mount and auto-trigger demo scan if 3h have passed
+  useEffect(() => {
+    fetchInboxes()
+    const saved = localStorage.getItem('cvmatch-lastDemoScan')
+    if (saved) setLastDemoScan(new Date(saved))
+    const lastMs = saved ? Date.now() - new Date(saved).getTime() : Infinity
+    if (lastMs >= DEMO_SCAN_INTERVAL_MS) {
+      // Auto-run demo scan in the background without blocking the UI
+      runDemoScan(true)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchInboxes = async () => {
     try {
@@ -93,16 +105,20 @@ export function EmailClient() {
     } finally { setScanning(null) }
   }
 
-  const handleDemoScan = async () => {
-    setDemoScanning(true)
+  const runDemoScan = async (silent = false) => {
+    if (!silent) setDemoScanning(true)
     try {
       const res = await fetch('/api/email/demo-scan', { method: 'POST' })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
-      toast({ title: 'Demo scan complete', description: `${data.processed} demo candidates added from ${data.scanned} simulated emails` })
+      const now = new Date()
+      setLastDemoScan(now)
+      localStorage.setItem('cvmatch-lastDemoScan', now.toISOString())
+      if (!silent) toast({ title: 'Demo scan complete', description: `${data.processed} demo candidates added from ${data.scanned} simulated emails` })
+      else toast({ title: 'Auto demo scan ran', description: `${data.processed} new demo candidates added automatically` })
     } catch (err: any) {
-      toast({ title: 'Demo scan failed', description: err.message, variant: 'destructive' })
-    } finally { setDemoScanning(false) }
+      if (!silent) toast({ title: 'Demo scan failed', description: err.message, variant: 'destructive' })
+    } finally { if (!silent) setDemoScanning(false) }
   }
 
   const handleDelete = async (inboxId: string) => {
@@ -124,17 +140,20 @@ export function EmailClient() {
         </div>
       </div>
 
-      {/* Demo scan — lets users test the email scanning flow without real IMAP credentials */}
+      {/* Demo scan — auto-runs every 3h, also manually triggerable */}
       <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 flex items-center gap-4">
         <div className="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center shrink-0">
           <Zap className="w-5 h-5 text-white" />
         </div>
         <div className="flex-1">
-          <p className="text-sm font-semibold text-indigo-800">Try the Demo Scan</p>
-          <p className="text-sm text-indigo-600">No inbox? Run a simulated scan with 4 realistic demo emails to see how the AI agent works.</p>
+          <p className="text-sm font-semibold text-indigo-800">Demo Email Scan <span className="text-xs bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full ml-1">Auto every 3h</span></p>
+          <p className="text-sm text-indigo-600">
+            Simulates 4 recruitment emails with attached CVs — no inbox needed. Runs automatically every 3 hours.
+            {lastDemoScan && <span className="text-indigo-400 ml-1">· Last: {lastDemoScan.toLocaleTimeString()}</span>}
+          </p>
         </div>
         <Button
-          onClick={handleDemoScan}
+          onClick={() => runDemoScan(false)}
           disabled={demoScanning}
           size="sm"
           className="gradient-bg shrink-0 gap-1.5"

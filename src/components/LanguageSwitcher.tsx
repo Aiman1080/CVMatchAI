@@ -1,6 +1,5 @@
 'use client'
 
-import { useLanguage } from '@/contexts/LanguageContext'
 import { Locale } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 
@@ -10,8 +9,14 @@ const LOCALES: { id: Locale; label: string }[] = [
   { id: 'en', label: 'EN' },
 ]
 
-export function LanguageSwitcher({ dark = false }: { dark?: boolean }) {
-  const { locale, setLocale } = useLanguage()
+interface LanguageSwitcherProps {
+  locale: Locale
+  setLocale: (l: Locale) => void
+  dark?: boolean
+}
+
+// Props-based switcher — no context dependency, works reliably in any component
+export function LanguageSwitcher({ locale, setLocale, dark = false }: LanguageSwitcherProps) {
   return (
     <div className={cn('flex items-center rounded-lg p-0.5 gap-0.5', dark ? 'bg-white/10' : 'bg-gray-100 border border-gray-200')}>
       {LOCALES.map(({ id, label }) => (

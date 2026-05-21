@@ -76,7 +76,7 @@ export function Sidebar() {
             <p className="text-sm font-medium text-gray-900 truncate">{user?.name || 'User'}</p>
             <span className={cn('text-xs px-1.5 py-0.5 rounded-full font-medium capitalize', planColors[user?.subscription || 'free'])}>{user?.subscription || 'free'}</span>
           </div>
-          <button onClick={() => signOut({ callbackUrl: '/' })} className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors" title="Sign out">
+          <button onClick={() => signOut({ callbackUrl: typeof window !== 'undefined' ? window.location.origin : '/' })} className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors" title="Sign out">
             <LogOut size={15} />
           </button>
         </div>
