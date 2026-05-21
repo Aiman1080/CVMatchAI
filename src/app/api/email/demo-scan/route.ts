@@ -156,7 +156,19 @@ export async function POST() {
 
   let processed = 0
 
+  // Reuse or create a single demo inbox to avoid duplicates
+  let demoInbox = await prisma.emailInbox.findFirst({ where: { userId } })
+  if (!demoInbox) {
+    demoInbox = await prisma.emailInbox.create({
+      data: { email: 'demo@cvmatch.ai', provider: 'demo', host: 'demo', port: 993, username: 'demo@cvmatch.ai', password: 'demo', userId },
+    })
+  }
+
   for (const email of DEMO_EMAILS) {
+    // Skip if candidate with this email already exists for this user (prevent duplicates)
+    const existing = await prisma.candidate.findFirst({ where: { email: email.sender, userId } })
+    if (existing) continue
+
     // Pick the most relevant vacancy based on keyword overlap (simplified matching)
     const titleLower = email.cvText.toLowerCase()
     const vacancy = vacancies.find(v =>
@@ -171,35 +183,14 @@ export async function POST() {
       email.motivationText || undefined,
     )
 
-    // Create a demo EmailScan record and link the candidate to it
-    const demoInbox = await prisma.emailInbox.findFirst({ where: { userId } }) // use first real inbox if exists
-
-    const emailScanData: any = {
+    const emailScanData = {
       subject: email.subject,
       sender: email.sender,
-      receivedAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000), // random within past week
+      receivedAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
       processed: true,
       relevant: true,
       attachments: JSON.stringify(['CV.pdf']),
-    }
-
-    // Only link to inbox if user has one; otherwise create a standalone scan record with a placeholder
-    if (demoInbox) {
-      emailScanData.inboxId = demoInbox.id
-    } else {
-      // Create a temporary demo inbox record so the EmailScan FK is satisfied
-      const tempInbox = await prisma.emailInbox.create({
-        data: {
-          email: 'demo@cvmatch.ai',
-          provider: 'demo',
-          host: 'demo',
-          port: 993,
-          username: 'demo@cvmatch.ai',
-          password: 'demo',
-          userId,
-        },
-      })
-      emailScanData.inboxId = tempInbox.id
+      inboxId: demoInbox.id,
     }
 
     await prisma.candidate.create({

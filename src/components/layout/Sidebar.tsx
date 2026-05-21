@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
-import { LayoutDashboard, Briefcase, Users, BarChart3, Settings, Mail, LogOut, Zap, ShieldCheck, ChevronRight, CreditCard } from 'lucide-react'
+import { LayoutDashboard, Briefcase, Users, BarChart3, Settings, Mail, LogOut, Zap, ShieldCheck, ChevronRight, CreditCard, LifeBuoy } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
@@ -14,6 +14,7 @@ const navItems = [
   { href: '/email', icon: Mail, label: 'Email Inbox' },
   { href: '/analytics', icon: BarChart3, label: 'Analytics' },
   { href: '/settings', icon: Settings, label: 'Settings' },
+  { href: '/support', icon: LifeBuoy, label: 'Support' },
 ]
 
 const planColors: Record<string, string> = {
