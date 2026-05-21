@@ -189,8 +189,9 @@ export async function classifyRecruitmentEmail(
   })
 
   try {
+    // Haiku is sufficient for binary email classification — no reasoning needed
     await client.beta.messages.toolRunner({
-      model: 'claude-opus-4-7',
+      model: 'claude-haiku-4-5',
       max_tokens: 512,
       tool_choice: { type: 'any' as const },
       tools: [classifyTool],
@@ -217,17 +218,59 @@ export async function classifyRecruitmentEmail(
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 
+const DocTypeSchema = z.object({
+  type: z.enum(['cv', 'motivation', 'other']).describe(
+    "'cv' for a curriculum vitae / resume, 'motivation' for a cover/motivation letter, 'other' for anything else",
+  ),
+})
+
 export async function detectDocumentType(text: string): Promise<'cv' | 'motivation' | 'other'> {
+  // Fast keyword fallback in demo mode
+  if (isDemoMode()) {
+    const lower = text.toLowerCase()
+    const cvScore = ['experience', 'education', 'skills', 'work history', 'curriculum vitae', 'resume',
+      'werkervaring', 'opleiding', 'vaardigheden', 'expérience', 'formation'].filter(k => lower.includes(k)).length
+    const motScore = ['dear', 'i am writing', 'apply', 'motivation', 'sollicitatie', 'geachte',
+      'motivatie', 'candidature', 'lettre'].filter(k => lower.includes(k)).length
+    if (cvScore > motScore) return 'cv'
+    if (motScore > 0) return 'motivation'
+    return 'other'
+  }
+
+  const client = getClient()
+  const capture: { result: { type: 'cv' | 'motivation' | 'other' } | null } = { result: null }
+
+  const docTypeTool = betaZodTool({
+    name: 'set_document_type',
+    description: 'Set the detected document type',
+    inputSchema: DocTypeSchema,
+    run: async (input) => {
+      capture.result = input as { type: 'cv' | 'motivation' | 'other' }
+      return 'Type recorded.'
+    },
+  })
+
+  try {
+    await client.beta.messages.toolRunner({
+      model: 'claude-haiku-4-5',
+      max_tokens: 256,
+      tool_choice: { type: 'any' as const },
+      tools: [docTypeTool],
+      messages: [{
+        role: 'user',
+        content: `Is this a CV/resume, a motivation/cover letter, or something else?\n\n${text.slice(0, 800)}\n\nCall set_document_type now.`,
+      }],
+    })
+    if (capture.result) return capture.result.type
+  } catch (error) {
+    console.error('[AI] detectDocumentType error:', error)
+  }
+
+  // Keyword fallback if AI call fails
   const lower = text.toLowerCase()
-  const cvKeywords = ['experience', 'education', 'skills', 'work history', 'curriculum vitae', 'resume',
-    'werkervaring', 'opleiding', 'vaardigheden', 'expérience', 'formation']
-  const motivationKeywords = ['dear', 'i am writing', 'apply', 'motivation', 'sollicitatie', 'geachte',
-    'motivatie', 'candidature', 'lettre']
-  const cvScore = cvKeywords.filter(k => lower.includes(k)).length
-  const motScore = motivationKeywords.filter(k => lower.includes(k)).length
-  if (cvScore > motScore) return 'cv'
-  if (motScore > 0) return 'motivation'
-  return 'other'
+  const cvScore = ['experience', 'education', 'skills', 'werkervaring', 'opleiding', 'expérience', 'formation']
+    .filter(k => lower.includes(k)).length
+  return cvScore >= 2 ? 'cv' : 'other'
 }
 
 export async function generateRecruiterInsights(candidates: Array<{

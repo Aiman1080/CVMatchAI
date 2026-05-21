@@ -3,6 +3,9 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { parseDocument } from '@/lib/pdf-parser'
+
+// Allow up to 5 minutes — IMAP + multiple AI calls can easily take 2–3 min
+export const maxDuration = 300
 import { analyzeCVAgainstVacancy, classifyRecruitmentEmail, detectDocumentType } from '@/lib/ai'
 
 export async function POST(req: Request) {

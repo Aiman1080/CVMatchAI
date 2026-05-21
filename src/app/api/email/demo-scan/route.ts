@@ -3,6 +3,9 @@
 // users can see the full email scanning flow without providing credentials.
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
+
+// 4 demo emails × ~30-60s per Opus analysis = up to 4 min — allow the full run
+export const maxDuration = 300
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { analyzeCVAgainstVacancy } from '@/lib/ai'
