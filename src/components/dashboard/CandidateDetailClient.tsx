@@ -58,6 +58,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
   const [emailBody, setEmailBody] = useState('')
   const [teamsLink, setTeamsLink] = useState('')
   const [sendingEmail, setSendingEmail] = useState(false)
+  const [generatingEmail, setGeneratingEmail] = useState(false)
   const notesTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const score = candidate.matchScore || 0
@@ -130,6 +131,28 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
     setEmailBody(tpl.body.replace('{name}', candidate.firstName || name))
     setTeamsLink('')
     setShowEmail(true)
+  }
+
+  const handleGenerateEmail = async () => {
+    setGeneratingEmail(true)
+    try {
+      const type = emailType === 'interview' ? 'positive' : 'negative'
+      const res = await fetch('/api/candidates/generate-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ candidateId: candidate.id, type }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setEmailSubject(data.subject)
+        setEmailBody(data.body)
+        toast({ title: "Email généré par l'IA ✨" })
+      } else {
+        toast({ title: data.error || 'Erreur IA', variant: 'destructive' })
+      }
+    } finally {
+      setGeneratingEmail(false)
+    }
   }
 
   const handleSendEmail = async () => {
@@ -614,6 +637,16 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                 </button>
               ))}
             </div>
+
+            <Button
+              onClick={handleGenerateEmail}
+              disabled={generatingEmail}
+              variant="outline"
+              className="w-full gap-2 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-400 dark:hover:bg-purple-950"
+            >
+              {generatingEmail ? <Loader2 size={14} className="animate-spin" /> : <span>✨</span>}
+              {generatingEmail ? 'Génération en cours…' : "Générer avec l'IA"}
+            </Button>
 
             <div>
               <Label className="text-xs text-gray-500 mb-1.5">Sujet</Label>

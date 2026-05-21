@@ -20,6 +20,7 @@ interface Candidate {
   liked: boolean
   priority: boolean
   savedToPool: boolean
+  viewedAt: Date | null
   createdAt: Date
   vacancy?: { title: string; company: string } | null
 }

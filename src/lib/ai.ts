@@ -35,9 +35,9 @@ const CV_ANALYSIS_TOOL: Anthropic.Tool = {
     type: 'object' as const,
     properties: {
       matchScore: { type: 'number', description: 'Match score 0-100. Be strict — average candidates score 50-65, only exceptional candidates score 80+.' },
-      summary: { type: 'string', description: '2-3 sentence professional summary of the candidate relative to this specific role' },
-      strengths: { type: 'array', items: { type: 'string' }, description: '2-4 key strengths relevant to this vacancy' },
-      weaknesses: { type: 'array', items: { type: 'string' }, description: '1-3 gaps or areas of concern relative to the vacancy requirements' },
+      summary: { type: 'string', description: '3-4 sentence professional summary covering the candidate\'s overall profile, key experience, main skills, and fit for this specific role.' },
+      strengths: { type: 'array', items: { type: 'string' }, description: '4-6 specific strengths relevant to this vacancy. Each item should be a complete sentence explaining WHY it is a strength for this role (e.g. "5 years of Python development directly matching the backend requirements").' },
+      weaknesses: { type: 'array', items: { type: 'string' }, description: '3-5 specific gaps or concerns relative to the vacancy requirements. Each item should be concrete (e.g. "No experience with Kubernetes mentioned despite it being a key requirement").' },
       skills: { type: 'array', items: { type: 'string' }, description: 'Technical and soft skills extracted from the CV' },
       experience: { type: 'string', description: 'Chronological summary of job roles only. Do NOT include education here.' },
       education: { type: 'string', description: 'Degrees with institution and year, e.g. "Master CS — KU Leuven (2021)". Do NOT list jobs here.' },

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Search, Users, Mail, Trash2, LayoutGrid, Columns, Star, Flag, Download, Send } from 'lucide-react'
+import { Search, Users, Mail, Trash2, LayoutGrid, Columns, Star, Flag, Download, Send, FileText, Eye, EyeOff } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -26,6 +26,7 @@ interface Candidate {
   liked: boolean
   priority: boolean
   savedToPool: boolean
+  viewedAt: Date | null
   createdAt: Date
   vacancy?: { title: string; company: string } | null
 }
@@ -87,14 +88,20 @@ export function CandidatesClient({ initialCandidates }: { initialCandidates: Can
         } else {
           toast({ title: data.error || 'Erreur', variant: 'destructive' })
         }
-      } else {
+      } else if (sendEmail === false) {
+        // CSV download
         const res = await fetch('/api/candidates/export')
         const blob = await res.blob()
         const a = document.createElement('a')
         a.href = URL.createObjectURL(blob)
         a.download = `candidates-${new Date().toISOString().slice(0, 10)}.csv`
         a.click()
-        toast({ title: 'Export téléchargé !' })
+        toast({ title: 'Export CSV téléchargé !' })
+        setShowExport(false)
+      } else {
+        // PDF — open in new tab for print/save
+        window.open('/api/candidates/pdf', '_blank')
+        toast({ title: 'Rapport PDF ouvert', description: 'Utilisez Ctrl+P pour sauvegarder en PDF.' })
         setShowExport(false)
       }
     } finally { setExporting(false) }
@@ -186,21 +193,28 @@ export function CandidatesClient({ initialCandidates }: { initialCandidates: Can
               const score = c.matchScore || 0
               const skills = parseJsonSafe<string[]>(c.skills, [])
               const isUpdating = updating === c.id
+              const isUnread = !c.viewedAt
 
               return (
-                <Link key={c.id} href={`/candidates/${c.id}`}>
-                  <Card className={`border-0 shadow-sm card-hover cursor-pointer h-full ${c.priority ? 'ring-1 ring-red-200' : ''} ${c.liked && !c.priority ? 'ring-1 ring-amber-200' : ''}`}>
+                <Link key={c.id} href={`/candidates/${c.id}`} onClick={() => setCandidates(prev => prev.map(x => x.id === c.id ? { ...x, viewedAt: new Date() } : x))}>
+                  <Card className={`border-0 shadow-sm card-hover cursor-pointer h-full dark:bg-gray-900 ${c.priority ? 'ring-1 ring-red-200 dark:ring-red-900' : ''} ${c.liked && !c.priority ? 'ring-1 ring-amber-200 dark:ring-amber-900' : ''}`}>
                     <CardContent className="p-3">
                       <div className="flex items-start gap-2.5">
-                        <div className="shrink-0 text-center">
-                          <div className="text-xs font-bold text-gray-200 mb-0.5">#{i + 1}</div>
-                          <Avatar className="w-8 h-8">
-                            <AvatarFallback className="text-xs gradient-bg text-white font-semibold">{initials}</AvatarFallback>
-                          </Avatar>
+                        <div className="shrink-0 text-center relative">
+                          <div className="text-xs font-bold text-gray-200 dark:text-gray-700 mb-0.5">#{i + 1}</div>
+                          <div className="relative">
+                            <Avatar className="w-8 h-8">
+                              <AvatarFallback className="text-xs gradient-bg text-white font-semibold">{initials}</AvatarFallback>
+                            </Avatar>
+                            {isUnread && (
+                              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-blue-500 border-2 border-white dark:border-gray-900 rounded-full" title="Non consulté" />
+                            )}
+                          </div>
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1 flex-wrap mb-0.5">
-                            <span className="font-semibold text-sm text-gray-900 truncate">{c.firstName} {c.lastName}</span>
+                            <span className={`font-semibold text-sm truncate ${isUnread ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>{c.firstName} {c.lastName}</span>
+                            {isUnread && <span className="text-xs bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 px-1.5 rounded font-semibold">Nouveau</span>}
                             {c.liked && <Star size={10} className="text-amber-500 shrink-0" fill="currentColor" />}
                             {c.priority && <Flag size={10} className="text-red-500 shrink-0" />}
                             {c.savedToPool && <span className="text-xs bg-amber-50 text-amber-600 px-1 rounded font-medium">vivier</span>}
@@ -268,12 +282,15 @@ export function CandidatesClient({ initialCandidates }: { initialCandidates: Can
           </DialogHeader>
           <div className="space-y-4 mt-2">
             <p className="text-sm text-gray-500">{filtered.length} candidat(s) inclus dans l'export.</p>
+            <Button onClick={() => handleExport(null as any)} disabled={exporting} className="w-full gap-2" variant="outline">
+              <FileText size={16} /> Rapport PDF brandé CVMatch AI
+            </Button>
             <Button onClick={() => handleExport(false)} disabled={exporting} className="w-full gap-2" variant="outline">
               <Download size={16} /> Télécharger en CSV
             </Button>
             <div className="relative">
-              <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-gray-200" /></div>
-              <div className="relative flex justify-center"><span className="bg-white px-2 text-xs text-gray-400 uppercase">ou envoyer par email</span></div>
+              <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-gray-200 dark:border-gray-700" /></div>
+              <div className="relative flex justify-center"><span className="bg-white dark:bg-gray-900 px-2 text-xs text-gray-400 uppercase">ou envoyer le CSV par email</span></div>
             </div>
             <Input type="email" placeholder="destinataire@email.com" value={exportEmail} onChange={e => setExportEmail(e.target.value)} />
             <Button onClick={() => handleExport(true)} disabled={exporting || !exportEmail} className="w-full gap-2 gradient-bg">

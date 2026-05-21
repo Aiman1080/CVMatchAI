@@ -19,7 +19,11 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     include: { vacancy: true, emailSource: true },
   })
   if (!candidate) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  return NextResponse.json(candidate)
+  // Mark as viewed on first open
+  if (!candidate.viewedAt) {
+    await prisma.candidate.update({ where: { id }, data: { viewedAt: new Date() } })
+  }
+  return NextResponse.json({ ...candidate, viewedAt: candidate.viewedAt ?? new Date() })
 }
 
 // Used to update status (new/reviewing/shortlisted/rejected/hired) from the UI
@@ -33,7 +37,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const existing = await prisma.candidate.findFirst({ where: isAdmin ? { id } : { id, userId } })
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   const body = await req.json()
-  const allowed = ['status', 'firstName', 'lastName', 'email', 'phone', 'summary', 'notes', 'liked', 'priority', 'savedToPool']
+  const allowed = ['status', 'firstName', 'lastName', 'email', 'phone', 'summary', 'notes', 'liked', 'priority', 'savedToPool', 'viewedAt']
   const data: any = {}
   for (const key of allowed) { if (body[key] !== undefined) data[key] = body[key] }
   const candidate = await prisma.candidate.update({ where: { id }, data })

@@ -111,6 +111,7 @@ model Candidate {
   liked           Boolean   @default(false)
   priority        Boolean   @default(false)
   savedToPool     Boolean   @default(false)
+  viewedAt        DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   vacancyId       String
