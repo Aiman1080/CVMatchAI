@@ -261,6 +261,13 @@ function generateDemoAnalysis(cvText: string, vacancyTitle: string): CVAnalysisR
   const detectedSkills = techSkills.filter(s => words.includes(s.toLowerCase())).slice(0, 5)
   if (detectedSkills.length === 0) detectedSkills.push('Communication', 'Problem-solving', 'Teamwork')
 
+  // Extract contact info from CV text with regex so the candidate isn't stored as "Unknown Candidate"
+  const emailMatch = cvText.match(/[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}/)
+  const phoneMatch = cvText.match(/(?:\+\d{1,3}[\s-]?)?\(?\d{2,4}\)?[\s.-]?\d{3,4}[\s.-]?\d{3,4}/)
+  // Look for a "First Last" name on its own line — uses [ \t]+ to avoid matching across newlines
+  const nameMatch = cvText.match(/^([A-Z][a-zÀ-ÿ'-]+(?:[ \t]+[A-Z][a-zÀ-ÿ'-]+)+)[ \t]*$/m)
+  const nameParts = nameMatch ? nameMatch[1].trim().split(/\s+/) : []
+
   return {
     matchScore: score,
     summary: `Candidate shows relevant experience for the ${vacancyTitle} position. Their background demonstrates key competencies required for the role. Further interview recommended to assess cultural fit.`,
@@ -279,5 +286,9 @@ function generateDemoAnalysis(cvText: string, vacancyTitle: string): CVAnalysisR
     recommendation: score >= 80 ? 'strong_yes' : score >= 65 ? 'yes' : score >= 50 ? 'maybe' : 'no',
     language: words.includes('werkervaring') || words.includes('opleiding') ? 'nl' :
       words.includes('expérience') ? 'fr' : 'en',
+    firstName: nameParts.length >= 2 ? nameParts[0] : undefined,
+    lastName: nameParts.length >= 2 ? nameParts.slice(1).join(' ') : undefined,
+    email: emailMatch ? emailMatch[0] : undefined,
+    phone: phoneMatch ? phoneMatch[0].trim() : undefined,
   }
 }

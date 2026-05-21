@@ -46,7 +46,7 @@ export function Sidebar() {
           const active = pathname === href || pathname.startsWith(href + '/')
           return (
             <Link key={href} href={href} className={cn('flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150', active ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900')}>
-              <Icon className={cn('w-4.5 h-4.5', active ? 'text-blue-600' : 'text-gray-400')} size={18} />
+              <Icon className={cn(active ? 'text-blue-600' : 'text-gray-400')} size={18} />
               {label}
               {active && <ChevronRight className="ml-auto w-3.5 h-3.5 text-blue-400" />}
             </Link>
