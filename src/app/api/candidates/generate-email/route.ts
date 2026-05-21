@@ -30,11 +30,11 @@ export async function POST(req: Request) {
     const demos: Record<string, { subject: string; body: string }> = {
       positive: {
         subject: `Invitation à un entretien — ${candidate.vacancy?.title || 'Poste'}`,
-        body: `Bonjour ${candidate.firstName},\n\nNous avons examiné votre candidature pour le poste de ${candidate.vacancy?.title} chez ${company} et nous sommes ravis de vous informer qu'elle a retenu toute notre attention.\n\nVotre profil présente des atouts remarquables, notamment : ${strengths || 'une expérience solide et des compétences techniques pertinentes'}. Votre score de correspondance de ${candidate.matchScore ? Math.round(candidate.matchScore) : '—'}% confirme votre adéquation avec nos besoins.\n\nNous souhaiterions vous inviter à un entretien pour approfondir votre candidature. Merci de nous faire part de vos disponibilités dans les prochains jours.\n\nCordialement,\n${recruiterName}\n${company}`,
+        body: `Bonjour ${candidate.firstName},\n\nNous avons bien pris connaissance de votre candidature pour le poste de ${candidate.vacancy?.title || 'le poste'} chez ${company} et nous sommes ravis de vous informer qu'elle a retenu toute notre attention.\n\nNous souhaiterions vous inviter à un entretien afin d'échanger plus en détail sur votre parcours et sur cette opportunité. Merci de nous faire part de vos disponibilités dans les prochains jours.\n\nNous restons à votre disposition pour toute question.\n\nCordialement,\n${recruiterName}\n${company}`,
       },
       negative: {
         subject: `Suite de votre candidature — ${candidate.vacancy?.title || 'Poste'}`,
-        body: `Bonjour ${candidate.firstName},\n\nNous vous remercions de l'intérêt que vous portez à notre offre de ${candidate.vacancy?.title} chez ${company} et du temps que vous avez consacré à votre candidature.\n\nAprès examen attentif de votre dossier, nous avons le regret de vous informer que votre candidature n'a pas été retenue. Ce choix difficile résulte d'une forte compétition et de profils correspondant plus précisément à nos besoins actuels, notamment en ce qui concerne ${weaknesses || 'certaines compétences spécifiques requises'}.\n\nVotre parcours et vos compétences en ${skills || 'votre domaine'} sont néanmoins appréciables, et nous ne manquerons pas de garder votre candidature à l'esprit pour de futures opportunités.\n\nNous vous souhaitons plein succès dans vos recherches.\n\nCordialement,\n${recruiterName}\n${company}`,
+        body: `Bonjour ${candidate.firstName},\n\nNous vous remercions de l'intérêt que vous portez à notre offre et du temps que vous avez consacré à votre candidature pour le poste de ${candidate.vacancy?.title || 'le poste'} chez ${company}.\n\nAprès examen attentif de votre dossier, nous avons le regret de vous informer que votre candidature n'a pas été retenue pour la suite du processus. Ce choix difficile résulte d'une forte compétition entre des profils de qualité.\n\nNous vous souhaitons plein succès dans vos recherches et espérons avoir l'occasion de nous recroiser lors de futures opportunités.\n\nCordialement,\n${recruiterName}\n${company}`,
       },
     }
     return NextResponse.json(demos[type] || demos.positive)
@@ -43,42 +43,31 @@ export async function POST(req: Request) {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
   const prompt = type === 'positive'
-    ? `Write a warm, professional recruitment email in French inviting ${candidate.firstName} ${candidate.lastName} to an interview for the position of "${candidate.vacancy?.title}" at ${company}.
-
-Candidate details:
-- Match score: ${candidate.matchScore ? Math.round(candidate.matchScore) + '%' : 'N/A'}
-- Key strengths: ${strengths || 'strong profile'}
-- Skills: ${skills || 'various'}
-- Summary: ${candidate.summary || ''}
+    ? `Write a warm, professional recruitment email in French inviting ${candidate.firstName} ${candidate.lastName} to an interview for the position of "${candidate.vacancy?.title || 'le poste'}" at ${company}.
 
 Recruiter name: ${recruiterName}
 Company: ${company}
 
 The email should:
 1. Be warm and enthusiastic but professional
-2. Specifically mention 2-3 of their actual strengths from the data above
-3. Mention their match score if above 70%
-4. Ask for their availability for an interview
-5. Be 150-200 words max
+2. Invite them to an interview and ask for their availability
+3. Be 120-160 words max
+4. Do NOT mention any score, rating, ranking, or percentage
+5. Do NOT mention specific strengths, weaknesses, or skills
 
 Return JSON: {"subject": "...", "body": "..."}`
-    : `Write a professional, empathetic rejection email in French to ${candidate.firstName} ${candidate.lastName} who applied for "${candidate.vacancy?.title}" at ${company}.
-
-Candidate details:
-- Match score: ${candidate.matchScore ? Math.round(candidate.matchScore) + '%' : 'N/A'}
-- Skills they had: ${skills || 'various'}
-- Summary: ${candidate.summary || ''}
-- Gap/weaknesses: ${weaknesses || 'profile mismatch'}
+    : `Write a professional, empathetic rejection email in French to ${candidate.firstName} ${candidate.lastName} who applied for "${candidate.vacancy?.title || 'le poste'}" at ${company}.
 
 Recruiter name: ${recruiterName}
 Company: ${company}
 
 The email should:
-1. Thank them genuinely for their time and interest
-2. Gently explain the decision was competitive (without being harsh)
-3. Mention something positive about their profile (use their actual skills)
-4. Leave the door open for future opportunities
-5. Be 150-200 words max, empathetic tone
+1. Thank them sincerely for their time and interest
+2. Inform them politely that their application was not selected
+3. Wish them success in their search
+4. Be 120-160 words max, empathetic tone
+5. Do NOT mention any score, rating, ranking, or percentage
+6. Do NOT mention specific strengths, weaknesses, or skills
 
 Return JSON: {"subject": "...", "body": "..."}`
 
