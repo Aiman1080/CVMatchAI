@@ -299,18 +299,28 @@ const NOT_A_NAME = new Set([
 
 function extractName(cvText: string): { firstName?: string; lastName?: string } {
   const lines = cvText.split('\n').map(l => l.trim()).filter(Boolean)
-  const nameLineRe = /^([A-ZÀÁÂÃÄÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝŸ][a-zàáâãäçèéêëìíîïñòóôõöùúûüýÿ'-]+(?:\s+(?:de|van|der|den|du|des|le|la|el|von|af|bin|al)?\s*[A-ZÀÁÂÃÄÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝŸ][a-zàáâãäçèéêëìíîïñòóôõöùúûüýÿ'-]+){1,3})\s*$/
-  for (const line of lines.slice(0, 10)) {
-    if (/[@+|\/\\]/.test(line)) continue
-    if (/^\d/.test(line)) continue
-    if (/https?:|www\.|linkedin|github/i.test(line)) continue
-    const words = line.split(/\s+/)
-    if (words.every(w => w === w.toUpperCase() && w.length > 1)) continue
-    if (words.some(w => NOT_A_NAME.has(w.toLowerCase()))) continue
-    const match = nameLineRe.exec(line)
+  const namePartRe = /^([A-ZÀÁÂÃÄÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝŸ][a-zàáâãäçèéêëìíîïñòóôõöùúûüýÿ'-]+(?:\s+(?:de|van|der|den|du|des|le|la|el|von|af|bin|al)?\s*[A-ZÀÁÂÃÄÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝŸ][a-zàáâãäçèéêëìíîïñòóôõöùúûüýÿ'-]+){1,3})\s*$/
+
+  const tryExtract = (segment: string): { firstName: string; lastName: string } | null => {
+    const s = segment.trim()
+    if (!s || /[@+\/\\]/.test(s) || /^\d/.test(s) || /https?:|www\.|linkedin|github/i.test(s)) return null
+    const words = s.split(/\s+/)
+    if (words.every(w => w === w.toUpperCase() && w.length > 1)) return null
+    if (words.some(w => NOT_A_NAME.has(w.toLowerCase()))) return null
+    const match = namePartRe.exec(s)
     if (match) {
       const parts = match[1].trim().split(/\s+/)
-      return { firstName: parts[0], lastName: parts.slice(1).join(' ') }
+      if (parts.length >= 2) return { firstName: parts[0], lastName: parts.slice(1).join(' ') }
+    }
+    return null
+  }
+
+  for (const line of lines.slice(0, 10)) {
+    // Try the full line first, then try just the part before a separator (handles "Jean Dupont - Engineer")
+    const segments = [line, ...line.split(/\s*[-|,]\s*/)]
+    for (const seg of segments) {
+      const result = tryExtract(seg)
+      if (result) return result
     }
   }
   return {}

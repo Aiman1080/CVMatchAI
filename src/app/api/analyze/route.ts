@@ -22,13 +22,21 @@ export async function POST(req: Request) {
 
   const analysis = await analyzeCVAgainstVacancy(
     candidate.cvContent,
-    candidate.vacancy.title,
-    candidate.vacancy.description,
-    candidate.vacancy.requirements,
+    candidate.vacancy?.title ?? 'Open position',
+    candidate.vacancy?.description ?? '',
+    candidate.vacancy?.requirements ?? '',
     candidate.motivationText || undefined,
   )
 
   // Persist all analysis fields — strengths/weaknesses/skills stored as JSON strings due to SQLite
+  // Also update contact fields extracted from the CV (only overwrite if currently unknown/empty)
+  const contactPatch: any = {}
+  if (analysis.firstName && candidate.firstName === 'Unknown') contactPatch.firstName = analysis.firstName
+  if (analysis.lastName && candidate.lastName === 'Candidate') contactPatch.lastName = analysis.lastName
+  if (analysis.email && !candidate.email) contactPatch.email = analysis.email
+  if (analysis.phone && !candidate.phone) contactPatch.phone = analysis.phone
+  if (analysis.language) contactPatch.language = analysis.language
+
   const updated = await prisma.candidate.update({
     where: { id: candidateId },
     data: {
@@ -36,6 +44,7 @@ export async function POST(req: Request) {
       strengths: JSON.stringify(analysis.strengths), weaknesses: JSON.stringify(analysis.weaknesses),
       skills: JSON.stringify(analysis.skills), experience: analysis.experience,
       education: analysis.education, recommendation: analysis.recommendation, analyzedAt: new Date(),
+      ...contactPatch,
     },
   })
   return NextResponse.json({ success: true, candidate: updated, analysis })
