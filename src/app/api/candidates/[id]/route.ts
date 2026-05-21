@@ -16,7 +16,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   // Ownership scoping — admins can view any candidate
   const candidate = await prisma.candidate.findFirst({
     where: isAdmin ? { id } : { id, userId },
-    include: { vacancy: true },
+    include: { vacancy: true, emailSource: true },
   })
   if (!candidate) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   return NextResponse.json(candidate)

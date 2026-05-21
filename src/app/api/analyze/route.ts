@@ -11,7 +11,9 @@ import { analyzeCVAgainstVacancy } from '@/lib/ai'
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const { candidateId } = await req.json()
+  let body: any
+  try { body = await req.json() } catch { return NextResponse.json({ error: 'Invalid request body' }, { status: 400 }) }
+  const { candidateId } = body
 
   // Include vacancy so we have the title/description/requirements for the AI prompt
   const candidate = await prisma.candidate.findUnique({ where: { id: candidateId }, include: { vacancy: true } })
