@@ -14,6 +14,7 @@ export async function POST(req: Request) {
   let body: any
   try { body = await req.json() } catch { return NextResponse.json({ error: 'Invalid request body' }, { status: 400 }) }
   const { candidateId } = body
+  if (!candidateId) return NextResponse.json({ error: 'candidateId required' }, { status: 400 })
 
   // Include vacancy so we have the title/description/requirements for the AI prompt
   const candidate = await prisma.candidate.findUnique({ where: { id: candidateId }, include: { vacancy: true } })

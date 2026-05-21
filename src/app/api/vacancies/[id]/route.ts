@@ -31,7 +31,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const existing = await prisma.vacancy.findFirst({ where: isAdmin ? { id } : { id, userId } })
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   const body = await req.json()
-  const vacancy = await prisma.vacancy.update({ where: { id }, data: body })
+  const allowed = ['title', 'company', 'department', 'location', 'type', 'description', 'requirements', 'niceToHave', 'salary', 'language', 'status']
+  const data: any = {}
+  for (const key of allowed) { if (body[key] !== undefined) data[key] = body[key] }
+  const vacancy = await prisma.vacancy.update({ where: { id }, data })
   return NextResponse.json(vacancy)
 }
 

@@ -13,7 +13,12 @@ export async function POST(req: Request) {
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
-    const formData = await req.formData()
+    let formData: FormData
+    try {
+      formData = await req.formData()
+    } catch {
+      return NextResponse.json({ error: 'Request must be multipart/form-data' }, { status: 400 })
+    }
     const file = formData.get('file') as File
     const vacancyId = formData.get('vacancyId') as string
     const gdprConsent = formData.get('gdprConsent') === 'true'
