@@ -53,6 +53,7 @@ model User {
   candidates      Candidate[]
   emailInboxes    EmailInbox[]
   supportTickets  SupportTicket[]
+  integrations    Integration[]
 }
 
 model VerificationToken {
@@ -64,23 +65,41 @@ model VerificationToken {
 }
 
 model Vacancy {
-  id          String      @id @default(cuid())
-  title       String
-  company     String
-  department  String?
-  location    String?
-  type        String      @default("full-time")
-  description String
+  id           String      @id @default(cuid())
+  title        String
+  company      String
+  department   String?
+  location     String?
+  type         String      @default("full-time")
+  description  String
   requirements String
-  niceToHave  String?
-  salary      String?
-  status      String      @default("active")
-  language    String      @default("nl")
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  niceToHave   String?
+  salary       String?
+  status       String      @default("active")
+  language     String      @default("nl")
+  externalId   String?
+  externalSource String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  candidates   Candidate[]
+}
+
+model Integration {
+  id          String    @id @default(cuid())
+  platform    String
+  apiKey      String
+  companySlug String?
+  status      String    @default("active")
+  lastSyncAt  DateTime?
+  syncCount   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   userId      String
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  candidates  Candidate[]
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([platform, userId])
 }
 
 model Candidate {
@@ -104,6 +123,8 @@ model Candidate {
   recommendation  String?
   status          String    @default("new")
   source          String    @default("upload")
+  externalId      String?
+  externalSource  String?
   gdprConsent     Boolean   @default(false)
   gdprConsentDate DateTime?
   analyzedAt      DateTime?
@@ -122,6 +143,7 @@ model Candidate {
 
   // One candidate per email per vacancy — prevents duplicates from repeated demo scans or uploads
   @@unique([email, vacancyId])
+  @@unique([externalId, externalSource, userId])
 }
 
 model EmailInbox {
