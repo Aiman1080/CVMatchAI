@@ -24,6 +24,6 @@ export async function PATCH(req: Request) {
   const allowed = ['name', 'company']
   const data: any = {}
   for (const key of allowed) { if (body[key] !== undefined) data[key] = body[key] }
-  const user = await prisma.user.update({ where: { id: userId }, data })
+  const user = await prisma.user.update({ where: { id: userId }, data, select: { id: true, name: true, email: true, company: true, role: true, subscription: true, createdAt: true } })
   return NextResponse.json(user)
 }

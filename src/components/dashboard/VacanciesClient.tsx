@@ -2,11 +2,12 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Plus, Briefcase, MapPin, Users, Clock, Search } from 'lucide-react'
+import { Plus, Briefcase, MapPin, Users, Clock, Search, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { CreateVacancyDialog } from './CreateVacancyDialog'
+import { toast } from '@/components/ui/use-toast'
 import { getStatusColor, formatRelativeTime } from '@/lib/utils'
 
 interface Vacancy {
@@ -25,6 +26,7 @@ export function VacanciesClient({ initialVacancies }: { initialVacancies: Vacanc
   const [vacancies, setVacancies] = useState(initialVacancies)
   const [search, setSearch] = useState('')
   const [showCreate, setShowCreate] = useState(false)
+  const [deleting, setDeleting] = useState<string | null>(null)
 
   const filtered = vacancies.filter(v =>
     v.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -34,6 +36,22 @@ export function VacanciesClient({ initialVacancies }: { initialVacancies: Vacanc
   const handleCreated = (newVacancy: any) => {
     setVacancies(prev => [{ ...newVacancy, _count: { candidates: 0 } }, ...prev])
     setShowCreate(false)
+  }
+
+  const handleDelete = async (e: React.MouseEvent, id: string, title: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!confirm(`Delete "${title}"? All ${vacancies.find(v => v.id === id)?._count.candidates ?? 0} candidates in this vacancy will also be deleted. This cannot be undone.`)) return
+    setDeleting(id)
+    try {
+      const res = await fetch(`/api/vacancies/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setVacancies(prev => prev.filter(v => v.id !== id))
+        toast({ title: 'Vacancy deleted', description: `"${title}" and all its candidates have been removed.` })
+      } else {
+        toast({ title: 'Delete failed', variant: 'destructive' })
+      }
+    } finally { setDeleting(null) }
   }
 
   const typeColors: Record<string, string> = {
@@ -108,9 +126,19 @@ export function VacanciesClient({ initialVacancies }: { initialVacancies: Vacanc
                     <span className="flex items-center gap-1">
                       <Users size={11} /> {v._count.candidates} candidates
                     </span>
-                    <span className="flex items-center gap-1">
-                      <Clock size={11} /> {formatRelativeTime(v.createdAt)}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="flex items-center gap-1">
+                        <Clock size={11} /> {formatRelativeTime(v.createdAt)}
+                      </span>
+                      <button
+                        onClick={e => handleDelete(e, v.id, v.title)}
+                        disabled={deleting === v.id}
+                        className="p-1 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete vacancy"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

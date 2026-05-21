@@ -2,13 +2,14 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Search, Users, ChevronRight, Mail } from 'lucide-react'
+import { Search, Users, ChevronRight, Mail, Trash2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Progress } from '@/components/ui/progress'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { toast } from '@/components/ui/use-toast'
 import { getStatusColor, formatRelativeTime, parseJsonSafe } from '@/lib/utils'
 
 interface Candidate {
@@ -30,6 +31,23 @@ export function CandidatesClient({ initialCandidates }: { initialCandidates: Can
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [sortBy, setSortBy] = useState('score')
+  const [deleting, setDeleting] = useState<string | null>(null)
+
+  const handleDelete = async (e: React.MouseEvent, id: string, name: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!confirm(`Delete ${name}? This cannot be undone.`)) return
+    setDeleting(id)
+    try {
+      const res = await fetch(`/api/candidates/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setCandidates(prev => prev.filter(c => c.id !== id))
+        toast({ title: 'Candidate deleted', description: `${name} has been removed.` })
+      } else {
+        toast({ title: 'Delete failed', variant: 'destructive' })
+      }
+    } finally { setDeleting(null) }
+  }
 
   const filtered = candidates
     .filter(c => {
@@ -128,6 +146,14 @@ export function CandidatesClient({ initialCandidates }: { initialCandidates: Can
                           </div>
                           {score > 0 && <Progress value={score} className="w-20 h-1.5 mt-1" />}
                         </div>
+                        <button
+                          onClick={e => handleDelete(e, c.id, `${c.firstName} ${c.lastName}`)}
+                          disabled={deleting === c.id}
+                          className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Delete candidate"
+                        >
+                          <Trash2 size={15} />
+                        </button>
                         <ChevronRight className="w-4 h-4 text-gray-300" />
                       </div>
                     </div>

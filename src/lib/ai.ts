@@ -1,10 +1,7 @@
-// AI analysis module — uses the Anthropic Agent SDK (betaZodTool + toolRunner) for structured
-// CV and motivation letter analysis.  Falls back to generateDemoAnalysis() when no API key
-// is configured so the app works out-of-the-box without a paid account.
+// AI analysis module — uses the Anthropic SDK (messages.create with tool_choice:'any')
+// for structured CV and email analysis. Falls back to generateDemoAnalysis() when no
+// API key is configured so the app works out-of-the-box without a paid account.
 import Anthropic, { BadRequestError, RateLimitError, AuthenticationError } from '@anthropic-ai/sdk'
-import { betaZodTool } from '@anthropic-ai/sdk/helpers/beta/zod'
-// The SDK's betaZodTool imports from zod/v4 — we must use the same subpath for type compatibility
-import { z } from 'zod/v4'
 
 const isDemoMode = () =>
   !process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY.trim() === ''
@@ -27,36 +24,34 @@ export interface CVAnalysisResult {
   phone?: string
 }
 
-// Zod schema — single source of truth for both TypeScript types AND the JSON Schema
-// that the Anthropic SDK auto-generates for the tool definition.
-const CvAnalysisSchema = z.object({
-  matchScore: z.number().describe(
-    'Match score 0-100 reflecting how well the candidate meets the vacancy requirements. Be strict — not every candidate scores 70+.',
-  ),
-  summary: z.string().describe('2-3 sentence professional summary of the candidate relative to the role'),
-  strengths: z.array(z.string()).describe('2-4 key strengths relevant to this specific vacancy'),
-  weaknesses: z.array(z.string()).describe('1-3 gaps or areas of concern relative to the vacancy requirements'),
-  skills: z.array(z.string()).describe('Technical and soft skills extracted from the CV text'),
-  experience: z.string().describe(
-    'Chronological summary of job roles only. Do NOT include education or school projects here.',
-  ),
-  education: z.string().describe(
-    'Specific degrees with institution and graduation year, e.g. "Master Computer Science — KU Leuven (2021), Bachelor Applied Informatics — HoGent (2018)". Do NOT list job titles here.',
-  ),
-  recommendation: z.enum(['strong_yes', 'yes', 'maybe', 'no']).describe('Hiring recommendation based on vacancy fit'),
-  language: z.enum(['nl', 'en', 'fr', 'de']).describe('Dominant language detected in the CV text'),
-  firstName: z.string().optional().describe(
-    "Candidate's personal given name — found on the VERY FIRST non-empty line of the CV. NEVER a school name (KU Leuven, HoGent…), company name, job title, or section header (EDUCATION, EXPERIENCE, SKILLS…). Leave empty if uncertain.",
-  ),
-  lastName: z.string().optional().describe(
-    "Candidate's family name — from the first line alongside firstName. Same rules apply: never a school, company, or header word.",
-  ),
-  email: z.string().optional().describe('Email address extracted from the CV, if present'),
-  phone: z.string().optional().describe('Phone number extracted from the CV, if present'),
-})
+// JSON Schema for the CV analysis tool — matches CVAnalysisResult fields exactly.
+// Defined manually to avoid the @anthropic-ai/sdk/helpers/beta/zod subpath import
+// which isn't in the package exports map and breaks Next.js webpack resolution.
+const CV_ANALYSIS_TOOL: Anthropic.Tool = {
+  name: 'submit_cv_analysis',
+  description:
+    'Submit your complete structured analysis after reviewing all documents. Call this exactly once with all fields populated.',
+  input_schema: {
+    type: 'object' as const,
+    properties: {
+      matchScore: { type: 'number', description: 'Match score 0-100. Be strict — average candidates score 50-65, only exceptional candidates score 80+.' },
+      summary: { type: 'string', description: '2-3 sentence professional summary of the candidate relative to this specific role' },
+      strengths: { type: 'array', items: { type: 'string' }, description: '2-4 key strengths relevant to this vacancy' },
+      weaknesses: { type: 'array', items: { type: 'string' }, description: '1-3 gaps or areas of concern relative to the vacancy requirements' },
+      skills: { type: 'array', items: { type: 'string' }, description: 'Technical and soft skills extracted from the CV' },
+      experience: { type: 'string', description: 'Chronological summary of job roles only. Do NOT include education here.' },
+      education: { type: 'string', description: 'Degrees with institution and year, e.g. "Master CS — KU Leuven (2021)". Do NOT list jobs here.' },
+      recommendation: { type: 'string', enum: ['strong_yes', 'yes', 'maybe', 'no'], description: 'Hiring recommendation based on fit' },
+      language: { type: 'string', enum: ['nl', 'en', 'fr', 'de'], description: 'Dominant language detected in the CV' },
+      firstName: { type: 'string', description: "Candidate's personal first name from the first line of the CV. Never a school or company name." },
+      lastName: { type: 'string', description: "Candidate's family name. Never a school, company, or header word." },
+      email: { type: 'string', description: 'Email address from the CV if present' },
+      phone: { type: 'string', description: 'Phone number from the CV if present' },
+    },
+    required: ['matchScore', 'summary', 'strengths', 'weaknesses', 'skills', 'experience', 'education', 'recommendation', 'language'],
+  },
+}
 
-// Static system prompt — marked for prompt caching so repeated analyses of different
-// candidates against the same vacancy reuse the cached prefix (≈90% cost reduction).
 const SYSTEM_PROMPT = `You are an expert HR recruiter and talent assessor with deep experience in Belgian and European job markets. Your task is to analyze a candidate's CV and optional motivation letter against an open vacancy and produce a thorough, honest structured assessment.
 
 CRITICAL EXTRACTION RULES — you must follow these exactly:
@@ -83,25 +78,9 @@ export async function analyzeCVAgainstVacancy(
   }
 
   const client = getClient()
-  const capture: { result: CVAnalysisResult | null } = { result: null }
 
-  // betaZodTool: Zod schema → JSON Schema auto-conversion + typed run() callback.
-  // We capture the structured analysis inside run() and return a confirmation string
-  // so the agent loop ends naturally on the next turn.
-  const cvAnalysisTool = betaZodTool({
-    name: 'submit_cv_analysis',
-    description:
-      'Submit your complete structured analysis after reviewing all documents. Call this exactly once with all fields populated.',
-    inputSchema: CvAnalysisSchema,
-    run: async (input) => {
-      capture.result = input as CVAnalysisResult
-      return 'Analysis received and recorded.'
-    },
-  })
-
-  try {
-    const userContent =
-      `Carefully analyze the job application below against the vacancy requirements, then call submit_cv_analysis with your complete assessment.
+  const userContent =
+    `Carefully analyze the job application below against the vacancy requirements, then call submit_cv_analysis with your complete assessment.
 
 VACANCY:
 Title: ${vacancyTitle}
@@ -110,56 +89,79 @@ Requirements: ${vacancyRequirements.slice(0, 1000)}
 
 CANDIDATE CV:
 ${cvText.slice(0, 6000)}` +
-      (motivationText ? `\n\nMOTIVATION LETTER:\n${motivationText.slice(0, 2000)}` : '')
+    (motivationText ? `\n\nMOTIVATION LETTER:\n${motivationText.slice(0, 2000)}` : '')
 
-    // toolRunner() handles the full agentic loop: calls the API, executes tool callbacks,
-    // feeds results back, and repeats until stop_reason === 'end_turn'.
-    // With tool_choice 'any' the first API call is forced to use a tool; after the tool
-    // result is returned the model naturally stops, keeping the loop to 2 turns total.
-    await client.beta.messages.toolRunner({
+  try {
+    // tool_choice:'any' forces the model to call the tool on the first turn,
+    // so we get the structured result in a single API call with no loop needed.
+    const response = await (client.messages.create as any)({
       model: 'claude-opus-4-7',
       max_tokens: 4096,
       thinking: { type: 'adaptive' },
-      output_config: { effort: 'high' },
       system: [
         {
-          type: 'text' as const,
+          type: 'text',
           text: SYSTEM_PROMPT,
-          // Prompt caching: the static system prompt is cached after the first request,
-          // saving ~90% of input token cost on every subsequent CV analyzed.
-          cache_control: { type: 'ephemeral' as const },
+          // Prompt caching: static system prompt cached after first request (~90% cost saving)
+          cache_control: { type: 'ephemeral' },
         },
       ],
-      tool_choice: { type: 'any' as const },
-      tools: [cvAnalysisTool],
+      tool_choice: { type: 'any' },
+      tools: [CV_ANALYSIS_TOOL],
       messages: [{ role: 'user', content: userContent }],
     })
 
-    if (capture.result) return capture.result
-    return generateDemoAnalysis(cvText, vacancyTitle)
+    const toolBlock = response.content?.find((b: any) => b.type === 'tool_use')
+    if (toolBlock?.type === 'tool_use') {
+      return toolBlock.input as CVAnalysisResult
+    }
   } catch (error) {
     if (error instanceof RateLimitError) {
-      console.error('[AI] Rate limit reached — returning demo analysis')
+      console.error('[AI] Rate limit — using demo analysis')
     } else if (error instanceof AuthenticationError) {
-      console.error('[AI] API key invalid — returning demo analysis')
+      console.error('[AI] Invalid API key — using demo analysis')
     } else if (error instanceof BadRequestError) {
-      console.error('[AI] Bad request:', error.message)
+      console.error('[AI] Bad request:', (error as any).message)
+      // Retry without thinking parameter (some model versions may not support it)
+      try {
+        const retry = await client.messages.create({
+          model: 'claude-opus-4-7',
+          max_tokens: 4096,
+          system: SYSTEM_PROMPT,
+          tool_choice: { type: 'any' as const },
+          tools: [CV_ANALYSIS_TOOL],
+          messages: [{ role: 'user', content: userContent }],
+        })
+        const block = retry.content?.find((b: any) => b.type === 'tool_use')
+        if (block?.type === 'tool_use') return (block as any).input as CVAnalysisResult
+      } catch (retryErr) {
+        console.error('[AI] Retry also failed:', retryErr)
+      }
     } else {
       console.error('[AI] Analysis error:', error)
     }
-    return generateDemoAnalysis(cvText, vacancyTitle)
   }
+
+  return generateDemoAnalysis(cvText, vacancyTitle)
 }
 
 // ── Email classification ──────────────────────────────────────────────────────
 
-const EmailClassificationSchema = z.object({
-  isRelevant: z.boolean().describe('True if this is a job application containing a CV or motivation letter'),
-  candidateName: z.string().optional().describe('Candidate name if detectable from the email'),
-  appliedPosition: z.string().optional().describe('Position applied for if explicitly mentioned'),
-  hasAttachments: z.boolean().describe('Whether the email likely has document attachments'),
-  confidence: z.number().describe('Confidence score 0-100'),
-})
+const EMAIL_CLASSIFY_TOOL: Anthropic.Tool = {
+  name: 'classify_email',
+  description: 'Classify whether this email is a recruitment job application',
+  input_schema: {
+    type: 'object' as const,
+    properties: {
+      isRelevant: { type: 'boolean', description: 'True if this is a job application with CV or motivation letter' },
+      candidateName: { type: 'string', description: 'Candidate name if detectable' },
+      appliedPosition: { type: 'string', description: 'Position applied for if mentioned' },
+      hasAttachments: { type: 'boolean', description: 'Whether the email has document attachments' },
+      confidence: { type: 'number', description: 'Confidence score 0-100' },
+    },
+    required: ['isRelevant', 'hasAttachments', 'confidence'],
+  },
+}
 
 export async function classifyRecruitmentEmail(
   subject: string,
@@ -174,39 +176,28 @@ export async function classifyRecruitmentEmail(
     return { isRelevant, confidence: isRelevant ? 85 : 20 }
   }
 
-  type EmailResult = { isRelevant: boolean; candidateName?: string; appliedPosition?: string; hasAttachments: boolean; confidence: number }
   const client = getClient()
-  const capture: { result: EmailResult | null } = { result: null }
-
-  const classifyTool = betaZodTool({
-    name: 'classify_email',
-    description: 'Classify whether this email is a recruitment-relevant job application',
-    inputSchema: EmailClassificationSchema,
-    run: async (input) => {
-      capture.result = input as EmailResult
-      return 'Classification recorded.'
-    },
-  })
 
   try {
-    // Haiku is sufficient for binary email classification — no reasoning needed
-    await client.beta.messages.toolRunner({
-      model: 'claude-haiku-4-5',
+    const response = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 512,
       tool_choice: { type: 'any' as const },
-      tools: [classifyTool],
+      tools: [EMAIL_CLASSIFY_TOOL],
       messages: [{
         role: 'user',
-        content: `Classify this email for recruitment relevance:\n\nSubject: ${subject}\nBody: ${bodyPreview.slice(0, 500)}\nAttachments: ${attachmentNames.join(', ') || 'none'}\n\nCall classify_email now.`,
+        content: `Classify this email:\n\nSubject: ${subject}\nBody: ${bodyPreview.slice(0, 500)}\nAttachments: ${attachmentNames.join(', ') || 'none'}\n\nCall classify_email now.`,
       }],
     })
 
-    if (capture.result) {
+    const block = response.content?.find((b: any) => b.type === 'tool_use')
+    if (block?.type === 'tool_use') {
+      const input = (block as any).input
       return {
-        isRelevant: capture.result.isRelevant,
-        candidateName: capture.result.candidateName,
-        appliedPosition: capture.result.appliedPosition,
-        confidence: capture.result.confidence,
+        isRelevant: input.isRelevant,
+        candidateName: input.candidateName,
+        appliedPosition: input.appliedPosition,
+        confidence: input.confidence,
       }
     }
   } catch (error) {
@@ -216,16 +207,21 @@ export async function classifyRecruitmentEmail(
   return { isRelevant: false, confidence: 0 }
 }
 
-// ── Utilities ─────────────────────────────────────────────────────────────────
+// ── Document type detection ───────────────────────────────────────────────────
 
-const DocTypeSchema = z.object({
-  type: z.enum(['cv', 'motivation', 'other']).describe(
-    "'cv' for a curriculum vitae / resume, 'motivation' for a cover/motivation letter, 'other' for anything else",
-  ),
-})
+const DOC_TYPE_TOOL: Anthropic.Tool = {
+  name: 'set_document_type',
+  description: 'Set the detected document type',
+  input_schema: {
+    type: 'object' as const,
+    properties: {
+      type: { type: 'string', enum: ['cv', 'motivation', 'other'], description: "'cv', 'motivation', or 'other'" },
+    },
+    required: ['type'],
+  },
+}
 
 export async function detectDocumentType(text: string): Promise<'cv' | 'motivation' | 'other'> {
-  // Fast keyword fallback in demo mode
   if (isDemoMode()) {
     const lower = text.toLowerCase()
     const cvScore = ['experience', 'education', 'skills', 'work history', 'curriculum vitae', 'resume',
@@ -238,35 +234,24 @@ export async function detectDocumentType(text: string): Promise<'cv' | 'motivati
   }
 
   const client = getClient()
-  const capture: { result: { type: 'cv' | 'motivation' | 'other' } | null } = { result: null }
-
-  const docTypeTool = betaZodTool({
-    name: 'set_document_type',
-    description: 'Set the detected document type',
-    inputSchema: DocTypeSchema,
-    run: async (input) => {
-      capture.result = input as { type: 'cv' | 'motivation' | 'other' }
-      return 'Type recorded.'
-    },
-  })
 
   try {
-    await client.beta.messages.toolRunner({
-      model: 'claude-haiku-4-5',
+    const response = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 256,
       tool_choice: { type: 'any' as const },
-      tools: [docTypeTool],
+      tools: [DOC_TYPE_TOOL],
       messages: [{
         role: 'user',
-        content: `Is this a CV/resume, a motivation/cover letter, or something else?\n\n${text.slice(0, 800)}\n\nCall set_document_type now.`,
+        content: `Is this a CV/resume, motivation/cover letter, or something else?\n\n${text.slice(0, 800)}\n\nCall set_document_type now.`,
       }],
     })
-    if (capture.result) return capture.result.type
+    const block = response.content?.find((b: any) => b.type === 'tool_use')
+    if (block?.type === 'tool_use') return ((block as any).input as any).type
   } catch (error) {
     console.error('[AI] detectDocumentType error:', error)
   }
 
-  // Keyword fallback if AI call fails
   const lower = text.toLowerCase()
   const cvScore = ['experience', 'education', 'skills', 'werkervaring', 'opleiding', 'expérience', 'formation']
     .filter(k => lower.includes(k)).length
@@ -281,7 +266,7 @@ export async function generateRecruiterInsights(candidates: Array<{
   return `Top ${top.length} candidates identified. ${top[0].name} leads with ${top[0].matchScore.toFixed(0)}% match. Recommend prioritizing top candidates for interviews.`
 }
 
-// ── Demo-mode analysis (no API key) ──────────────────────────────────────────
+// ── Demo-mode analysis (no API key needed) ────────────────────────────────────
 
 function hashScore(cv: string, title: string): number {
   const s = (cv + title).slice(0, 600)
@@ -291,39 +276,30 @@ function hashScore(cv: string, title: string): number {
 }
 
 const NOT_A_NAME = new Set([
-  // Section headers
   'experience', 'education', 'opleiding', 'formation', 'études', 'etudes',
   'skills', 'vaardigheden', 'compétences', 'werkervaring', 'expérience',
   'professional', 'professionnel', 'professioneel', 'summary', 'profil', 'profile',
   'samenvatting', 'contact', 'technical', 'technische', 'languages', 'talen',
   'certifications', 'references', 'objective', 'about', 'awards', 'publications',
   'curriculum', 'vitae', 'resume',
-  // Degree types
   'master', 'bachelor', 'licence', 'msc', 'bsc', 'phd', 'doctorat', 'postgraduate',
-  'graduaat', 'gegradueerde', 'ingenieur', 'kandidaat',
-  // Generic institution words
+  'graduaat', 'ingenieur', 'kandidaat',
   'university', 'université', 'universiteit', 'hogeschool', 'school', 'institute',
   'college', 'academy', 'academie', 'faculteit', 'faculty', 'département',
-  'campus', 'polytechnique', 'polytechnic',
-  // Belgian/Dutch/French universities and hogescholen
+  'campus', 'polytechnique',
   'odisee', 'artesis', 'plantijn', 'ehb', 'erasmushogeschool', 'kdg', 'karel',
   'hogent', 'thomas', 'more', 'ucll', 'uclouvain', 'kuleuven', 'ugent', 'vub',
-  'uantwerpen', 'uhasselt', 'uliège', 'ulb', 'unamur', 'umons', 'uclouvain',
-  'pxl', 'syntra', 'vives', 'luca', 'rits', 'sint-lukas', 'sint',
-  'intec', 'ifapme', 'cepegra', 'ephec', 'iéseg', 'solvay', 'vlerick',
-  // Cities (often appear next to institution names)
-  'leuven', 'gent', 'ghent', 'brussels', 'bruxelles', 'brussel',
-  'antwerp', 'antwerpen', 'liège', 'liege', 'paris', 'berlin', 'london',
-  'amsterdam', 'rotterdam', 'utrecht', 'eindhoven', 'hasselt', 'kortrijk',
-  // Job titles
+  'uantwerpen', 'uhasselt', 'ulb', 'unamur', 'umons', 'pxl', 'syntra', 'vives',
+  'luca', 'rits', 'sint-lukas', 'sint', 'intec', 'ifapme', 'ephec', 'solvay', 'vlerick',
+  'leuven', 'gent', 'ghent', 'brussels', 'bruxelles', 'brussel', 'antwerp', 'antwerpen',
+  'liège', 'liege', 'paris', 'berlin', 'london', 'amsterdam', 'rotterdam', 'utrecht',
   'senior', 'junior', 'lead', 'manager', 'engineer', 'developer', 'designer',
-  'analyst', 'consultant', 'ingénieur', 'développeur', 'responsable',
-  'directeur', 'director', 'coordinator', 'specialist', 'expert',
+  'analyst', 'consultant', 'directeur', 'director', 'coordinator', 'specialist', 'expert',
 ])
 
 function extractName(cvText: string): { firstName?: string; lastName?: string } {
   const lines = cvText.split('\n').map(l => l.trim()).filter(Boolean)
-  const nameLineRe = /^([A-ZÀÁÂÃÄÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝŸ][a-zàáâãäçèéêëìíîïñòóôõöùúûüýÿ'-]+(?:\s+(?:de|van|der|den|du|des|le|la|el|von|af|bin|al|de la|von der)?\s*[A-ZÀÁÂÃÄÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝŸ][a-zàáâãäçèéêëìíîïñòóôõöùúûüýÿ'-]+){1,3})\s*$/
+  const nameLineRe = /^([A-ZÀÁÂÃÄÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝŸ][a-zàáâãäçèéêëìíîïñòóôõöùúûüýÿ'-]+(?:\s+(?:de|van|der|den|du|des|le|la|el|von|af|bin|al)?\s*[A-ZÀÁÂÃÄÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝŸ][a-zàáâãäçèéêëìíîïñòóôõöùúûüýÿ'-]+){1,3})\s*$/
   for (const line of lines.slice(0, 10)) {
     if (/[@+|\/\\]/.test(line)) continue
     if (/^\d/.test(line)) continue
@@ -376,31 +352,22 @@ function generateDemoAnalysis(cvText: string, vacancyTitle: string): CVAnalysisR
   const phoneMatch = cvText.match(/(?:\+\d{1,3}[\s.-]?)?\(?\d{2,4}\)?[\s.-]?\d{3,4}[\s.-]?\d{3,4}/)
   const { firstName, lastName } = extractName(cvText)
 
-  const eduSection = extractSection(cvText, [
-    'education', 'opleiding', 'formation', 'études', 'etudes', 'academic',
-    'diplom', 'degree', 'qualifications',
-  ])
-  const education = eduSection ?? 'Educational background present — see CV tab for details.'
-
-  const expSection = extractSection(cvText, [
-    'experience', 'werkervaring', 'expérience', 'employment', 'work history',
-    'professional background', 'carrière', 'career', 'positions',
-  ])
-  const experience = expSection ?? 'Work experience present — see CV tab for details.'
+  const eduSection = extractSection(cvText, ['education', 'opleiding', 'formation', 'études', 'etudes', 'academic', 'diplom', 'degree'])
+  const expSection = extractSection(cvText, ['experience', 'werkervaring', 'expérience', 'employment', 'work history', 'professional background', 'career'])
 
   const lang: 'nl' | 'fr' | 'en' | 'de' =
-    lower.includes('werkervaring') || lower.includes('opleiding') || lower.includes('vaardigheden') ? 'nl' :
-    lower.includes('expérience') || lower.includes('formation') || lower.includes('compétences') ? 'fr' :
+    lower.includes('werkervaring') || lower.includes('opleiding') ? 'nl' :
+    lower.includes('expérience') || lower.includes('formation') ? 'fr' :
     lower.includes('berufserfahrung') || lower.includes('ausbildung') ? 'de' : 'en'
 
   return {
     matchScore: score,
-    summary: `Candidate presents relevant background for the ${vacancyTitle} role. Profile reviewed in demo mode — re-analyze with a live API key for a full AI assessment.`,
+    summary: `Candidate presents relevant background for the ${vacancyTitle} role. Profile reviewed in demo mode — add an ANTHROPIC_API_KEY for full AI assessment.`,
     strengths: ['Relevant professional experience', 'Technical skills matching vacancy', 'Clear structured CV'],
     weaknesses: ['Demo mode: detailed analysis requires AI key', 'Some requirements need interview confirmation'],
     skills: detectedSkills,
-    experience,
-    education,
+    experience: expSection ?? 'Work experience present — see CV tab for details.',
+    education: eduSection ?? 'Educational background present — see CV tab for details.',
     recommendation: score >= 80 ? 'strong_yes' : score >= 65 ? 'yes' : score >= 50 ? 'maybe' : 'no',
     language: lang,
     firstName,
