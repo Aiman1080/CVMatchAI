@@ -33,7 +33,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const existing = await prisma.candidate.findFirst({ where: isAdmin ? { id } : { id, userId } })
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   const body = await req.json()
-  const allowed = ['status', 'firstName', 'lastName', 'email', 'phone', 'summary', 'notes']
+  const allowed = ['status', 'firstName', 'lastName', 'email', 'phone', 'summary', 'notes', 'liked', 'priority', 'savedToPool']
   const data: any = {}
   for (const key of allowed) { if (body[key] !== undefined) data[key] = body[key] }
   const candidate = await prisma.candidate.update({ where: { id }, data })

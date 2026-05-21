@@ -11,11 +11,11 @@ export default async function CandidatesPage() {
   const candidates = await prisma.candidate.findMany({
     where: isAdmin ? {} : { userId },
     include: { vacancy: { select: { title: true, company: true } } },
-    orderBy: [{ matchScore: 'desc' }, { createdAt: 'desc' }],
+    orderBy: [{ priority: 'desc' }, { liked: 'desc' }, { matchScore: 'desc' }, { createdAt: 'desc' }],
   })
   return (
     <div>
-      <Header title="Candidates" description={`${candidates.length} candidate${candidates.length !== 1 ? 's' : ''} in your pipeline`} />
+      <Header title="Candidats" description={`${candidates.length} candidat${candidates.length !== 1 ? 's' : ''} dans votre pipeline`} />
       <div className="p-8"><CandidatesClient initialCandidates={candidates} /></div>
     </div>
   )

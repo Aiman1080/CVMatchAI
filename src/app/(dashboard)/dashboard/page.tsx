@@ -6,6 +6,7 @@ import { DashboardStats } from '@/components/dashboard/DashboardStats'
 import { RecentCandidates } from '@/components/dashboard/RecentCandidates'
 import { RecentVacancies } from '@/components/dashboard/RecentVacancies'
 import { AIInsightsPanel } from '@/components/dashboard/AIInsightsPanel'
+import { DashboardClient } from '@/components/dashboard/DashboardClient'
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions)
@@ -13,11 +14,12 @@ export default async function DashboardPage() {
   const isAdmin = (session?.user as any)?.role === 'admin'
   const where = isAdmin ? {} : { userId }
 
-  const [vacancyCount, candidateCount, shortlistedCount, avgScore] = await Promise.all([
+  const [vacancyCount, candidateCount, shortlistedCount, avgScore, inboxCount] = await Promise.all([
     prisma.vacancy.count({ where }),
     prisma.candidate.count({ where }),
     prisma.candidate.count({ where: { ...where, status: 'shortlisted' } }),
     prisma.candidate.aggregate({ where, _avg: { matchScore: true } }),
+    prisma.emailInbox.count({ where: isAdmin ? {} : { userId } }),
   ])
 
   const recentCandidates = await prisma.candidate.findMany({
@@ -35,10 +37,17 @@ export default async function DashboardPage() {
     shortlisted: shortlistedCount, avgScore: Math.round(avgScore._avg.matchScore || 0),
   }
 
+  const onboarding = {
+    hasVacancy: vacancyCount > 0,
+    hasCandidate: candidateCount > 0,
+    hasEmail: inboxCount > 0,
+  }
+
   return (
     <div>
-      <Header title={`Welcome back, ${session?.user?.name?.split(' ')[0] || 'Recruiter'}`} description="Here's what's happening with your recruitment pipeline" />
+      <Header title={`Bienvenue, ${session?.user?.name?.split(' ')[0] || 'Recruteur'}`} description="Voici l'état de votre pipeline de recrutement" />
       <div className="p-8 space-y-8">
+        <DashboardClient onboarding={onboarding} />
         <DashboardStats stats={stats} />
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           <div className="xl:col-span-2"><RecentCandidates candidates={recentCandidates} /></div>

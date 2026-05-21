@@ -107,6 +107,10 @@ model Candidate {
   gdprConsent     Boolean   @default(false)
   gdprConsentDate DateTime?
   analyzedAt      DateTime?
+  notes           String?
+  liked           Boolean   @default(false)
+  priority        Boolean   @default(false)
+  savedToPool     Boolean   @default(false)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   vacancyId       String
