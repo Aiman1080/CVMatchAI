@@ -284,7 +284,9 @@ export function AdminClient({ users: initialUsers, tickets: initialTickets, subs
             </Card>
           ) : (
             tickets.map(ticket => (
-              <Card key={ticket.id} className={cn('border-0 shadow-sm transition-all', ticket.status === 'resolved' || ticket.status === 'closed' ? 'opacity-70' : '')}>
+              <Card key={ticket.id} className={cn('border-0 shadow-sm transition-all cursor-pointer hover:shadow-md', ticket.status === 'resolved' || ticket.status === 'closed' ? 'opacity-70' : '')}
+                onClick={() => setExpandedTicket(expandedTicket === ticket.id ? null : ticket.id)}
+              >
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
                     <div className={`mt-0.5 w-2 h-2 rounded-full shrink-0 ${ticket.priority === 'urgent' ? 'bg-red-500' : ticket.priority === 'high' ? 'bg-amber-500' : 'bg-blue-400'}`} />
@@ -308,18 +310,15 @@ export function AdminClient({ users: initialUsers, tickets: initialTickets, subs
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <span className="text-xs text-gray-400">{formatDate(ticket.createdAt)}</span>
-                      <button
-                        onClick={() => setExpandedTicket(expandedTicket === ticket.id ? null : ticket.id)}
-                        className="p-1 text-gray-400 hover:text-gray-600 rounded"
-                      >
+                      <span className="p-1 text-gray-400 rounded">
                         {expandedTicket === ticket.id ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-                      </button>
+                      </span>
                     </div>
                   </div>
 
                   {expandedTicket === ticket.id && (
-                    <div className="mt-3 pt-3 border-t border-gray-100 space-y-3">
-                      <div className="flex gap-2">
+                    <div className="mt-3 pt-3 border-t border-gray-100 space-y-3" onClick={e => e.stopPropagation()}>
+                      <div className="flex gap-2 flex-wrap">
                         {['open', 'in_progress', 'resolved', 'closed'].map(s => (
                           <button
                             key={s}
