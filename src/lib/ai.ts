@@ -98,19 +98,26 @@ export async function analyzeCVAgainstVacancy(
 
   const client = getClient()
 
-  const userMessage = `You are an expert HR recruiter. Analyze this CV against the job vacancy and call submit_cv_analysis with your findings.
+  const userMessage = `You are an expert HR recruiter. Carefully analyze the CV and motivation letter below against the job vacancy, then call submit_cv_analysis with your structured findings.
+
+CRITICAL EXTRACTION RULES:
+- firstName / lastName: Extract the CANDIDATE'S personal name only. It is always on the FIRST line(s) of the CV. NEVER use a company name, university name, school name, or section header (like "EXPERIENCE", "EDUCATION") as a name.
+- education: List specific degrees with institution name and year, e.g. "Master Computer Science — KU Leuven (2020), Bachelor Applied Informatics — HoGent (2018)". Do NOT list job titles or work experience here.
+- experience: Summarize job roles chronologically. Do NOT include education here.
+- matchScore: Score 0-100 based strictly on how well the candidate meets the listed requirements.
+- language: Detect from the CV text (nl/fr/en/de).
 
 JOB VACANCY:
 Title: ${vacancyTitle}
-Description: ${vacancyDescription}
-Requirements: ${vacancyRequirements}
+Description: ${vacancyDescription.slice(0, 1500)}
+Requirements: ${vacancyRequirements.slice(0, 1000)}
 
 CANDIDATE CV:
 ${cvText.slice(0, 6000)}
 
 ${motivationText ? `MOTIVATION LETTER:\n${motivationText.slice(0, 2000)}` : ''}
 
-Evaluate carefully and call the submit_cv_analysis tool with your complete assessment.`
+Now call submit_cv_analysis with your complete, accurate assessment.`
 
   try {
     // Agentic tool-use loop: run until the model calls the tool
@@ -260,42 +267,123 @@ function hashScore(cv: string, title: string): number {
   return Math.abs(h) % 35
 }
 
+// Words that must never be treated as a candidate's first name
+const NOT_A_NAME = new Set([
+  'experience', 'education', 'opleiding', 'formation', 'études', 'etudes',
+  'skills', 'vaardigheden', 'compétences', 'werkervaring', 'expérience',
+  'professional', 'professionnel', 'professioneel', 'summary', 'profil', 'profile',
+  'samenvatting', 'contact', 'technical', 'technische', 'languages', 'talen',
+  'certifications', 'references', 'objective', 'about', 'awards', 'publications',
+  'curriculum', 'vitae', 'resume', 'master', 'bachelor', 'licence', 'msc', 'bsc',
+  'university', 'université', 'universiteit', 'hogeschool', 'school', 'institute',
+  'college', 'academy', 'leuven', 'gent', 'ghent', 'brussels', 'bruxelles',
+  'brussel', 'antwerp', 'antwerpen', 'liège', 'liege', 'paris', 'berlin', 'london',
+  'senior', 'junior', 'lead', 'manager', 'engineer', 'developer', 'designer',
+  'analyst', 'consultant', 'ingénieur', 'développeur', 'responsable',
+])
+
+function extractName(cvText: string): { firstName?: string; lastName?: string } {
+  const lines = cvText.split('\n').map(l => l.trim()).filter(Boolean)
+
+  // A person name line: 2–4 words, title-cased (not all-caps), no special chars like @/+/|
+  // Allows particles: de, van, der, den, le, la, el, von, af, bin, du, des
+  const nameLineRe = /^([A-ZÀÁÂÃÄÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝŸ][a-zàáâãäçèéêëìíîïñòóôõöùúûüýÿ'-]+(?:\s+(?:de|van|der|den|du|des|le|la|el|von|af|bin|bin|al|de la|von der)?\s*[A-ZÀÁÂÃÄÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝŸ][a-zàáâãäçèéêëìíîïñòóôõöùúûüýÿ'-]+){1,3})\s*$/
+
+  for (const line of lines.slice(0, 10)) {
+    // Skip lines with contact info or special chars
+    if (/[@+|\/\\]/.test(line)) continue
+    if (/^\d/.test(line)) continue
+    if (/https?:|www\.|linkedin|github/i.test(line)) continue
+
+    // Skip all-caps lines (section headers like EDUCATION, EXPERIENCE)
+    const words = line.split(/\s+/)
+    if (words.every(w => w === w.toUpperCase() && w.length > 1)) continue
+
+    // Skip if any word is a known non-name word
+    if (words.some(w => NOT_A_NAME.has(w.toLowerCase()))) continue
+
+    const match = nameLineRe.exec(line)
+    if (match) {
+      const parts = match[1].trim().split(/\s+/)
+      return { firstName: parts[0], lastName: parts.slice(1).join(' ') }
+    }
+  }
+  return {}
+}
+
+function extractSection(cvText: string, keywords: string[]): string | null {
+  const lines = cvText.split('\n').map(l => l.trim())
+  const idx = lines.findIndex(l => {
+    const lower = l.toLowerCase()
+    return keywords.some(k => lower.includes(k)) && l.length < 60
+  })
+  if (idx < 0) return null
+  // Collect next lines until the next section header (all-caps or known header keyword)
+  const result: string[] = []
+  for (let i = idx + 1; i < Math.min(idx + 12, lines.length); i++) {
+    const l = lines[i]
+    if (!l) continue
+    // Stop at next section header
+    const isHeader = (l === l.toUpperCase() && l.length > 3 && /^[A-Z]/.test(l)) ||
+      ['experience', 'education', 'skills', 'opleiding', 'vaardigheden', 'werkervaring',
+        'formation', 'compétences', 'expérience', 'contact', 'references', 'awards',
+        'certifications', 'languages', 'talen', 'summary', 'profil'].some(k => l.toLowerCase().startsWith(k))
+    if (isHeader && result.length > 0) break
+    result.push(l)
+  }
+  return result.filter(l => l.length > 4).slice(0, 4).join(' · ') || null
+}
+
 function generateDemoAnalysis(cvText: string, vacancyTitle: string): CVAnalysisResult {
   const score = 60 + hashScore(cvText, vacancyTitle)
-  const words = cvText.toLowerCase()
+  const lower = cvText.toLowerCase()
 
+  // Skills detection
   const techSkills = ['React', 'Node.js', 'TypeScript', 'Python', 'SQL', 'AWS', 'Docker',
-    'Figma', 'Java', 'Vue.js', 'JavaScript', 'CSS', 'HTML']
-  const detectedSkills = techSkills.filter(s => words.includes(s.toLowerCase())).slice(0, 5)
+    'Figma', 'Java', 'Vue.js', 'JavaScript', 'CSS', 'HTML', 'dbt', 'Airflow', 'Kafka',
+    'PostgreSQL', 'MongoDB', 'Redis', 'Kubernetes', 'Terraform', 'GraphQL', 'NestJS']
+  const detectedSkills = techSkills.filter(s => lower.includes(s.toLowerCase())).slice(0, 6)
   if (detectedSkills.length === 0) detectedSkills.push('Communication', 'Problem-solving', 'Teamwork')
 
-  // Extract contact info from CV text with regex so the candidate isn't stored as "Unknown Candidate"
+  // Contact info
   const emailMatch = cvText.match(/[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}/)
-  const phoneMatch = cvText.match(/(?:\+\d{1,3}[\s-]?)?\(?\d{2,4}\)?[\s.-]?\d{3,4}[\s.-]?\d{3,4}/)
-  // Look for a "First Last" name on its own line — uses [ \t]+ to avoid matching across newlines
-  const nameMatch = cvText.match(/^([A-Z][a-zÀ-ÿ'-]+(?:[ \t]+[A-Z][a-zÀ-ÿ'-]+)+)[ \t]*$/m)
-  const nameParts = nameMatch ? nameMatch[1].trim().split(/\s+/) : []
+  const phoneMatch = cvText.match(/(?:\+\d{1,3}[\s.-]?)?\(?\d{2,4}\)?[\s.-]?\d{3,4}[\s.-]?\d{3,4}/)
+
+  // Name — uses dedicated extractor that rejects school/company names
+  const { firstName, lastName } = extractName(cvText)
+
+  // Education — look for the education section and extract real content
+  const eduSection = extractSection(cvText, [
+    'education', 'opleiding', 'formation', 'études', 'etudes', 'academic',
+    'diplom', 'degree', 'qualifications', 'scholarships',
+  ])
+  const education = eduSection || 'Educational background present in CV — see CV tab for details.'
+
+  // Experience — look for the experience section
+  const expSection = extractSection(cvText, [
+    'experience', 'werkervaring', 'expérience', 'employment', 'work history',
+    'professional background', 'carrière', 'career', 'positions',
+  ])
+  const experience = expSection || 'Work experience present in CV — see CV tab for details.'
+
+  // Language detection
+  const lang: 'nl' | 'fr' | 'en' | 'de' =
+    (lower.includes('werkervaring') || lower.includes('opleiding') || lower.includes('vaardigheden')) ? 'nl' :
+    (lower.includes('expérience') || lower.includes('formation') || lower.includes('compétences')) ? 'fr' :
+    (lower.includes('berufserfahrung') || lower.includes('ausbildung')) ? 'de' : 'en'
 
   return {
     matchScore: score,
-    summary: `Candidate shows relevant experience for the ${vacancyTitle} position. Their background demonstrates key competencies required for the role. Further interview recommended to assess cultural fit.`,
-    strengths: [
-      'Relevant professional experience',
-      'Strong technical skill set',
-      'Clear communication in CV',
-    ],
-    weaknesses: [
-      'Some requirements not explicitly mentioned',
-      'Could benefit from more specific examples',
-    ],
+    summary: `Candidate presents relevant background for the ${vacancyTitle} role. Profile reviewed in demo mode — re-analyze with a live API key for a full AI assessment.`,
+    strengths: ['Relevant professional experience', 'Technical skills matching vacancy', 'Clear structured CV'],
+    weaknesses: ['Demo mode: detailed analysis requires AI key', 'Some requirements need interview confirmation'],
     skills: detectedSkills,
-    experience: 'Professional experience mentioned in CV. Relevant background for the position.',
-    education: 'Educational background noted in CV.',
+    experience,
+    education,
     recommendation: score >= 80 ? 'strong_yes' : score >= 65 ? 'yes' : score >= 50 ? 'maybe' : 'no',
-    language: words.includes('werkervaring') || words.includes('opleiding') ? 'nl' :
-      words.includes('expérience') ? 'fr' : 'en',
-    firstName: nameParts.length >= 2 ? nameParts[0] : undefined,
-    lastName: nameParts.length >= 2 ? nameParts.slice(1).join(' ') : undefined,
+    language: lang,
+    firstName,
+    lastName,
     email: emailMatch ? emailMatch[0] : undefined,
     phone: phoneMatch ? phoneMatch[0].trim() : undefined,
   }
