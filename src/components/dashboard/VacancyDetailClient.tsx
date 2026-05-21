@@ -1,16 +1,23 @@
 'use client'
 
+// Vacancy detail page — shows vacancy info, candidate rankings, and allows editing
+// the vacancy inline. The Pencil button opens an edit dialog that saves via PATCH.
+
 import { useState } from 'react'
 import Link from 'next/link'
 import {
   MapPin, Briefcase, DollarSign, Users, Upload, Star, ChevronRight,
-  Pencil, Trash2, CheckCircle, XCircle, Clock
+  Pencil, Trash2, CheckCircle, XCircle, Clock, Loader2, Save, X
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { UploadCVDialog } from './UploadCVDialog'
 import { getStatusColor, formatDate, parseJsonSafe } from '@/lib/utils'
 import { toast } from '@/components/ui/use-toast'
@@ -45,9 +52,23 @@ interface Vacancy {
   candidates: Candidate[]
 }
 
-export function VacancyDetailClient({ vacancy: initial, userId }: { vacancy: Vacancy; userId: string }) {
+export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy; userId: string }) {
   const [vacancy, setVacancy] = useState(initial)
   const [showUpload, setShowUpload] = useState(false)
+  const [showEdit, setShowEdit] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [editForm, setEditForm] = useState({
+    title: initial.title,
+    company: initial.company,
+    department: initial.department ?? '',
+    location: initial.location ?? '',
+    type: initial.type,
+    description: initial.description,
+    requirements: initial.requirements,
+    niceToHave: initial.niceToHave ?? '',
+    salary: initial.salary ?? '',
+    status: initial.status,
+  })
 
   const handleCandidateAdded = (candidate: any) => {
     setVacancy(prev => ({
@@ -70,6 +91,32 @@ export function VacancyDetailClient({ vacancy: initial, userId }: { vacancy: Vac
     toast({ title: 'Status updated', description: `Candidate status changed to ${status}` })
   }
 
+  const handleSaveVacancy = async () => {
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/vacancies/${vacancy.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...editForm,
+          department: editForm.department || null,
+          location: editForm.location || null,
+          niceToHave: editForm.niceToHave || null,
+          salary: editForm.salary || null,
+        }),
+      })
+      if (!res.ok) throw new Error('Save failed')
+      const updated = await res.json()
+      setVacancy(prev => ({ ...prev, ...updated }))
+      setShowEdit(false)
+      toast({ title: 'Vacancy updated', description: 'Your changes have been saved.' })
+    } catch {
+      toast({ title: 'Save failed', description: 'Could not update the vacancy.', variant: 'destructive' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const sortedCandidates = [...vacancy.candidates].sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0))
 
   return (
@@ -88,8 +135,29 @@ export function VacancyDetailClient({ vacancy: initial, userId }: { vacancy: Vac
                   <p className="text-gray-500">{vacancy.company} · {vacancy.department}</p>
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
                 <span className={`text-sm px-3 py-1 rounded-full font-medium ${getStatusColor(vacancy.status)}`}>{vacancy.status}</span>
+                <button
+                  onClick={() => {
+                    setEditForm({
+                      title: vacancy.title,
+                      company: vacancy.company,
+                      department: vacancy.department ?? '',
+                      location: vacancy.location ?? '',
+                      type: vacancy.type,
+                      description: vacancy.description,
+                      requirements: vacancy.requirements,
+                      niceToHave: vacancy.niceToHave ?? '',
+                      salary: vacancy.salary ?? '',
+                      status: vacancy.status,
+                    })
+                    setShowEdit(true)
+                  }}
+                  className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  title="Edit vacancy"
+                >
+                  <Pencil size={16} />
+                </button>
               </div>
             </div>
 
@@ -233,6 +301,107 @@ export function VacancyDetailClient({ vacancy: initial, userId }: { vacancy: Vac
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Vacancy Dialog */}
+      <Dialog open={showEdit} onOpenChange={setShowEdit}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Vacancy</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label>Job Title *</Label>
+                <Input value={editForm.title} onChange={e => setEditForm(p => ({ ...p, title: e.target.value }))} placeholder="e.g. Senior Developer" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Company *</Label>
+                <Input value={editForm.company} onChange={e => setEditForm(p => ({ ...p, company: e.target.value }))} placeholder="Company name" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label>Department</Label>
+                <Input value={editForm.department} onChange={e => setEditForm(p => ({ ...p, department: e.target.value }))} placeholder="e.g. Engineering" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Location</Label>
+                <Input value={editForm.location} onChange={e => setEditForm(p => ({ ...p, location: e.target.value }))} placeholder="e.g. Brussels (Remote)" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label>Contract Type</Label>
+                <Select value={editForm.type} onValueChange={v => setEditForm(p => ({ ...p, type: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {['full-time', 'part-time', 'contract', 'internship', 'remote'].map(t => (
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Status</Label>
+                <Select value={editForm.status} onValueChange={v => setEditForm(p => ({ ...p, status: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="paused">Paused</SelectItem>
+                    <SelectItem value="closed">Closed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Salary Range</Label>
+              <Input value={editForm.salary} onChange={e => setEditForm(p => ({ ...p, salary: e.target.value }))} placeholder="e.g. €50,000 – €70,000" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Job Description *</Label>
+              <textarea
+                className="w-full border border-gray-200 rounded-lg p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                rows={4}
+                value={editForm.description}
+                onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))}
+                placeholder="Describe the role, responsibilities and team..."
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Requirements *</Label>
+              <textarea
+                className="w-full border border-gray-200 rounded-lg p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                rows={4}
+                value={editForm.requirements}
+                onChange={e => setEditForm(p => ({ ...p, requirements: e.target.value }))}
+                placeholder="Required skills, experience, education..."
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Nice to Have</Label>
+              <textarea
+                className="w-full border border-gray-200 rounded-lg p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                rows={2}
+                value={editForm.niceToHave}
+                onChange={e => setEditForm(p => ({ ...p, niceToHave: e.target.value }))}
+                placeholder="Bonus skills or experience..."
+              />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button variant="outline" onClick={() => setShowEdit(false)} className="flex-1 gap-1.5">
+                <X size={14} /> Cancel
+              </Button>
+              <Button
+                onClick={handleSaveVacancy}
+                disabled={saving || !editForm.title.trim() || !editForm.company.trim()}
+                className="flex-1 gradient-bg gap-1.5"
+              >
+                {saving ? <><Loader2 size={14} className="animate-spin" /> Saving...</> : <><Save size={14} /> Save Changes</>}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <UploadCVDialog
         open={showUpload}

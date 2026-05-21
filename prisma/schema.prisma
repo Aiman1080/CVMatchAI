@@ -114,6 +114,9 @@ model Candidate {
   vacancy         Vacancy   @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   emailSource     EmailScan?
+
+  // One candidate per email per vacancy — prevents duplicates from repeated demo scans or uploads
+  @@unique([email, vacancyId])
 }
 
 model EmailInbox {

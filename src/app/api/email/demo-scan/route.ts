@@ -1,6 +1,7 @@
 // Simulated email scan for demo purposes — no real IMAP connection needed.
-// Creates realistic demo candidates sourced from fake recruitment emails so
-// users can see the full email scanning flow without providing credentials.
+// Creates realistic demo candidates from fake recruitment emails so users can
+// see the full AI email-scanning flow without providing real credentials.
+// Uses upsert (email + vacancyId unique key) so running it multiple times is safe.
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -14,6 +15,8 @@ const DEMO_EMAILS = [
   {
     subject: 'Application: Senior Developer Position',
     sender: 'alex.johnson@gmail.com',
+    // Keywords that help match this CV to a full-stack / developer vacancy
+    domainKeywords: ['react', 'typescript', 'node', 'javascript', 'frontend', 'backend', 'fullstack', 'full-stack', 'developer', 'engineer', 'software', 'aws', 'docker'],
     cvText: `Alex Johnson
 alex.johnson@gmail.com | +32 471 555 001 | Leuven, Belgium
 
@@ -47,6 +50,7 @@ Alex Johnson`,
   {
     subject: 'CV Attached - UX Designer Application',
     sender: 'maya.patel@outlook.com',
+    domainKeywords: ['ux', 'ui', 'design', 'figma', 'user research', 'usability', 'prototype', 'wireframe', 'designer', 'product design', 'accessibility'],
     cvText: `Maya Patel
 maya.patel@outlook.com | +44 7911 234 567 | London, UK (open to remote)
 
@@ -85,6 +89,7 @@ Maya Patel`,
   {
     subject: 'Sollicitatie Data Engineer - Julien Bernard',
     sender: 'julien.bernard@free.fr',
+    domainKeywords: ['data', 'dbt', 'airflow', 'bigquery', 'snowflake', 'pipeline', 'etl', 'sql', 'analytics', 'warehouse', 'kafka', 'spark', 'python'],
     cvText: `Julien Bernard
 julien.bernard@free.fr | +33 6 88 77 66 55 | Paris, France
 
@@ -119,6 +124,7 @@ Julien Bernard`,
   {
     subject: 'Application for Full-Stack Developer Role',
     sender: 'nina.schmidt@web.de',
+    domainKeywords: ['react', 'next.js', 'typescript', 'node', 'javascript', 'frontend', 'fullstack', 'full-stack', 'developer', 'rest', 'api', 'postgresql'],
     cvText: `Nina Schmidt
 nina.schmidt@web.de | +49 176 999 888 | Berlin, Germany
 
@@ -142,6 +148,26 @@ Docker, AWS EC2, Git, Agile`,
   },
 ]
 
+// Scores a vacancy for a given CV using overlap between the CV text and the full
+// vacancy text (title + description + requirements). Returns 0-100.
+function scoreVacancyForCV(
+  cvLower: string,
+  domainKeywords: string[],
+  vacancy: { title: string; description: string; requirements: string },
+): number {
+  const vacancyText = `${vacancy.title} ${vacancy.description} ${vacancy.requirements}`.toLowerCase()
+
+  // Domain keyword hits — direct match between CV profile and vacancy text
+  const domainHits = domainKeywords.filter(k => vacancyText.includes(k) || cvLower.includes(k)).length
+
+  // Word overlap — count meaningful vacancy words that appear in the CV
+  const vacancyWords = [...new Set((vacancyText.match(/\b[a-z]{4,}\b/g) || []))]
+  const wordHits = vacancyWords.filter(w => cvLower.includes(w)).length
+  const wordScore = vacancyWords.length > 0 ? wordHits / vacancyWords.length : 0
+
+  return domainHits * 10 + wordScore * 50
+}
+
 export async function POST() {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -159,8 +185,8 @@ export async function POST() {
 
   let processed = 0
 
-  // Reuse or create a single demo inbox to avoid duplicates
-  let demoInbox = await prisma.emailInbox.findFirst({ where: { userId } })
+  // Reuse or create the demo inbox record — this is just a placeholder for the email source relation
+  let demoInbox = await prisma.emailInbox.findFirst({ where: { userId, provider: 'demo' } })
   if (!demoInbox) {
     demoInbox = await prisma.emailInbox.create({
       data: { email: 'demo@cvmatch.ai', provider: 'demo', host: 'demo', port: 993, username: 'demo@cvmatch.ai', password: 'demo', userId },
@@ -168,15 +194,12 @@ export async function POST() {
   }
 
   for (const email of DEMO_EMAILS) {
-    // Skip if candidate with this email already exists for this user (prevent duplicates)
-    const existing = await prisma.candidate.findFirst({ where: { email: email.sender, userId } })
-    if (existing) continue
-
-    // Pick the most relevant vacancy based on keyword overlap (simplified matching)
-    const titleLower = email.cvText.toLowerCase()
-    const vacancy = vacancies.find(v =>
-      v.title.toLowerCase().split(/\s+/).some(w => w.length > 3 && titleLower.includes(w))
-    ) || vacancies[0]
+    // Select the vacancy whose full text best matches this CV's domain keywords.
+    // Falls back to the first active vacancy when nothing scores above 0.
+    const cvLower = email.cvText.toLowerCase()
+    const scored = vacancies.map(v => ({ v, score: scoreVacancyForCV(cvLower, email.domainKeywords, v) }))
+    scored.sort((a, b) => b.score - a.score)
+    const vacancy = scored[0].v
 
     const analysis = await analyzeCVAgainstVacancy(
       email.cvText,
@@ -186,21 +209,20 @@ export async function POST() {
       email.motivationText || undefined,
     )
 
-    const emailScanData = {
-      subject: email.subject,
-      sender: email.sender,
-      receivedAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
-      processed: true,
-      relevant: true,
-      attachments: JSON.stringify(['CV.pdf']),
-      inboxId: demoInbox.id,
-    }
+    // Always use email.sender as the stored email — this is the dedup key.
+    // Using analysis.email could differ from sender and break the unique constraint check.
+    const candidateEmail = email.sender
 
-    await prisma.candidate.create({
-      data: {
+    // upsert: if this email+vacancy combination already exists, skip (update: {}).
+    // This is safe under concurrent requests because the DB unique constraint
+    // guarantees exactly one row even if two requests race.
+    const result = await prisma.candidate.upsert({
+      where: { email_vacancyId: { email: candidateEmail, vacancyId: vacancy.id } },
+      update: {},
+      create: {
         firstName: analysis.firstName || email.sender.split('@')[0].split('.')[0],
         lastName: analysis.lastName || email.sender.split('@')[0].split('.').slice(1).join(' ') || 'Demo',
-        email: analysis.email || email.sender,
+        email: candidateEmail,
         phone: analysis.phone,
         cvContent: email.cvText,
         motivationText: email.motivationText || null,
@@ -218,11 +240,22 @@ export async function POST() {
         vacancyId: vacancy.id,
         userId,
         analyzedAt: new Date(),
-        emailSource: { create: emailScanData },
+        emailSource: {
+          create: {
+            subject: email.subject,
+            sender: email.sender,
+            receivedAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
+            processed: true,
+            relevant: true,
+            attachments: JSON.stringify(['CV.pdf']),
+            inboxId: demoInbox.id,
+          },
+        },
       },
     })
 
-    processed++
+    // upsert returns the record whether created or updated — track only new inserts
+    if (result.analyzedAt && Date.now() - result.analyzedAt.getTime() < 60_000) processed++
   }
 
   return NextResponse.json({ scanned: DEMO_EMAILS.length, relevant: DEMO_EMAILS.length, processed })

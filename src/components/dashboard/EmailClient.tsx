@@ -28,8 +28,6 @@ interface Inbox {
   createdAt: string
 }
 
-const DEMO_SCAN_INTERVAL_MS = 3 * 60 * 60 * 1000 // 3 hours
-
 export function EmailClient() {
   const [showConnect, setShowConnect] = useState(false)
   const [provider, setProvider] = useState('gmail')
@@ -39,19 +37,9 @@ export function EmailClient() {
   const [demoScanning, setDemoScanning] = useState(false)
   const [inboxes, setInboxes] = useState<Inbox[]>([])
   const [loading, setLoading] = useState(true)
-  const [lastDemoScan, setLastDemoScan] = useState<Date | null>(null)
 
-  // Load inboxes on mount and auto-trigger demo scan if 3h have passed
-  useEffect(() => {
-    fetchInboxes()
-    const saved = localStorage.getItem('cvmatch-lastDemoScan')
-    if (saved) setLastDemoScan(new Date(saved))
-    const lastMs = saved ? Date.now() - new Date(saved).getTime() : Infinity
-    if (lastMs >= DEMO_SCAN_INTERVAL_MS) {
-      // Auto-run demo scan in the background without blocking the UI
-      runDemoScan(true)
-    }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  // Load connected inboxes on mount — no auto demo scan (user triggers manually)
+  useEffect(() => { fetchInboxes() }, [])
 
   const fetchInboxes = async () => {
     try {
@@ -62,7 +50,6 @@ export function EmailClient() {
 
   const handleProviderChange = (id: string) => {
     setProvider(id)
-    // Auto-fill host/port when selecting a known provider
     const p = PROVIDERS.find(pr => pr.id === id)
     if (p?.host) setForm(prev => ({ ...prev, host: p.host, port: p.port }))
   }
@@ -74,7 +61,6 @@ export function EmailClient() {
       const res = await fetch('/api/email/connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // The API tests the IMAP connection before saving — if this succeeds it's a live inbox
         body: JSON.stringify({ email: form.username, provider, host: form.host, port: form.port, username: form.username, password: form.password }),
       })
       const data = await res.json()
@@ -105,20 +91,21 @@ export function EmailClient() {
     } finally { setScanning(null) }
   }
 
-  const runDemoScan = async (silent = false) => {
-    if (!silent) setDemoScanning(true)
+  // Demo scan is safe to run multiple times — the server uses upsert so no duplicates
+  const runDemoScan = async () => {
+    setDemoScanning(true)
     try {
       const res = await fetch('/api/email/demo-scan', { method: 'POST' })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
-      const now = new Date()
-      setLastDemoScan(now)
-      localStorage.setItem('cvmatch-lastDemoScan', now.toISOString())
-      if (!silent) toast({ title: 'Demo scan complete', description: `${data.processed} demo candidates added from ${data.scanned} simulated emails` })
-      else toast({ title: 'Auto demo scan ran', description: `${data.processed} new demo candidates added automatically` })
+      if (data.processed > 0) {
+        toast({ title: 'Demo scan complete', description: `${data.processed} new demo candidates added` })
+      } else {
+        toast({ title: 'Demo scan complete', description: 'All demo candidates already exist — no duplicates created.' })
+      }
     } catch (err: any) {
-      if (!silent) toast({ title: 'Demo scan failed', description: err.message, variant: 'destructive' })
-    } finally { if (!silent) setDemoScanning(false) }
+      toast({ title: 'Demo scan failed', description: err.message, variant: 'destructive' })
+    } finally { setDemoScanning(false) }
   }
 
   const handleDelete = async (inboxId: string) => {
@@ -140,20 +127,19 @@ export function EmailClient() {
         </div>
       </div>
 
-      {/* Demo scan — auto-runs every 3h, also manually triggerable */}
+      {/* Demo scan — manual only, safe to click multiple times (upsert prevents duplicates) */}
       <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 flex items-center gap-4">
         <div className="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center shrink-0">
           <Zap className="w-5 h-5 text-white" />
         </div>
         <div className="flex-1">
-          <p className="text-sm font-semibold text-indigo-800">Demo Email Scan <span className="text-xs bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full ml-1">Auto every 3h</span></p>
+          <p className="text-sm font-semibold text-indigo-800">Demo Email Scan</p>
           <p className="text-sm text-indigo-600">
-            Simulates 4 recruitment emails with attached CVs — no inbox needed. Runs automatically every 3 hours.
-            {lastDemoScan && <span className="text-indigo-400 ml-1">· Last: {lastDemoScan.toLocaleTimeString()}</span>}
+            Simulates 4 recruitment emails with attached CVs. Safe to run multiple times — no duplicates will ever be created.
           </p>
         </div>
         <Button
-          onClick={() => runDemoScan(false)}
+          onClick={runDemoScan}
           disabled={demoScanning}
           size="sm"
           className="gradient-bg shrink-0 gap-1.5"
@@ -253,7 +239,6 @@ export function EmailClient() {
               <Input type="password" placeholder="App-specific password" value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} required />
               <p className="text-xs text-gray-400">For Gmail: Settings → Security → 2-Step Verification → App Passwords.</p>
             </div>
-            {/* Only show custom IMAP fields when the user selects "Custom IMAP" */}
             {provider === 'custom' && (
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">

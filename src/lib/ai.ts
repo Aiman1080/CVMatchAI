@@ -291,17 +291,34 @@ function hashScore(cv: string, title: string): number {
 }
 
 const NOT_A_NAME = new Set([
+  // Section headers
   'experience', 'education', 'opleiding', 'formation', 'études', 'etudes',
   'skills', 'vaardigheden', 'compétences', 'werkervaring', 'expérience',
   'professional', 'professionnel', 'professioneel', 'summary', 'profil', 'profile',
   'samenvatting', 'contact', 'technical', 'technische', 'languages', 'talen',
   'certifications', 'references', 'objective', 'about', 'awards', 'publications',
-  'curriculum', 'vitae', 'resume', 'master', 'bachelor', 'licence', 'msc', 'bsc',
+  'curriculum', 'vitae', 'resume',
+  // Degree types
+  'master', 'bachelor', 'licence', 'msc', 'bsc', 'phd', 'doctorat', 'postgraduate',
+  'graduaat', 'gegradueerde', 'ingenieur', 'kandidaat',
+  // Generic institution words
   'university', 'université', 'universiteit', 'hogeschool', 'school', 'institute',
-  'college', 'academy', 'leuven', 'gent', 'ghent', 'brussels', 'bruxelles',
-  'brussel', 'antwerp', 'antwerpen', 'liège', 'liege', 'paris', 'berlin', 'london',
+  'college', 'academy', 'academie', 'faculteit', 'faculty', 'département',
+  'campus', 'polytechnique', 'polytechnic',
+  // Belgian/Dutch/French universities and hogescholen
+  'odisee', 'artesis', 'plantijn', 'ehb', 'erasmushogeschool', 'kdg', 'karel',
+  'hogent', 'thomas', 'more', 'ucll', 'uclouvain', 'kuleuven', 'ugent', 'vub',
+  'uantwerpen', 'uhasselt', 'uliège', 'ulb', 'unamur', 'umons', 'uclouvain',
+  'pxl', 'syntra', 'vives', 'luca', 'rits', 'sint-lukas', 'sint',
+  'intec', 'ifapme', 'cepegra', 'ephec', 'iéseg', 'solvay', 'vlerick',
+  // Cities (often appear next to institution names)
+  'leuven', 'gent', 'ghent', 'brussels', 'bruxelles', 'brussel',
+  'antwerp', 'antwerpen', 'liège', 'liege', 'paris', 'berlin', 'london',
+  'amsterdam', 'rotterdam', 'utrecht', 'eindhoven', 'hasselt', 'kortrijk',
+  // Job titles
   'senior', 'junior', 'lead', 'manager', 'engineer', 'developer', 'designer',
   'analyst', 'consultant', 'ingénieur', 'développeur', 'responsable',
+  'directeur', 'director', 'coordinator', 'specialist', 'expert',
 ])
 
 function extractName(cvText: string): { firstName?: string; lastName?: string } {
