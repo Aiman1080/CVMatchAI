@@ -24,6 +24,7 @@ interface Candidate {
   vacancy?: { title: string; company: string } | null
 }
 
+// Client component: filters and sorts the candidate list entirely in-memory (no API calls per filter change)
 export function CandidatesClient({ initialCandidates }: { initialCandidates: Candidate[] }) {
   const [candidates, setCandidates] = useState(initialCandidates)
   const [search, setSearch] = useState('')
@@ -89,6 +90,7 @@ export function CandidatesClient({ initialCandidates }: { initialCandidates: Can
           {filtered.map((c, i) => {
             const initials = `${c.firstName[0]}${c.lastName[0]}`.toUpperCase()
             const score = c.matchScore || 0
+            // skills is stored as a JSON string in the DB — parse safely to avoid crashes on bad data
             const skills = parseJsonSafe<string[]>(c.skills, [])
 
             return (

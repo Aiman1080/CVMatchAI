@@ -12,9 +12,11 @@ export async function POST(req: Request) {
   const userId = (session.user as any).id
   const { inboxId } = await req.json()
 
+  // Ownership check — users can only scan their own inboxes
   const inbox = await prisma.emailInbox.findFirst({ where: { id: inboxId, userId } })
   if (!inbox) return NextResponse.json({ error: 'Inbox not found' }, { status: 404 })
 
+  // Require at least one active vacancy to match against before scanning
   const vacancies = await prisma.vacancy.findMany({
     where: { userId, status: 'active' },
     select: { id: true, title: true, description: true, requirements: true },
@@ -40,6 +42,7 @@ export async function POST(req: Request) {
     const lock = await client.getMailboxLock('INBOX')
 
     try {
+      // Only look at emails from the last 30 days to keep scans fast
       const since = new Date()
       since.setDate(since.getDate() - 30)
 
@@ -53,12 +56,14 @@ export async function POST(req: Request) {
 
       results.scanned = messages.length
 
+      // Cap at 20 messages per scan to avoid timeouts on busy inboxes
       for (const msg of messages.slice(0, 20)) {
         try {
           const subject = msg.envelope?.subject || ''
           const sender = msg.envelope?.from?.[0]?.address || ''
           const receivedAt = msg.envelope?.date || new Date()
 
+          // Walk the MIME tree to find PDF/DOCX attachment names for classification
           const attachmentBuffers: Array<{ name: string; buffer: Buffer; mimeType: string }> = []
           const bodyStructure = msg.bodyStructure
 
@@ -78,6 +83,7 @@ export async function POST(req: Request) {
           }
           collectParts(bodyStructure)
 
+          // Download just the text body part (part 1) for classification preview
           let bodyText = ''
           try {
             const textPart = await client.download(msg.uid.toString(), '1', { uid: true }) as any
@@ -86,7 +92,7 @@ export async function POST(req: Request) {
               for await (const chunk of textPart.content) chunks.push(chunk)
               bodyText = Buffer.concat(chunks).toString('utf-8').slice(0, 1000)
             }
-          } catch { /* no text part */ }
+          } catch { /* no text part — attachment-only emails are still classified via filename */ }
 
           const classification = await classifyRecruitmentEmail(
             subject,
@@ -94,11 +100,13 @@ export async function POST(req: Request) {
             attachmentBuffers.map(a => a.name),
           )
 
+          // Skip emails already recorded to prevent duplicate candidates on re-scan
           const alreadyScanned = await prisma.emailScan.findFirst({
             where: { inboxId: inbox.id, subject, sender },
           })
           if (alreadyScanned) continue
 
+          // Always record the scan attempt for audit purposes
           const scan = await prisma.emailScan.create({
             data: {
               subject,
@@ -111,12 +119,14 @@ export async function POST(req: Request) {
             },
           })
 
+          // Skip low-confidence or irrelevant emails
           if (!classification.isRelevant || classification.confidence < 50) continue
           results.relevant++
 
           let cvText = ''
           let motivationText = ''
 
+          // Try downloading MIME parts 1–10 to find actual document content
           for (let partIndex = 1; partIndex <= 10; partIndex++) {
             try {
               const dl = await client.download(msg.uid.toString(), String(partIndex), { uid: true }) as any
@@ -134,12 +144,14 @@ export async function POST(req: Request) {
             } catch { break }
           }
 
+          // Fallback: treat the email body itself as a CV if no attachments were parsed
           if (!cvText && bodyText.length > 200) cvText = bodyText
           if (cvText.length < 50) {
             await prisma.emailScan.update({ where: { id: scan.id }, data: { processed: true } })
             continue
           }
 
+          // Match against the first active vacancy — multi-vacancy matching is a future improvement
           const vacancy = vacancies[0]
           const analysis = await analyzeCVAgainstVacancy(
             cvText, vacancy.title, vacancy.description, vacancy.requirements, motivationText || undefined,
@@ -171,6 +183,7 @@ export async function POST(req: Request) {
             },
           })
 
+          // Link the scan record to the created candidate for audit trail
           await prisma.emailScan.update({
             where: { id: scan.id },
             data: { processed: true, candidateId: candidate.id },
@@ -181,6 +194,7 @@ export async function POST(req: Request) {
         }
       }
     } finally {
+      // Always release the mailbox lock to avoid hanging IMAP sessions
       lock.release()
     }
 

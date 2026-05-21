@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card'
 
 interface Stats { vacancies: number; candidates: number; shortlisted: number; avgScore: number }
 
+// Four KPI cards shown at the top of the dashboard
 export function DashboardStats({ stats }: { stats: Stats }) {
   const items = [
     { label: 'Active Vacancies', value: stats.vacancies, icon: Briefcase, color: 'bg-blue-500', bg: 'bg-blue-50', change: '+2 this week' },
@@ -21,6 +22,7 @@ export function DashboardStats({ stats }: { stats: Stats }) {
                 <p className="text-3xl font-bold text-gray-900 mt-1">{item.value}</p>
                 <p className="text-xs text-gray-400 mt-1">{item.change}</p>
               </div>
+              {/* Convert bg- class to text- class for the icon color */}
               <div className={`p-3 rounded-xl ${item.bg}`}>
                 <item.icon className={`w-5 h-5 ${item.color.replace('bg-', 'text-')}`} />
               </div>

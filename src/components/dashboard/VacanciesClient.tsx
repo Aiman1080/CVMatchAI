@@ -6,7 +6,6 @@ import { Plus, Briefcase, MapPin, Users, Clock, Search, Filter } from 'lucide-re
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { CreateVacancyDialog } from './CreateVacancyDialog'
 import { getStatusColor, formatRelativeTime } from '@/lib/utils'
 
@@ -21,6 +20,7 @@ interface Vacancy {
   _count: { candidates: number }
 }
 
+// Client component: manages optimistic vacancy list — new vacancies are prepended without a page reload
 export function VacanciesClient({ initialVacancies }: { initialVacancies: Vacancy[] }) {
   const [vacancies, setVacancies] = useState(initialVacancies)
   const [search, setSearch] = useState('')

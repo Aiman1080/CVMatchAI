@@ -1,14 +1,17 @@
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
+// Merges Tailwind class names while resolving conflicts (e.g. p-2 vs p-4 keeps p-4)
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+// Uses Belgian locale for date formatting (DD Mon YYYY)
 export function formatDate(date: Date | string): string {
   return new Date(date).toLocaleDateString('en-BE', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
+// Shows human-readable relative time for recent events, falls back to formatDate after 7 days
 export function formatRelativeTime(date: Date | string): string {
   const now = new Date()
   const d = new Date(date)
@@ -21,6 +24,7 @@ export function formatRelativeTime(date: Date | string): string {
   return formatDate(date)
 }
 
+// Returns Tailwind color classes for status badges — unknown statuses get neutral grey
 export function getStatusColor(status: string): string {
   const colors: Record<string, string> = {
     new: 'bg-blue-100 text-blue-700',
@@ -34,11 +38,13 @@ export function getStatusColor(status: string): string {
   return colors[status] || 'bg-gray-100 text-gray-700'
 }
 
+// Safe JSON parse that returns a typed fallback instead of throwing on malformed input
 export function parseJsonSafe<T>(str: string | null | undefined, fallback: T): T {
   if (!str) return fallback
   try { return JSON.parse(str) as T } catch { return fallback }
 }
 
+// Truncates at word boundaries is not required here — just hard-cut with ellipsis
 export function truncate(str: string, length: number): string {
   if (str.length <= length) return str
   return str.slice(0, length) + '...'

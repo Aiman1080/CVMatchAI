@@ -16,6 +16,7 @@ interface Props {
   onUploaded: (candidate: any) => void
 }
 
+// Handles multi-file CV/motivation letter uploads with per-file progress and GDPR consent gate
 export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploaded }: Props) {
   const [files, setFiles] = useState<File[]>([])
   const [uploading, setUploading] = useState(false)
@@ -23,6 +24,7 @@ export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploa
   const [gdprConsent, setGdprConsent] = useState(false)
   const [results, setResults] = useState<any[]>([])
 
+  // Cap at 10 files per session to avoid overwhelming the AI analysis queue
   const onDrop = useCallback((accepted: File[]) => {
     setFiles(prev => [...prev, ...accepted].slice(0, 10))
   }, [])
@@ -46,6 +48,7 @@ export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploa
     setUploading(true)
     const uploaded: any[] = []
 
+    // Upload files sequentially — parallel uploads could saturate the AI analysis API
     for (let i = 0; i < files.length; i++) {
       const file = files[i]
       setProgress(Math.round(((i) / files.length) * 100))
@@ -80,6 +83,7 @@ export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploa
     })
   }
 
+  // Reset all state on close so the dialog is fresh when reopened
   const handleClose = () => {
     setFiles([])
     setResults([])
@@ -152,6 +156,7 @@ export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploa
               </div>
             )}
 
+            {/* EU GDPR regulation requires explicit consent before processing personal data */}
             <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-lg">
               <input
                 type="checkbox"

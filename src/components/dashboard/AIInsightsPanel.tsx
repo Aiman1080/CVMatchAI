@@ -3,7 +3,9 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 
 interface Props { candidates: Array<{ name: string; matchScore: number; vacancyTitle: string }>; totalCandidates: number; avgScore: number }
 
+// Generates contextual AI insights based on the current candidate pool stats
 export function AIInsightsPanel({ candidates, totalCandidates, avgScore }: Props) {
+  // Each insight switches between a positive and a warning variant based on thresholds
   const insights = [
     avgScore >= 70
       ? { icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50', text: `Strong candidate pool — avg. ${avgScore}% match score` }
@@ -27,6 +29,7 @@ export function AIInsightsPanel({ candidates, totalCandidates, avgScore }: Props
           <div className="mt-4 pt-4 border-t border-gray-100">
             <p className="text-xs font-semibold text-gray-700 mb-2">Top Matches</p>
             <div className="space-y-2">
+              {/* Sort inline to show best-scoring candidates first */}
               {candidates.sort((a, b) => b.matchScore - a.matchScore).slice(0, 3).map((c, i) => (
                 <div key={i} className="flex items-center justify-between">
                   <span className="text-xs text-gray-600 truncate max-w-[140px]">{c.name}</span>

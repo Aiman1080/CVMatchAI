@@ -1,8 +1,13 @@
+// AI analysis module — uses Anthropic's tool-use agent pattern for structured CV analysis.
+// When ANTHROPIC_API_KEY is empty the module falls back to generateDemoAnalysis() so the
+// app works out of the box without a paid API key.
 import Anthropic from '@anthropic-ai/sdk'
 
+// Demo mode: no real API key configured — all AI calls return deterministic mock data
 const isDemoMode = () =>
   !process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY.trim() === ''
 
+// Create a new client per call to pick up env-var changes without restarting the server
 const getClient = () =>
   new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 

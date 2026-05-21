@@ -17,6 +17,7 @@ export async function POST(req: Request) {
 
     if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     if (!vacancyId) return NextResponse.json({ error: 'Vacancy ID required' }, { status: 400 })
+    // GDPR consent must be explicitly confirmed by the recruiter before storing any PII
     if (!gdprConsent) return NextResponse.json({ error: 'GDPR consent required' }, { status: 400 })
 
     const maxSize = parseInt(process.env.MAX_FILE_SIZE || '10485760')
@@ -29,13 +30,16 @@ export async function POST(req: Request) {
     const fileName = saveUploadedFile(buffer, file.name)
     const text = await parseDocument(buffer, file.type)
 
+    // Reject files that parsed to mostly whitespace — likely scanned images without OCR
     if (!text || text.trim().length < 50) {
       return NextResponse.json({ error: 'Could not extract text from document' }, { status: 400 })
     }
 
+    // Detect whether this file is a CV or a motivation letter before creating the record
     const docType = await detectDocumentType(text)
     const userId = (session.user as any).id
 
+    // Create a placeholder candidate first so we have an ID for the analysis update
     let candidate = await prisma.candidate.create({
       data: {
         firstName: 'Unknown', lastName: 'Candidate',
@@ -56,12 +60,14 @@ export async function POST(req: Request) {
       candidate = await prisma.candidate.update({
         where: { id: candidate.id },
         data: {
+          // Use AI-extracted name/contact if found; keep placeholders otherwise
           firstName: analysis.firstName || candidate.firstName,
           lastName: analysis.lastName || candidate.lastName,
           email: analysis.email || candidate.email,
           phone: analysis.phone || candidate.phone,
           matchScore: analysis.matchScore,
           summary: analysis.summary,
+          // Arrays stored as JSON strings — SQLite has no native array type
           strengths: JSON.stringify(analysis.strengths),
           weaknesses: JSON.stringify(analysis.weaknesses),
           skills: JSON.stringify(analysis.skills),

@@ -5,7 +5,9 @@ import bcrypt from 'bcryptjs'
 import prisma from './prisma'
 
 export const authOptions: NextAuthOptions = {
+  // `as any` cast needed because @auth/prisma-adapter v2 types don't exactly match NextAuth v4 Adapter interface
   adapter: PrismaAdapter(prisma) as any,
+  // JWT strategy keeps sessions stateless — no DB session table needed
   session: { strategy: 'jwt' },
   pages: {
     signIn: '/login',
@@ -25,6 +27,7 @@ export const authOptions: NextAuthOptions = {
         if (!user || !user.password) return null
         const isValid = await bcrypt.compare(credentials.password, user.password)
         if (!isValid) return null
+        // Return only safe fields — never expose password hash to session
         return {
           id: user.id, email: user.email, name: user.name,
           role: user.role, subscription: user.subscription, company: user.company,
@@ -33,6 +36,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
+    // Persist extra fields into the JWT token on first sign-in
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id
@@ -42,6 +46,7 @@ export const authOptions: NextAuthOptions = {
       }
       return token
     },
+    // Copy JWT fields to the session object so client components can read them
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).id = token.id

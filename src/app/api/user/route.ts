@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 
+// Returns the current user's stats and subscription tier — used by the dashboard header
 export async function GET() {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -14,6 +15,7 @@ export async function GET() {
   return NextResponse.json({ vacancyCount, candidateCount, subscription: (session.user as any).subscription })
 }
 
+// Only `name` and `company` can be updated — email and role changes require admin
 export async function PATCH(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

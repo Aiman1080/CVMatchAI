@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 
+// Returns connected inboxes without exposing stored passwords
 export async function GET() {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -10,6 +11,7 @@ export async function GET() {
   const userId = (session.user as any).id
   const inboxes = await prisma.emailInbox.findMany({
     where: { userId },
+    // Explicitly exclude password from the selected fields
     select: { id: true, email: true, provider: true, active: true, lastScan: true, createdAt: true },
     orderBy: { createdAt: 'desc' },
   })
@@ -17,6 +19,7 @@ export async function GET() {
   return NextResponse.json(inboxes)
 }
 
+// Verifies IMAP connection before saving — avoids storing credentials that don't work
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -28,7 +31,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
   }
 
-  // Verify connection before saving
+  // Test the connection live — fail fast with a clear error rather than storing bad credentials
   try {
     const { ImapFlow } = await import('imapflow')
     const client = new ImapFlow({
@@ -51,6 +54,7 @@ export async function POST(req: Request) {
     data: { email, provider, host, port: Number(port) || 993, username, password, userId },
   })
 
+  // Return only safe fields — never echo the password back to the client
   return NextResponse.json({
     id: inbox.id,
     email: inbox.email,
@@ -61,6 +65,7 @@ export async function POST(req: Request) {
   })
 }
 
+// deleteMany with userId constraint prevents deleting another user's inbox
 export async function DELETE(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

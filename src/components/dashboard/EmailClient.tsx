@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { toast } from '@/components/ui/use-toast'
 import { formatRelativeTime } from '@/lib/utils'
 
+// Preset IMAP settings for common providers — users can also enter custom host/port
 const PROVIDERS = [
   { id: 'gmail', label: 'Gmail', host: 'imap.gmail.com', port: 993 },
   { id: 'outlook', label: 'Outlook / Office 365', host: 'outlook.office365.com', port: 993 },
@@ -36,17 +37,19 @@ export function EmailClient() {
   const [inboxes, setInboxes] = useState<Inbox[]>([])
   const [loading, setLoading] = useState(true)
 
+  // Load inboxes on mount — passwords are never returned by the API
   useEffect(() => { fetchInboxes() }, [])
 
   const fetchInboxes = async () => {
     try {
       const res = await fetch('/api/email/connect')
       if (res.ok) setInboxes(await res.json())
-    } catch { /* silent */ } finally { setLoading(false) }
+    } catch { /* silent — user sees empty list */ } finally { setLoading(false) }
   }
 
   const handleProviderChange = (id: string) => {
     setProvider(id)
+    // Auto-fill host/port when selecting a known provider
     const p = PROVIDERS.find(pr => pr.id === id)
     if (p?.host) setForm(prev => ({ ...prev, host: p.host, port: p.port }))
   }
@@ -58,6 +61,7 @@ export function EmailClient() {
       const res = await fetch('/api/email/connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        // The API tests the IMAP connection before saving — if this succeeds it's a live inbox
         body: JSON.stringify({ email: form.username, provider, host: form.host, port: form.port, username: form.username, password: form.password }),
       })
       const data = await res.json()
@@ -198,6 +202,7 @@ export function EmailClient() {
               <Input type="password" placeholder="App-specific password" value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} required />
               <p className="text-xs text-gray-400">For Gmail: Settings → Security → 2-Step Verification → App Passwords.</p>
             </div>
+            {/* Only show custom IMAP fields when the user selects "Custom IMAP" */}
             {provider === 'custom' && (
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">

@@ -17,6 +17,7 @@ const schema = z.object({
   language: z.string().default('nl'),
 })
 
+// Admins can see all vacancies across all users; recruiters only see their own
 export async function GET() {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
