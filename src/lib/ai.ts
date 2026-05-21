@@ -252,8 +252,16 @@ export async function generateRecruiterInsights(candidates: Array<{
   return `Top ${top.length} candidates identified. ${top[0].name} leads with ${top[0].matchScore.toFixed(0)}% match. Recommend prioritizing top candidates for interviews.`
 }
 
+// Deterministic hash so re-analyzing the same CV always returns the same score
+function hashScore(cv: string, title: string): number {
+  const s = (cv + title).slice(0, 600)
+  let h = 0
+  for (let i = 0; i < s.length; i++) h = Math.imul(31, h) + s.charCodeAt(i) | 0
+  return Math.abs(h) % 35
+}
+
 function generateDemoAnalysis(cvText: string, vacancyTitle: string): CVAnalysisResult {
-  const score = 60 + Math.floor(Math.random() * 35)
+  const score = 60 + hashScore(cvText, vacancyTitle)
   const words = cvText.toLowerCase()
 
   const techSkills = ['React', 'Node.js', 'TypeScript', 'Python', 'SQL', 'AWS', 'Docker',

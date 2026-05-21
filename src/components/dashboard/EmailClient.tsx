@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Mail, Plus, Loader2, CheckCircle, AlertCircle, Scan, Info, Trash2, RefreshCw } from 'lucide-react'
+import { Mail, Plus, Loader2, CheckCircle, AlertCircle, Scan, Info, Trash2, RefreshCw, Zap } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -34,6 +34,7 @@ export function EmailClient() {
   const [form, setForm] = useState({ username: '', password: '', host: 'imap.gmail.com', port: 993 })
   const [connecting, setConnecting] = useState(false)
   const [scanning, setScanning] = useState<string | null>(null)
+  const [demoScanning, setDemoScanning] = useState(false)
   const [inboxes, setInboxes] = useState<Inbox[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -92,6 +93,18 @@ export function EmailClient() {
     } finally { setScanning(null) }
   }
 
+  const handleDemoScan = async () => {
+    setDemoScanning(true)
+    try {
+      const res = await fetch('/api/email/demo-scan', { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      toast({ title: 'Demo scan complete', description: `${data.processed} demo candidates added from ${data.scanned} simulated emails` })
+    } catch (err: any) {
+      toast({ title: 'Demo scan failed', description: err.message, variant: 'destructive' })
+    } finally { setDemoScanning(false) }
+  }
+
   const handleDelete = async (inboxId: string) => {
     await fetch('/api/email/connect', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: inboxId }) })
     setInboxes(prev => prev.filter(i => i.id !== inboxId))
@@ -102,13 +115,32 @@ export function EmailClient() {
     <div className="space-y-6">
       <div className="p-4 rounded-xl bg-blue-50 border border-blue-100 flex gap-3">
         <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-        <div>
+        <div className="flex-1">
           <p className="text-sm font-semibold text-blue-800">AI-Powered Email Inbox Scanning</p>
           <p className="text-sm text-blue-600 mt-0.5">
             Connect your recruitment inbox. The Claude AI agent automatically scans emails, identifies CVs and
             motivation letters, extracts candidate data, and matches them to your active vacancies.
           </p>
         </div>
+      </div>
+
+      {/* Demo scan — lets users test the email scanning flow without real IMAP credentials */}
+      <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 flex items-center gap-4">
+        <div className="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center shrink-0">
+          <Zap className="w-5 h-5 text-white" />
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-semibold text-indigo-800">Try the Demo Scan</p>
+          <p className="text-sm text-indigo-600">No inbox? Run a simulated scan with 4 realistic demo emails to see how the AI agent works.</p>
+        </div>
+        <Button
+          onClick={handleDemoScan}
+          disabled={demoScanning}
+          size="sm"
+          className="gradient-bg shrink-0 gap-1.5"
+        >
+          {demoScanning ? <><Loader2 size={13} className="animate-spin" /> Scanning...</> : <><Scan size={13} /> Run Demo Scan</>}
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

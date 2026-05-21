@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import {
   Mail, Phone, Linkedin, CheckCircle, XCircle, Clock, Star,
-  TrendingUp, TrendingDown, Loader2, RefreshCw, FileText, User
+  TrendingUp, TrendingDown, Loader2, RefreshCw, FileText, User, Briefcase,
+  GraduationCap, Languages, Award
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -14,6 +15,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from '@/components/ui/use-toast'
 import { getStatusColor, parseJsonSafe, formatDate } from '@/lib/utils'
 
+const RECOMMENDATION_COLORS: Record<string, string> = {
+  strong_yes: 'bg-green-100 text-green-800 border border-green-200',
+  yes: 'bg-blue-100 text-blue-800 border border-blue-200',
+  maybe: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
+  no: 'bg-red-100 text-red-800 border border-red-200',
+}
+const RECOMMENDATION_LABELS: Record<string, string> = {
+  strong_yes: '✅ Strong Yes',
+  yes: '👍 Yes',
+  maybe: '🤔 Maybe',
+  no: '❌ No',
+}
+
 export function CandidateDetailClient({ candidate: initial }: { candidate: any }) {
   const [candidate, setCandidate] = useState(initial)
   const [analyzing, setAnalyzing] = useState(false)
@@ -22,7 +36,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
   const strengths = parseJsonSafe<string[]>(candidate.strengths, [])
   const weaknesses = parseJsonSafe<string[]>(candidate.weaknesses, [])
   const skills = parseJsonSafe<string[]>(candidate.skills, [])
-  const initials = `${candidate.firstName[0]}${candidate.lastName[0]}`.toUpperCase()
+  const initials = `${candidate.firstName?.[0] ?? '?'}${candidate.lastName?.[0] ?? '?'}`.toUpperCase()
 
   const handleStatusChange = async (status: string) => {
     const res = await fetch(`/api/candidates/${candidate.id}`, {
@@ -58,18 +72,8 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
   const scoreColor = score >= 75 ? 'text-green-600' : score >= 50 ? 'text-amber-600' : 'text-red-500'
   const scoreBg = score >= 75 ? 'from-green-500 to-emerald-600' : score >= 50 ? 'from-amber-500 to-orange-600' : 'from-red-500 to-rose-600'
 
-  const recommendationColors: Record<string, string> = {
-    strong_yes: 'bg-green-100 text-green-800',
-    yes: 'bg-blue-100 text-blue-800',
-    maybe: 'bg-yellow-100 text-yellow-800',
-    no: 'bg-red-100 text-red-800',
-  }
-  const recommendationLabels: Record<string, string> = {
-    strong_yes: 'Strong Yes',
-    yes: 'Yes',
-    maybe: 'Maybe',
-    no: 'No',
-  }
+  const hasEmailSource = candidate.source === 'email' || candidate.emailSource
+  const hasMotiviationText = !!candidate.motivationText
 
   return (
     <div className="space-y-6">
@@ -89,13 +93,18 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                     {candidate.status}
                   </span>
                   {candidate.recommendation && (
-                    <span className={`text-sm px-3 py-1 rounded-full font-medium ${recommendationColors[candidate.recommendation] || ''}`}>
-                      AI: {recommendationLabels[candidate.recommendation] || candidate.recommendation}
+                    <span className={`text-sm px-3 py-1 rounded-full font-medium ${RECOMMENDATION_COLORS[candidate.recommendation] || ''}`}>
+                      AI: {RECOMMENDATION_LABELS[candidate.recommendation] || candidate.recommendation}
                     </span>
                   )}
-                  {candidate.source === 'email' && (
-                    <span className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full font-medium">
-                      via email
+                  {hasEmailSource && (
+                    <span className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full font-medium flex items-center gap-1">
+                      <Mail size={10} /> via email
+                    </span>
+                  )}
+                  {candidate.language && (
+                    <span className="text-xs bg-gray-50 text-gray-500 px-2 py-1 rounded-full font-medium uppercase">
+                      {candidate.language}
                     </span>
                   )}
                 </div>
@@ -103,7 +112,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
             </div>
 
             <div className="lg:ml-auto flex items-center gap-4">
-              {/* Score Circle */}
+              {/* Score circle */}
               <div className={`w-24 h-24 rounded-full bg-gradient-to-br ${scoreBg} flex flex-col items-center justify-center shadow-lg`}>
                 <span className="text-2xl font-bold text-white">{score > 0 ? `${score.toFixed(0)}%` : '—'}</span>
                 <span className="text-xs text-white/80">match</span>
@@ -140,7 +149,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Contact & Details */}
+        {/* Left column: contact, skills, meta */}
         <div className="space-y-4">
           <Card className="border-0 shadow-sm">
             <CardHeader className="pb-3">
@@ -151,26 +160,26 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
             <CardContent className="space-y-3 text-sm">
               {candidate.email && (
                 <div className="flex items-center gap-2 text-gray-600">
-                  <Mail size={14} className="text-gray-400" />
-                  <a href={`mailto:${candidate.email}`} className="hover:text-blue-600">{candidate.email}</a>
+                  <Mail size={14} className="text-gray-400 shrink-0" />
+                  <a href={`mailto:${candidate.email}`} className="hover:text-blue-600 truncate">{candidate.email}</a>
                 </div>
               )}
               {candidate.phone && (
                 <div className="flex items-center gap-2 text-gray-600">
-                  <Phone size={14} className="text-gray-400" />
+                  <Phone size={14} className="text-gray-400 shrink-0" />
                   <a href={`tel:${candidate.phone}`} className="hover:text-blue-600">{candidate.phone}</a>
                 </div>
               )}
               {candidate.linkedIn && (
                 <div className="flex items-center gap-2 text-gray-600">
-                  <Linkedin size={14} className="text-gray-400" />
+                  <Linkedin size={14} className="text-gray-400 shrink-0" />
                   <a href={candidate.linkedIn} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600">LinkedIn</a>
                 </div>
               )}
-              <div className="pt-2 border-t border-gray-100 text-xs text-gray-400">
-                Added {formatDate(candidate.createdAt)}
-                {candidate.analyzedAt && <><br />Analyzed {formatDate(candidate.analyzedAt)}</>}
-                {candidate.gdprConsent && <><br />GDPR: Consented</>}
+              <div className="pt-2 border-t border-gray-100 text-xs text-gray-400 space-y-1">
+                <p>Added {formatDate(candidate.createdAt)}</p>
+                {candidate.analyzedAt && <p>Analyzed {formatDate(candidate.analyzedAt)}</p>}
+                {candidate.gdprConsent && <p className="text-green-600">GDPR: Consented ✓</p>}
               </div>
             </CardContent>
           </Card>
@@ -189,29 +198,59 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
               </CardContent>
             </Card>
           )}
+
+          {/* Score breakdown bar */}
+          {score > 0 && (
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm">Match Score</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+                  <span>Overall</span>
+                  <span className={`font-bold text-sm ${scoreColor}`}>{score.toFixed(0)}%</span>
+                </div>
+                <Progress value={score} className="h-2" />
+                <div className="pt-1 grid grid-cols-3 text-center text-xs text-gray-400">
+                  <span className="text-red-500">0–49<br />Poor</span>
+                  <span className="text-amber-500">50–74<br />Fair</span>
+                  <span className="text-green-500">75–100<br />Good</span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
-        {/* AI Analysis */}
+        {/* Right column: tabs */}
         <div className="lg:col-span-2 space-y-4">
           <Tabs defaultValue="analysis">
             <TabsList>
               <TabsTrigger value="analysis">AI Analysis</TabsTrigger>
-              <TabsTrigger value="cv">CV Text</TabsTrigger>
-              {candidate.motivationText && <TabsTrigger value="motivation">Motivation</TabsTrigger>}
+              {hasEmailSource && <TabsTrigger value="email">Email</TabsTrigger>}
+              <TabsTrigger value="cv">CV</TabsTrigger>
+              {hasMotiviationText && <TabsTrigger value="motivation">Motivation</TabsTrigger>}
             </TabsList>
 
+            {/* ── AI Analysis tab ── */}
             <TabsContent value="analysis" className="space-y-4 mt-4">
               {candidate.summary ? (
                 <>
+                  {/* Summary */}
                   <Card className="border-0 shadow-sm">
-                    <CardContent className="p-5">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm flex items-center gap-2 text-gray-700">
+                        <Award className="w-4 h-4 text-blue-500" /> AI Summary
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
                       <p className="text-sm text-gray-700 leading-relaxed">{candidate.summary}</p>
                     </CardContent>
                   </Card>
 
+                  {/* Strengths + Weaknesses */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {strengths.length > 0 && (
-                      <Card className="border-0 shadow-sm">
+                      <Card className="border-0 shadow-sm border-l-4 border-l-green-400">
                         <CardHeader className="pb-2">
                           <CardTitle className="text-sm flex items-center gap-2 text-green-700">
                             <TrendingUp className="w-4 h-4" /> Strengths
@@ -228,7 +267,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                       </Card>
                     )}
                     {weaknesses.length > 0 && (
-                      <Card className="border-0 shadow-sm">
+                      <Card className="border-0 shadow-sm border-l-4 border-l-amber-400">
                         <CardHeader className="pb-2">
                           <CardTitle className="text-sm flex items-center gap-2 text-amber-700">
                             <TrendingDown className="w-4 h-4" /> Areas for Concern
@@ -246,25 +285,47 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                     )}
                   </div>
 
+                  {/* Experience + Education */}
                   {(candidate.experience || candidate.education) && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {candidate.experience && (
                         <Card className="border-0 shadow-sm">
                           <CardContent className="p-4">
-                            <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Experience</p>
-                            <p className="text-sm text-gray-700">{candidate.experience}</p>
+                            <div className="flex items-center gap-2 mb-2">
+                              <Briefcase className="w-4 h-4 text-indigo-500" />
+                              <p className="text-xs font-semibold text-gray-500 uppercase">Experience</p>
+                            </div>
+                            <p className="text-sm text-gray-700 leading-relaxed">{candidate.experience}</p>
                           </CardContent>
                         </Card>
                       )}
                       {candidate.education && (
                         <Card className="border-0 shadow-sm">
                           <CardContent className="p-4">
-                            <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Education</p>
-                            <p className="text-sm text-gray-700">{candidate.education}</p>
+                            <div className="flex items-center gap-2 mb-2">
+                              <GraduationCap className="w-4 h-4 text-purple-500" />
+                              <p className="text-xs font-semibold text-gray-500 uppercase">Education</p>
+                            </div>
+                            <p className="text-sm text-gray-700 leading-relaxed">{candidate.education}</p>
                           </CardContent>
                         </Card>
                       )}
                     </div>
+                  )}
+
+                  {/* Recommendation banner */}
+                  {candidate.recommendation && (
+                    <Card className="border-0 shadow-sm">
+                      <CardContent className="p-4 flex items-center gap-3">
+                        <div className="text-2xl">{candidate.recommendation === 'strong_yes' ? '🎯' : candidate.recommendation === 'yes' ? '✅' : candidate.recommendation === 'maybe' ? '🤔' : '❌'}</div>
+                        <div>
+                          <p className="text-xs font-semibold text-gray-500 uppercase mb-0.5">AI Hiring Recommendation</p>
+                          <p className="text-sm font-semibold text-gray-800">
+                            {RECOMMENDATION_LABELS[candidate.recommendation] || candidate.recommendation}
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
                   )}
                 </>
               ) : (
@@ -283,9 +344,67 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
               )}
             </TabsContent>
 
-            <TabsContent value="cv">
+            {/* ── Email tab (only for email-sourced candidates) ── */}
+            {hasEmailSource && (
+              <TabsContent value="email" className="mt-4">
+                <Card className="border-0 shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-blue-500" /> Original Email
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {candidate.emailSource ? (
+                      <>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-xl text-sm">
+                          <div>
+                            <p className="text-xs font-semibold text-gray-400 uppercase mb-1">From</p>
+                            <p className="text-gray-700 font-medium">{candidate.emailSource.sender}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold text-gray-400 uppercase mb-1">Received</p>
+                            <p className="text-gray-700">{formatDate(candidate.emailSource.receivedAt)}</p>
+                          </div>
+                          <div className="sm:col-span-2">
+                            <p className="text-xs font-semibold text-gray-400 uppercase mb-1">Subject</p>
+                            <p className="text-gray-700 font-medium">{candidate.emailSource.subject}</p>
+                          </div>
+                          {candidate.emailSource.attachments && (
+                            <div className="sm:col-span-2">
+                              <p className="text-xs font-semibold text-gray-400 uppercase mb-1">Attachments</p>
+                              <div className="flex flex-wrap gap-2">
+                                {(JSON.parse(candidate.emailSource.attachments) as string[]).map((att: string, i: number) => (
+                                  <span key={i} className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-md flex items-center gap-1">
+                                    <FileText size={10} /> {att}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-400">The CV and motivation letter above were extracted from this email by the AI agent.</p>
+                      </>
+                    ) : (
+                      <div className="py-8 text-center">
+                        <Mail className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                        <p className="text-gray-500 text-sm font-medium">Candidate sourced via email</p>
+                        <p className="text-gray-400 text-xs mt-1">Original email metadata is not available for this candidate.</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
+
+            {/* ── CV tab ── */}
+            <TabsContent value="cv" className="mt-4">
               <Card className="border-0 shadow-sm">
-                <CardContent className="p-5">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-gray-400" /> Extracted CV Text
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
                   {candidate.cvContent ? (
                     <pre className="text-xs text-gray-600 whitespace-pre-wrap font-sans leading-relaxed max-h-96 overflow-y-auto">
                       {candidate.cvContent}
@@ -297,10 +416,16 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
               </Card>
             </TabsContent>
 
-            {candidate.motivationText && (
-              <TabsContent value="motivation">
+            {/* ── Motivation tab ── */}
+            {hasMotiviationText && (
+              <TabsContent value="motivation" className="mt-4">
                 <Card className="border-0 shadow-sm">
-                  <CardContent className="p-5">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-indigo-400" /> Motivation Letter
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
                     <pre className="text-xs text-gray-600 whitespace-pre-wrap font-sans leading-relaxed max-h-96 overflow-y-auto">
                       {candidate.motivationText}
                     </pre>
