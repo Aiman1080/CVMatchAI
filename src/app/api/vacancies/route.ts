@@ -1,3 +1,6 @@
+// Vacancy CRUD list endpoint — GET returns the user's vacancies with candidate counts,
+// POST creates a new vacancy after Zod validation.
+// The vacancy title + description + requirements drive the AI match scoring.
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'

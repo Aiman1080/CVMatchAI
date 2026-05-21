@@ -373,7 +373,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                             <div className="sm:col-span-2">
                               <p className="text-xs font-semibold text-gray-400 uppercase mb-1">Attachments</p>
                               <div className="flex flex-wrap gap-2">
-                                {(JSON.parse(candidate.emailSource.attachments) as string[]).map((att: string, i: number) => (
+                                {((() => { try { return JSON.parse(candidate.emailSource.attachments) as string[] } catch { return [] } })()).map((att: string, i: number) => (
                                   <span key={i} className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-md flex items-center gap-1">
                                     <FileText size={10} /> {att}
                                   </span>

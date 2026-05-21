@@ -1,3 +1,6 @@
+// Single candidate CRUD — GET loads the full profile for the detail page,
+// PATCH updates mutable fields (typically status changes),
+// DELETE removes the candidate and relies on Prisma cascade for linked emailScan.
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'

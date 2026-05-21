@@ -88,7 +88,7 @@ export function CandidatesClient({ initialCandidates }: { initialCandidates: Can
       ) : (
         <div className="space-y-3">
           {filtered.map((c, i) => {
-            const initials = `${c.firstName[0]}${c.lastName[0]}`.toUpperCase()
+            const initials = `${c.firstName?.[0] ?? '?'}${c.lastName?.[0] ?? ''}`.toUpperCase()
             const score = c.matchScore || 0
             // skills is stored as a JSON string in the DB — parse safely to avoid crashes on bad data
             const skills = parseJsonSafe<string[]>(c.skills, [])

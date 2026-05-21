@@ -1,3 +1,5 @@
+// Admin ticket reply — updates ticket status and/or saves an admin reply text.
+// Sets repliedAt so the UI can show when the response was sent.
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'

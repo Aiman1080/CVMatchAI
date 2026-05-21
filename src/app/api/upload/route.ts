@@ -1,3 +1,6 @@
+// CV/document upload endpoint — accepts a PDF or DOCX via multipart form,
+// detects whether it's a CV or a motivation letter, runs AI analysis against
+// the requested vacancy, and creates a Candidate record in the database.
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'

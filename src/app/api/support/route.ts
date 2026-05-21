@@ -1,3 +1,5 @@
+// Support ticket API — recruiters submit tickets (POST) and list their own history (GET).
+// Tickets land in the admin panel where an admin can reply and update the status.
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'

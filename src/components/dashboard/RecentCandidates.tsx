@@ -20,7 +20,7 @@ export function RecentCandidates({ candidates }: { candidates: Candidate[] }) {
         ) : (
           <div className="space-y-3">
             {candidates.map(c => {
-              const initials = `${c.firstName[0]}${c.lastName[0]}`.toUpperCase()
+              const initials = `${c.firstName?.[0] ?? '?'}${c.lastName?.[0] ?? ''}`.toUpperCase()
               const score = c.matchScore || 0
               return (
                 <Link key={c.id} href={`/candidates/${c.id}`}>

@@ -1,3 +1,6 @@
+// Recruiter registration — validates input with Zod, checks for duplicate email,
+// hashes the password with bcrypt (cost 12) and creates the account with
+// subscription: 'free' and role: 'recruiter'. Login goes through NextAuth.
 import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import prisma from '@/lib/prisma'

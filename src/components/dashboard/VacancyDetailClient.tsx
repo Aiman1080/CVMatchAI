@@ -168,7 +168,7 @@ export function VacancyDetailClient({ vacancy: initial, userId }: { vacancy: Vac
           ) : (
             <div className="space-y-3">
               {sortedCandidates.map((c, i) => {
-                const initials = `${c.firstName[0]}${c.lastName[0]}`.toUpperCase()
+                const initials = `${c.firstName?.[0] ?? '?'}${c.lastName?.[0] ?? ''}`.toUpperCase()
                 const score = c.matchScore || 0
                 const skills = parseJsonSafe<string[]>(c.skills, [])
 

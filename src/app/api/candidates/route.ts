@@ -1,3 +1,6 @@
+// Candidates list — returns the current user's candidates sorted by AI match score.
+// Supports optional ?vacancyId and ?status query filters.
+// Admins can query across all users by omitting the userId scope.
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'

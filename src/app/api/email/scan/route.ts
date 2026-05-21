@@ -1,12 +1,17 @@
+// Real IMAP email scan — connects to the recruiter's inbox via ImapFlow,
+// fetches unseen emails from the last 30 days (capped at 20), uses AI to classify
+// each email, downloads and parses PDF/DOCX attachments, detects whether each
+// document is a CV or motivation letter, then runs AI CV analysis and creates
+// a Candidate record linked to the best matching active vacancy.
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { parseDocument } from '@/lib/pdf-parser'
+import { analyzeCVAgainstVacancy, classifyRecruitmentEmail, detectDocumentType } from '@/lib/ai'
 
 // Allow up to 5 minutes — IMAP + multiple AI calls can easily take 2–3 min
 export const maxDuration = 300
-import { analyzeCVAgainstVacancy, classifyRecruitmentEmail, detectDocumentType } from '@/lib/ai'
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
@@ -117,7 +122,7 @@ export async function POST(req: Request) {
               receivedAt: new Date(receivedAt),
               processed: false,
               relevant: classification.isRelevant,
-              attachments: attachmentBuffers.map(a => a.name).join(', '),
+              attachments: JSON.stringify(attachmentBuffers.map(a => a.name)),
               inboxId: inbox.id,
             },
           })

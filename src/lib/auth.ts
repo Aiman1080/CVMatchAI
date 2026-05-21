@@ -1,3 +1,6 @@
+// NextAuth configuration — email/password login with bcrypt, JWT session strategy.
+// Attaches userId, role and subscription to every JWT so API routes can call
+// getServerSession(authOptions) to identify the caller without a DB lookup.
 import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { PrismaAdapter } from '@auth/prisma-adapter'

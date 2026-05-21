@@ -1,3 +1,5 @@
+// Admin support queue — returns ALL tickets across all users, ordered open-first
+// then newest-first, with the submitting user's name, email and subscription tier included.
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'

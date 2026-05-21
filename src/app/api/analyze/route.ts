@@ -1,3 +1,6 @@
+// Re-analysis endpoint — re-runs the full AI scoring on an existing candidate.
+// Called from the candidate detail page when the recruiter wants a fresh assessment
+// after editing the vacancy requirements or uploading additional documents.
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'

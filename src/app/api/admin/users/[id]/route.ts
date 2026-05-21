@@ -1,3 +1,5 @@
+// Admin user management — PATCH to change subscription/role/suspended flag,
+// DELETE to remove an account. Only fields in the allowlist can be changed via PATCH.
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'

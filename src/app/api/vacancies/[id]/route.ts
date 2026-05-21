@@ -1,3 +1,5 @@
+// Single vacancy CRUD — GET loads the vacancy with all its ranked candidates,
+// PATCH updates the vacancy fields, DELETE removes it with cascade to candidates.
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
