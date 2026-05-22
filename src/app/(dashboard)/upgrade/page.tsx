@@ -21,7 +21,7 @@ export default function UpgradePage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {plans.map(plan => (
-              <div key={plan.name} className={`relative rounded-2xl border-2 p-6 ${plan.color} bg-white`}>
+              <div key={plan.name} className={`relative rounded-2xl border-2 p-6 ${plan.color} bg-white dark:bg-gray-800`}>
                 {(plan as any).popular && <div className="absolute -top-3 left-1/2 -translate-x-1/2"><span className="gradient-bg text-white text-xs px-3 py-1 rounded-full font-semibold">Most Popular</span></div>}
                 <div className={`w-10 h-10 rounded-xl ${plan.iconColor} flex items-center justify-center mb-4`}><plan.icon className="w-5 h-5" /></div>
                 <h3 className="text-xl font-bold text-gray-900 mb-1">{plan.name}</h3>

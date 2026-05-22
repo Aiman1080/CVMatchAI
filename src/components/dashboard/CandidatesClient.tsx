@@ -160,10 +160,10 @@ export function CandidatesClient({ initialCandidates }: { initialCandidates: Can
           </SelectContent>
         </Select>
         <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-          <button onClick={() => setView('grid')} className={`p-1.5 rounded-md transition-colors ${view === 'grid' ? 'bg-white shadow-sm text-gray-800' : 'text-gray-400 hover:text-gray-600'}`} title="Vue grille">
+          <button onClick={() => setView('grid')} className={`p-1.5 rounded-md transition-colors ${view === 'grid' ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-800 dark:text-gray-200' : 'text-gray-400 hover:text-gray-600'}`} title="Vue grille">
             <LayoutGrid size={16} />
           </button>
-          <button onClick={() => setView('kanban')} className={`p-1.5 rounded-md transition-colors ${view === 'kanban' ? 'bg-white shadow-sm text-gray-800' : 'text-gray-400 hover:text-gray-600'}`} title="Vue kanban">
+          <button onClick={() => setView('kanban')} className={`p-1.5 rounded-md transition-colors ${view === 'kanban' ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-800 dark:text-gray-200' : 'text-gray-400 hover:text-gray-600'}`} title="Vue kanban">
             <Columns size={16} />
           </button>
         </div>

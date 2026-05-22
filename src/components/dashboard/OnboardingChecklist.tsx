@@ -74,7 +74,7 @@ export function OnboardingChecklist({ hasVacancy, hasCandidate, hasEmail, onVaca
           <div className="mb-5">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-semibold text-gray-900">Premiers pas</h3>
-              <span className="text-xs bg-white border border-gray-200 text-gray-500 px-2 py-0.5 rounded-full">
+              <span className="text-xs bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">
                 {completed}/{total} complétés
               </span>
             </div>
@@ -90,7 +90,7 @@ export function OnboardingChecklist({ hasVacancy, hasCandidate, hasEmail, onVaca
               return (
                 <div
                   key={step.key}
-                  className={`flex items-center gap-4 p-3 rounded-xl transition-all ${done ? 'bg-white/50 opacity-60' : blocked ? 'bg-white/30 opacity-50' : 'bg-white shadow-sm'}`}
+                  className={`flex items-center gap-4 p-3 rounded-xl transition-all ${done ? 'bg-white/50 dark:bg-gray-800/50 opacity-60' : blocked ? 'bg-white/30 dark:bg-gray-800/30 opacity-50' : 'bg-white dark:bg-gray-800 shadow-sm'}`}
                 >
                   <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${done ? 'bg-green-100' : 'bg-blue-50'}`}>
                     {done ? <CheckCircle className="w-5 h-5 text-green-600" /> : <Icon className="w-5 h-5 text-blue-600" />}

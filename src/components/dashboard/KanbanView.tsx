@@ -94,7 +94,7 @@ export function KanbanView({ candidates, onCandidatesChange }: Props) {
                 <span className={`w-2 h-2 rounded-full ${col.dot}`} />
                 <span className="font-semibold text-sm text-gray-700">{col.label}</span>
               </div>
-              <span className="text-xs bg-white border border-gray-200 text-gray-500 px-2 py-0.5 rounded-full font-medium">
+              <span className="text-xs bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full font-medium">
                 {cards.length}
               </span>
             </div>
@@ -114,8 +114,8 @@ export function KanbanView({ candidates, onCandidatesChange }: Props) {
                 />
               ))}
               {cards.length === 0 && (
-                <div className="flex items-center justify-center h-24 border-2 border-dashed border-gray-200 rounded-lg">
-                  <p className="text-xs text-gray-400">Glisser ici</p>
+                <div className="flex items-center justify-center h-24 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg">
+                  <p className="text-xs text-gray-400 dark:text-gray-600">Glisser ici</p>
                 </div>
               )}
             </div>
@@ -145,7 +145,7 @@ function KanbanCard({ candidate: c, isDragging, isUpdating, onDragStart, onDragE
       draggable
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
-      className={`bg-white rounded-lg border border-gray-100 shadow-sm p-3 cursor-grab active:cursor-grabbing transition-opacity select-none ${isDragging ? 'opacity-40' : 'opacity-100'} ${isUpdating ? 'animate-pulse' : ''}`}
+      className={`bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm p-3 cursor-grab active:cursor-grabbing transition-opacity select-none ${isDragging ? 'opacity-40' : 'opacity-100'} ${isUpdating ? 'animate-pulse' : ''}`}
     >
       <div className="flex items-start gap-2 mb-2">
         <Avatar className="w-7 h-7 shrink-0">
@@ -153,7 +153,7 @@ function KanbanCard({ candidate: c, isDragging, isUpdating, onDragStart, onDragE
         </Avatar>
         <div className="flex-1 min-w-0">
           <Link href={`/candidates/${c.id}`} onClick={e => e.stopPropagation()}>
-            <p className="text-sm font-semibold text-gray-900 truncate hover:text-blue-600">{c.firstName} {c.lastName}</p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate hover:text-blue-600">{c.firstName} {c.lastName}</p>
           </Link>
           {c.vacancy && <p className="text-xs text-gray-400 truncate">{c.vacancy.title}</p>}
         </div>
