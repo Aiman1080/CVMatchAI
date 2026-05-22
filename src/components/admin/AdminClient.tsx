@@ -4,7 +4,8 @@ import { useState } from 'react'
 import {
   Users, Briefcase, UserCheck, MessageSquare, Activity, Shield,
   CheckCircle, XCircle, Clock, AlertCircle, ChevronDown, ChevronUp,
-  Trash2, RefreshCw, Send, TrendingUp, Database, Mail, Building2
+  Trash2, RefreshCw, Send, TrendingUp, Database, Mail, Building2,
+  Brain, Link2, Inbox, BarChart3
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -45,9 +46,14 @@ interface Props {
   subscriptions: Array<{ subscription: string; _count: number }>
   counts: { users: number; vacancies: number; candidates: number; openTickets: number }
   hasAiKey: boolean
+  aiAnalysesCount: number
+  integrationsCount: number
+  emailInboxesCount: number
+  candidateStatusDist: Array<{ status: string; _count: number }>
+  latestVacancies: Array<{ title: string; company: string; createdAt: Date; _count: { candidates: number } }>
 }
 
-export function AdminClient({ users: initialUsers, tickets: initialTickets, subscriptions, counts, hasAiKey }: Props) {
+export function AdminClient({ users: initialUsers, tickets: initialTickets, subscriptions, counts, hasAiKey, aiAnalysesCount, integrationsCount, emailInboxesCount, candidateStatusDist, latestVacancies }: Props) {
   const [users, setUsers] = useState(initialUsers)
   const [tickets, setTickets] = useState(initialTickets)
   const [expandedTicket, setExpandedTicket] = useState<string | null>(null)
@@ -180,6 +186,7 @@ export function AdminClient({ users: initialUsers, tickets: initialTickets, subs
             Support
             {openCount > 0 && <span className="ml-1.5 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">{openCount}</span>}
           </TabsTrigger>
+          <TabsTrigger value="system">Système</TabsTrigger>
         </TabsList>
 
         {/* ── Companies tab ── */}
@@ -269,6 +276,132 @@ export function AdminClient({ users: initialUsers, tickets: initialTickets, subs
                   </tbody>
                 </table>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ── Système tab ── */}
+        <TabsContent value="system" className="mt-4 space-y-4">
+          {/* Cards row: AI, DB, Activité */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* IA */}
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Brain className="w-4 h-4 text-purple-500" /> Intelligence Artificielle
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">Analyses effectuées</span>
+                  <span className="text-lg font-bold text-gray-900">{aiAnalysesCount}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">Clé API configurée</span>
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${hasAiKey ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                    {hasAiKey ? 'Oui' : 'Non'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">Mode</span>
+                  <span className="text-xs text-gray-700 font-medium">{hasAiKey ? 'Live AI' : 'Démo'}</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Base de données */}
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Database className="w-4 h-4 text-blue-500" /> Base de données
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {[
+                  { label: 'Utilisateurs', value: counts.users, icon: Users },
+                  { label: 'Candidats', value: counts.candidates, icon: UserCheck },
+                  { label: 'Offres', value: counts.vacancies, icon: Briefcase },
+                  { label: 'Intégrations ATS', value: integrationsCount, icon: Link2 },
+                  { label: 'Boîtes mail', value: emailInboxesCount, icon: Inbox },
+                ].map(item => (
+                  <div key={item.label} className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                      <item.icon className="w-3 h-3" />
+                      {item.label}
+                    </div>
+                    <span className="text-sm font-semibold text-gray-900">{item.value}</span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Activité candidats */}
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4 text-green-500" /> Distribution des statuts
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {candidateStatusDist.length === 0 ? (
+                  <p className="text-xs text-gray-400">Aucun candidat</p>
+                ) : (
+                  candidateStatusDist.map(s => {
+                    const total = candidateStatusDist.reduce((acc, x) => acc + x._count, 0)
+                    const pct = total > 0 ? Math.round((s._count / total) * 100) : 0
+                    const colors: Record<string, string> = {
+                      new: 'bg-blue-400',
+                      reviewing: 'bg-amber-400',
+                      shortlisted: 'bg-purple-400',
+                      hired: 'bg-green-500',
+                      rejected: 'bg-red-400',
+                    }
+                    return (
+                      <div key={s.status} className="space-y-0.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="capitalize text-gray-600">{s.status}</span>
+                          <span className="font-medium text-gray-700">{s._count} ({pct}%)</span>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-1.5">
+                          <div
+                            className={`${colors[s.status] || 'bg-gray-400'} h-1.5 rounded-full`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    )
+                  })
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Dernières offres */}
+          <Card className="border-0 shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Briefcase className="w-4 h-4 text-indigo-500" /> Dernières offres publiées
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {latestVacancies.length === 0 ? (
+                <p className="text-xs text-gray-400 px-5 py-4">Aucune offre</p>
+              ) : (
+                <div className="divide-y divide-gray-50">
+                  {latestVacancies.map((v, i) => (
+                    <div key={i} className="flex items-center justify-between px-5 py-3">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{v.title}</p>
+                        <p className="text-xs text-gray-400">{v.company} · {formatDate(v.createdAt)}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-lg font-bold text-gray-900">{v._count.candidates}</span>
+                        <p className="text-xs text-gray-400">candidats</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

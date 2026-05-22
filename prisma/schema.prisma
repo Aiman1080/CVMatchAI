@@ -111,8 +111,10 @@ model Candidate {
   phone           String?
   linkedIn        String?
   cvFileName      String?
+  cvUrl           String?
   cvContent       String?
   motivationText  String?
+  motivationUrl   String?
   language        String    @default("nl")
   matchScore      Float?
   summary         String?

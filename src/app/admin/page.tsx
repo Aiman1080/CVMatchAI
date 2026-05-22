@@ -10,7 +10,7 @@ export default async function AdminPage() {
   const session = await getServerSession(authOptions)
   if (!session || (session.user as any).role !== 'admin') redirect('/dashboard')
 
-  const [users, tickets, subscriptions, counts] = await Promise.all([
+  const [users, tickets, subscriptions, counts, aiAnalysesCount, integrationsCount, emailInboxesCount, candidateStatusDist, latestVacancies] = await Promise.all([
     prisma.user.findMany({
       orderBy: { createdAt: 'desc' },
       select: {
@@ -32,6 +32,20 @@ export default async function AdminPage() {
       prisma.candidate.count(),
       prisma.supportTicket.count({ where: { status: { in: ['open', 'in_progress'] } } }),
     ]).then(([u, v, c, t]) => ({ users: u, vacancies: v, candidates: c, openTickets: t })),
+    prisma.candidate.count({ where: { analyzedAt: { not: null } } }),
+    prisma.integration.count(),
+    prisma.emailInbox.count(),
+    prisma.candidate.groupBy({ by: ['status'], _count: true }),
+    prisma.vacancy.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+      select: {
+        title: true,
+        company: true,
+        createdAt: true,
+        _count: { select: { candidates: true } },
+      },
+    }),
   ])
 
   return (
@@ -40,7 +54,18 @@ export default async function AdminPage() {
       <main className="flex-1 ml-64">
         <Header title="Admin Panel" description="Platform management & monitoring" />
         <div className="p-8">
-          <AdminClient users={users as any} tickets={tickets as any} subscriptions={subscriptions} counts={counts} hasAiKey={!!process.env.ANTHROPIC_API_KEY} />
+          <AdminClient
+            users={users as any}
+            tickets={tickets as any}
+            subscriptions={subscriptions}
+            counts={counts}
+            hasAiKey={!!process.env.ANTHROPIC_API_KEY}
+            aiAnalysesCount={aiAnalysesCount}
+            integrationsCount={integrationsCount}
+            emailInboxesCount={emailInboxesCount}
+            candidateStatusDist={candidateStatusDist}
+            latestVacancies={latestVacancies as any}
+          />
         </div>
       </main>
     </div>

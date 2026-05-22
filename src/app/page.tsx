@@ -6,7 +6,7 @@ import { useTheme } from 'next-themes'
 import { Sun, Moon, Zap, ArrowRight, CheckCircle, Upload, Brain, BarChart3, Mail, Shield, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
-import { translations, Locale } from '@/lib/i18n'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 const featureIcons = [Brain, Upload, Mail, BarChart3, Users, Shield]
 const featureColors = [
@@ -16,21 +16,12 @@ const featureColors = [
 ]
 
 export default function LandingPage() {
-  const [locale, setLocaleState] = useState<Locale>('en')
-
-  // Restore saved language preference on first render
-  useEffect(() => {
-    const saved = localStorage.getItem('cvmatch-locale') as Locale
-    if (saved && ['en', 'nl', 'fr'].includes(saved)) setLocaleState(saved)
-  }, [])
-
-  const setLocale = (l: Locale) => {
-    setLocaleState(l)
-    localStorage.setItem('cvmatch-locale', l)
-  }
-
-  const t = translations[locale]
+  const { t } = useLanguage()
   const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => setMounted(true), [])
+
   const isDark = theme === 'dark'
 
   return (
@@ -50,14 +41,16 @@ export default function LandingPage() {
             <a href="#pricing" className="hover:text-gray-900 dark:hover:text-white transition-colors">{t.nav.pricing}</a>
           </div>
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setTheme(isDark ? 'light' : 'dark')}
-              className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              title={isDark ? 'Mode clair' : 'Mode sombre'}
-            >
-              {isDark ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
-            <LanguageSwitcher locale={locale} setLocale={setLocale} />
+            {mounted ? (
+              <button
+                onClick={() => setTheme(isDark ? 'light' : 'dark')}
+                className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                title={isDark ? 'Mode clair' : 'Mode sombre'}
+              >
+                {isDark ? <Sun size={18} /> : <Moon size={18} />}
+              </button>
+            ) : null}
+            <LanguageSwitcher />
             <Link href="/login"><Button variant="ghost" size="sm">{t.nav.signIn}</Button></Link>
             <Link href="/register"><Button size="sm" className="gradient-bg">{t.nav.startFree}</Button></Link>
           </div>
@@ -251,7 +244,7 @@ export default function LandingPage() {
             <a href="#" className="hover:text-white">{t.footer.privacy}</a>
             <a href="#" className="hover:text-white">{t.footer.terms}</a>
             <a href="#" className="hover:text-white">{t.footer.contact}</a>
-            <LanguageSwitcher locale={locale} setLocale={setLocale} />
+            <LanguageSwitcher dark />
           </div>
         </div>
       </footer>
