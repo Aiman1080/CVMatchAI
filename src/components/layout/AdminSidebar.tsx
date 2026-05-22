@@ -26,7 +26,7 @@ export function AdminSidebar() {
           </div>
           <div>
             <span className="font-bold text-white text-lg leading-tight block">CVMatch</span>
-            <span className="text-xs text-purple-400 font-semibold leading-tight">Administration</span>
+            <span className="text-xs text-purple-400 font-semibold leading-tight">Admin Panel</span>
           </div>
         </Link>
       </div>
@@ -53,14 +53,14 @@ export function AdminSidebar() {
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:bg-gray-900 hover:text-gray-200 transition-all"
           >
             <ArrowLeft size={18} className="text-gray-500" />
-            Retour au Dashboard
+            Back to Dashboard
           </Link>
           <Link
             href="/dashboard"
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:bg-gray-900 hover:text-gray-200 transition-all"
           >
             <LayoutDashboard size={18} className="text-gray-500" />
-            Espace recruteur
+            Recruiter Space
           </Link>
         </div>
       </nav>
@@ -72,7 +72,7 @@ export function AdminSidebar() {
           className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-gray-900 hover:bg-gray-800 transition-colors"
         >
           <span className="text-xs font-medium text-gray-400">
-            {isDark ? 'Mode sombre' : 'Mode clair'}
+            {isDark ? 'Dark mode' : 'Light mode'}
           </span>
           <div className="flex items-center gap-1">
             <Sun size={13} className={isDark ? 'text-gray-500' : 'text-amber-400'} />
@@ -93,13 +93,13 @@ export function AdminSidebar() {
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-gray-200 truncate">{user?.name || 'Admin'}</p>
             <span className="text-xs px-1.5 py-0.5 rounded-full font-medium bg-purple-900/60 text-purple-300">
-              Administrateur
+              Administrator
             </span>
           </div>
           <button
             onClick={() => signOut({ callbackUrl: '/' })}
             className="p-1 text-gray-500 hover:text-gray-200 rounded transition-colors"
-            title="Se déconnecter"
+            title="Sign out"
           >
             <LogOut size={15} />
           </button>

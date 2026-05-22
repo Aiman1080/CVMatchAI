@@ -46,7 +46,7 @@ export default function LandingPage() {
               <button
                 onClick={() => setTheme(isDark ? 'light' : 'dark')}
                 className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                title={isDark ? 'Mode clair' : 'Mode sombre'}
+                title={isDark ? t.dashboard.nav.lightMode : t.dashboard.nav.darkMode}
               >
                 {isDark ? <Sun size={18} /> : <Moon size={18} />}
               </button>

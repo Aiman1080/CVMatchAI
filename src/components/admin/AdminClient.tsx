@@ -209,19 +209,19 @@ export function AdminClient({
       color: 'text-green-600',
       bg: 'bg-green-50 dark:bg-green-950/30',
       status: emailInboxesCount > 0 ? 'live' : 'configured',
-      model: 'Détection par règles + IA',
-      thinking: 'Heuristiques d\'abord, Claude en fallback',
+      model: 'Rule-based detection + AI',
+      thinking: 'Heuristics first, Claude as fallback',
       details: [
-        'Connexion IMAP/IMAPS sécurisée',
-        'Détection automatique des CV en pièces jointes',
-        'Filtrage anti-spam par analyse du sujet',
-        'Extraction du nom du candidat depuis l\'e-mail',
-        'Création automatique du profil candidat',
+        'Secure IMAP/IMAPS connection',
+        'Automatic CV attachment detection',
+        'Anti-spam filtering by subject analysis',
+        'Candidate name extraction from email',
+        'Automatic candidate profile creation',
       ],
-      stat: `${emailInboxesCount} boîte${emailInboxesCount !== 1 ? 's' : ''} connectée${emailInboxesCount !== 1 ? 's' : ''}`,
+      stat: `${emailInboxesCount} inbox${emailInboxesCount !== 1 ? 'es' : ''} connected`,
     },
     {
-      name: 'Intégrations ATS',
+      name: 'ATS Integrations',
       icon: Network,
       color: 'text-orange-600',
       bg: 'bg-orange-50 dark:bg-orange-950/30',
@@ -281,14 +281,14 @@ export function AdminClient({
       {/* ── KPI Row ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-3">
         {[
-          { label: 'Comptes', value: counts.users, icon: Building2, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950' },
+          { label: 'Accounts', value: counts.users, icon: Building2, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950' },
           { label: 'Pro', value: proCount, icon: Zap, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-950' },
           { label: 'Enterprise', value: enterpriseCount, icon: Shield, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-950' },
           { label: 'MRR', value: `€${mrr}`, icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950' },
-          { label: 'Candidats/j', value: candidatesToday, icon: Activity, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-950' },
-          { label: 'Analyses IA', value: aiAnalysesCount, icon: Brain, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-950' },
-          { label: 'Inscrits 7j', value: newUsersThisWeek, icon: UserPlus, color: 'text-cyan-600', bg: 'bg-cyan-50 dark:bg-cyan-950' },
-          { label: 'Tickets ouverts', value: counts.openTickets, icon: MessageSquare, color: counts.openTickets > 0 ? 'text-red-600' : 'text-gray-400', bg: counts.openTickets > 0 ? 'bg-red-50 dark:bg-red-950' : 'bg-gray-50 dark:bg-gray-800' },
+          { label: 'Candidates/day', value: candidatesToday, icon: Activity, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-950' },
+          { label: 'AI Analyses', value: aiAnalysesCount, icon: Brain, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-950' },
+          { label: 'New users 7d', value: newUsersThisWeek, icon: UserPlus, color: 'text-cyan-600', bg: 'bg-cyan-50 dark:bg-cyan-950' },
+          { label: 'Open tickets', value: counts.openTickets, icon: MessageSquare, color: counts.openTickets > 0 ? 'text-red-600' : 'text-gray-400', bg: counts.openTickets > 0 ? 'bg-red-50 dark:bg-red-950' : 'bg-gray-50 dark:bg-gray-800' },
         ].map(s => (
           <Card key={s.label} className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <CardContent className="p-3 flex items-center gap-2">
@@ -310,7 +310,7 @@ export function AdminClient({
           <div className="flex flex-wrap gap-x-6 gap-y-2 items-center">
             <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">État système</span>
             {[
-              { label: 'Base de données', ok: true },
+              { label: 'Database', ok: true },
               { label: `IA — ${hasAiKey ? 'Live (claude-opus-4-7)' : 'Mode démo'}`, ok: hasAiKey },
               { label: `Email — ${emailInboxesCount} boîte${emailInboxesCount !== 1 ? 's' : ''}`, ok: true },
               { label: `Support — ${openCount} ouvert${openCount !== 1 ? 's' : ''}`, ok: openCount === 0 },
@@ -329,7 +329,7 @@ export function AdminClient({
       {/* ── Main Tabs ── */}
       <Tabs defaultValue="accounts">
         <TabsList>
-          <TabsTrigger value="accounts">Comptes ({users.length})</TabsTrigger>
+          <TabsTrigger value="accounts">Accounts ({users.length})</TabsTrigger>
           <TabsTrigger value="support">
             Support
             {openCount > 0 && (
@@ -341,7 +341,7 @@ export function AdminClient({
           <TabsTrigger value="system">Système</TabsTrigger>
         </TabsList>
 
-        {/* ══ Comptes tab ══ */}
+        {/* ══ Accounts tab ══ */}
         <TabsContent value="accounts" className="mt-4">
           <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <CardContent className="p-0">
@@ -411,7 +411,7 @@ export function AdminClient({
                                   <span className="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full w-fit">Actif</span>
                                 )}
                                 <span className={`text-xs px-2 py-0.5 rounded-full w-fit ${user.role === 'admin' ? 'bg-purple-100 text-purple-600' : 'bg-gray-100 text-gray-500'}`}>
-                                  {user.role === 'admin' ? '★ Admin' : 'Utilisateur'}
+                                  {user.role === 'admin' ? '★ Admin' : 'User'}
                                 </span>
                               </div>
                             </td>
@@ -479,8 +479,8 @@ export function AdminClient({
                                             <SelectValue />
                                           </SelectTrigger>
                                           <SelectContent>
-                                            <SelectItem value="user">Utilisateur</SelectItem>
-                                            <SelectItem value="admin">Administrateur</SelectItem>
+                                            <SelectItem value="user">User</SelectItem>
+                                            <SelectItem value="admin">Administrator</SelectItem>
                                           </SelectContent>
                                         </Select>
                                       </div>
@@ -512,9 +512,9 @@ export function AdminClient({
                                     </p>
                                     <div className="space-y-2">
                                       {[
-                                        { label: 'Offres publiées', value: user._count.vacancies, icon: Briefcase },
-                                        { label: 'Candidats créés', value: user._count.candidates, icon: UserCheck },
-                                        { label: 'Tickets support', value: user._count.supportTickets, icon: MessageSquare },
+                                        { label: 'Vacancies posted', value: user._count.vacancies, icon: Briefcase },
+                                        { label: 'Candidates', value: user._count.candidates, icon: UserCheck },
+                                        { label: 'Support tickets', value: user._count.supportTickets, icon: MessageSquare },
                                       ].map(item => (
                                         <div key={item.label} className="flex items-center justify-between text-xs">
                                           <span className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
@@ -825,15 +825,15 @@ export function AdminClient({
             <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-indigo-500" /> Activité récente
+                  <Activity className="w-4 h-4 text-indigo-500" /> Recent Activity
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-3 gap-3">
                   {[
-                    { label: 'Candidats aujourd\'hui', value: candidatesToday, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-950/30' },
-                    { label: 'Candidats cette semaine', value: candidatesThisWeek, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-950/30' },
-                    { label: 'Nouveaux comptes 7j', value: newUsersThisWeek, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/30' },
+                    { label: 'Candidates today', value: candidatesToday, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-950/30' },
+                    { label: 'Candidates this week', value: candidatesThisWeek, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-950/30' },
+                    { label: 'New accounts 7d', value: newUsersThisWeek, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/30' },
                   ].map(item => (
                     <div key={item.label} className={`text-center p-3 rounded-xl ${item.bg}`}>
                       <div className={`text-2xl font-bold ${item.color}`}>{item.value}</div>
@@ -852,18 +852,18 @@ export function AdminClient({
             <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <Database className="w-4 h-4 text-blue-500" /> Base de données
+                  <Database className="w-4 h-4 text-blue-500" /> Database
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 {[
-                  { label: 'Comptes', value: counts.users, icon: Users },
-                  { label: 'Candidats', value: counts.candidates, icon: UserCheck },
-                  { label: 'Offres', value: counts.vacancies, icon: Briefcase },
-                  { label: 'Offres actives', value: activeVacanciesCount, icon: Briefcase },
-                  { label: 'Intégrations ATS', value: integrationsCount, icon: Link2 },
-                  { label: 'Boîtes mail', value: emailInboxesCount, icon: Inbox },
-                  { label: 'Tickets support', value: counts.openTickets, icon: MessageSquare },
+                  { label: 'Accounts', value: counts.users, icon: Users },
+                  { label: 'Candidates', value: counts.candidates, icon: UserCheck },
+                  { label: 'Vacancies', value: counts.vacancies, icon: Briefcase },
+                  { label: 'Active vacancies', value: activeVacanciesCount, icon: Briefcase },
+                  { label: 'ATS integrations', value: integrationsCount, icon: Link2 },
+                  { label: 'Inboxes', value: emailInboxesCount, icon: Inbox },
+                  { label: 'Support tickets', value: counts.openTickets, icon: MessageSquare },
                 ].map(item => (
                   <div key={item.label} className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
@@ -878,7 +878,7 @@ export function AdminClient({
             <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <Network className="w-4 h-4 text-orange-500" /> Intégrations ATS
+                  <Network className="w-4 h-4 text-orange-500" /> ATS Integrations
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -911,7 +911,7 @@ export function AdminClient({
               <CardContent className="space-y-2">
                 {[
                   { label: 'Framework', value: 'Next.js 15 App Router' },
-                  { label: 'Base de données', value: 'PostgreSQL (Neon)' },
+                  { label: 'Database', value: 'PostgreSQL (Neon)' },
                   { label: 'ORM', value: 'Prisma 5.22' },
                   { label: 'Auth', value: 'NextAuth.js v4 JWT' },
                   { label: 'IA', value: 'Anthropic SDK (claude-opus-4-7)' },
