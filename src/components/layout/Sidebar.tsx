@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { useTheme } from 'next-themes'
-import { LayoutDashboard, Briefcase, Users, BarChart3, Settings, Mail, LogOut, Zap, ShieldCheck, ChevronRight, CreditCard, LifeBuoy, Sun, Moon, Monitor } from 'lucide-react'
+import { LayoutDashboard, Briefcase, Users, BarChart3, Settings, Mail, LogOut, Zap, ShieldCheck, ChevronRight, CreditCard, LifeBuoy, Sun, Moon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
@@ -32,9 +32,8 @@ export function Sidebar() {
   const initials = user?.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || 'U'
 
   const themeOptions = [
-    { value: 'light', icon: Sun, label: 'Clair' },
-    { value: 'dark', icon: Moon, label: 'Sombre' },
-    { value: 'system', icon: Monitor, label: 'Système' },
+    { value: 'light', icon: Sun, label: 'Mode clair' },
+    { value: 'dark', icon: Moon, label: 'Mode sombre' },
   ]
 
   return (
@@ -89,7 +88,6 @@ export function Sidebar() {
 
       {/* Theme toggle */}
       <div className="px-4 pb-2">
-        <p className="text-xs text-gray-400 dark:text-gray-600 mb-2 px-1">Thème</p>
         <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-900 rounded-lg p-1">
           {themeOptions.map(({ value, icon: Icon, label }) => (
             <button
@@ -97,13 +95,14 @@ export function Sidebar() {
               onClick={() => setTheme(value)}
               title={label}
               className={cn(
-                'flex-1 flex items-center justify-center p-1.5 rounded-md text-xs transition-all',
+                'flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md text-xs transition-all font-medium',
                 theme === value
                   ? 'bg-white dark:bg-gray-800 shadow-sm text-gray-800 dark:text-gray-200'
                   : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
               )}
             >
-              <Icon size={14} />
+              <Icon size={13} />
+              <span>{value === 'light' ? 'Clair' : 'Sombre'}</span>
             </button>
           ))}
         </div>
