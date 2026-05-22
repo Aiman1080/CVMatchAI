@@ -5,6 +5,7 @@ import { CheckCircle, Circle, Briefcase, Upload, Mail, X, ChevronRight } from 'l
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { CreateVacancyDialog } from './CreateVacancyDialog'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface Props {
   hasVacancy: boolean
@@ -13,36 +14,16 @@ interface Props {
   onVacancyCreated: () => void
 }
 
-const steps = [
-  {
-    key: 'vacancy',
-    icon: Briefcase,
-    title: 'Créez votre première offre',
-    description: 'Définissez un poste pour que l\'IA puisse scorer vos candidats.',
-    action: 'Créer une offre',
-    href: null,
-  },
-  {
-    key: 'candidate',
-    icon: Upload,
-    title: 'Ajoutez un candidat',
-    description: 'Uploadez un CV ou lancez le scan email de démo.',
-    action: 'Voir les offres',
-    href: '/vacancies',
-  },
-  {
-    key: 'email',
-    icon: Mail,
-    title: 'Connectez votre boîte mail',
-    description: 'Recevez les candidatures automatiquement par email IMAP.',
-    action: 'Configurer',
-    href: '/email',
-  },
-]
-
 export function OnboardingChecklist({ hasVacancy, hasCandidate, hasEmail, onVacancyCreated }: Props) {
   const [dismissed, setDismissed] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
+  const { t } = useLanguage()
+
+  const steps = [
+    { key: 'vacancy', icon: Briefcase, title: t.dashboard.onboarding.step1Title, description: t.dashboard.onboarding.step1Desc, action: t.dashboard.onboarding.step1Action, href: null },
+    { key: 'candidate', icon: Upload, title: t.dashboard.onboarding.step2Title, description: t.dashboard.onboarding.step2Desc, action: t.dashboard.onboarding.step2Action, href: '/vacancies' },
+    { key: 'email', icon: Mail, title: t.dashboard.onboarding.step3Title, description: t.dashboard.onboarding.step3Desc, action: t.dashboard.onboarding.step3Action, href: '/email' },
+  ]
 
   const completed = [hasVacancy, hasCandidate, hasEmail].filter(Boolean).length
   const total = steps.length
@@ -73,12 +54,12 @@ export function OnboardingChecklist({ hasVacancy, hasCandidate, hasEmail, onVaca
           </button>
           <div className="mb-5">
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-semibold text-gray-900 dark:text-white">Premiers pas</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white">{t.dashboard.onboarding.title}</h3>
               <span className="text-xs bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">
-                {completed}/{total} complétés
+                {completed}/{total} {t.dashboard.onboarding.progress}
               </span>
             </div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Suivez ces étapes pour configurer votre pipeline de recrutement.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{t.dashboard.onboarding.subtitle}</p>
           </div>
 
           <div className="space-y-3">

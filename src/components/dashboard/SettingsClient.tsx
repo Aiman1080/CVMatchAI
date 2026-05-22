@@ -9,6 +9,8 @@ import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from '@/components/ui/use-toast'
 import Link from 'next/link'
+import { useLanguage } from '@/contexts/LanguageContext'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
 interface Props {
   user: { name?: string; email?: string; company?: string; subscription?: string }
@@ -21,6 +23,7 @@ const PLANS = [
 ]
 
 export function SettingsClient({ user }: Props) {
+  const { t } = useLanguage()
   const [form, setForm] = useState({ name: user.name || '', company: user.company || '' })
   const [saving, setSaving] = useState(false)
   const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirm: '' })
@@ -100,6 +103,19 @@ export function SettingsClient({ user }: Props) {
               </div>
               <Button type="submit" disabled={saving} className="gradient-bg gap-2"><Save size={14} />{saving ? 'Saving...' : 'Save Changes'}</Button>
             </form>
+          </CardContent>
+        </Card>
+
+        {/* Language */}
+        <Card className="border border-gray-100 dark:border-gray-800 shadow-none max-w-lg">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <span className="text-lg">🌐</span> {t.dashboard.settings.language}
+            </CardTitle>
+            <CardDescription>{t.dashboard.settings.languageDesc}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <LanguageSwitcher />
           </CardContent>
         </Card>
 

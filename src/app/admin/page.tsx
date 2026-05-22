@@ -3,7 +3,6 @@ import { authOptions } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import prisma from '@/lib/prisma'
 import { Header } from '@/components/layout/Header'
-import { Sidebar } from '@/components/layout/Sidebar'
 import { AdminClient } from '@/components/admin/AdminClient'
 
 export default async function AdminPage() {
@@ -59,31 +58,28 @@ export default async function AdminPage() {
   ])
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <Sidebar />
-      <main className="flex-1 ml-64">
-        <Header title="Admin Panel" description="Platform management & monitoring" />
-        <div className="p-8">
-          <AdminClient
-            users={users as any}
-            tickets={tickets as any}
-            subscriptions={subscriptions}
-            counts={counts}
-            hasAiKey={!!process.env.ANTHROPIC_API_KEY}
-            aiAnalysesCount={aiAnalysesCount}
-            integrationsCount={integrationsCount}
-            emailInboxesCount={emailInboxesCount}
-            candidateStatusDist={candidateStatusDist}
-            latestVacancies={latestVacancies as any}
-            newUsersThisWeek={newUsersThisWeek}
-            candidatesThisWeek={candidatesThisWeek}
-            candidatesToday={candidatesToday}
-            integrationsByPlatform={integrationsByPlatform as any}
-            candidatesBySource={candidatesBySource as any}
-            activeVacanciesCount={activeVacanciesCount}
-          />
-        </div>
-      </main>
+    <div>
+      <Header title="Admin Panel" description="Platform management & monitoring" />
+      <div className="p-8">
+        <AdminClient
+          users={users as any}
+          tickets={tickets as any}
+          subscriptions={subscriptions}
+          counts={counts}
+          hasAiKey={!!process.env.ANTHROPIC_API_KEY}
+          aiAnalysesCount={aiAnalysesCount}
+          integrationsCount={integrationsCount}
+          emailInboxesCount={emailInboxesCount}
+          candidateStatusDist={candidateStatusDist}
+          latestVacancies={latestVacancies as any}
+          newUsersThisWeek={newUsersThisWeek}
+          candidatesThisWeek={candidatesThisWeek}
+          candidatesToday={candidatesToday}
+          integrationsByPlatform={integrationsByPlatform as any}
+          candidatesBySource={candidatesBySource as any}
+          activeVacanciesCount={activeVacanciesCount}
+        />
+      </div>
     </div>
   )
 }

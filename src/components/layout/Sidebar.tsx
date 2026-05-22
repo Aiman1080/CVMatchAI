@@ -7,17 +7,7 @@ import { useTheme } from 'next-themes'
 import { LayoutDashboard, Briefcase, Users, BarChart3, Settings, Mail, LogOut, Zap, ShieldCheck, ChevronRight, CreditCard, LifeBuoy, Sun, Moon, Plug } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-
-const navItems = [
-  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/vacancies', icon: Briefcase, label: 'Vacancies' },
-  { href: '/candidates', icon: Users, label: 'Candidats' },
-  { href: '/email', icon: Mail, label: 'Email Inbox' },
-  { href: '/integrations', icon: Plug, label: 'Intégrations ATS' },
-  { href: '/analytics', icon: BarChart3, label: 'Analytics' },
-  { href: '/settings', icon: Settings, label: 'Paramètres' },
-  { href: '/support', icon: LifeBuoy, label: 'Support' },
-]
+import { useLanguage } from '@/contexts/LanguageContext'
 
 const planColors: Record<string, string> = {
   free: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
@@ -29,10 +19,22 @@ export function Sidebar() {
   const pathname = usePathname()
   const { data: session } = useSession()
   const { theme, setTheme } = useTheme()
+  const { t } = useLanguage()
   const user = session?.user as any
   const initials = user?.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || 'U'
 
   const isDark = theme === 'dark'
+
+  const navItems = [
+    { href: '/dashboard', icon: LayoutDashboard, label: t.dashboard.nav.dashboard },
+    { href: '/vacancies', icon: Briefcase, label: t.dashboard.nav.vacancies },
+    { href: '/candidates', icon: Users, label: t.dashboard.nav.candidates },
+    { href: '/email', icon: Mail, label: t.dashboard.nav.email },
+    { href: '/integrations', icon: Plug, label: t.dashboard.nav.integrations },
+    { href: '/analytics', icon: BarChart3, label: t.dashboard.nav.analytics },
+    { href: '/settings', icon: Settings, label: t.dashboard.nav.settings },
+    { href: '/support', icon: LifeBuoy, label: t.dashboard.nav.support },
+  ]
 
   return (
     <aside className="fixed left-0 top-0 h-full w-64 bg-white dark:bg-gray-950 border-r border-gray-100 dark:border-gray-800 flex flex-col z-40">
@@ -79,7 +81,7 @@ export function Sidebar() {
             )}
           >
             <ShieldCheck size={18} className="text-gray-400 dark:text-gray-600" />
-            Admin Panel
+            {t.dashboard.nav.admin}
           </Link>
         )}
       </nav>
@@ -91,7 +93,7 @@ export function Sidebar() {
           className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-900 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
         >
           <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-            {isDark ? 'Mode sombre' : 'Mode clair'}
+            {isDark ? t.dashboard.nav.darkMode : t.dashboard.nav.lightMode}
           </span>
           <div className="flex items-center gap-1">
             <Sun size={13} className={isDark ? 'text-gray-500' : 'text-amber-500'} />
@@ -108,9 +110,9 @@ export function Sidebar() {
           <Link href="/upgrade" className="block p-3 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border border-blue-100 dark:border-blue-900 hover:border-blue-200 transition-colors">
             <div className="flex items-center gap-2 mb-1">
               <CreditCard size={14} className="text-blue-600 dark:text-blue-400" />
-              <span className="text-xs font-semibold text-blue-800 dark:text-blue-300">Upgrade to Pro</span>
+              <span className="text-xs font-semibold text-blue-800 dark:text-blue-300">{t.dashboard.nav.upgradeTitle}</span>
             </div>
-            <p className="text-xs text-blue-600 dark:text-blue-400">Unlock AI analysis & email</p>
+            <p className="text-xs text-blue-600 dark:text-blue-400">{t.dashboard.nav.upgradeDesc}</p>
           </Link>
         </div>
       )}
@@ -129,7 +131,7 @@ export function Sidebar() {
           <button
             onClick={() => signOut({ callbackUrl: '/' })}
             className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded transition-colors"
-            title="Se déconnecter"
+            title={t.dashboard.nav.signOut}
           >
             <LogOut size={15} />
           </button>
