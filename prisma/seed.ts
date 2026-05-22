@@ -19,7 +19,7 @@ async function main() {
 
   await prisma.user.upsert({
     where: { email: 'admin@cvmatch.ai' },
-    update: {},
+    update: { password: adminPassword, role: 'admin', subscription: 'enterprise' },
     create: {
       email: 'admin@cvmatch.ai', name: 'Admin User',
       password: adminPassword, role: 'admin',
@@ -29,7 +29,7 @@ async function main() {
 
   const recruiter = await prisma.user.upsert({
     where: { email: 'demo@cvmatch.ai' },
-    update: { subscription: 'free' },
+    update: { password: recruiterPassword, subscription: 'free' },
     create: {
       email: 'demo@cvmatch.ai', name: 'Demo Recruiter',
       password: recruiterPassword, role: 'recruiter',
@@ -39,7 +39,7 @@ async function main() {
 
   const proUser = await prisma.user.upsert({
     where: { email: 'pro@cvmatch.ai' },
-    update: { subscription: 'pro' },
+    update: { password: proPassword, subscription: 'pro' },
     create: {
       email: 'pro@cvmatch.ai', name: 'Demo Pro',
       password: proPassword, role: 'recruiter',
@@ -49,7 +49,7 @@ async function main() {
 
   await prisma.user.upsert({
     where: { email: 'free@cvmatch.ai' },
-    update: { subscription: 'free' },
+    update: { password: freePassword, subscription: 'free' },
     create: {
       email: 'free@cvmatch.ai', name: 'Demo Gratuit',
       password: freePassword, role: 'recruiter',
