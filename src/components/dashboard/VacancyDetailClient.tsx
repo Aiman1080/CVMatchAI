@@ -190,7 +190,7 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy; us
         </Card>
 
         <div className="space-y-4">
-          <Card className="border-0 shadow-sm">
+          <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
             <CardContent className="p-5">
               <div className="text-center mb-4">
                 <div className="text-4xl font-bold text-gray-900 dark:text-white">{vacancy.candidates.length}</div>
@@ -217,7 +217,7 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy; us
       </div>
 
       {/* Candidate Rankings */}
-      <Card className="border-0 shadow-sm">
+      <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
         <CardHeader className="pb-3 flex flex-row items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
             <Star className="w-4 h-4 text-amber-500" />

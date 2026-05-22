@@ -12,7 +12,7 @@ export function RecentVacancies({ vacancies }: { vacancies: Vacancy[] }) {
   const { t } = useLanguage()
   const rv = t.dashboard.recentVacancies
   return (
-    <Card className="border-0 shadow-sm">
+    <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-base">{rv.title}</CardTitle>
         <Link href="/vacancies" className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1">{rv.manage} <ArrowRight size={14} /></Link>

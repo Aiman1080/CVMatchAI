@@ -196,7 +196,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
   return (
     <div className="space-y-6">
       {/* Profile Header */}
-      <Card className="border-0 shadow-sm">
+      <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
         <CardContent className="p-6">
           <div className="flex flex-col lg:flex-row items-start gap-6">
             <div className="flex items-center gap-4 flex-1">
@@ -305,7 +305,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left column */}
         <div className="space-y-4">
-          <Card className="border-0 shadow-sm">
+          <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">
                 <User className="w-4 h-4 text-blue-500" /> Contact
@@ -339,7 +339,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
           </Card>
 
           {skills.length > 0 && (
-            <Card className="border-0 shadow-sm">
+            <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm">{cd.skills}</CardTitle>
               </CardHeader>
@@ -354,7 +354,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
           )}
 
           {score > 0 && (
-            <Card className="border-0 shadow-sm">
+            <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm">{cd.match}</CardTitle>
               </CardHeader>
@@ -389,7 +389,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
             <TabsContent value="analysis" className="space-y-4 mt-4">
               {candidate.summary ? (
                 <>
-                  <Card className="border-0 shadow-sm">
+                  <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm flex items-center gap-2 text-gray-700 dark:text-gray-300">
                         <Award className="w-4 h-4 text-blue-500" /> {cd.aiAnalysis}
@@ -440,7 +440,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                   {(candidate.experience || candidate.education) && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {candidate.experience && (
-                        <Card className="border-0 shadow-sm">
+                        <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
                           <CardContent className="p-4">
                             <div className="flex items-center gap-2 mb-2">
                               <Briefcase className="w-4 h-4 text-indigo-500" />
@@ -451,7 +451,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                         </Card>
                       )}
                       {candidate.education && (
-                        <Card className="border-0 shadow-sm">
+                        <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
                           <CardContent className="p-4">
                             <div className="flex items-center gap-2 mb-2">
                               <GraduationCap className="w-4 h-4 text-purple-500" />
@@ -465,7 +465,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                   )}
 
                   {candidate.recommendation && (
-                    <Card className="border-0 shadow-sm">
+                    <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
                       <CardContent className="p-4 flex items-center gap-3">
                         <div className="text-2xl">{candidate.recommendation === 'strong_yes' ? '🎯' : candidate.recommendation === 'yes' ? '✅' : candidate.recommendation === 'maybe' ? '🤔' : '❌'}</div>
                         <div>
@@ -477,7 +477,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                   )}
                 </>
               ) : (
-                <Card className="border-0 shadow-sm">
+                <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
                   <CardContent className="py-12 text-center">
                     <Star className="w-8 h-8 text-gray-300 mx-auto mb-2" />
                     <p className="text-gray-400 text-sm">{cd.noAnalysis}</p>
@@ -494,7 +494,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
 
             {/* ── Notes tab ── */}
             <TabsContent value="notes" className="mt-4">
-              <Card className="border-0 shadow-sm">
+              <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-sm flex items-center gap-2">
@@ -519,7 +519,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
             {/* ── Email source tab ── */}
             {hasEmailSource && (
               <TabsContent value="email" className="mt-4">
-                <Card className="border-0 shadow-sm">
+                <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm flex items-center gap-2">
                       <Mail className="w-4 h-4 text-blue-500" /> {cd.emailPanel}
@@ -570,7 +570,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
 
             {/* ── CV tab ── */}
             <TabsContent value="cv" className="mt-4">
-              <Card className="border-0 shadow-sm">
+              <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm flex items-center gap-2">
                     <FileText className="w-4 h-4 text-gray-400" /> CV
@@ -591,7 +591,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
             {/* ── Motivation tab ── */}
             {hasMotivationText && (
               <TabsContent value="motivation" className="mt-4">
-                <Card className="border-0 shadow-sm">
+                <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm flex items-center gap-2">
                       <FileText className="w-4 h-4 text-indigo-400" /> Motivation

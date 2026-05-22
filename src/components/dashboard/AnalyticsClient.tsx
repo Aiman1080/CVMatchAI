@@ -1,5 +1,5 @@
 'use client'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, ReferenceLine } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useTheme } from 'next-themes'
 import { TrendingUp } from 'lucide-react'
@@ -17,7 +17,8 @@ export function AnalyticsClient({ candidates, vacancies, candidatesOverTime }: P
   const { theme } = useTheme()
   const { t } = useLanguage()
   const ta = t.dashboard.analytics
-  const gridColor = theme === 'dark' ? '#374151' : '#f0f0f0'
+  const gridColor = theme === 'dark' ? '#374151' : '#e5e7eb'
+  const todayDate = new Date().toISOString().slice(0, 10)
 
   const statusData = ['new', 'reviewing', 'shortlisted', 'rejected', 'hired'].map(s => ({ name: s.charAt(0).toUpperCase() + s.slice(1), value: candidates.filter(c => c.status === s).length })).filter(d => d.value > 0)
   const scoreDistribution = [
@@ -51,7 +52,7 @@ export function AnalyticsClient({ candidates, vacancies, candidatesOverTime }: P
           { label: ta.shortlistRate, value: `${shortlistRate}%`, color: 'text-purple-600' },
           { label: ta.activeVacancies, value: vacancies.length, color: 'text-amber-600' },
         ].map(kpi => (
-          <Card key={kpi.label} className="border-0 shadow-sm">
+          <Card key={kpi.label} className="border border-gray-200 shadow-sm dark:border-gray-800">
             <CardContent className="p-5 text-center">
               <div className={`text-3xl font-bold ${kpi.color}`}>{kpi.value}</div>
               <div className="text-xs text-gray-500 mt-1">{kpi.label}</div>
@@ -61,7 +62,7 @@ export function AnalyticsClient({ candidates, vacancies, candidatesOverTime }: P
       </div>
 
       {/* Time-series area chart — full width, most prominent */}
-      <Card className="border-0 shadow-sm">
+      <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-blue-500" /> {ta.over30days}
@@ -80,6 +81,13 @@ export function AnalyticsClient({ candidates, vacancies, candidatesOverTime }: P
               <XAxis dataKey="date" tick={{ fontSize: 10 }} interval={4} />
               <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
               <Tooltip />
+              <ReferenceLine
+                x={todayDate}
+                stroke={theme === 'dark' ? '#94a3b8' : '#1e293b'}
+                strokeWidth={2}
+                strokeDasharray="4 3"
+                label={{ value: "Aujourd'hui", position: 'top', fontSize: 10, fill: theme === 'dark' ? '#94a3b8' : '#1e293b' }}
+              />
               <Area type="monotone" dataKey="count" stroke="#3b82f6" strokeWidth={2} fill="url(#colorCount)" name="Candidats" />
             </AreaChart>
           </ResponsiveContainer>
@@ -88,7 +96,7 @@ export function AnalyticsClient({ candidates, vacancies, candidatesOverTime }: P
 
       {/* Score distribution + pipeline status */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border-0 shadow-sm">
+        <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
           <CardHeader className="pb-3"><CardTitle className="text-base">{ta.scoreDistribution}</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={220}>
@@ -102,7 +110,7 @@ export function AnalyticsClient({ candidates, vacancies, candidatesOverTime }: P
             </ResponsiveContainer>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-sm">
+        <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
           <CardHeader className="pb-3"><CardTitle className="text-base">{ta.pipeline}</CardTitle></CardHeader>
           <CardContent>
             {statusData.length > 0 ? (
@@ -121,7 +129,7 @@ export function AnalyticsClient({ candidates, vacancies, candidatesOverTime }: P
 
       {/* Candidates per vacancy + sources pie */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border-0 shadow-sm">
+        <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
           <CardHeader className="pb-3"><CardTitle className="text-base">{ta.byVacancy}</CardTitle></CardHeader>
           <CardContent>
             {vacancyData.length > 0 ? (
@@ -137,7 +145,7 @@ export function AnalyticsClient({ candidates, vacancies, candidatesOverTime }: P
             ) : <div className="h-[220px] flex items-center justify-center text-gray-400 text-sm">No data yet</div>}
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-sm">
+        <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
           <CardHeader className="pb-3"><CardTitle className="text-base">{ta.sources}</CardTitle></CardHeader>
           <CardContent>
             {sourcesData.length > 0 ? (

@@ -193,7 +193,7 @@ export function SettingsClient({ user }: Props) {
 
       <TabsContent value="privacy">
         <div className="max-w-2xl space-y-4">
-          <Card className="border-0 shadow-sm">
+          <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base text-gray-900 dark:text-white"><Shield className="w-4 h-4" />GDPR & Data Privacy</CardTitle>
               <CardDescription>Manage how candidate data is stored and processed</CardDescription>

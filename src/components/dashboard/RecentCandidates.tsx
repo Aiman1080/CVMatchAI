@@ -14,7 +14,7 @@ export function RecentCandidates({ candidates }: { candidates: Candidate[] }) {
   const { t } = useLanguage()
   const rc = t.dashboard.recentCandidates
   return (
-    <Card className="border-0 shadow-sm">
+    <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-base">{rc.title}</CardTitle>
         <Link href="/candidates" className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1">{rc.viewAll} <ArrowRight size={14} /></Link>

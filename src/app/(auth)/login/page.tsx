@@ -42,9 +42,30 @@ export default function LoginPage() {
           <p className="text-gray-500 text-sm mt-1">Sign in to CVMatch AI</p>
         </div>
         <div className="flex gap-2 mb-6">
-          <button onClick={() => fillDemo('free')} className="flex-1 text-xs bg-blue-50 text-blue-700 px-3 py-2 rounded-lg hover:bg-blue-100 transition-colors font-medium">Demo Gratuit</button>
-          <button onClick={() => fillDemo('pro')} className="flex-1 text-xs bg-green-50 text-green-700 px-3 py-2 rounded-lg hover:bg-green-100 transition-colors font-medium">Demo Pro</button>
-          <button onClick={() => fillDemo('admin')} className="flex-1 text-xs bg-purple-50 text-purple-700 px-3 py-2 rounded-lg hover:bg-purple-100 transition-colors font-medium">Demo Admin</button>
+          <button
+            onClick={() => fillDemo('free')}
+            title="demo@cvmatch.ai / recruiter123"
+            className="flex-1 text-xs bg-blue-50 text-blue-700 px-3 py-2 rounded-lg hover:bg-blue-100 transition-colors font-medium"
+          >
+            Demo Gratuit
+            <span className="block text-blue-400 font-normal" style={{ fontSize: '10px' }}>recruiter123</span>
+          </button>
+          <button
+            onClick={() => fillDemo('pro')}
+            title="pro@cvmatch.ai / pro123"
+            className="flex-1 text-xs bg-green-50 text-green-700 px-3 py-2 rounded-lg hover:bg-green-100 transition-colors font-medium"
+          >
+            Demo Pro
+            <span className="block text-green-400 font-normal" style={{ fontSize: '10px' }}>pro123</span>
+          </button>
+          <button
+            onClick={() => fillDemo('admin')}
+            title="admin@cvmatch.ai / admin123"
+            className="flex-1 text-xs bg-purple-50 text-purple-700 px-3 py-2 rounded-lg hover:bg-purple-100 transition-colors font-medium"
+          >
+            Demo Admin
+            <span className="block text-purple-400 font-normal" style={{ fontSize: '10px' }}>admin123</span>
+          </button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">

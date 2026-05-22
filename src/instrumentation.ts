@@ -21,16 +21,29 @@ export async function register() {
             subscription: 'enterprise',
           },
           {
+            email: 'pro@cvmatch.ai',
+            name: 'Pro Recruiter',
+            password: await bcrypt.hash('pro123', 12),
+            role: 'recruiter',
+            company: 'TechStartup NV',
+            subscription: 'pro',
+          },
+          {
             email: 'demo@cvmatch.ai',
             name: 'Demo Recruiter',
             password: await bcrypt.hash('recruiter123', 12),
             role: 'recruiter',
             company: 'Acme Corp',
-            subscription: 'pro',
+            subscription: 'free',
           },
         ],
       })
-      console.log('✅ CVMatch AI: demo accounts created — admin@cvmatch.ai / admin123 | demo@cvmatch.ai / recruiter123')
+      console.log(
+        '✅ CVMatch AI: demo accounts created\n' +
+        '  admin:   admin@cvmatch.ai  / admin123\n' +
+        '  pro:     pro@cvmatch.ai    / pro123\n' +
+        '  free:    demo@cvmatch.ai   / recruiter123'
+      )
     }
   } catch {
     // Tables not created yet — run: npx prisma db push

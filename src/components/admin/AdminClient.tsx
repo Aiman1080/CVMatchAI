@@ -290,7 +290,7 @@ export function AdminClient({
           { label: 'Inscrits 7j', value: newUsersThisWeek, icon: UserPlus, color: 'text-cyan-600', bg: 'bg-cyan-50 dark:bg-cyan-950' },
           { label: 'Tickets ouverts', value: counts.openTickets, icon: MessageSquare, color: counts.openTickets > 0 ? 'text-red-600' : 'text-gray-400', bg: counts.openTickets > 0 ? 'bg-red-50 dark:bg-red-950' : 'bg-gray-50 dark:bg-gray-800' },
         ].map(s => (
-          <Card key={s.label} className="border-0 shadow-sm dark:bg-gray-900">
+          <Card key={s.label} className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <CardContent className="p-3 flex items-center gap-2">
               <div className={`p-2 rounded-lg ${s.bg} shrink-0`}>
                 <s.icon className={`w-3.5 h-3.5 ${s.color}`} />
@@ -305,7 +305,7 @@ export function AdminClient({
       </div>
 
       {/* ── Health bar ── */}
-      <Card className="border-0 shadow-sm dark:bg-gray-900">
+      <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
         <CardContent className="p-4">
           <div className="flex flex-wrap gap-x-6 gap-y-2 items-center">
             <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">État système</span>
@@ -328,7 +328,7 @@ export function AdminClient({
 
       {/* ── Main Tabs ── */}
       <Tabs defaultValue="accounts">
-        <TabsList className="dark:bg-gray-800">
+        <TabsList>
           <TabsTrigger value="accounts">Comptes ({users.length})</TabsTrigger>
           <TabsTrigger value="support">
             Support
@@ -343,7 +343,7 @@ export function AdminClient({
 
         {/* ══ Comptes tab ══ */}
         <TabsContent value="accounts" className="mt-4">
-          <Card className="border-0 shadow-sm dark:bg-gray-900">
+          <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -575,7 +575,7 @@ export function AdminClient({
         {/* ══ Support tab ══ */}
         <TabsContent value="support" className="mt-4 space-y-3">
           {tickets.length === 0 ? (
-            <Card className="border-0 shadow-sm dark:bg-gray-900">
+            <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
               <CardContent className="py-12 text-center">
                 <MessageSquare className="w-8 h-8 text-gray-200 mx-auto mb-2" />
                 <p className="text-gray-400 text-sm">Aucun ticket support</p>
@@ -584,7 +584,7 @@ export function AdminClient({
           ) : tickets.map(ticket => (
             <Card
               key={ticket.id}
-              className={cn('border-0 shadow-sm dark:bg-gray-900 transition-all cursor-pointer hover:shadow-md',
+              className={cn('border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900 transition-all cursor-pointer hover:shadow-md',
                 (ticket.status === 'resolved' || ticket.status === 'closed') && 'opacity-70'
               )}
               onClick={() => setExpandedTicket(expandedTicket === ticket.id ? null : ticket.id)}
@@ -650,7 +650,7 @@ export function AdminClient({
         {/* ══ Intelligence Artificielle tab ══ */}
         <TabsContent value="ai" className="mt-4 space-y-6">
           {/* Model overview */}
-          <Card className="border-0 shadow-sm dark:bg-gray-900">
+          <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <Bot className="w-4 h-4 text-violet-500" /> Modèle IA en production
@@ -685,7 +685,7 @@ export function AdminClient({
           {/* Feature cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {aiFeatures.map(feature => (
-              <Card key={feature.name} className="border-0 shadow-sm dark:bg-gray-900">
+              <Card key={feature.name} className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm flex items-center justify-between">
                     <span className="flex items-center gap-2">
@@ -733,7 +733,7 @@ export function AdminClient({
         {/* ══ Statistiques tab ══ */}
         <TabsContent value="stats" className="mt-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <Card className="border-0 shadow-sm dark:bg-gray-900">
+            <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-blue-500" /> Répartition des abonnements
@@ -763,7 +763,7 @@ export function AdminClient({
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm dark:bg-gray-900">
+            <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <BarChart3 className="w-4 h-4 text-green-500" /> Pipeline candidats
@@ -794,7 +794,7 @@ export function AdminClient({
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm dark:bg-gray-900">
+            <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <RefreshCw className="w-4 h-4 text-orange-500" /> Sources des candidats
@@ -822,7 +822,7 @@ export function AdminClient({
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm dark:bg-gray-900">
+            <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <Activity className="w-4 h-4 text-indigo-500" /> Activité récente
@@ -849,7 +849,7 @@ export function AdminClient({
         {/* ══ Système tab ══ */}
         <TabsContent value="system" className="mt-4 space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <Card className="border-0 shadow-sm dark:bg-gray-900">
+            <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <Database className="w-4 h-4 text-blue-500" /> Base de données
@@ -875,7 +875,7 @@ export function AdminClient({
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm dark:bg-gray-900">
+            <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <Network className="w-4 h-4 text-orange-500" /> Intégrations ATS
@@ -902,7 +902,7 @@ export function AdminClient({
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm dark:bg-gray-900">
+            <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <GitBranch className="w-4 h-4 text-teal-500" /> Stack technique
@@ -928,7 +928,7 @@ export function AdminClient({
             </Card>
           </div>
 
-          <Card className="border-0 shadow-sm dark:bg-gray-900">
+          <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
                 <Briefcase className="w-4 h-4 text-indigo-500" /> Dernières offres publiées

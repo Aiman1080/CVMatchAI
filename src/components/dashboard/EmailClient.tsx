@@ -193,7 +193,7 @@ export function EmailClient() {
           { icon: Scan, title: 'AI Agent Scans', desc: 'Claude AI agent reads emails, detects CVs & motivation letters, ignores spam.' },
           { icon: CheckCircle, title: 'Auto-Match', desc: 'Candidates are created, analyzed, and matched to your active vacancies automatically.' },
         ].map((item, i) => (
-          <Card key={i} className="border-0 shadow-sm">
+          <Card key={i} className="border border-gray-200 shadow-sm dark:border-gray-800">
             <CardContent className="p-5">
               <div className="w-8 h-8 rounded-lg gradient-bg flex items-center justify-center mb-3">
                 <item.icon className="w-4 h-4 text-white" />
@@ -205,7 +205,7 @@ export function EmailClient() {
         ))}
       </div>
 
-      <Card className="border-0 shadow-sm">
+      <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
         <CardHeader className="flex flex-row items-center justify-between pb-3">
           <CardTitle className="text-base">Connected Inboxes</CardTitle>
           <Button onClick={() => setShowConnect(true)} size="sm" className="gradient-bg gap-1.5">
