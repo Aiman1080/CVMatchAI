@@ -10,11 +10,15 @@ export async function GET() {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const userId = (session.user as any).id
-  const integrations = await prisma.integration.findMany({
-    where: { userId },
-    orderBy: { createdAt: 'desc' },
-  })
-  return NextResponse.json(integrations.map(i => ({ ...i, apiKey: '••••••••' })))
+  try {
+    const integrations = await prisma.integration.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    })
+    return NextResponse.json(integrations.map(i => ({ ...i, apiKey: '••••••••' })))
+  } catch {
+    return NextResponse.json({ error: 'Failed to load integrations' }, { status: 500 })
+  }
 }
 
 export async function POST(req: Request) {
@@ -43,11 +47,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: `Connection failed: ${testResult.error}` }, { status: 400 })
   }
 
-  const integration = await prisma.integration.upsert({
-    where: { platform_userId: { platform, userId } },
-    create: { platform, apiKey, companySlug: companySlug || null, userId, status: 'active' },
-    update: { apiKey, companySlug: companySlug || null, status: 'active' },
-  })
-
-  return NextResponse.json({ ...integration, apiKey: '••••••••', company: testResult.company })
+  try {
+    const integration = await prisma.integration.upsert({
+      where: { platform_userId: { platform, userId } },
+      create: { platform, apiKey, companySlug: companySlug || null, userId, status: 'active' },
+      update: { apiKey, companySlug: companySlug || null, status: 'active' },
+    })
+    return NextResponse.json({ ...integration, apiKey: '••••••••', company: testResult.company })
+  } catch {
+    return NextResponse.json({ error: 'Failed to save integration' }, { status: 500 })
+  }
 }

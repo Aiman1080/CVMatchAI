@@ -19,10 +19,14 @@ export async function GET(req: Request) {
   const where: any = isAdmin ? {} : { userId }
   if (vacancyId) where.vacancyId = vacancyId
   if (status) where.status = status
-  const candidates = await prisma.candidate.findMany({
-    where,
-    include: { vacancy: { select: { title: true, company: true } } },
-    orderBy: [{ matchScore: 'desc' }, { createdAt: 'desc' }],
-  })
-  return NextResponse.json(candidates)
+  try {
+    const candidates = await prisma.candidate.findMany({
+      where,
+      include: { vacancy: { select: { title: true, company: true } } },
+      orderBy: [{ matchScore: 'desc' }, { createdAt: 'desc' }],
+    })
+    return NextResponse.json(candidates)
+  } catch {
+    return NextResponse.json({ error: 'Failed to load candidates' }, { status: 500 })
+  }
 }

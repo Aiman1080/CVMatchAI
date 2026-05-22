@@ -11,12 +11,16 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const { id } = await params
-  const ticket = await prisma.supportTicket.findUnique({
-    where: { id },
-    include: { user: { select: { name: true, email: true } } },
-  })
-  if (!ticket) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  return NextResponse.json(ticket)
+  try {
+    const ticket = await prisma.supportTicket.findUnique({
+      where: { id },
+      include: { user: { select: { name: true, email: true } } },
+    })
+    if (!ticket) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    return NextResponse.json(ticket)
+  } catch {
+    return NextResponse.json({ error: 'Failed to load ticket' }, { status: 500 })
+  }
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -26,15 +30,22 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const { id } = await params
-  const { status, adminReply } = await req.json()
-
-  const ticket = await prisma.supportTicket.update({
-    where: { id },
-    data: {
-      ...(status && { status }),
-      ...(adminReply !== undefined && { adminReply, repliedAt: new Date() }),
-    },
-    include: { user: { select: { name: true, email: true } } },
-  })
-  return NextResponse.json(ticket)
+  try {
+    const { status, adminReply } = await req.json()
+    const allowedStatuses = ['open', 'in_progress', 'resolved', 'closed']
+    if (status && !allowedStatuses.includes(status)) {
+      return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
+    }
+    const ticket = await prisma.supportTicket.update({
+      where: { id },
+      data: {
+        ...(status && { status }),
+        ...(adminReply !== undefined && { adminReply, repliedAt: new Date() }),
+      },
+      include: { user: { select: { name: true, email: true } } },
+    })
+    return NextResponse.json(ticket)
+  } catch {
+    return NextResponse.json({ error: 'Failed to update ticket' }, { status: 500 })
+  }
 }

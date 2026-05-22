@@ -11,9 +11,13 @@ export async function GET() {
   if ((session.user as any).role !== 'admin')
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const tickets = await prisma.supportTicket.findMany({
-    orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
-    include: { user: { select: { name: true, email: true, company: true, subscription: true } } },
-  })
-  return NextResponse.json(tickets)
+  try {
+    const tickets = await prisma.supportTicket.findMany({
+      orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
+      include: { user: { select: { name: true, email: true, company: true, subscription: true } } },
+    })
+    return NextResponse.json(tickets)
+  } catch {
+    return NextResponse.json({ error: 'Failed to load tickets' }, { status: 500 })
+  }
 }

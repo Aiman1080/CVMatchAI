@@ -43,7 +43,8 @@ export function SupportClient() {
   useEffect(() => {
     fetch('/api/support')
       .then(r => r.json())
-      .then(data => { setTickets(data); setLoading(false) })
+      .then(data => { setTickets(Array.isArray(data) ? data : []); setLoading(false) })
+      .catch(() => setLoading(false))
   }, [])
 
   const submit = async () => {

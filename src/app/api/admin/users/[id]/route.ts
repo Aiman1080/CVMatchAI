@@ -19,9 +19,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const { id } = await params
-  const user = await prisma.user.findUnique({ where: { id }, select: USER_SELECT })
-  if (!user) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  return NextResponse.json(user)
+  try {
+    const user = await prisma.user.findUnique({ where: { id }, select: USER_SELECT })
+    if (!user) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    return NextResponse.json(user)
+  } catch {
+    return NextResponse.json({ error: 'Failed to load user' }, { status: 500 })
+  }
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -31,17 +35,21 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const { id } = await params
-  const body = await req.json()
-  const allowed = ['subscription', 'role', 'suspended', 'name', 'company', 'subscriptionEnd']
-  const data: Record<string, any> = {}
-  for (const key of allowed) if (key in body) data[key] = body[key]
+  try {
+    const body = await req.json()
+    const allowed = ['subscription', 'role', 'suspended', 'name', 'company', 'subscriptionEnd']
+    const data: Record<string, any> = {}
+    for (const key of allowed) if (key in body) data[key] = body[key]
 
-  if ('subscriptionEnd' in body) {
-    data.subscriptionEnd = body.subscriptionEnd ? new Date(body.subscriptionEnd) : null
+    if ('subscriptionEnd' in body) {
+      data.subscriptionEnd = body.subscriptionEnd ? new Date(body.subscriptionEnd) : null
+    }
+
+    const user = await prisma.user.update({ where: { id }, data, select: USER_SELECT })
+    return NextResponse.json(user)
+  } catch {
+    return NextResponse.json({ error: 'Failed to update user' }, { status: 500 })
   }
-
-  const user = await prisma.user.update({ where: { id }, data, select: USER_SELECT })
-  return NextResponse.json(user)
 }
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -51,6 +59,12 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const { id } = await params
-  await prisma.user.delete({ where: { id } })
-  return NextResponse.json({ success: true })
+  const adminId = (session.user as any).id
+  if (id === adminId) return NextResponse.json({ error: 'Cannot delete your own account' }, { status: 400 })
+  try {
+    await prisma.user.delete({ where: { id } })
+    return NextResponse.json({ success: true })
+  } catch {
+    return NextResponse.json({ error: 'Failed to delete user' }, { status: 500 })
+  }
 }

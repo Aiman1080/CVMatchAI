@@ -9,11 +9,15 @@ export async function GET() {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const userId = (session.user as any).id
-  const [vacancyCount, candidateCount] = await Promise.all([
-    prisma.vacancy.count({ where: { userId } }),
-    prisma.candidate.count({ where: { userId } }),
-  ])
-  return NextResponse.json({ vacancyCount, candidateCount, subscription: (session.user as any).subscription })
+  try {
+    const [vacancyCount, candidateCount] = await Promise.all([
+      prisma.vacancy.count({ where: { userId } }),
+      prisma.candidate.count({ where: { userId } }),
+    ])
+    return NextResponse.json({ vacancyCount, candidateCount, subscription: (session.user as any).subscription })
+  } catch {
+    return NextResponse.json({ error: 'Failed to load user stats' }, { status: 500 })
+  }
 }
 
 // Only `name` and `company` can be updated — email and role changes require admin.
@@ -22,20 +26,24 @@ export async function PATCH(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const userId = (session.user as any).id
-  const body = await req.json()
+  try {
+    const body = await req.json()
 
-  const data: any = {}
-  if (body.name !== undefined) data.name = body.name
-  if (body.company !== undefined) data.company = body.company
+    const data: any = {}
+    if (body.name !== undefined) data.name = body.name
+    if (body.company !== undefined) data.company = body.company
 
-  if (body.newPassword) {
-    if (!body.currentPassword) return NextResponse.json({ error: 'Current password required' }, { status: 400 })
-    const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { password: true } })
-    const valid = dbUser?.password && await bcrypt.compare(body.currentPassword, dbUser.password)
-    if (!valid) return NextResponse.json({ error: 'Current password is incorrect' }, { status: 401 })
-    data.password = await bcrypt.hash(body.newPassword, 12)
+    if (body.newPassword) {
+      if (!body.currentPassword) return NextResponse.json({ error: 'Current password required' }, { status: 400 })
+      const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { password: true } })
+      const valid = dbUser?.password && await bcrypt.compare(body.currentPassword, dbUser.password)
+      if (!valid) return NextResponse.json({ error: 'Current password is incorrect' }, { status: 401 })
+      data.password = await bcrypt.hash(body.newPassword, 12)
+    }
+
+    const user = await prisma.user.update({ where: { id: userId }, data, select: { id: true, name: true, email: true, company: true, role: true, subscription: true, createdAt: true } })
+    return NextResponse.json(user)
+  } catch {
+    return NextResponse.json({ error: 'Failed to update user' }, { status: 500 })
   }
-
-  const user = await prisma.user.update({ where: { id: userId }, data, select: { id: true, name: true, email: true, company: true, role: true, subscription: true, createdAt: true } })
-  return NextResponse.json(user)
 }

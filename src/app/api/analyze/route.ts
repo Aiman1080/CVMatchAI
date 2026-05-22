@@ -17,35 +17,40 @@ export async function POST(req: Request) {
   if (!candidateId) return NextResponse.json({ error: 'candidateId required' }, { status: 400 })
   const userId = (session.user as any).id
 
-  // findFirst with userId scoping prevents IDOR — users can only re-analyze their own candidates
-  const candidate = await prisma.candidate.findFirst({ where: { id: candidateId, userId }, include: { vacancy: true } })
-  if (!candidate || !candidate.cvContent) return NextResponse.json({ error: 'Candidate or CV not found' }, { status: 404 })
+  try {
+    // findFirst with userId scoping prevents IDOR — users can only re-analyze their own candidates
+    const candidate = await prisma.candidate.findFirst({ where: { id: candidateId, userId }, include: { vacancy: true } })
+    if (!candidate || !candidate.cvContent) return NextResponse.json({ error: 'Candidate or CV not found' }, { status: 404 })
 
-  const analysis = await analyzeCVAgainstVacancy(
-    candidate.cvContent,
-    candidate.vacancy?.title ?? 'Open position',
-    candidate.vacancy?.description ?? '',
-    candidate.vacancy?.requirements ?? '',
-    candidate.motivationText || undefined,
-  )
+    const analysis = await analyzeCVAgainstVacancy(
+      candidate.cvContent,
+      candidate.vacancy?.title ?? 'Open position',
+      candidate.vacancy?.description ?? '',
+      candidate.vacancy?.requirements ?? '',
+      candidate.motivationText || undefined,
+    )
 
-  // Also update contact fields extracted from the CV (only overwrite if currently unknown/empty)
-  const contactPatch: any = {}
-  if (analysis.firstName && candidate.firstName === 'Unknown') contactPatch.firstName = analysis.firstName
-  if (analysis.lastName && candidate.lastName === 'Candidate') contactPatch.lastName = analysis.lastName
-  if (analysis.email && !candidate.email) contactPatch.email = analysis.email
-  if (analysis.phone && !candidate.phone) contactPatch.phone = analysis.phone
-  if (analysis.language) contactPatch.language = analysis.language
+    // Also update contact fields extracted from the CV (only overwrite if currently unknown/empty)
+    const contactPatch: any = {}
+    if (analysis.firstName && candidate.firstName === 'Unknown') contactPatch.firstName = analysis.firstName
+    if (analysis.lastName && candidate.lastName === 'Candidate') contactPatch.lastName = analysis.lastName
+    if (analysis.email && !candidate.email) contactPatch.email = analysis.email
+    if (analysis.phone && !candidate.phone) contactPatch.phone = analysis.phone
+    if (analysis.language) contactPatch.language = analysis.language
 
-  const updated = await prisma.candidate.update({
-    where: { id: candidateId },
-    data: {
-      matchScore: analysis.matchScore, summary: analysis.summary,
-      strengths: JSON.stringify(analysis.strengths), weaknesses: JSON.stringify(analysis.weaknesses),
-      skills: JSON.stringify(analysis.skills), experience: analysis.experience,
-      education: analysis.education, recommendation: analysis.recommendation, analyzedAt: new Date(),
-      ...contactPatch,
-    },
-  })
-  return NextResponse.json({ success: true, candidate: updated, analysis })
+    const updated = await prisma.candidate.update({
+      where: { id: candidateId },
+      data: {
+        matchScore: analysis.matchScore, summary: analysis.summary,
+        strengths: JSON.stringify(analysis.strengths), weaknesses: JSON.stringify(analysis.weaknesses),
+        skills: JSON.stringify(analysis.skills), experience: analysis.experience,
+        education: analysis.education, recommendation: analysis.recommendation, analyzedAt: new Date(),
+        ...contactPatch,
+      },
+    })
+    return NextResponse.json({ success: true, candidate: updated, analysis })
+  } catch (error) {
+    console.error('Analyze error:', error)
+    return NextResponse.json({ error: 'Analysis failed' }, { status: 500 })
+  }
 }

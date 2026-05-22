@@ -12,13 +12,17 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params
   const userId = (session.user as any).id
   const isAdmin = (session.user as any).role === 'admin'
-  const vacancy = await prisma.vacancy.findFirst({
-    where: isAdmin ? { id } : { id, userId },
-    // Include candidates sorted by score descending for instant ranking display
-    include: { candidates: { orderBy: { matchScore: 'desc' } }, _count: { select: { candidates: true } } },
-  })
-  if (!vacancy) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  return NextResponse.json(vacancy)
+  try {
+    const vacancy = await prisma.vacancy.findFirst({
+      where: isAdmin ? { id } : { id, userId },
+      // Include candidates sorted by score descending for instant ranking display
+      include: { candidates: { orderBy: { matchScore: 'desc' } }, _count: { select: { candidates: true } } },
+    })
+    if (!vacancy) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    return NextResponse.json(vacancy)
+  } catch {
+    return NextResponse.json({ error: 'Failed to load vacancy' }, { status: 500 })
+  }
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -27,15 +31,23 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const { id } = await params
   const userId = (session.user as any).id
   const isAdmin = (session.user as any).role === 'admin'
-  // Ownership check: only the owner or admin can modify
-  const existing = await prisma.vacancy.findFirst({ where: isAdmin ? { id } : { id, userId } })
-  if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  const body = await req.json()
-  const allowed = ['title', 'company', 'department', 'location', 'type', 'description', 'requirements', 'niceToHave', 'salary', 'language', 'status']
-  const data: any = {}
-  for (const key of allowed) { if (body[key] !== undefined) data[key] = body[key] }
-  const vacancy = await prisma.vacancy.update({ where: { id }, data })
-  return NextResponse.json(vacancy)
+  try {
+    // Ownership check: only the owner or admin can modify
+    const existing = await prisma.vacancy.findFirst({ where: isAdmin ? { id } : { id, userId } })
+    if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    const body = await req.json()
+    const allowed = ['title', 'company', 'department', 'location', 'type', 'description', 'requirements', 'niceToHave', 'salary', 'language', 'status']
+    const data: any = {}
+    for (const key of allowed) { if (body[key] !== undefined) data[key] = body[key] }
+    const validTypes = ['full-time', 'part-time', 'contract', 'internship', 'remote']
+    if (data.type && !validTypes.includes(data.type)) {
+      return NextResponse.json({ error: 'Invalid type value' }, { status: 400 })
+    }
+    const vacancy = await prisma.vacancy.update({ where: { id }, data })
+    return NextResponse.json(vacancy)
+  } catch {
+    return NextResponse.json({ error: 'Failed to update vacancy' }, { status: 500 })
+  }
 }
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -44,10 +56,14 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   const { id } = await params
   const userId = (session.user as any).id
   const isAdmin = (session.user as any).role === 'admin'
-  // Ownership check before delete
-  const existing = await prisma.vacancy.findFirst({ where: isAdmin ? { id } : { id, userId } })
-  if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  // Cascading deletes for candidates are handled by Prisma schema onDelete rules
-  await prisma.vacancy.delete({ where: { id } })
-  return NextResponse.json({ success: true })
+  try {
+    // Ownership check before delete
+    const existing = await prisma.vacancy.findFirst({ where: isAdmin ? { id } : { id, userId } })
+    if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    // Cascading deletes for candidates are handled by Prisma schema onDelete rules
+    await prisma.vacancy.delete({ where: { id } })
+    return NextResponse.json({ success: true })
+  } catch {
+    return NextResponse.json({ error: 'Failed to delete vacancy' }, { status: 500 })
+  }
 }

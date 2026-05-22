@@ -40,11 +40,16 @@ export async function GET(req: Request) {
   const where: any = isAdmin ? {} : { userId }
   if (vacancyId) where.vacancyId = vacancyId
 
-  const candidates = await prisma.candidate.findMany({
-    where,
-    include: { vacancy: { select: { title: true } } },
-    orderBy: [{ matchScore: 'desc' }, { createdAt: 'desc' }],
-  })
+  let candidates: any[]
+  try {
+    candidates = await prisma.candidate.findMany({
+      where,
+      include: { vacancy: { select: { title: true } } },
+      orderBy: [{ matchScore: 'desc' }, { createdAt: 'desc' }],
+    })
+  } catch {
+    return NextResponse.json({ error: 'Failed to load candidates' }, { status: 500 })
+  }
 
   const csv = toCSV(candidates)
   const filename = `candidates-${vacancyId || 'all'}-${new Date().toISOString().slice(0, 10)}.csv`

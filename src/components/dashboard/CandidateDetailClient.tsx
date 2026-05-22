@@ -47,10 +47,10 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
   const tc = t.dashboard.candidates
 
   const RECOMMENDATION_LABELS: Record<string, string> = {
-    strong_yes: `✅ ${cd.strengths}`,
-    yes: `👍 ${cd.overview}`,
-    maybe: `🤔 ${cd.details}`,
-    no: `❌ ${cd.weaknesses}`,
+    strong_yes: '🎯 Strongly recommended',
+    yes: '✅ Recommended',
+    maybe: '🤔 To consider',
+    no: '❌ Not recommended',
   }
 
   const [candidate, setCandidate] = useState(initial)
@@ -75,20 +75,31 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
 
   const patch = async (data: any) => {
     setUpdating(true)
-    const res = await fetch(`/api/candidates/${candidate.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    })
-    const updated = await res.json()
-    setCandidate((prev: any) => ({ ...prev, ...updated }))
-    setUpdating(false)
-    return updated
+    try {
+      const res = await fetch(`/api/candidates/${candidate.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        toast({ title: err.error || 'Update failed', variant: 'destructive' })
+        return null
+      }
+      const updated = await res.json()
+      setCandidate((prev: any) => ({ ...prev, ...updated }))
+      return updated
+    } catch {
+      toast({ title: 'Update failed', variant: 'destructive' })
+      return null
+    } finally {
+      setUpdating(false)
+    }
   }
 
   const handleStatusChange = async (status: string) => {
-    await patch({ status })
-    toast({ title: cd.status })
+    const result = await patch({ status })
+    if (result) toast({ title: cd.changeStatus, description: status })
   }
 
   const handleToggle = async (field: 'liked' | 'priority' | 'savedToPool') => {
@@ -100,12 +111,17 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
     setNotesSaved(false)
     if (notesTimer.current) clearTimeout(notesTimer.current)
     notesTimer.current = setTimeout(async () => {
-      await fetch(`/api/candidates/${candidate.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notes: val }),
-      })
-      setNotesSaved(true)
+      try {
+        const res = await fetch(`/api/candidates/${candidate.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ notes: val }),
+        })
+        if (res.ok) setNotesSaved(true)
+        else toast({ title: 'Failed to save notes', variant: 'destructive' })
+      } catch {
+        toast({ title: 'Failed to save notes', variant: 'destructive' })
+      }
     }, 800)
   }
 

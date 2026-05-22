@@ -110,7 +110,7 @@ export async function POST(req: Request) {
       if (placeholderCandidateId) {
         await prisma.candidate.delete({ where: { id: placeholderCandidateId } }).catch(() => {})
       }
-      return NextResponse.json({ error: 'Ce candidat a déjà été soumis pour ce poste.' }, { status: 409 })
+      return NextResponse.json({ error: 'This candidate has already been submitted for this vacancy.' }, { status: 409 })
     }
     console.error('Upload error:', error)
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 })

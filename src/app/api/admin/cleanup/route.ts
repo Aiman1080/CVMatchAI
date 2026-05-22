@@ -10,30 +10,37 @@ export async function POST() {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const userId = (session.user as any).id
+  if ((session.user as any).role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  // Fetch all candidates for this user ordered newest first
-  const all = await prisma.candidate.findMany({
-    where: { userId },
-    orderBy: { createdAt: 'desc' },
-    select: { id: true, email: true },
-  })
+  try {
+    // Fetch all candidates for this user ordered newest first
+    const all = await prisma.candidate.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, email: true },
+    })
 
-  const seenEmails = new Set<string>()
-  const toDelete: string[] = []
+    const seenEmails = new Set<string>()
+    const toDelete: string[] = []
 
-  for (const c of all) {
-    if (!c.email) continue
-    if (seenEmails.has(c.email)) {
-      toDelete.push(c.id)
-    } else {
-      seenEmails.add(c.email)
+    for (const c of all) {
+      if (!c.email) continue
+      if (seenEmails.has(c.email)) {
+        toDelete.push(c.id)
+      } else {
+        seenEmails.add(c.email)
+      }
     }
+
+    if (toDelete.length === 0) return NextResponse.json({ deleted: 0 })
+
+    await prisma.$transaction([
+      prisma.emailScan.deleteMany({ where: { candidateId: { in: toDelete } } }),
+      prisma.candidate.deleteMany({ where: { id: { in: toDelete } } }),
+    ])
+
+    return NextResponse.json({ deleted: toDelete.length })
+  } catch {
+    return NextResponse.json({ error: 'Cleanup failed' }, { status: 500 })
   }
-
-  if (toDelete.length === 0) return NextResponse.json({ deleted: 0 })
-
-  await prisma.emailScan.deleteMany({ where: { candidateId: { in: toDelete } } })
-  await prisma.candidate.deleteMany({ where: { id: { in: toDelete } } })
-
-  return NextResponse.json({ deleted: toDelete.length })
 }

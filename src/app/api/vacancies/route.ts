@@ -27,12 +27,16 @@ export async function GET() {
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const userId = (session.user as any).id
   const isAdmin = (session.user as any).role === 'admin'
-  const vacancies = await prisma.vacancy.findMany({
-    where: isAdmin ? {} : { userId },
-    include: { _count: { select: { candidates: true } } },
-    orderBy: { createdAt: 'desc' },
-  })
-  return NextResponse.json(vacancies)
+  try {
+    const vacancies = await prisma.vacancy.findMany({
+      where: isAdmin ? {} : { userId },
+      include: { _count: { select: { candidates: true } } },
+      orderBy: { createdAt: 'desc' },
+    })
+    return NextResponse.json(vacancies)
+  } catch {
+    return NextResponse.json({ error: 'Failed to load vacancies' }, { status: 500 })
+  }
 }
 
 export async function POST(req: Request) {

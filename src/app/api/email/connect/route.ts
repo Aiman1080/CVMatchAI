@@ -50,19 +50,23 @@ export async function POST(req: Request) {
     )
   }
 
-  const inbox = await prisma.emailInbox.create({
-    data: { email, provider, host, port: Number(port) || 993, username, password, userId },
-  })
+  try {
+    const inbox = await prisma.emailInbox.create({
+      data: { email, provider, host, port: Number(port) || 993, username, password, userId },
+    })
 
-  // Return only safe fields — never echo the password back to the client
-  return NextResponse.json({
-    id: inbox.id,
-    email: inbox.email,
-    provider: inbox.provider,
-    active: inbox.active,
-    lastScan: inbox.lastScan,
-    createdAt: inbox.createdAt,
-  })
+    // Return only safe fields — never echo the password back to the client
+    return NextResponse.json({
+      id: inbox.id,
+      email: inbox.email,
+      provider: inbox.provider,
+      active: inbox.active,
+      lastScan: inbox.lastScan,
+      createdAt: inbox.createdAt,
+    })
+  } catch {
+    return NextResponse.json({ error: 'Failed to save inbox configuration' }, { status: 500 })
+  }
 }
 
 // deleteMany with userId constraint prevents deleting another user's inbox
@@ -71,8 +75,12 @@ export async function DELETE(req: Request) {
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const userId = (session.user as any).id
-  const { id } = await req.json()
-
-  await prisma.emailInbox.deleteMany({ where: { id, userId } })
-  return NextResponse.json({ success: true })
+  try {
+    const { id } = await req.json()
+    if (!id || typeof id !== 'string') return NextResponse.json({ error: 'Missing inbox id' }, { status: 400 })
+    await prisma.emailInbox.deleteMany({ where: { id, userId } })
+    return NextResponse.json({ success: true })
+  } catch {
+    return NextResponse.json({ error: 'Failed to disconnect inbox' }, { status: 500 })
+  }
 }

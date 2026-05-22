@@ -17,7 +17,7 @@ export default async function VacancyDetailPage({ params }: { params: Promise<{ 
   return (
     <div>
       <Header title={vacancy.title} description={`${vacancy.company} · ${vacancy.location || 'Remote'} · ${vacancy.candidates.length} candidates`} />
-      <div className="p-8"><VacancyDetailClient vacancy={vacancy} userId={userId} /></div>
+      <div className="p-8"><VacancyDetailClient vacancy={vacancy} /></div>
     </div>
   )
 }

@@ -8,13 +8,20 @@ export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { candidateId, type, subject, body, teamsLink } = await req.json()
+  let reqBody: any
+  try { reqBody = await req.json() } catch { return NextResponse.json({ error: 'Invalid request body' }, { status: 400 }) }
+  const { candidateId, type, subject, body, teamsLink } = reqBody
   if (!candidateId || !type || !subject || !body) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
   }
 
   const userId = (session.user as any).id
-  const candidate = await prisma.candidate.findFirst({ where: { id: candidateId, userId }, include: { vacancy: true } })
+  let candidate: any
+  try {
+    candidate = await prisma.candidate.findFirst({ where: { id: candidateId, userId }, include: { vacancy: true } })
+  } catch {
+    return NextResponse.json({ error: 'Failed to load candidate' }, { status: 500 })
+  }
   if (!candidate) return NextResponse.json({ error: 'Candidate not found' }, { status: 404 })
   if (!candidate.email) return NextResponse.json({ error: 'Candidate has no email address' }, { status: 400 })
 

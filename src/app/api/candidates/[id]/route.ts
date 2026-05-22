@@ -13,17 +13,22 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params
   const userId = (session.user as any).id
   const isAdmin = (session.user as any).role === 'admin'
-  // Ownership scoping — admins can view any candidate
-  const candidate = await prisma.candidate.findFirst({
-    where: isAdmin ? { id } : { id, userId },
-    include: { vacancy: true, emailSource: true },
-  })
-  if (!candidate) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  // Mark as viewed on first open
-  if (!candidate.viewedAt) {
-    await prisma.candidate.update({ where: { id }, data: { viewedAt: new Date() } })
+  try {
+    // Ownership scoping — admins can view any candidate
+    const candidate = await prisma.candidate.findFirst({
+      where: isAdmin ? { id } : { id, userId },
+      include: { vacancy: true, emailSource: true },
+    })
+    if (!candidate) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    // Mark as viewed on first open
+    if (!candidate.viewedAt) {
+      const updated = await prisma.candidate.update({ where: { id }, data: { viewedAt: new Date() } })
+      return NextResponse.json(updated)
+    }
+    return NextResponse.json(candidate)
+  } catch {
+    return NextResponse.json({ error: 'Failed to load candidate' }, { status: 500 })
   }
-  return NextResponse.json({ ...candidate, viewedAt: candidate.viewedAt ?? new Date() })
 }
 
 // Used to update status (new/reviewing/shortlisted/rejected/hired) from the UI
@@ -33,15 +38,23 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const { id } = await params
   const userId = (session.user as any).id
   const isAdmin = (session.user as any).role === 'admin'
-  // Ownership check before update
-  const existing = await prisma.candidate.findFirst({ where: isAdmin ? { id } : { id, userId } })
-  if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  const body = await req.json()
-  const allowed = ['status', 'firstName', 'lastName', 'email', 'phone', 'summary', 'notes', 'liked', 'priority', 'savedToPool', 'viewedAt']
-  const data: any = {}
-  for (const key of allowed) { if (body[key] !== undefined) data[key] = body[key] }
-  const candidate = await prisma.candidate.update({ where: { id }, data })
-  return NextResponse.json(candidate)
+  try {
+    // Ownership check before update
+    const existing = await prisma.candidate.findFirst({ where: isAdmin ? { id } : { id, userId } })
+    if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    const body = await req.json()
+    const allowed = ['status', 'firstName', 'lastName', 'email', 'phone', 'summary', 'notes', 'liked', 'priority', 'savedToPool', 'viewedAt']
+    const data: any = {}
+    for (const key of allowed) { if (body[key] !== undefined) data[key] = body[key] }
+    const validStatuses = ['new', 'reviewing', 'shortlisted', 'rejected', 'hired']
+    if (data.status && !validStatuses.includes(data.status)) {
+      return NextResponse.json({ error: 'Invalid status value' }, { status: 400 })
+    }
+    const candidate = await prisma.candidate.update({ where: { id }, data })
+    return NextResponse.json(candidate)
+  } catch {
+    return NextResponse.json({ error: 'Failed to update candidate' }, { status: 500 })
+  }
 }
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -50,9 +63,13 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   const { id } = await params
   const userId = (session.user as any).id
   const isAdmin = (session.user as any).role === 'admin'
-  // Ownership check before delete
-  const existing = await prisma.candidate.findFirst({ where: isAdmin ? { id } : { id, userId } })
-  if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  await prisma.candidate.delete({ where: { id } })
-  return NextResponse.json({ success: true })
+  try {
+    // Ownership check before delete
+    const existing = await prisma.candidate.findFirst({ where: isAdmin ? { id } : { id, userId } })
+    if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    await prisma.candidate.delete({ where: { id } })
+    return NextResponse.json({ success: true })
+  } catch {
+    return NextResponse.json({ error: 'Failed to delete candidate' }, { status: 500 })
+  }
 }

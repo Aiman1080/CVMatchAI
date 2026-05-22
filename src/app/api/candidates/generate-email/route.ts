@@ -10,14 +10,21 @@ export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { candidateId, type, locale = 'fr' } = await req.json()
+  let body: any
+  try { body = await req.json() } catch { return NextResponse.json({ error: 'Invalid request body' }, { status: 400 }) }
+  const { candidateId, type, locale = 'fr' } = body
   if (!candidateId || !type) return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
 
   const userId = (session.user as any).id
-  const candidate = await prisma.candidate.findFirst({
-    where: { id: candidateId, userId },
-    include: { vacancy: true },
-  })
+  let candidate: any
+  try {
+    candidate = await prisma.candidate.findFirst({
+      where: { id: candidateId, userId },
+      include: { vacancy: true },
+    })
+  } catch {
+    return NextResponse.json({ error: 'Failed to load candidate' }, { status: 500 })
+  }
   if (!candidate) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const LANG_NAMES: Record<string, string> = { en: 'English', nl: 'Dutch', fr: 'French' }

@@ -52,7 +52,7 @@ interface Vacancy {
   candidates: Candidate[]
 }
 
-export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy; userId: string }) {
+export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) {
   const [vacancy, setVacancy] = useState(initial)
   const [showUpload, setShowUpload] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
@@ -79,16 +79,24 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy; us
   }
 
   const handleStatusChange = async (candidateId: string, status: string) => {
-    await fetch(`/api/candidates/${candidateId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
-    })
-    setVacancy(prev => ({
-      ...prev,
-      candidates: prev.candidates.map(c => c.id === candidateId ? { ...c, status } : c),
-    }))
-    toast({ title: 'Status updated', description: `Candidate status changed to ${status}` })
+    try {
+      const res = await fetch(`/api/candidates/${candidateId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      })
+      if (!res.ok) {
+        toast({ title: 'Update failed', variant: 'destructive' })
+        return
+      }
+      setVacancy(prev => ({
+        ...prev,
+        candidates: prev.candidates.map(c => c.id === candidateId ? { ...c, status } : c),
+      }))
+      toast({ title: 'Status updated', description: `Candidate status changed to ${status}` })
+    } catch {
+      toast({ title: 'Update failed', variant: 'destructive' })
+    }
   }
 
   const handleSaveVacancy = async () => {

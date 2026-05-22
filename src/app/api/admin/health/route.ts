@@ -21,12 +21,19 @@ export async function GET() {
     dbStatus = 'error'
   }
 
-  const [userCount, vacancyCount, candidateCount, openTickets] = await Promise.all([
-    prisma.user.count(),
-    prisma.vacancy.count(),
-    prisma.candidate.count(),
-    prisma.supportTicket.count({ where: { status: { in: ['open', 'in_progress'] } } }),
-  ])
+  let userCount = 0, vacancyCount = 0, candidateCount = 0, openTickets = 0
+  if (dbStatus === 'ok') {
+    try {
+      ;[userCount, vacancyCount, candidateCount, openTickets] = await Promise.all([
+        prisma.user.count(),
+        prisma.vacancy.count(),
+        prisma.candidate.count(),
+        prisma.supportTicket.count({ where: { status: { in: ['open', 'in_progress'] } } }),
+      ])
+    } catch {
+      dbStatus = 'error'
+    }
+  }
 
   return NextResponse.json({
     status: dbStatus === 'ok' ? 'healthy' : 'degraded',

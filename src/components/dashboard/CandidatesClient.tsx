@@ -65,18 +65,23 @@ export function CandidatesClient({ initialCandidates }: { initialCandidates: Can
 
   const updateCandidate = async (id: string, patch: Partial<Candidate>) => {
     setUpdating(id)
-    const res = await fetch(`/api/candidates/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(patch),
-    })
-    if (res.ok) {
-      const updated = await res.json()
-      setCandidates(prev => prev.map(c => c.id === id ? { ...c, ...updated } : c))
-    } else {
+    try {
+      const res = await fetch(`/api/candidates/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+      })
+      if (res.ok) {
+        const updated = await res.json()
+        setCandidates(prev => prev.map(c => c.id === id ? { ...c, ...updated } : c))
+      } else {
+        toast({ title: tc.updateError, variant: 'destructive' })
+      }
+    } catch {
       toast({ title: tc.updateError, variant: 'destructive' })
+    } finally {
+      setUpdating(null)
     }
-    setUpdating(null)
   }
 
   const handleExport = async (sendEmail: boolean) => {
