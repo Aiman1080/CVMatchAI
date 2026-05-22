@@ -5,8 +5,8 @@ import {
   Users, Briefcase, UserCheck, MessageSquare, Activity,
   Shield, CheckCircle, XCircle, ChevronDown, ChevronUp,
   Trash2, Send, TrendingUp, Database, Mail, Building2,
-  Brain, Link2, Inbox, BarChart3, Wifi, KeyRound,
-  CalendarDays, ExternalLink,
+  Brain, Link2, Inbox, BarChart3, KeyRound,
+  CalendarDays, UserPlus,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -28,14 +28,6 @@ function relativeTime(date: Date | string | null | undefined): string {
   if (h < 24) return `Il y a ${h}h`
   const d = Math.floor(h / 24)
   return `Il y a ${d}j`
-}
-
-function onlineStatus(lastSeenAt: Date | string | null | undefined): 'online' | 'recent' | 'offline' {
-  if (!lastSeenAt) return 'offline'
-  const diff = Date.now() - new Date(lastSeenAt).getTime()
-  if (diff < 5 * 60 * 1000) return 'online'
-  if (diff < 24 * 60 * 60 * 1000) return 'recent'
-  return 'offline'
 }
 
 function subEndColor(end: Date | string | null | undefined): string {
@@ -70,27 +62,12 @@ const PRIORITY_COLORS: Record<string, string> = {
 
 interface UserRow {
   id: string
-  name: string | null
-  email: string | null
-  company: string | null
   role: string
   subscription: string
   subscriptionEnd: Date | null
   suspended: boolean
   createdAt: Date
-  lastSeenAt: Date | null
   _count: { vacancies: number; candidates: number; supportTickets: number }
-}
-
-interface ActivityRow {
-  id: string
-  firstName: string
-  lastName: string
-  createdAt: Date
-  analyzedAt: Date | null
-  status: string
-  user: { name: string | null; company: string | null }
-  vacancy: { title: string }
 }
 
 interface Props {
@@ -103,10 +80,9 @@ interface Props {
   integrationsCount: number
   emailInboxesCount: number
   candidateStatusDist: Array<{ status: string; _count: number }>
-  latestVacancies: Array<{ title: string; company: string; createdAt: Date; _count: { candidates: number } }>
-  onlineCount: number
-  activeTodayCount: number
-  recentActivity: ActivityRow[]
+  latestVacancies: Array<{ title: string; createdAt: Date; _count: { candidates: number } }>
+  newUsersThisWeek: number
+  candidatesThisWeek: number
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -114,7 +90,7 @@ interface Props {
 export function AdminClient({
   users: initialUsers, tickets: initialTickets, subscriptions, counts, hasAiKey,
   aiAnalysesCount, integrationsCount, emailInboxesCount, candidateStatusDist,
-  latestVacancies, onlineCount, activeTodayCount, recentActivity,
+  latestVacancies, newUsersThisWeek, candidatesThisWeek,
 }: Props) {
   const [users, setUsers] = useState(initialUsers)
   const [tickets, setTickets] = useState(initialTickets)
@@ -131,7 +107,6 @@ export function AdminClient({
   }, 0)
 
   const openCount = tickets.filter(t => t.status === 'open').length
-  const inProgressCount = tickets.filter(t => t.status === 'in_progress').length
 
   // ── Actions ───────────────────────────────────────────────────────────────
 
@@ -143,18 +118,18 @@ export function AdminClient({
     })
     if (res.ok) {
       setUsers(prev => prev.map(u => u.id === id ? { ...u, ...data } : u))
-      toast({ title: 'Utilisateur mis à jour' })
+      toast({ title: 'Compte mis à jour' })
     } else {
       toast({ title: 'Erreur lors de la mise à jour', variant: 'destructive' })
     }
   }
 
-  const deleteUser = async (id: string, email: string) => {
-    if (!confirm(`Supprimer ${email} ? Cette action est irréversible.`)) return
+  const deleteUser = async (id: string) => {
+    if (!confirm('Supprimer ce compte ? Cette action est irréversible.')) return
     const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' })
     if (res.ok) {
       setUsers(prev => prev.filter(u => u.id !== id))
-      toast({ title: 'Utilisateur supprimé' })
+      toast({ title: 'Compte supprimé' })
     }
   }
 
@@ -163,17 +138,16 @@ export function AdminClient({
     const res = await fetch(`/api/admin/users/${id}/reset-password`, { method: 'POST' })
     setLoading(p => ({ ...p, [id]: false }))
     if (res.ok) {
-      const { tempPassword, email } = await res.json()
+      const { tempPassword } = await res.json()
       setTempPasswords(p => ({ ...p, [id]: tempPassword }))
-      toast({ title: `Mot de passe réinitialisé pour ${email}` })
+      toast({ title: 'Mot de passe réinitialisé' })
     } else {
       toast({ title: 'Erreur lors de la réinitialisation', variant: 'destructive' })
     }
   }
 
   const saveSubEnd = async (id: string) => {
-    const val = subEndEdit[id]
-    await updateUser(id, { subscriptionEnd: val || null })
+    await updateUser(id, { subscriptionEnd: subEndEdit[id] || null })
     setSubEndEdit(p => { const n = { ...p }; delete n[id]; return n })
   }
 
@@ -200,10 +174,10 @@ export function AdminClient({
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {[
           { label: 'Comptes', value: counts.users, icon: Building2, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950' },
-          { label: 'En ligne', value: onlineCount, icon: Wifi, color: onlineCount > 0 ? 'text-green-600' : 'text-gray-400', bg: onlineCount > 0 ? 'bg-green-50 dark:bg-green-950' : 'bg-gray-50 dark:bg-gray-800' },
-          { label: 'Actifs 24h', value: activeTodayCount, icon: Activity, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-950' },
+          { label: 'Nouveaux 7j', value: newUsersThisWeek, icon: UserPlus, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-950' },
+          { label: 'Candidats 7j', value: candidatesThisWeek, icon: Activity, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-950' },
           { label: 'MRR', value: `€${mrr}`, icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950' },
-          { label: 'Candidats', value: counts.candidates, icon: UserCheck, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-950' },
+          { label: 'Candidats total', value: counts.candidates, icon: UserCheck, color: 'text-cyan-600', bg: 'bg-cyan-50 dark:bg-cyan-950' },
           { label: 'Tickets ouverts', value: counts.openTickets, icon: MessageSquare, color: counts.openTickets > 0 ? 'text-red-600' : 'text-gray-400', bg: counts.openTickets > 0 ? 'bg-red-50 dark:bg-red-950' : 'bg-gray-50 dark:bg-gray-800' },
         ].map(s => (
           <Card key={s.label} className="border-0 shadow-sm dark:bg-gray-900">
@@ -252,7 +226,7 @@ export function AdminClient({
               <span className="ml-1.5 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">{openCount}</span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="activity">Activité</TabsTrigger>
+          <TabsTrigger value="stats">Statistiques</TabsTrigger>
           <TabsTrigger value="system">Système</TabsTrigger>
         </TabsList>
 
@@ -264,18 +238,18 @@ export function AdminClient({
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Compte</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Réf.</th>
                       <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Abonnement</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">Connexion</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden xl:table-cell">Activité</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">Inscrit le</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden xl:table-cell">Utilisation</th>
                       <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Statut</th>
                       <th className="px-4 py-3 w-8" />
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
                     {users.map(user => {
-                      const status = onlineStatus(user.lastSeenAt)
                       const isExpanded = expandedUser === user.id
+                      const ref = user.id.slice(-6).toUpperCase()
                       return (
                         <Fragment key={user.id}>
                           <tr
@@ -283,9 +257,7 @@ export function AdminClient({
                             onClick={() => setExpandedUser(isExpanded ? null : user.id)}
                           >
                             <td className="px-5 py-3.5">
-                              <div className="font-medium text-gray-900 dark:text-white">{user.name || '—'}</div>
-                              <div className="text-xs text-gray-400">{user.email}</div>
-                              {user.company && <div className="text-xs text-gray-400">{user.company}</div>}
+                              <span className="font-mono text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">#{ref}</span>
                             </td>
                             <td className="px-4 py-3.5">
                               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${PLAN_COLORS[user.subscription]}`}>
@@ -300,10 +272,7 @@ export function AdminClient({
                               ) : null}
                             </td>
                             <td className="px-4 py-3.5 hidden lg:table-cell">
-                              <div className="flex items-center gap-1.5">
-                                <div className={`w-2 h-2 rounded-full ${status === 'online' ? 'bg-green-400' : status === 'recent' ? 'bg-blue-400' : 'bg-gray-300 dark:bg-gray-600'}`} />
-                                <span className="text-xs text-gray-500 dark:text-gray-400">{relativeTime(user.lastSeenAt)}</span>
-                              </div>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">{formatDate(user.createdAt)}</span>
                             </td>
                             <td className="px-4 py-3.5 hidden xl:table-cell">
                               <div className="flex gap-3 text-xs text-gray-500 dark:text-gray-400">
@@ -385,30 +354,23 @@ export function AdminClient({
                                     </div>
                                   </div>
 
-                                  {/* Quick links */}
+                                  {/* Usage */}
                                   <div className="space-y-3">
                                     <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide flex items-center gap-1.5">
-                                      <ExternalLink size={12} /> Données du compte
+                                      <BarChart3 size={12} /> Utilisation
                                     </p>
                                     <div className="flex flex-col gap-2">
-                                      <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400">
+                                      <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
                                         <Briefcase size={13} />
                                         <span>{user._count.vacancies} offres d'emploi</span>
                                       </div>
-                                      <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400">
+                                      <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
                                         <UserCheck size={13} />
                                         <span>{user._count.candidates} candidats</span>
                                       </div>
-                                      <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400">
+                                      <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
                                         <MessageSquare size={13} />
                                         <span>{user._count.supportTickets} tickets support</span>
-                                      </div>
-                                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                        <Wifi size={13} />
-                                        <span>{relativeTime(user.lastSeenAt)}</span>
-                                        {status === 'online' && (
-                                          <span className="text-green-600 font-semibold">• En ligne</span>
-                                        )}
                                       </div>
                                     </div>
                                   </div>
@@ -458,7 +420,7 @@ export function AdminClient({
                                             size="sm"
                                             variant="outline"
                                             className="h-8 text-xs gap-1.5 border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400"
-                                            onClick={() => deleteUser(user.id, user.email || '')}
+                                            onClick={() => deleteUser(user.id)}
                                           >
                                             <Trash2 size={12} /> Supprimer le compte
                                           </Button>
@@ -509,12 +471,11 @@ export function AdminClient({
                       <span className={`text-xs font-medium capitalize ${PRIORITY_COLORS[ticket.priority]}`}>
                         {ticket.priority}
                       </span>
-                    </div>
-                    <div className="text-xs text-gray-400 mt-0.5">
-                      {ticket.user.name} · {ticket.user.email} · {ticket.user.company}
-                      <span className={`ml-2 px-1.5 py-0.5 rounded text-xs ${PLAN_COLORS[ticket.user.subscription] || ''}`}>
-                        {ticket.user.subscription}
-                      </span>
+                      {ticket.user?.subscription && (
+                        <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${PLAN_COLORS[ticket.user.subscription] || ''}`}>
+                          {ticket.user.subscription}
+                        </span>
+                      )}
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 leading-relaxed">{ticket.message}</p>
                     {ticket.adminReply && (
@@ -575,73 +536,98 @@ export function AdminClient({
           ))}
         </TabsContent>
 
-        {/* ══ Activité tab ══ */}
-        <TabsContent value="activity" className="mt-4">
+        {/* ══ Statistiques tab ══ */}
+        <TabsContent value="stats" className="mt-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Recent candidate uploads */}
+            {/* Subscription breakdown */}
             <Card className="border-0 shadow-sm dark:bg-gray-900">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <UserCheck className="w-4 h-4 text-green-500" /> Derniers candidats ajoutés
+                  <TrendingUp className="w-4 h-4 text-blue-500" /> Répartition des abonnements
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-0">
-                {recentActivity.length === 0 ? (
-                  <p className="text-xs text-gray-400 px-5 py-4">Aucun candidat</p>
-                ) : (
-                  <div className="divide-y divide-gray-50 dark:divide-gray-800">
-                    {recentActivity.slice(0, 15).map(c => (
-                      <div key={c.id} className="flex items-center gap-3 px-5 py-2.5">
-                        <div
-                          className={`w-2 h-2 rounded-full shrink-0 ${c.analyzedAt ? 'bg-green-400' : 'bg-gray-300 dark:bg-gray-600'}`}
-                          title={c.analyzedAt ? 'Analysé par IA' : 'Non analysé'}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                            {c.firstName} {c.lastName}
-                          </p>
-                          <p className="text-xs text-gray-400 truncate">
-                            {c.user.company || c.user.name} · {c.vacancy.title}
-                          </p>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <span className="text-xs text-gray-400">{relativeTime(c.createdAt)}</span>
-                          {c.analyzedAt && <div className="text-xs text-green-600">✓ IA</div>}
-                        </div>
+              <CardContent className="space-y-3">
+                {subscriptions.map(s => {
+                  const total = subscriptions.reduce((acc, x) => acc + x._count, 0)
+                  const pct = total > 0 ? Math.round((s._count / total) * 100) : 0
+                  return (
+                    <div key={s.subscription} className="space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className={`px-2 py-0.5 rounded-full font-medium ${PLAN_COLORS[s.subscription]}`}>{s.subscription}</span>
+                        <span className="font-semibold text-gray-700 dark:text-gray-300">{s._count} ({pct}%)</span>
                       </div>
-                    ))}
-                  </div>
-                )}
+                      <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2">
+                        <div
+                          className={`h-2 rounded-full ${s.subscription === 'free' ? 'bg-gray-400' : s.subscription === 'pro' ? 'bg-blue-500' : 'bg-purple-500'}`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  )
+                })}
+                <div className="pt-2 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between text-xs">
+                  <span className="text-gray-500 dark:text-gray-400">MRR estimé</span>
+                  <span className="font-bold text-emerald-600 text-base">€{mrr}/mois</span>
+                </div>
               </CardContent>
             </Card>
 
-            {/* Recent signups */}
+            {/* Candidate status distribution */}
             <Card className="border-0 shadow-sm dark:bg-gray-900">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-blue-500" /> Inscriptions récentes
+                  <BarChart3 className="w-4 h-4 text-green-500" /> Pipeline candidats
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-0">
-                <div className="divide-y divide-gray-50 dark:divide-gray-800">
-                  {users.slice(0, 10).map(u => {
-                    const s = onlineStatus(u.lastSeenAt)
-                    return (
-                      <div key={u.id} className="flex items-center gap-3 px-5 py-2.5">
-                        <div className={`w-2 h-2 rounded-full shrink-0 ${s === 'online' ? 'bg-green-400' : s === 'recent' ? 'bg-blue-300' : 'bg-gray-300 dark:bg-gray-600'}`} />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{u.name || u.email}</p>
-                          <p className="text-xs text-gray-400 truncate">{u.company || '—'}</p>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${PLAN_COLORS[u.subscription]}`}>
-                            {u.subscription}
-                          </span>
-                          <div className="text-xs text-gray-400 mt-0.5">{relativeTime(u.createdAt)}</div>
-                        </div>
+              <CardContent className="space-y-2">
+                {candidateStatusDist.length === 0 ? (
+                  <p className="text-xs text-gray-400">Aucun candidat</p>
+                ) : candidateStatusDist.map(s => {
+                  const total = candidateStatusDist.reduce((acc, x) => acc + x._count, 0)
+                  const pct = total > 0 ? Math.round((s._count / total) * 100) : 0
+                  const barColors: Record<string, string> = {
+                    new: 'bg-blue-400', reviewing: 'bg-amber-400',
+                    shortlisted: 'bg-purple-400', hired: 'bg-green-500', rejected: 'bg-red-400',
+                  }
+                  return (
+                    <div key={s.status} className="space-y-0.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="capitalize text-gray-600 dark:text-gray-300">{s.status}</span>
+                        <span className="font-medium text-gray-700 dark:text-gray-300">{s._count} ({pct}%)</span>
                       </div>
-                    )
-                  })}
+                      <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5">
+                        <div
+                          className={`${barColors[s.status] || 'bg-gray-400'} h-1.5 rounded-full`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  )
+                })}
+              </CardContent>
+            </Card>
+
+            {/* Weekly activity */}
+            <Card className="border-0 shadow-sm dark:bg-gray-900 lg:col-span-2">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-indigo-500" /> Activité cette semaine
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="text-center p-4 bg-indigo-50 dark:bg-indigo-950/30 rounded-xl">
+                    <div className="text-3xl font-bold text-indigo-600">{newUsersThisWeek}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center justify-center gap-1">
+                      <UserPlus size={11} /> Nouveaux comptes (7 derniers jours)
+                    </div>
+                  </div>
+                  <div className="text-center p-4 bg-purple-50 dark:bg-purple-950/30 rounded-xl">
+                    <div className="text-3xl font-bold text-purple-600">{candidatesThisWeek}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center justify-center gap-1">
+                      <UserCheck size={11} /> Candidats ajoutés (7 derniers jours)
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -681,7 +667,7 @@ export function AdminClient({
               </CardHeader>
               <CardContent className="space-y-2">
                 {[
-                  { label: 'Utilisateurs', value: counts.users, icon: Users },
+                  { label: 'Comptes', value: counts.users, icon: Users },
                   { label: 'Candidats', value: counts.candidates, icon: UserCheck },
                   { label: 'Offres', value: counts.vacancies, icon: Briefcase },
                   { label: 'Intégrations ATS', value: integrationsCount, icon: Link2 },
@@ -697,68 +683,50 @@ export function AdminClient({
               </CardContent>
             </Card>
 
-            {/* Candidate status distribution */}
+            {/* Latest vacancies */}
             <Card className="border-0 shadow-sm dark:bg-gray-900">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4 text-green-500" /> Distribution des statuts
+                  <Briefcase className="w-4 h-4 text-indigo-500" /> Dernières offres publiées
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                {candidateStatusDist.length === 0 ? (
-                  <p className="text-xs text-gray-400">Aucun candidat</p>
-                ) : candidateStatusDist.map(s => {
-                  const total = candidateStatusDist.reduce((acc, x) => acc + x._count, 0)
-                  const pct = total > 0 ? Math.round((s._count / total) * 100) : 0
-                  const barColors: Record<string, string> = {
-                    new: 'bg-blue-400', reviewing: 'bg-amber-400',
-                    shortlisted: 'bg-purple-400', hired: 'bg-green-500', rejected: 'bg-red-400',
-                  }
-                  return (
-                    <div key={s.status} className="space-y-0.5">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="capitalize text-gray-600 dark:text-gray-300">{s.status}</span>
-                        <span className="font-medium text-gray-700 dark:text-gray-300">{s._count} ({pct}%)</span>
+              <CardContent className="p-0">
+                {latestVacancies.length === 0 ? (
+                  <p className="text-xs text-gray-400 px-5 py-4">Aucune offre</p>
+                ) : (
+                  <div className="divide-y divide-gray-50 dark:divide-gray-800">
+                    {latestVacancies.map((v, i) => (
+                      <div key={i} className="flex items-center justify-between px-5 py-3">
+                        <div>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">{v.title}</p>
+                          <p className="text-xs text-gray-400">{formatDate(v.createdAt)}</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-lg font-bold text-gray-900 dark:text-white">{v._count.candidates}</span>
+                          <p className="text-xs text-gray-400">candidats</p>
+                        </div>
                       </div>
-                      <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5">
-                        <div
-                          className={`${barColors[s.status] || 'bg-gray-400'} h-1.5 rounded-full`}
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    </div>
-                  )
-                })}
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
 
-          {/* Latest vacancies */}
+          {/* Email & integrations */}
           <Card className="border-0 shadow-sm dark:bg-gray-900">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Briefcase className="w-4 h-4 text-indigo-500" /> Dernières offres publiées
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              {latestVacancies.length === 0 ? (
-                <p className="text-xs text-gray-400 px-5 py-4">Aucune offre</p>
-              ) : (
-                <div className="divide-y divide-gray-50 dark:divide-gray-800">
-                  {latestVacancies.map((v, i) => (
-                    <div key={i} className="flex items-center justify-between px-5 py-3">
-                      <div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{v.title}</p>
-                        <p className="text-xs text-gray-400">{v.company} · {formatDate(v.createdAt)}</p>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-lg font-bold text-gray-900 dark:text-white">{v._count.candidates}</span>
-                        <p className="text-xs text-gray-400">candidats</p>
-                      </div>
-                    </div>
-                  ))}
+            <CardContent className="p-4">
+              <div className="flex flex-wrap gap-x-8 gap-y-3 items-center">
+                <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Connecteurs</span>
+                <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                  <Link2 size={13} className="text-blue-500" />
+                  <span>{integrationsCount} intégration{integrationsCount !== 1 ? 's' : ''} ATS active{integrationsCount !== 1 ? 's' : ''}</span>
                 </div>
-              )}
+                <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                  <Mail size={13} className="text-purple-500" />
+                  <span>{emailInboxesCount} boîte{emailInboxesCount !== 1 ? 's' : ''} email connectée{emailInboxesCount !== 1 ? 's' : ''}</span>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
