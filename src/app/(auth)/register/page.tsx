@@ -31,7 +31,7 @@ export default function RegisterPage() {
 
   return (
     <div className="relative z-10 w-full max-w-md">
-      <div className="bg-white rounded-2xl shadow-2xl p-8">
+      <div className="bg-white rounded-2xl shadow-2xl p-8" data-theme="light">
         <div className="text-center mb-8">
           <div className="w-12 h-12 rounded-2xl gradient-bg flex items-center justify-center mx-auto mb-4 shadow-lg">
             <Zap className="w-6 h-6 text-white" />
