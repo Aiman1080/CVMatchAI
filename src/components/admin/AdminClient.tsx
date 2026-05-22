@@ -117,20 +117,20 @@ export function AdminClient({
     })
     if (res.ok) {
       setUsers(prev => prev.map(u => u.id === id ? { ...u, ...data } : u))
-      toast({ title: 'Compte mis à jour' })
+      toast({ title: 'Account updated' })
     } else {
-      toast({ title: 'Erreur lors de la mise à jour', variant: 'destructive' })
+      toast({ title: 'Update failed', variant: 'destructive' })
     }
   }
 
   const deleteUser = async (id: string) => {
-    if (!confirm('Supprimer ce compte définitivement ? Toutes les données associées seront perdues. Cette action est irréversible.')) return
+    if (!confirm('Permanently delete this account? All associated data will be lost. This action is irreversible.')) return
     const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' })
     if (res.ok) {
       setUsers(prev => prev.filter(u => u.id !== id))
-      toast({ title: 'Compte supprimé définitivement' })
+      toast({ title: 'Account permanently deleted' })
     } else {
-      toast({ title: 'Erreur lors de la suppression', variant: 'destructive' })
+      toast({ title: 'Delete failed', variant: 'destructive' })
     }
   }
 
@@ -141,9 +141,9 @@ export function AdminClient({
     if (res.ok) {
       const { tempPassword } = await res.json()
       setTempPasswords(p => ({ ...p, [id]: tempPassword }))
-      toast({ title: 'Mot de passe temporaire généré' })
+      toast({ title: 'Temporary password generated' })
     } else {
-      toast({ title: 'Erreur lors de la réinitialisation', variant: 'destructive' })
+      toast({ title: 'Reset failed', variant: 'destructive' })
     }
   }
 
@@ -162,7 +162,7 @@ export function AdminClient({
       const updated = await res.json()
       setTickets(prev => prev.map(t => t.id === id ? { ...t, ...updated } : t))
       if (data.adminReply) setReplyText(p => ({ ...p, [id]: '' }))
-      toast({ title: 'Ticket mis à jour' })
+      toast({ title: 'Ticket updated' })
     }
   }
 
@@ -170,41 +170,41 @@ export function AdminClient({
 
   const aiFeatures = [
     {
-      name: 'Analyse & Scoring de CV',
+      name: 'CV Analysis & Scoring',
       icon: FileText,
       color: 'text-blue-600',
       bg: 'bg-blue-50 dark:bg-blue-950/30',
       status: hasAiKey ? 'live' : 'demo',
       model: 'claude-opus-4-7',
-      thinking: 'Adaptive thinking activé',
+      thinking: 'Adaptive thinking enabled',
       details: [
-        'Extraction des compétences, expériences, diplômes',
-        'Score de correspondance 0–100 par rapport à l\'offre',
-        'Forces & faiblesses détaillées',
-        'Résumé exécutif du candidat',
-        'Détection automatique de la langue du CV',
+        'Extraction of skills, experience, degrees',
+        'Match score 0–100 against the job posting',
+        'Detailed strengths & weaknesses',
+        'Executive summary of the candidate',
+        'Automatic language detection from CV',
       ],
-      stat: `${aiAnalysesCount} analyse${aiAnalysesCount !== 1 ? 's' : ''} effectuée${aiAnalysesCount !== 1 ? 's' : ''}`,
+      stat: `${aiAnalysesCount} analysis${aiAnalysesCount !== 1 ? 'es' : ''} performed`,
     },
     {
-      name: 'Générateur d\'e-mails IA',
+      name: 'AI Email Generator',
       icon: Mail,
       color: 'text-purple-600',
       bg: 'bg-purple-50 dark:bg-purple-950/30',
       status: hasAiKey ? 'live' : 'demo',
       model: 'claude-opus-4-7',
-      thinking: 'Sans thinking (rapidité)',
+      thinking: 'No thinking (speed)',
       details: [
-        'Type invitation entretien — ton chaleureux & professionnel',
-        'Type refus — formulé avec respect',
-        'Type suivi — relance après entretien',
-        'Langue auto-détectée depuis le CV du candidat',
-        'Personnalisé avec le nom, le poste et l\'entreprise',
+        'Interview invitation — warm & professional tone',
+        'Rejection — worded with respect',
+        'Follow-up — re-engagement after interview',
+        'Language auto-detected from candidate CV',
+        'Personalized with name, position and company',
       ],
-      stat: '3 types d\'e-mails supportés',
+      stat: '3 email types supported',
     },
     {
-      name: 'Scanner e-mail IMAP',
+      name: 'IMAP Email Scanner',
       icon: Inbox,
       color: 'text-green-600',
       bg: 'bg-green-50 dark:bg-green-950/30',
@@ -226,33 +226,33 @@ export function AdminClient({
       color: 'text-orange-600',
       bg: 'bg-orange-50 dark:bg-orange-950/30',
       status: integrationsCount > 0 ? 'live' : 'available',
-      model: 'API REST + synchronisation',
+      model: 'REST API + synchronization',
       thinking: 'Sync one-way → CVMatch',
       details: [
-        'Teamtailor : import candidats & offres via API',
-        'Recruitee : sync candidatures et statuts',
-        'SmartRecruiters : import en masse',
-        'IA analyse chaque CV importé automatiquement',
-        'Déduplication intelligente des candidats',
+        'Teamtailor: import candidates & jobs via API',
+        'Recruitee: sync applications and statuses',
+        'SmartRecruiters: bulk import',
+        'AI analyzes each imported CV automatically',
+        'Intelligent deduplication of candidates',
       ],
-      stat: `${integrationsCount} intégration${integrationsCount !== 1 ? 's' : ''} · ${integrationsByPlatform.map(p => `${p._count} ${p.platform}`).join(', ') || '—'}`,
+      stat: `${integrationsCount} integration${integrationsCount !== 1 ? 's' : ''} · ${integrationsByPlatform.map(p => `${p._count} ${p.platform}`).join(', ') || '—'}`,
     },
     {
-      name: 'Parser de documents',
+      name: 'Document Parser',
       icon: GitBranch,
       color: 'text-teal-600',
       bg: 'bg-teal-50 dark:bg-teal-950/30',
       status: 'live',
       model: 'pdf-parse + mammoth',
-      thinking: 'Extraction textuelle pré-IA',
+      thinking: 'Text extraction pre-AI',
       details: [
-        'PDF : extraction via pdf-parse (natif)',
-        'DOCX/DOC : extraction via mammoth',
-        'TXT/copier-coller : direct',
-        'Nettoyage automatique des artefacts de formatage',
-        'Envoi du texte brut vers Claude pour analyse',
+        'PDF: extraction via pdf-parse (native)',
+        'DOCX/DOC: extraction via mammoth',
+        'TXT/paste: direct',
+        'Automatic formatting artifact cleanup',
+        'Sends raw text to Claude for analysis',
       ],
-      stat: 'PDF, DOCX, TXT supportés',
+      stat: 'PDF, DOCX, TXT supported',
     },
     {
       name: 'Pipeline & Kanban',
@@ -260,16 +260,16 @@ export function AdminClient({
       color: 'text-indigo-600',
       bg: 'bg-indigo-50 dark:bg-indigo-950/30',
       status: 'live',
-      model: 'Logique applicative (pas d\'IA)',
-      thinking: 'Sans IA — gestion manuelle',
+      model: 'Application logic (no AI)',
+      thinking: 'No AI — manual management',
       details: [
-        'Vue liste et vue Kanban par glisser-déposer',
-        'Statuts : Nouveau → En cours → Shortlisté → Embauché / Refusé',
-        'Vivier de talents : conserver les meilleurs candidats',
-        'Filtres par score, statut, source, langue',
-        'Export CSV / PDF de la liste de candidats',
+        'List view and drag-and-drop Kanban view',
+        'Statuses: New → Reviewing → Shortlisted → Hired / Rejected',
+        'Talent pool: keep the best candidates',
+        'Filters by score, status, source, language',
+        'CSV / PDF export of candidate list',
       ],
-      stat: `${counts.candidates} candidats dans la plateforme`,
+      stat: `${counts.candidates} candidates on the platform`,
     },
   ]
 
@@ -308,14 +308,14 @@ export function AdminClient({
       <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
         <CardContent className="p-4">
           <div className="flex flex-wrap gap-x-6 gap-y-2 items-center">
-            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">État système</span>
+            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">System Status</span>
             {[
               { label: 'Database', ok: true },
-              { label: `IA — ${hasAiKey ? 'Live (claude-opus-4-7)' : 'Mode démo'}`, ok: hasAiKey },
-              { label: `Email — ${emailInboxesCount} boîte${emailInboxesCount !== 1 ? 's' : ''}`, ok: true },
-              { label: `Support — ${openCount} ouvert${openCount !== 1 ? 's' : ''}`, ok: openCount === 0 },
-              { label: `ATS — ${integrationsCount} connexion${integrationsCount !== 1 ? 's' : ''}`, ok: true },
-              { label: `${activeVacanciesCount} offre${activeVacanciesCount !== 1 ? 's' : ''} active${activeVacanciesCount !== 1 ? 's' : ''}`, ok: true },
+              { label: `AI — ${hasAiKey ? 'Live (claude-opus-4-7)' : 'Demo mode'}`, ok: hasAiKey },
+              { label: `Email — ${emailInboxesCount} inbox${emailInboxesCount !== 1 ? 'es' : ''}`, ok: true },
+              { label: `Support — ${openCount} open`, ok: openCount === 0 },
+              { label: `ATS — ${integrationsCount} connection${integrationsCount !== 1 ? 's' : ''}`, ok: true },
+              { label: `${activeVacanciesCount} active job${activeVacanciesCount !== 1 ? 's' : ''}`, ok: true },
             ].map(item => (
               <div key={item.label} className="flex items-center gap-1.5">
                 <div className={`w-2 h-2 rounded-full ${item.ok ? 'bg-green-400' : 'bg-amber-400'}`} />
@@ -336,9 +336,9 @@ export function AdminClient({
               <span className="ml-1.5 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">{openCount}</span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="ai">Intelligence Artificielle</TabsTrigger>
-          <TabsTrigger value="stats">Statistiques</TabsTrigger>
-          <TabsTrigger value="system">Système</TabsTrigger>
+          <TabsTrigger value="ai">Artificial Intelligence</TabsTrigger>
+          <TabsTrigger value="stats">Statistics</TabsTrigger>
+          <TabsTrigger value="system">System</TabsTrigger>
         </TabsList>
 
         {/* ══ Accounts tab ══ */}
@@ -349,11 +349,11 @@ export function AdminClient({
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Compte</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Account</th>
                       <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Plan</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">Inscrit le</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden xl:table-cell">Utilisation</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Statut / Rôle</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">Joined</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden xl:table-cell">Usage</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status / Role</th>
                       <th className="px-4 py-3 w-8" />
                     </tr>
                   </thead>
@@ -389,7 +389,7 @@ export function AdminClient({
                               </span>
                               {user.subscriptionEnd && (
                                 <div className={`text-xs mt-1 ${subEndColor(user.subscriptionEnd)}`}>
-                                  Expire {formatDate(user.subscriptionEnd)}
+                                  Expires {formatDate(user.subscriptionEnd)}
                                 </div>
                               )}
                             </td>
@@ -406,9 +406,9 @@ export function AdminClient({
                             <td className="px-4 py-3.5">
                               <div className="flex flex-col gap-1">
                                 {user.suspended ? (
-                                  <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full w-fit">Suspendu</span>
+                                  <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full w-fit">Suspended</span>
                                 ) : (
-                                  <span className="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full w-fit">Actif</span>
+                                  <span className="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full w-fit">Active</span>
                                 )}
                                 <span className={`text-xs px-2 py-0.5 rounded-full w-fit ${user.role === 'admin' ? 'bg-purple-100 text-purple-600' : 'bg-gray-100 text-gray-500'}`}>
                                   {user.role === 'admin' ? '★ Admin' : 'User'}
@@ -426,10 +426,10 @@ export function AdminClient({
                               <td colSpan={6} className="px-5 py-5" onClick={e => e.stopPropagation()}>
                                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
 
-                                  {/* Col 1: Abonnement */}
+                                  {/* Col 1: Subscription */}
                                   <div className="space-y-3">
                                     <p className="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wide flex items-center gap-1.5">
-                                      <CalendarDays size={12} /> Abonnement
+                                      <CalendarDays size={12} /> Subscription
                                     </p>
                                     <div className="space-y-2.5">
                                       <div>
@@ -446,7 +446,7 @@ export function AdminClient({
                                         </Select>
                                       </div>
                                       <div>
-                                        <label className="text-xs text-gray-500 block mb-1">Expiration</label>
+                                        <label className="text-xs text-gray-500 block mb-1">Expiry</label>
                                         <div className="flex gap-2 items-center">
                                           <input
                                             type="date"
@@ -459,21 +459,21 @@ export function AdminClient({
                                           )}
                                         </div>
                                         {user.subscriptionEnd && new Date(user.subscriptionEnd) < new Date() && (
-                                          <p className="text-xs text-red-500 mt-1">⚠ Expiré</p>
+                                          <p className="text-xs text-red-500 mt-1">⚠ Expired</p>
                                         )}
                                       </div>
-                                      <p className="text-xs text-gray-400">Inscrit le {formatDate(user.createdAt)}</p>
+                                      <p className="text-xs text-gray-400">Joined on {formatDate(user.createdAt)}</p>
                                     </div>
                                   </div>
 
-                                  {/* Col 2: Rôle */}
+                                  {/* Col 2: Role */}
                                   <div className="space-y-3">
                                     <p className="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wide flex items-center gap-1.5">
-                                      <Shield size={12} /> Rôle & Accès
+                                      <Shield size={12} /> Role & Access
                                     </p>
                                     <div className="space-y-2.5">
                                       <div>
-                                        <label className="text-xs text-gray-500 block mb-1">Rôle du compte</label>
+                                        <label className="text-xs text-gray-500 block mb-1">Account Role</label>
                                         <Select value={user.role} onValueChange={val => updateUser(user.id, { role: val })}>
                                           <SelectTrigger className="h-8 text-xs w-44 dark:bg-gray-800 dark:border-gray-700">
                                             <SelectValue />
@@ -485,7 +485,7 @@ export function AdminClient({
                                         </Select>
                                       </div>
                                       <div className="pt-1">
-                                        <label className="text-xs text-gray-500 block mb-1">Statut du compte</label>
+                                        <label className="text-xs text-gray-500 block mb-1">Account Status</label>
                                         <Button
                                           size="sm"
                                           variant="outline"
@@ -497,8 +497,8 @@ export function AdminClient({
                                           onClick={() => updateUser(user.id, { suspended: !user.suspended })}
                                         >
                                           {user.suspended
-                                            ? <><CheckCircle size={12} /> Réactiver le compte</>
-                                            : <><XCircle size={12} /> Suspendre le compte</>
+                                            ? <><CheckCircle size={12} /> Reactivate account</>
+                                            : <><XCircle size={12} /> Suspend account</>
                                           }
                                         </Button>
                                       </div>
@@ -540,11 +540,11 @@ export function AdminClient({
                                         disabled={loading[user.id]}
                                       >
                                         <KeyRound size={12} />
-                                        {loading[user.id] ? 'Génération...' : 'Réinitialiser le mot de passe'}
+                                        {loading[user.id] ? 'Generating...' : 'Reset password'}
                                       </Button>
                                       {tempPasswords[user.id] && (
                                         <div className="p-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
-                                          <p className="text-xs text-amber-700 dark:text-amber-400 font-semibold mb-1">Mot de passe temporaire :</p>
+                                          <p className="text-xs text-amber-700 dark:text-amber-400 font-semibold mb-1">Temporary password:</p>
                                           <code className="text-sm font-mono text-amber-900 dark:text-amber-300 select-all break-all">{tempPasswords[user.id]}</code>
                                         </div>
                                       )}
@@ -554,7 +554,7 @@ export function AdminClient({
                                         className="h-8 text-xs gap-1.5 w-full justify-start border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/30"
                                         onClick={() => deleteUser(user.id)}
                                       >
-                                        <Trash2 size={12} /> Supprimer définitivement
+                                        <Trash2 size={12} /> Delete permanently
                                       </Button>
                                     </div>
                                   </div>
@@ -578,7 +578,7 @@ export function AdminClient({
             <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
               <CardContent className="py-12 text-center">
                 <MessageSquare className="w-8 h-8 text-gray-200 mx-auto mb-2" />
-                <p className="text-gray-400 text-sm">Aucun ticket support</p>
+                <p className="text-gray-400 text-sm">No support tickets</p>
               </CardContent>
             </Card>
           ) : tickets.map(ticket => (
@@ -608,7 +608,7 @@ export function AdminClient({
                     <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 leading-relaxed">{ticket.message}</p>
                     {ticket.adminReply && (
                       <div className="mt-2 p-2.5 bg-blue-50 dark:bg-blue-950/30 rounded-lg border-l-2 border-blue-300">
-                        <p className="text-xs font-semibold text-blue-600 mb-1">Réponse admin · {ticket.repliedAt ? formatDate(ticket.repliedAt) : ''}</p>
+                        <p className="text-xs font-semibold text-blue-600 mb-1">Admin reply · {ticket.repliedAt ? formatDate(ticket.repliedAt) : ''}</p>
                         <p className="text-xs text-blue-800 dark:text-blue-300">{ticket.adminReply}</p>
                       </div>
                     )}
@@ -631,13 +631,13 @@ export function AdminClient({
                       ))}
                     </div>
                     <div className="flex gap-2">
-                      <textarea rows={2} placeholder="Répondre…" value={replyText[ticket.id] || ''}
+                      <textarea rows={2} placeholder="Reply…" value={replyText[ticket.id] || ''}
                         onChange={e => setReplyText(p => ({ ...p, [ticket.id]: e.target.value }))}
                         className="flex-1 text-sm border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                       <Button size="sm" onClick={() => updateTicket(ticket.id, { adminReply: replyText[ticket.id], status: 'in_progress' })}
                         disabled={!replyText[ticket.id]?.trim()} className="gradient-bg gap-1.5 self-end">
-                        <Send size={13} /> Répondre
+                        <Send size={13} /> Reply
                       </Button>
                     </div>
                   </div>
@@ -653,16 +653,16 @@ export function AdminClient({
           <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
-                <Bot className="w-4 h-4 text-violet-500" /> Modèle IA en production
+                <Bot className="w-4 h-4 text-violet-500" /> AI Model in production
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                  { label: 'Modèle', value: 'claude-opus-4-7', icon: Brain, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-950/30' },
-                  { label: 'Mode de réflexion', value: 'Adaptive thinking', icon: Cpu, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/30' },
-                  { label: 'Clé API Anthropic', value: hasAiKey ? '✓ Configurée' : '✗ Manquante', icon: hasAiKey ? CheckCircle2 : AlertCircle, color: hasAiKey ? 'text-green-600' : 'text-red-500', bg: hasAiKey ? 'bg-green-50 dark:bg-green-950/30' : 'bg-red-50 dark:bg-red-950/30' },
-                  { label: 'Mode opérationnel', value: hasAiKey ? 'Live AI' : 'Démo simulée', icon: hasAiKey ? ToggleRight : ToggleLeft, color: hasAiKey ? 'text-green-600' : 'text-amber-600', bg: hasAiKey ? 'bg-green-50 dark:bg-green-950/30' : 'bg-amber-50 dark:bg-amber-950/30' },
+                  { label: 'Model', value: 'claude-opus-4-7', icon: Brain, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-950/30' },
+                  { label: 'Thinking mode', value: 'Adaptive thinking', icon: Cpu, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/30' },
+                  { label: 'Anthropic API Key', value: hasAiKey ? '✓ Configured' : '✗ Missing', icon: hasAiKey ? CheckCircle2 : AlertCircle, color: hasAiKey ? 'text-green-600' : 'text-red-500', bg: hasAiKey ? 'bg-green-50 dark:bg-green-950/30' : 'bg-red-50 dark:bg-red-950/30' },
+                  { label: 'Operational mode', value: hasAiKey ? 'Live AI' : 'Simulated demo', icon: hasAiKey ? ToggleRight : ToggleLeft, color: hasAiKey ? 'text-green-600' : 'text-amber-600', bg: hasAiKey ? 'bg-green-50 dark:bg-green-950/30' : 'bg-amber-50 dark:bg-amber-950/30' },
                 ].map(item => (
                   <div key={item.label} className={`flex items-center gap-3 p-3 rounded-xl ${item.bg}`}>
                     <item.icon className={`w-5 h-5 shrink-0 ${item.color}`} />
@@ -675,7 +675,7 @@ export function AdminClient({
               </div>
               <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Total analyses IA effectuées sur la plateforme</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Total AI analyses performed on the platform</span>
                   <span className="text-2xl font-bold text-violet-600">{aiAnalysesCount}</span>
                 </div>
               </div>
@@ -699,17 +699,17 @@ export function AdminClient({
                       feature.status === 'demo' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400' :
                       'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400'
                     }`}>
-                      {feature.status === 'live' ? '● Live' : feature.status === 'demo' ? '● Démo' : feature.status === 'configured' ? '● Configuré' : '○ Disponible'}
+                      {feature.status === 'live' ? '● Live' : feature.status === 'demo' ? '● Demo' : feature.status === 'configured' ? '● Configured' : '○ Available'}
                     </span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="space-y-1">
                     <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                      <Cpu size={10} /> <span className="font-medium">Moteur :</span> {feature.model}
+                      <Cpu size={10} /> <span className="font-medium">Engine:</span> {feature.model}
                     </div>
                     <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                      <Brain size={10} /> <span className="font-medium">Thinking :</span> {feature.thinking}
+                      <Brain size={10} /> <span className="font-medium">Thinking:</span> {feature.thinking}
                     </div>
                   </div>
                   <ul className="space-y-1">
@@ -736,7 +736,7 @@ export function AdminClient({
             <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-blue-500" /> Répartition des abonnements
+                  <TrendingUp className="w-4 h-4 text-blue-500" /> Subscription Distribution
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -748,7 +748,7 @@ export function AdminClient({
                     <div key={s.subscription} className="space-y-1">
                       <div className="flex items-center justify-between text-xs">
                         <span className={`px-2 py-0.5 rounded-full font-medium ${PLAN_COLORS[s.subscription]}`}>{s.subscription}</span>
-                        <span className="text-gray-500 dark:text-gray-400">{s._count} comptes · {pct}% · €{prices[s.subscription] * s._count}/mois</span>
+                        <span className="text-gray-500 dark:text-gray-400">{s._count} accounts · {pct}% · €{prices[s.subscription] * s._count}/month</span>
                       </div>
                       <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2">
                         <div className={`h-2 rounded-full ${s.subscription === 'free' ? 'bg-gray-400' : s.subscription === 'pro' ? 'bg-blue-500' : 'bg-purple-500'}`} style={{ width: `${pct}%` }} />
@@ -757,8 +757,8 @@ export function AdminClient({
                   )
                 })}
                 <div className="pt-2 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
-                  <span className="text-xs text-gray-500">MRR estimé</span>
-                  <span className="font-bold text-emerald-600 text-lg">€{mrr}/mois</span>
+                  <span className="text-xs text-gray-500">Estimated MRR</span>
+                  <span className="font-bold text-emerald-600 text-lg">€{mrr}/month</span>
                 </div>
               </CardContent>
             </Card>
@@ -766,12 +766,12 @@ export function AdminClient({
             <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4 text-green-500" /> Pipeline candidats
+                  <BarChart3 className="w-4 h-4 text-green-500" /> Candidate Pipeline
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 {candidateStatusDist.length === 0 ? (
-                  <p className="text-xs text-gray-400">Aucun candidat</p>
+                  <p className="text-xs text-gray-400">No candidates</p>
                 ) : candidateStatusDist.map(s => {
                   const total = candidateStatusDist.reduce((acc, x) => acc + x._count, 0)
                   const pct = total > 0 ? Math.round((s._count / total) * 100) : 0
@@ -797,12 +797,12 @@ export function AdminClient({
             <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <RefreshCw className="w-4 h-4 text-orange-500" /> Sources des candidats
+                  <RefreshCw className="w-4 h-4 text-orange-500" /> Candidate Sources
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 {candidatesBySource.length === 0 ? (
-                  <p className="text-xs text-gray-400">Aucune donnée</p>
+                  <p className="text-xs text-gray-400">No data</p>
                 ) : candidatesBySource.map(s => {
                   const total = candidatesBySource.reduce((acc, x) => acc + x._count, 0)
                   const pct = total > 0 ? Math.round((s._count / total) * 100) : 0
@@ -846,7 +846,7 @@ export function AdminClient({
           </div>
         </TabsContent>
 
-        {/* ══ Système tab ══ */}
+        {/* ══ System tab ══ */}
         <TabsContent value="system" className="mt-4 space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
@@ -891,7 +891,7 @@ export function AdminClient({
                         <div className={`w-2 h-2 rounded-full ${count > 0 ? 'bg-green-400' : 'bg-gray-300 dark:bg-gray-600'}`} />
                         <span className="text-xs text-gray-600 dark:text-gray-400 capitalize">{platform}</span>
                       </div>
-                      <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">{count} connexion{count !== 1 ? 's' : ''}</span>
+                      <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">{count} connection{count !== 1 ? 's' : ''}</span>
                     </div>
                   )
                 })}
@@ -905,7 +905,7 @@ export function AdminClient({
             <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <GitBranch className="w-4 h-4 text-teal-500" /> Stack technique
+                  <GitBranch className="w-4 h-4 text-teal-500" /> Tech Stack
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
@@ -931,12 +931,12 @@ export function AdminClient({
           <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
-                <Briefcase className="w-4 h-4 text-indigo-500" /> Dernières offres publiées
+                <Briefcase className="w-4 h-4 text-indigo-500" /> Latest Job Postings
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               {latestVacancies.length === 0 ? (
-                <p className="text-xs text-gray-400 px-5 py-4">Aucune offre</p>
+                <p className="text-xs text-gray-400 px-5 py-4">No vacancies</p>
               ) : (
                 <div className="divide-y divide-gray-50 dark:divide-gray-800">
                   {latestVacancies.map((v, i) => (
@@ -947,7 +947,7 @@ export function AdminClient({
                       </div>
                       <div className="text-right">
                         <span className="text-lg font-bold text-gray-900 dark:text-white">{v._count.candidates}</span>
-                        <p className="text-xs text-gray-400">candidats</p>
+                        <p className="text-xs text-gray-400">candidates</p>
                       </div>
                     </div>
                   ))}

@@ -47,7 +47,7 @@ export default function LoginPage() {
             title="demo@cvmatch.ai / recruiter123"
             className="flex-1 text-xs bg-blue-50 text-blue-700 px-3 py-2 rounded-lg hover:bg-blue-100 transition-colors font-medium"
           >
-            Demo Gratuit
+            Demo Free
             <span className="block text-blue-400 font-normal" style={{ fontSize: '10px' }}>recruiter123</span>
           </button>
           <button

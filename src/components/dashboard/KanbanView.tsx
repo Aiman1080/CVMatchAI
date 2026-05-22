@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { toast } from '@/components/ui/use-toast'
 import { getStatusColor, parseJsonSafe } from '@/lib/utils'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface Candidate {
   id: string
@@ -25,12 +26,12 @@ interface Candidate {
   vacancy?: { title: string; company: string } | null
 }
 
-const COLUMNS: { id: string; label: string; color: string; dot: string }[] = [
-  { id: 'new',         label: 'Nouveau',       color: 'border-t-gray-400',   dot: 'bg-gray-400' },
-  { id: 'reviewing',   label: 'En révision',   color: 'border-t-blue-500',   dot: 'bg-blue-500' },
-  { id: 'shortlisted', label: 'Shortlisté',    color: 'border-t-purple-500', dot: 'bg-purple-500' },
-  { id: 'hired',       label: 'Embauché',      color: 'border-t-green-500',  dot: 'bg-green-500' },
-  { id: 'pool',        label: 'Vivier Talent', color: 'border-t-amber-500',  dot: 'bg-amber-500' },
+const COLUMN_STYLES: { color: string; dot: string }[] = [
+  { color: 'border-t-gray-400',   dot: 'bg-gray-400' },
+  { color: 'border-t-blue-500',   dot: 'bg-blue-500' },
+  { color: 'border-t-purple-500', dot: 'bg-purple-500' },
+  { color: 'border-t-green-500',  dot: 'bg-green-500' },
+  { color: 'border-t-amber-500',  dot: 'bg-amber-500' },
 ]
 
 interface Props {
@@ -39,9 +40,19 @@ interface Props {
 }
 
 export function KanbanView({ candidates, onCandidatesChange }: Props) {
+  const { t } = useLanguage()
+  const tk = t.dashboard.kanban
   const [dragging, setDragging] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState<string | null>(null)
   const [updating, setUpdating] = useState<string | null>(null)
+
+  const COLUMNS = [
+    { id: 'new',         label: tk.new,         ...COLUMN_STYLES[0] },
+    { id: 'reviewing',   label: tk.reviewing,   ...COLUMN_STYLES[1] },
+    { id: 'shortlisted', label: tk.shortlisted, ...COLUMN_STYLES[2] },
+    { id: 'hired',       label: tk.hired,       ...COLUMN_STYLES[3] },
+    { id: 'pool',        label: tk.pool,        ...COLUMN_STYLES[4] },
+  ]
 
   const getColumnCandidates = (colId: string) => {
     if (colId === 'pool') return candidates.filter(c => c.savedToPool)
@@ -106,6 +117,7 @@ export function KanbanView({ candidates, onCandidatesChange }: Props) {
                   candidate={c}
                   isDragging={dragging === c.id}
                   isUpdating={updating === c.id}
+                  labels={tk}
                   onDragStart={() => setDragging(c.id)}
                   onDragEnd={() => { setDragging(null); setDragOver(null) }}
                   onToggleLiked={() => updateCandidate(c.id, { liked: !c.liked })}
@@ -115,7 +127,7 @@ export function KanbanView({ candidates, onCandidatesChange }: Props) {
               ))}
               {cards.length === 0 && (
                 <div className="flex items-center justify-center h-24 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg">
-                  <p className="text-xs text-gray-400 dark:text-gray-600">Glisser ici</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-600">{tk.dragHere}</p>
                 </div>
               )}
             </div>
@@ -126,10 +138,11 @@ export function KanbanView({ candidates, onCandidatesChange }: Props) {
   )
 }
 
-function KanbanCard({ candidate: c, isDragging, isUpdating, onDragStart, onDragEnd, onToggleLiked, onTogglePriority, onSaveToPool }: {
+function KanbanCard({ candidate: c, isDragging, isUpdating, labels, onDragStart, onDragEnd, onToggleLiked, onTogglePriority, onSaveToPool }: {
   candidate: Candidate
   isDragging: boolean
   isUpdating: boolean
+  labels: { addFavorite: string; removeFavorite: string; markPriority: string; removePriority: string; addToPool: string; removeFromPool: string }
   onDragStart: () => void
   onDragEnd: () => void
   onToggleLiked: () => void
@@ -186,14 +199,14 @@ function KanbanCard({ candidate: c, isDragging, isUpdating, onDragStart, onDragE
           <button
             onClick={onToggleLiked}
             className={`p-1 rounded transition-colors ${c.liked ? 'text-amber-500' : 'text-gray-300 hover:text-amber-400'}`}
-            title={c.liked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+            title={c.liked ? labels.removeFavorite : labels.addFavorite}
           >
             <Star size={13} fill={c.liked ? 'currentColor' : 'none'} />
           </button>
           <button
             onClick={onTogglePriority}
             className={`p-1 rounded transition-colors ${c.priority ? 'text-red-500' : 'text-gray-300 hover:text-red-400'}`}
-            title={c.priority ? 'Retirer priorité' : 'Marquer prioritaire'}
+            title={c.priority ? labels.removePriority : labels.markPriority}
           >
             <Flag size={13} />
           </button>
@@ -201,7 +214,7 @@ function KanbanCard({ candidate: c, isDragging, isUpdating, onDragStart, onDragE
         <button
           onClick={onSaveToPool}
           className={`p-1 rounded text-xs transition-colors flex items-center gap-0.5 ${c.savedToPool ? 'text-amber-600' : 'text-gray-300 hover:text-amber-500'}`}
-          title={c.savedToPool ? 'Retirer du vivier' : 'Sauver dans le vivier talent'}
+          title={c.savedToPool ? labels.removeFromPool : labels.addToPool}
         >
           <Archive size={12} />
         </button>

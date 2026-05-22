@@ -86,9 +86,9 @@ export function AnalyticsClient({ candidates, vacancies, candidatesOverTime }: P
                 stroke={theme === 'dark' ? '#94a3b8' : '#1e293b'}
                 strokeWidth={2}
                 strokeDasharray="4 3"
-                label={{ value: "Aujourd'hui", position: 'top', fontSize: 10, fill: theme === 'dark' ? '#94a3b8' : '#1e293b' }}
+                label={{ value: ta.today, position: 'top', fontSize: 10, fill: theme === 'dark' ? '#94a3b8' : '#1e293b' }}
               />
-              <Area type="monotone" dataKey="count" stroke="#3b82f6" strokeWidth={2} fill="url(#colorCount)" name="Candidats" />
+              <Area type="monotone" dataKey="count" stroke="#3b82f6" strokeWidth={2} fill="url(#colorCount)" name={ta.candidatesLabel} />
             </AreaChart>
           </ResponsiveContainer>
         </CardContent>

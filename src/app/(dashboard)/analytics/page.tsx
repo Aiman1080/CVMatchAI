@@ -22,8 +22,8 @@ export default async function AnalyticsPage() {
         <Header title="Analytics" description="Recruitment performance overview" />
         <div className="p-8">
           <UpgradePrompt
-            feature="Analytics — Fonctionnalité Pro"
-            description="Visualisez vos performances de recrutement, suivez vos scores de match, analysez vos sources de candidats et optimisez votre processus. Disponible à partir du plan Pro."
+            feature="Analytics — Pro Feature"
+            description="Visualize your recruitment performance, track match scores, analyze candidate sources and optimize your process. Available from the Pro plan."
           />
         </div>
       </div>

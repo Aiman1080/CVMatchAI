@@ -22,8 +22,8 @@ export default async function EmailPage() {
           <EmailClient />
         ) : (
           <UpgradePrompt
-            feature="Email Inbox — Fonctionnalité Pro"
-            description="Connectez vos boîtes email de recrutement, scannez automatiquement les candidatures et centralisez toute votre communication. Disponible à partir du plan Pro."
+            feature="Email Inbox — Pro Feature"
+            description="Connect your recruitment inboxes, automatically scan applications and centralize all your communication. Available from the Pro plan."
           />
         )}
       </div>

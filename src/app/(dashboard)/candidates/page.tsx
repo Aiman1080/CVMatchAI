@@ -15,7 +15,7 @@ export default async function CandidatesPage() {
   })
   return (
     <div>
-      <Header title="Candidats" description={`${candidates.length} candidat${candidates.length !== 1 ? 's' : ''} dans votre pipeline`} />
+      <Header title="Candidates" description={`${candidates.length} candidate${candidates.length !== 1 ? 's' : ''} in your pipeline`} />
       <div className="p-8"><CandidatesClient initialCandidates={candidates} /></div>
     </div>
   )

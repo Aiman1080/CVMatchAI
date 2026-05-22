@@ -27,16 +27,16 @@ export default async function IntegrationsPage() {
   return (
     <div>
       <Header
-        title="Intégrations ATS"
-        description="Connectez vos plateformes ATS et synchronisez vos candidats automatiquement"
+        title="ATS Integrations"
+        description="Connect your ATS platforms and automatically sync your candidates"
       />
       <div className="p-8">
         {limits.atsIntegrations ? (
           <IntegrationsClient initialIntegrations={integrations} />
         ) : (
           <UpgradePrompt
-            feature="Intégrations ATS — Fonctionnalité Pro"
-            description="Synchronisez automatiquement vos candidats depuis Teamtailor, Workable, Lever et d'autres plateformes ATS. Disponible à partir du plan Pro."
+            feature="ATS Integrations — Pro Feature"
+            description="Automatically sync candidates from Teamtailor, Recruitee, SmartRecruiters and other ATS platforms. Available from the Pro plan."
           />
         )}
       </div>
