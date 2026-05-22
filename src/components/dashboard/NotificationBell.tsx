@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Bell, X, User, Mail, Link2 } from 'lucide-react'
 import Link from 'next/link'
 import { formatRelativeTime } from '@/lib/utils'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface Notification {
   id: string
@@ -21,6 +22,8 @@ export function NotificationBell() {
   const [count, setCount] = useState(0)
   const [seen, setSeen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  const { t } = useLanguage()
+  const tn = t.dashboard.notifications
 
   const fetchNotifications = async () => {
     try {
@@ -76,13 +79,13 @@ export function NotificationBell() {
       {open && (
         <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl shadow-xl z-50 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Nouveaux candidats (24h)</h3>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{tn.title}</h3>
             <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-gray-600">
               <X size={15} />
             </button>
           </div>
           {notifications.length === 0 ? (
-            <div className="py-8 text-center text-gray-400 text-sm">Aucun nouveau candidat</div>
+            <div className="py-8 text-center text-gray-400 text-sm">{tn.empty}</div>
           ) : (
             <div className="divide-y divide-gray-50 dark:divide-gray-800 max-h-80 overflow-y-auto">
               {notifications.map(n => (

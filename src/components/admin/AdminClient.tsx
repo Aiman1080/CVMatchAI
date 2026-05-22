@@ -52,6 +52,7 @@ const PRIORITY_COLORS: Record<string, string> = {
 interface UserRow {
   id: string
   name: string | null
+  email: string | null
   company: string | null
   role: string
   subscription: string
@@ -371,8 +372,11 @@ export function AdminClient({
                                 <span className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">
                                   {user.name || '—'}
                                 </span>
+                                {user.email && (
+                                  <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[180px]">{user.email}</span>
+                                )}
                                 {user.company && (
-                                  <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                                  <span className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
                                     <Building2 size={10} />{user.company}
                                   </span>
                                 )}

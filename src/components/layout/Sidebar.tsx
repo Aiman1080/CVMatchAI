@@ -8,6 +8,7 @@ import { LayoutDashboard, Briefcase, Users, BarChart3, Settings, Mail, LogOut, Z
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useLanguage } from '@/contexts/LanguageContext'
+import type { Locale } from '@/lib/i18n'
 
 const planColors: Record<string, string> = {
   free: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
@@ -15,11 +16,17 @@ const planColors: Record<string, string> = {
   enterprise: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400',
 }
 
+const LOCALES: { id: Locale; label: string }[] = [
+  { id: 'fr', label: 'FR' },
+  { id: 'nl', label: 'NL' },
+  { id: 'en', label: 'EN' },
+]
+
 export function Sidebar() {
   const pathname = usePathname()
   const { data: session } = useSession()
   const { theme, setTheme } = useTheme()
-  const { t } = useLanguage()
+  const { t, locale, setLocale } = useLanguage()
   const user = session?.user as any
   const initials = user?.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || 'U'
 
@@ -90,6 +97,26 @@ export function Sidebar() {
         )}
       </nav>
 
+      {/* Language switcher */}
+      <div className="px-4 pb-2">
+        <div className="flex gap-1 p-1 bg-gray-100 dark:bg-gray-900 rounded-lg">
+          {LOCALES.map(l => (
+            <button
+              key={l.id}
+              onClick={() => setLocale(l.id)}
+              className={cn(
+                'flex-1 text-xs font-semibold py-1 rounded-md transition-all',
+                locale === l.id
+                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+              )}
+            >
+              {l.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Theme toggle — manual light/dark, ignores OS setting */}
       <div className="px-4 pb-2">
         <button
@@ -111,7 +138,7 @@ export function Sidebar() {
 
       {isFree && (
         <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800">
-          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">Plan Gratuit</p>
+          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">{t.dashboard.upgrade.planFree}</p>
           <div className="p-3 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/40 dark:to-purple-950/40 rounded-xl border border-blue-100 dark:border-blue-900">
             <p className="text-xs font-bold text-blue-800 dark:text-blue-300 mb-1">{t.dashboard.nav.upgradeTitle}</p>
             <p className="text-xs text-blue-600 dark:text-blue-400 mb-2">{t.dashboard.nav.upgradeDesc}</p>

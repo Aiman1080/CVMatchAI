@@ -40,8 +40,8 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
         const data = await res.json().catch(() => ({}))
         if (res.status === 403 && data.upgrade) {
           toast({
-            title: 'Limite atteinte',
-            description: 'Passez en Pro pour des vacatures illimitées',
+            title: cv.limitReached || 'Limit reached',
+            description: t.dashboard.upgrade.vacancyLimitDesc,
             variant: 'destructive',
           })
         } else {

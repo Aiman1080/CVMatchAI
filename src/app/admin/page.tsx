@@ -23,7 +23,7 @@ export default async function AdminPage() {
     prisma.user.findMany({
       orderBy: { createdAt: 'desc' },
       select: {
-        id: true, name: true, company: true, role: true,
+        id: true, name: true, email: true, company: true, role: true,
         subscription: true, subscriptionEnd: true,
         suspended: true, createdAt: true,
         _count: { select: { vacancies: true, candidates: true, supportTickets: true } },

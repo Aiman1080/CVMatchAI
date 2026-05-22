@@ -110,6 +110,20 @@ export const translations = {
         sources: 'Application Sources',
         over30days: 'Candidates over 30 days',
       },
+      notifications: {
+        title: 'New candidates (24h)',
+        empty: 'No new candidates',
+      },
+      upgrade: {
+        cta: 'Upgrade to Pro — €49/month',
+        trial: '14-day free trial · Cancel anytime',
+        onboardingTitle: 'Upgrade to Pro',
+        onboardingDesc: 'Unlock advanced AI analysis, ATS integrations and more.',
+        onboardingAction: 'Upgrade now',
+        vacancyLimitDesc: 'Upgrade to Pro for unlimited vacancies',
+        planFree: 'Free Plan',
+        planPro: 'Pro Plan',
+      },
       settings: {
         language: 'Interface language',
         languageDesc: 'Choose the language for the application interface.',
@@ -208,6 +222,7 @@ export const translations = {
         creating: 'Creating...',
         created: 'Vacancy created!',
         createError: 'Failed to create vacancy',
+        limitReached: 'Vacancy limit reached',
       },
       settingsProfile: {
         title: 'Profile Settings',
@@ -384,6 +399,20 @@ export const translations = {
         sources: 'Bronnen sollicitaties',
         over30days: 'Kandidaten over 30 dagen',
       },
+      notifications: {
+        title: 'Nieuwe kandidaten (24u)',
+        empty: 'Geen nieuwe kandidaten',
+      },
+      upgrade: {
+        cta: 'Upgraden naar Pro — €49/maand',
+        trial: '14 dagen gratis proberen · Op elk moment opzeggen',
+        onboardingTitle: 'Upgraden naar Pro',
+        onboardingDesc: 'Ontgrendel geavanceerde AI-analyse, ATS-integraties en meer.',
+        onboardingAction: 'Nu upgraden',
+        vacancyLimitDesc: 'Upgraden naar Pro voor onbeperkte vacatures',
+        planFree: 'Gratis plan',
+        planPro: 'Pro-plan',
+      },
       settings: {
         language: 'Interfacetaal',
         languageDesc: 'Kies de taal voor de applicatie-interface.',
@@ -482,6 +511,7 @@ export const translations = {
         creating: 'Aanmaken...',
         created: 'Vacature aangemaakt!',
         createError: 'Aanmaken mislukt',
+        limitReached: 'Limiet vacatures bereikt',
       },
       settingsProfile: {
         title: 'Profielinstellingen',
@@ -658,6 +688,20 @@ export const translations = {
         sources: 'Sources candidatures',
         over30days: 'Candidats sur 30 jours',
       },
+      notifications: {
+        title: 'Nouveaux candidats (24h)',
+        empty: 'Aucun nouveau candidat',
+      },
+      upgrade: {
+        cta: 'Passer en Pro — €49/mois',
+        trial: 'Essai gratuit 14 jours · Annulation à tout moment',
+        onboardingTitle: 'Passez en Pro',
+        onboardingDesc: "Débloquez l'analyse IA avancée, les intégrations ATS et plus.",
+        onboardingAction: 'Mettre à niveau',
+        vacancyLimitDesc: 'Passez en Pro pour des offres illimitées',
+        planFree: 'Plan Gratuit',
+        planPro: 'Plan Pro',
+      },
       settings: {
         language: "Langue de l'interface",
         languageDesc: "Choisissez la langue pour l'interface de l'application.",
@@ -756,6 +800,7 @@ export const translations = {
         creating: 'Création...',
         created: 'Offre créée !',
         createError: 'Échec de la création',
+        limitReached: 'Limite de postes atteinte',
       },
       settingsProfile: {
         title: 'Paramètres du profil',

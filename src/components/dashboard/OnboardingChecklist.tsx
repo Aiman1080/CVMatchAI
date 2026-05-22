@@ -29,7 +29,7 @@ export function OnboardingChecklist({ hasVacancy, hasCandidate, hasEmail, onVaca
     { key: 'email', icon: Mail, title: t.dashboard.onboarding.step3Title, description: t.dashboard.onboarding.step3Desc, action: t.dashboard.onboarding.step3Action, href: '/email' },
   ]
 
-  const upgradeStep = { key: 'upgrade', icon: Zap, title: 'Passez en Pro', description: 'Débloquez l\'analyse IA avancée, les intégrations ATS et plus.', action: 'Mettre à niveau', href: '/settings' }
+  const upgradeStep = { key: 'upgrade', icon: Zap, title: t.dashboard.upgrade.onboardingTitle, description: t.dashboard.upgrade.onboardingDesc, action: t.dashboard.upgrade.onboardingAction, href: '/settings' }
 
   const steps = isFree ? [...baseSteps, upgradeStep] : baseSteps
 
@@ -71,11 +71,11 @@ export function OnboardingChecklist({ hasVacancy, hasCandidate, hasEmail, onVaca
               </span>
               {isFree ? (
                 <span className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 px-2 py-0.5 rounded-full font-medium">
-                  Plan Gratuit
+                  {t.dashboard.upgrade.planFree}
                 </span>
               ) : (
                 <span className="text-xs bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900 px-2 py-0.5 rounded-full font-medium">
-                  Plan Pro
+                  {t.dashboard.upgrade.planPro}
                 </span>
               )}
             </div>
