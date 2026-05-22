@@ -22,10 +22,10 @@ interface Ticket {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-  open: { label: 'Open', color: 'bg-amber-100 text-amber-700', icon: <Clock size={12} /> },
-  in_progress: { label: 'In Progress', color: 'bg-blue-100 text-blue-700', icon: <AlertCircle size={12} /> },
-  resolved: { label: 'Resolved', color: 'bg-green-100 text-green-700', icon: <CheckCircle2 size={12} /> },
-  closed: { label: 'Closed', color: 'bg-gray-100 text-gray-600', icon: <CheckCircle2 size={12} /> },
+  open: { label: 'Open', color: 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400', icon: <Clock size={12} /> },
+  in_progress: { label: 'In Progress', color: 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400', icon: <AlertCircle size={12} /> },
+  resolved: { label: 'Resolved', color: 'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400', icon: <CheckCircle2 size={12} /> },
+  closed: { label: 'Closed', color: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400', icon: <CheckCircle2 size={12} /> },
 }
 
 const PRIORITY_LABELS: Record<string, string> = {
@@ -74,13 +74,13 @@ export function SupportClient() {
   return (
     <div className="max-w-3xl space-y-6">
       {/* SLA banner */}
-      <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-100 rounded-xl">
-        <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
-          <LifeBuoy className="w-5 h-5 text-blue-600" />
+      <div className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl">
+        <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-xl flex items-center justify-center flex-shrink-0">
+          <LifeBuoy className="w-5 h-5 text-blue-600 dark:text-blue-400" />
         </div>
         <div>
-          <p className="text-sm font-semibold text-blue-900">24-hour response guarantee</p>
-          <p className="text-xs text-blue-600">Our support team replies to every ticket within 24 hours on business days.</p>
+          <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">24-hour response guarantee</p>
+          <p className="text-xs text-blue-600 dark:text-blue-400">Our support team replies to every ticket within 24 hours on business days.</p>
         </div>
         <Button
           onClick={() => setShowForm(v => !v)}
@@ -102,7 +102,7 @@ export function SupportClient() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="text-xs font-medium text-gray-600 block mb-1.5">Subject</label>
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-300 block mb-1.5">Subject</label>
               <Input
                 placeholder="Briefly describe your issue…"
                 value={form.subject}
@@ -110,7 +110,7 @@ export function SupportClient() {
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-600 block mb-1.5">Message</label>
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-300 block mb-1.5">Message</label>
               <Textarea
                 placeholder="Describe your issue in detail. Include screenshots or steps to reproduce if applicable."
                 value={form.message}
@@ -121,7 +121,7 @@ export function SupportClient() {
             </div>
             <div className="flex items-center gap-4">
               <div className="flex-1">
-                <label className="text-xs font-medium text-gray-600 block mb-1.5">Priority</label>
+                <label className="text-xs font-medium text-gray-600 dark:text-gray-300 block mb-1.5">Priority</label>
                 <Select value={form.priority} onValueChange={v => setForm(f => ({ ...f, priority: v }))}>
                   <SelectTrigger className="h-9">
                     <SelectValue />
@@ -151,7 +151,7 @@ export function SupportClient() {
           <div className="flex items-center justify-between">
             <CardTitle className="text-base">Your Tickets</CardTitle>
             {openCount > 0 && (
-              <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
+              <span className="text-xs bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full font-medium">
                 {openCount} open
               </span>
             )}
@@ -167,7 +167,7 @@ export function SupportClient() {
               <p className="text-xs text-gray-400 mt-1">Submit a ticket above if you need help.</p>
             </div>
           ) : (
-            <div className="divide-y divide-gray-50">
+            <div className="divide-y divide-gray-50 dark:divide-gray-800">
               {tickets.map(ticket => {
                 const status = STATUS_CONFIG[ticket.status] || STATUS_CONFIG.open
                 const isExpanded = expanded === ticket.id
@@ -180,7 +180,7 @@ export function SupportClient() {
                       <div className="flex items-start gap-3">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <p className="text-sm font-medium text-gray-900 truncate">{ticket.subject}</p>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{ticket.subject}</p>
                             <span className={cn('inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium', status.color)}>
                               {status.icon}{status.label}
                             </span>
@@ -197,25 +197,25 @@ export function SupportClient() {
 
                     {isExpanded && (
                       <div className="mt-3 space-y-3">
-                        <div className="bg-gray-50 rounded-lg p-3">
-                          <p className="text-xs text-gray-500 font-medium mb-1">Your message</p>
-                          <p className="text-sm text-gray-700 whitespace-pre-wrap">{ticket.message}</p>
+                        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">Your message</p>
+                          <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{ticket.message}</p>
                         </div>
                         {ticket.adminReply ? (
-                          <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">
+                          <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-lg p-3">
                             <div className="flex items-center gap-2 mb-1">
-                              <LifeBuoy size={12} className="text-blue-600" />
-                              <p className="text-xs text-blue-700 font-medium">Support Team reply</p>
+                              <LifeBuoy size={12} className="text-blue-600 dark:text-blue-400" />
+                              <p className="text-xs text-blue-700 dark:text-blue-300 font-medium">Support Team reply</p>
                               {ticket.repliedAt && (
                                 <span className="text-xs text-blue-400 ml-auto">
                                   {new Date(ticket.repliedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                                 </span>
                               )}
                             </div>
-                            <p className="text-sm text-blue-900 whitespace-pre-wrap">{ticket.adminReply}</p>
+                            <p className="text-sm text-blue-900 dark:text-blue-200 whitespace-pre-wrap">{ticket.adminReply}</p>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
+                          <div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded-lg px-3 py-2">
                             <Clock size={12} />
                             Awaiting reply — our team will respond within 24 hours
                           </div>

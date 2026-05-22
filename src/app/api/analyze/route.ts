@@ -29,7 +29,6 @@ export async function POST(req: Request) {
     candidate.motivationText || undefined,
   )
 
-  // Persist all analysis fields — strengths/weaknesses/skills stored as JSON strings due to SQLite
   // Also update contact fields extracted from the CV (only overwrite if currently unknown/empty)
   const contactPatch: any = {}
   if (analysis.firstName && candidate.firstName === 'Unknown') contactPatch.firstName = analysis.firstName

@@ -131,8 +131,8 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy; us
                   <Briefcase className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">{vacancy.title}</h2>
-                  <p className="text-gray-500">{vacancy.company} · {vacancy.department}</p>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">{vacancy.title}</h2>
+                  <p className="text-gray-500 dark:text-gray-400">{vacancy.company} · {vacancy.department}</p>
                 </div>
               </div>
               <div className="flex gap-2 items-center">
@@ -161,7 +161,7 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy; us
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-4 text-sm text-gray-500 mb-4">
+            <div className="flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400 mb-4">
               {vacancy.location && <span className="flex items-center gap-1.5"><MapPin size={14} />{vacancy.location}</span>}
               <span className="flex items-center gap-1.5"><Briefcase size={14} />{vacancy.type}</span>
               {vacancy.salary && <span className="flex items-center gap-1.5"><DollarSign size={14} />{vacancy.salary}</span>}
@@ -174,14 +174,14 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy; us
                 <TabsTrigger value="requirements">Requirements</TabsTrigger>
               </TabsList>
               <TabsContent value="description">
-                <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">{vacancy.description}</p>
+                <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">{vacancy.description}</p>
               </TabsContent>
               <TabsContent value="requirements">
-                <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">{vacancy.requirements}</p>
+                <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">{vacancy.requirements}</p>
                 {vacancy.niceToHave && (
                   <div className="mt-4">
-                    <p className="text-sm font-semibold text-gray-700 mb-2">Nice to Have:</p>
-                    <p className="text-gray-600 text-sm">{vacancy.niceToHave}</p>
+                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Nice to Have:</p>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm">{vacancy.niceToHave}</p>
                   </div>
                 )}
               </TabsContent>
@@ -193,8 +193,8 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy; us
           <Card className="border-0 shadow-sm">
             <CardContent className="p-5">
               <div className="text-center mb-4">
-                <div className="text-4xl font-bold text-gray-900">{vacancy.candidates.length}</div>
-                <div className="text-sm text-gray-500">Total Candidates</div>
+                <div className="text-4xl font-bold text-gray-900 dark:text-white">{vacancy.candidates.length}</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">Total Candidates</div>
               </div>
               <div className="space-y-2 text-sm">
                 {['new', 'reviewing', 'shortlisted', 'rejected'].map(s => {
@@ -202,7 +202,7 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy; us
                   return (
                     <div key={s} className="flex items-center justify-between">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(s)}`}>{s}</span>
-                      <span className="font-semibold text-gray-700">{count}</span>
+                      <span className="font-semibold text-gray-700 dark:text-gray-300">{count}</span>
                     </div>
                   )
                 })}
@@ -241,7 +241,7 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy; us
                 const skills = parseJsonSafe<string[]>(c.skills, [])
 
                 return (
-                  <div key={c.id} className="flex items-center gap-4 p-4 border border-gray-100 rounded-xl hover:border-blue-200 transition-colors">
+                  <div key={c.id} className="flex items-center gap-4 p-4 border border-gray-100 dark:border-gray-800 rounded-xl hover:border-blue-200 dark:hover:border-blue-800 transition-colors">
                     <div className="flex items-center gap-1 shrink-0 w-6 text-center">
                       <span className={`text-sm font-bold ${i === 0 ? 'text-amber-500' : i === 1 ? 'text-gray-400' : i === 2 ? 'text-orange-500' : 'text-gray-300'}`}>
                         #{i + 1}
@@ -252,7 +252,7 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy; us
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <Link href={`/candidates/${c.id}`} className="font-semibold text-gray-900 text-sm hover:text-blue-600">
+                        <Link href={`/candidates/${c.id}`} className="font-semibold text-gray-900 dark:text-white text-sm hover:text-blue-600">
                           {c.firstName} {c.lastName}
                         </Link>
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getStatusColor(c.status)}`}>{c.status}</span>
@@ -262,7 +262,7 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy; us
                       {skills.length > 0 && (
                         <div className="flex gap-1 flex-wrap">
                           {skills.slice(0, 4).map((s, j) => (
-                            <span key={j} className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">{s}</span>
+                            <span key={j} className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded">{s}</span>
                           ))}
                         </div>
                       )}
@@ -360,7 +360,7 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy; us
             <div className="space-y-1.5">
               <Label>Job Description *</Label>
               <textarea
-                className="w-full border border-gray-200 rounded-lg p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-lg p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
                 rows={4}
                 value={editForm.description}
                 onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))}
@@ -370,7 +370,7 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy; us
             <div className="space-y-1.5">
               <Label>Requirements *</Label>
               <textarea
-                className="w-full border border-gray-200 rounded-lg p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-lg p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
                 rows={4}
                 value={editForm.requirements}
                 onChange={e => setEditForm(p => ({ ...p, requirements: e.target.value }))}
@@ -380,7 +380,7 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy; us
             <div className="space-y-1.5">
               <Label>Nice to Have</Label>
               <textarea
-                className="w-full border border-gray-200 rounded-lg p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-lg p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
                 rows={2}
                 value={editForm.niceToHave}
                 onChange={e => setEditForm(p => ({ ...p, niceToHave: e.target.value }))}

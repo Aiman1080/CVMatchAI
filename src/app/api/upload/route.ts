@@ -80,7 +80,6 @@ export async function POST(req: Request) {
           phone: analysis.phone || candidate.phone,
           matchScore: analysis.matchScore,
           summary: analysis.summary,
-          // Arrays stored as JSON strings — SQLite has no native array type
           strengths: JSON.stringify(analysis.strengths),
           weaknesses: JSON.stringify(analysis.weaknesses),
           skills: JSON.stringify(analysis.skills),

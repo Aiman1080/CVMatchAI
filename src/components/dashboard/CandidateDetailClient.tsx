@@ -200,12 +200,12 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
               </Avatar>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <h2 className="text-2xl font-bold text-gray-900">{candidate.firstName} {candidate.lastName}</h2>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{candidate.firstName} {candidate.lastName}</h2>
                   {candidate.liked && <Star className="w-5 h-5 text-amber-500" fill="currentColor" />}
                   {candidate.priority && <Flag className="w-5 h-5 text-red-500" />}
-                  {candidate.savedToPool && <span className="text-xs bg-amber-50 text-amber-600 px-2 py-1 rounded-full font-medium border border-amber-200">Vivier talent</span>}
+                  {candidate.savedToPool && <span className="text-xs bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 px-2 py-1 rounded-full font-medium border border-amber-200 dark:border-amber-800">Vivier talent</span>}
                 </div>
-                <p className="text-gray-500 mb-2">{candidate.vacancy?.title}</p>
+                <p className="text-gray-500 dark:text-gray-400 mb-2">{candidate.vacancy?.title}</p>
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className={`text-sm px-3 py-1 rounded-full font-medium ${getStatusColor(candidate.status)}`}>{candidate.status}</span>
                   {candidate.recommendation && (
@@ -213,8 +213,8 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                       IA : {RECOMMENDATION_LABELS[candidate.recommendation] || candidate.recommendation}
                     </span>
                   )}
-                  {hasEmailSource && <span className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full font-medium flex items-center gap-1"><Mail size={10} /> via email</span>}
-                  {candidate.language && <span className="text-xs bg-gray-50 text-gray-500 px-2 py-1 rounded-full font-medium uppercase">{candidate.language}</span>}
+                  {hasEmailSource && <span className="text-xs bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-full font-medium flex items-center gap-1"><Mail size={10} /> via email</span>}
+                  {candidate.language && <span className="text-xs bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 px-2 py-1 rounded-full font-medium uppercase">{candidate.language}</span>}
                 </div>
               </div>
             </div>
@@ -246,7 +246,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                   <button
                     onClick={() => handleToggle('liked')}
                     disabled={updating}
-                    className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-medium border transition-colors ${candidate.liked ? 'bg-amber-50 text-amber-600 border-amber-200' : 'border-gray-200 text-gray-400 hover:border-amber-200 hover:text-amber-500'}`}
+                    className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-medium border transition-colors ${candidate.liked ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-600 border-amber-200' : 'border-gray-200 dark:border-gray-700 text-gray-400 hover:border-amber-200 hover:text-amber-500'}`}
                     title="Favori"
                   >
                     <Star size={12} fill={candidate.liked ? 'currentColor' : 'none'} /> Favori
@@ -254,7 +254,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                   <button
                     onClick={() => handleToggle('priority')}
                     disabled={updating}
-                    className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-medium border transition-colors ${candidate.priority ? 'bg-red-50 text-red-600 border-red-200' : 'border-gray-200 text-gray-400 hover:border-red-200 hover:text-red-500'}`}
+                    className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-medium border transition-colors ${candidate.priority ? 'bg-red-50 dark:bg-red-950/30 text-red-600 border-red-200' : 'border-gray-200 dark:border-gray-700 text-gray-400 hover:border-red-200 hover:text-red-500'}`}
                     title="Priorité"
                   >
                     <Flag size={12} /> Priorité
@@ -262,7 +262,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                   <button
                     onClick={() => handleToggle('savedToPool')}
                     disabled={updating}
-                    className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-medium border transition-colors ${candidate.savedToPool ? 'bg-amber-50 text-amber-700 border-amber-200' : 'border-gray-200 text-gray-400 hover:border-amber-200 hover:text-amber-600'}`}
+                    className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-medium border transition-colors ${candidate.savedToPool ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 border-amber-200' : 'border-gray-200 dark:border-gray-700 text-gray-400 hover:border-amber-200 hover:text-amber-600'}`}
                     title="Vivier talent"
                   >
                     <Archive size={12} /> Vivier
@@ -281,7 +281,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
 
           {/* Quick email actions */}
           {candidate.email && (
-            <div className="mt-4 pt-4 border-t border-gray-100 flex flex-wrap gap-2">
+            <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 flex flex-wrap gap-2">
               <p className="text-xs text-gray-400 self-center mr-1">Contacter :</p>
               <Button size="sm" variant="outline" onClick={() => openEmailDialog('interview')} className="gap-1.5 h-7 text-xs">
                 <Video size={12} /> Inviter à un entretien
@@ -308,13 +308,13 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               {candidate.email && (
-                <div className="flex items-center gap-2 text-gray-600">
+                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                   <Mail size={14} className="text-gray-400 shrink-0" />
                   <a href={`mailto:${candidate.email}`} className="hover:text-blue-600 truncate">{candidate.email}</a>
                 </div>
               )}
               {candidate.phone && (
-                <div className="flex items-center gap-2 text-gray-600">
+                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                   <Phone size={14} className="text-gray-400 shrink-0" />
                   <a href={`tel:${candidate.phone}`} className="hover:text-blue-600">{candidate.phone}</a>
                 </div>
@@ -325,7 +325,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                   <a href={candidate.linkedIn} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600">LinkedIn</a>
                 </div>
               )}
-              <div className="pt-2 border-t border-gray-100 text-xs text-gray-400 space-y-1">
+              <div className="pt-2 border-t border-gray-100 dark:border-gray-800 text-xs text-gray-400 space-y-1">
                 <p>Ajouté le {formatDate(candidate.createdAt)}</p>
                 {candidate.analyzedAt && <p>Analysé le {formatDate(candidate.analyzedAt)}</p>}
                 {candidate.gdprConsent && <p className="text-green-600">RGPD : Consenti ✓</p>}
@@ -341,7 +341,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
               <CardContent>
                 <div className="flex flex-wrap gap-2">
                   {skills.map((s, i) => (
-                    <span key={i} className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-medium">{s}</span>
+                    <span key={i} className="text-xs bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 px-2.5 py-1 rounded-full font-medium">{s}</span>
                   ))}
                 </div>
               </CardContent>
@@ -354,12 +354,12 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                 <CardTitle className="text-sm">Score de correspondance</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="flex items-center justify-between text-xs text-gray-500">
+                <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
                   <span>Global</span>
                   <span className={`font-bold text-sm ${scoreColor}`}>{score.toFixed(0)}%</span>
                 </div>
                 <Progress value={score} className="h-2" />
-                <div className="grid grid-cols-3 text-center text-xs text-gray-400">
+                <div className="grid grid-cols-3 text-center text-xs text-gray-400 dark:text-gray-500">
                   <span className="text-red-500">0–49<br />Faible</span>
                   <span className="text-amber-500">50–74<br />Moyen</span>
                   <span className="text-green-500">75–100<br />Fort</span>
@@ -386,12 +386,12 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                 <>
                   <Card className="border-0 shadow-sm">
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm flex items-center gap-2 text-gray-700">
+                      <CardTitle className="text-sm flex items-center gap-2 text-gray-700 dark:text-gray-300">
                         <Award className="w-4 h-4 text-blue-500" /> Résumé IA
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-gray-700 leading-relaxed">{candidate.summary}</p>
+                      <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{candidate.summary}</p>
                     </CardContent>
                   </Card>
 
@@ -407,7 +407,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                           {strengths.map((s, i) => (
                             <div key={i} className="flex items-start gap-2">
                               <CheckCircle className="w-3.5 h-3.5 text-green-500 mt-0.5 shrink-0" />
-                              <span className="text-sm text-gray-600">{s}</span>
+                              <span className="text-sm text-gray-600 dark:text-gray-300">{s}</span>
                             </div>
                           ))}
                         </CardContent>
@@ -424,7 +424,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                           {weaknesses.map((w, i) => (
                             <div key={i} className="flex items-start gap-2">
                               <XCircle className="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0" />
-                              <span className="text-sm text-gray-600">{w}</span>
+                              <span className="text-sm text-gray-600 dark:text-gray-300">{w}</span>
                             </div>
                           ))}
                         </CardContent>
@@ -439,9 +439,9 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                           <CardContent className="p-4">
                             <div className="flex items-center gap-2 mb-2">
                               <Briefcase className="w-4 h-4 text-indigo-500" />
-                              <p className="text-xs font-semibold text-gray-500 uppercase">Expérience</p>
+                              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Expérience</p>
                             </div>
-                            <p className="text-sm text-gray-700 leading-relaxed">{candidate.experience}</p>
+                            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{candidate.experience}</p>
                           </CardContent>
                         </Card>
                       )}
@@ -450,9 +450,9 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                           <CardContent className="p-4">
                             <div className="flex items-center gap-2 mb-2">
                               <GraduationCap className="w-4 h-4 text-purple-500" />
-                              <p className="text-xs font-semibold text-gray-500 uppercase">Formation</p>
+                              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Formation</p>
                             </div>
-                            <p className="text-sm text-gray-700 leading-relaxed">{candidate.education}</p>
+                            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{candidate.education}</p>
                           </CardContent>
                         </Card>
                       )}
@@ -464,8 +464,8 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                       <CardContent className="p-4 flex items-center gap-3">
                         <div className="text-2xl">{candidate.recommendation === 'strong_yes' ? '🎯' : candidate.recommendation === 'yes' ? '✅' : candidate.recommendation === 'maybe' ? '🤔' : '❌'}</div>
                         <div>
-                          <p className="text-xs font-semibold text-gray-500 uppercase mb-0.5">Recommandation IA</p>
-                          <p className="text-sm font-semibold text-gray-800">{RECOMMENDATION_LABELS[candidate.recommendation] || candidate.recommendation}</p>
+                          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-0.5">Recommandation IA</p>
+                          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{RECOMMENDATION_LABELS[candidate.recommendation] || candidate.recommendation}</p>
                         </div>
                       </CardContent>
                     </Card>
@@ -505,7 +505,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                     value={notes}
                     onChange={e => handleNotesChange(e.target.value)}
                     placeholder="Ajoutez vos notes après l'entretien, vos impressions, les points à vérifier…"
-                    className="w-full min-h-64 p-3 text-sm text-gray-700 border border-gray-200 rounded-xl resize-y focus:outline-none focus:ring-2 focus:ring-blue-200 leading-relaxed"
+                    className="w-full min-h-64 p-3 text-sm text-gray-700 dark:text-gray-300 bg-transparent border border-gray-200 dark:border-gray-700 dark:bg-gray-800 rounded-xl resize-y focus:outline-none focus:ring-2 focus:ring-blue-200 leading-relaxed"
                   />
                   <p className="text-xs text-gray-400 mt-2">Les notes sont privées et sauvegardées automatiquement.</p>
                 </CardContent>
@@ -524,18 +524,18 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                   <CardContent className="space-y-4">
                     {candidate.emailSource ? (
                       <>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-xl text-sm">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl text-sm">
                           <div>
                             <p className="text-xs font-semibold text-gray-400 uppercase mb-1">De</p>
-                            <p className="text-gray-700 font-medium">{candidate.emailSource.sender}</p>
+                            <p className="text-gray-700 dark:text-gray-300 font-medium">{candidate.emailSource.sender}</p>
                           </div>
                           <div>
                             <p className="text-xs font-semibold text-gray-400 uppercase mb-1">Reçu le</p>
-                            <p className="text-gray-700">{formatDate(candidate.emailSource.receivedAt)}</p>
+                            <p className="text-gray-700 dark:text-gray-300">{formatDate(candidate.emailSource.receivedAt)}</p>
                           </div>
                           <div className="sm:col-span-2">
                             <p className="text-xs font-semibold text-gray-400 uppercase mb-1">Sujet</p>
-                            <p className="text-gray-700 font-medium">{candidate.emailSource.subject}</p>
+                            <p className="text-gray-700 dark:text-gray-300 font-medium">{candidate.emailSource.subject}</p>
                           </div>
                           {candidate.emailSource.attachments && (
                             <div className="sm:col-span-2">
@@ -574,7 +574,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                 </CardHeader>
                 <CardContent>
                   {candidate.cvContent ? (
-                    <pre className="text-xs text-gray-600 whitespace-pre-wrap font-sans leading-relaxed max-h-96 overflow-y-auto">
+                    <pre className="text-xs text-gray-600 dark:text-gray-300 whitespace-pre-wrap font-sans leading-relaxed max-h-96 overflow-y-auto">
                       {candidate.cvContent}
                     </pre>
                   ) : (
@@ -594,7 +594,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <pre className="text-xs text-gray-600 whitespace-pre-wrap font-sans leading-relaxed max-h-96 overflow-y-auto">
+                    <pre className="text-xs text-gray-600 dark:text-gray-300 whitespace-pre-wrap font-sans leading-relaxed max-h-96 overflow-y-auto">
                       {candidate.motivationText}
                     </pre>
                   </CardContent>
@@ -612,9 +612,9 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
             <DialogTitle>Envoyer un email à {candidate.firstName}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 mt-2">
-            <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg text-sm">
+            <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm">
               <Mail size={14} className="text-gray-400" />
-              <span className="text-gray-600">À : <strong>{candidate.email}</strong></span>
+              <span className="text-gray-600 dark:text-gray-300">À : <strong>{candidate.email}</strong></span>
             </div>
 
             <div className="flex gap-2">
@@ -659,7 +659,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                 value={emailBody}
                 onChange={e => setEmailBody(e.target.value)}
                 rows={7}
-                className="w-full p-3 text-sm border border-gray-200 rounded-xl resize-y focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="w-full p-3 text-sm border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-xl resize-y focus:outline-none focus:ring-2 focus:ring-blue-200"
               />
             </div>
 
