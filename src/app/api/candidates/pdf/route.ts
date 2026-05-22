@@ -179,15 +179,19 @@ export async function GET(req: Request) {
   if (vacancyId) where.vacancyId = vacancyId
   if (candidateId) where.id = candidateId
 
-  const candidates = await prisma.candidate.findMany({
-    where,
-    include: { vacancy: { select: { title: true, company: true } } },
-    orderBy: [{ priority: 'desc' }, { liked: 'desc' }, { matchScore: 'desc' }],
-  })
-
-  const vacancyTitle = vacancyId
-    ? (await prisma.vacancy.findUnique({ where: { id: vacancyId }, select: { title: true } }))?.title || 'All vacancies'
-    : 'All vacancies'
+  let candidates: any[], vacancyTitle: string
+  try {
+    candidates = await prisma.candidate.findMany({
+      where,
+      include: { vacancy: { select: { title: true, company: true } } },
+      orderBy: [{ priority: 'desc' }, { liked: 'desc' }, { matchScore: 'desc' }],
+    })
+    vacancyTitle = vacancyId
+      ? (await prisma.vacancy.findUnique({ where: { id: vacancyId }, select: { title: true } }))?.title || 'All vacancies'
+      : 'All vacancies'
+  } catch {
+    return NextResponse.json({ error: 'Failed to load candidates' }, { status: 500 })
+  }
 
   const html = buildPDFHtml(
     candidates,
