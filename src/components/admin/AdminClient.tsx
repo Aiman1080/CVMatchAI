@@ -51,6 +51,8 @@ const PRIORITY_COLORS: Record<string, string> = {
 
 interface UserRow {
   id: string
+  name: string | null
+  company: string | null
   role: string
   subscription: string
   subscriptionEnd: Date | null
@@ -346,7 +348,7 @@ export function AdminClient({
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Réf.</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Compte</th>
                       <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Plan</th>
                       <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">Inscrit le</th>
                       <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden xl:table-cell">Utilisation</th>
@@ -365,7 +367,17 @@ export function AdminClient({
                             onClick={() => setExpandedUser(isExpanded ? null : user.id)}
                           >
                             <td className="px-5 py-3.5">
-                              <span className="font-mono text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">#{ref}</span>
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">
+                                  {user.name || '—'}
+                                </span>
+                                {user.company && (
+                                  <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                                    <Building2 size={10} />{user.company}
+                                  </span>
+                                )}
+                                <span className="font-mono text-xs text-gray-400 dark:text-gray-600">#{ref}</span>
+                              </div>
                             </td>
                             <td className="px-4 py-3.5">
                               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${PLAN_COLORS[user.subscription]}`}>
