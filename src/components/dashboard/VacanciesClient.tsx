@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { CreateVacancyDialog } from './CreateVacancyDialog'
 import { toast } from '@/components/ui/use-toast'
 import { getStatusColor, formatRelativeTime } from '@/lib/utils'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface Vacancy {
   id: string
@@ -23,6 +24,8 @@ interface Vacancy {
 
 // Client component: manages optimistic vacancy list — new vacancies are prepended without a page reload
 export function VacanciesClient({ initialVacancies }: { initialVacancies: Vacancy[] }) {
+  const { t } = useLanguage()
+  const tv = t.dashboard.vacancies
   const [vacancies, setVacancies] = useState(initialVacancies)
   const [search, setSearch] = useState('')
   const [showCreate, setShowCreate] = useState(false)
@@ -47,9 +50,9 @@ export function VacanciesClient({ initialVacancies }: { initialVacancies: Vacanc
       const res = await fetch(`/api/vacancies/${id}`, { method: 'DELETE' })
       if (res.ok) {
         setVacancies(prev => prev.filter(v => v.id !== id))
-        toast({ title: 'Vacancy deleted', description: `"${title}" and all its candidates have been removed.` })
+        toast({ title: tv.deleted, description: `"${title}" and all its candidates have been removed.` })
       } else {
-        toast({ title: 'Delete failed', variant: 'destructive' })
+        toast({ title: tv.deleteError, variant: 'destructive' })
       }
     } finally { setDeleting(null) }
   }
@@ -68,14 +71,14 @@ export function VacanciesClient({ initialVacancies }: { initialVacancies: Vacanc
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input
-            placeholder="Search vacancies..."
+            placeholder={tv.searchPlaceholder}
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="pl-9"
           />
         </div>
         <Button onClick={() => setShowCreate(true)} className="gap-2 gradient-bg">
-          <Plus size={16} /> New Vacancy
+          <Plus size={16} /> {tv.newVacancy}
         </Button>
       </div>
 
@@ -85,14 +88,14 @@ export function VacanciesClient({ initialVacancies }: { initialVacancies: Vacanc
             <Briefcase className="w-8 h-8 text-white" />
           </div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-            {search ? 'No vacancies found' : 'Create your first vacancy'}
+            {search ? tv.noResults : tv.createFirst}
           </h3>
           <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">
-            {search ? 'Try a different search term' : 'Post a job and start receiving AI-analyzed candidates'}
+            {search ? tv.noResultsDesc : tv.createFirstDesc}
           </p>
           {!search && (
             <Button onClick={() => setShowCreate(true)} className="gradient-bg gap-2">
-              <Plus size={16} /> Create Vacancy
+              <Plus size={16} /> {tv.createVacancy}
             </Button>
           )}
         </div>
@@ -124,7 +127,7 @@ export function VacanciesClient({ initialVacancies }: { initialVacancies: Vacanc
                   </div>
                   <div className="flex items-center justify-between text-xs text-gray-400 pt-3 border-t border-gray-50 dark:border-gray-800">
                     <span className="flex items-center gap-1">
-                      <Users size={11} /> {v._count.candidates} candidates
+                      <Users size={11} /> {v._count.candidates}
                     </span>
                     <div className="flex items-center gap-2">
                       <span className="flex items-center gap-1">

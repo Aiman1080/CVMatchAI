@@ -1,15 +1,20 @@
+'use client'
+
 import { Briefcase, Users, Star, TrendingUp } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface Stats { vacancies: number; candidates: number; shortlisted: number; avgScore: number }
 
 // Four KPI cards shown at the top of the dashboard
 export function DashboardStats({ stats }: { stats: Stats }) {
+  const { t } = useLanguage()
+  const s = t.dashboard.stats
   const items = [
-    { label: 'Active Vacancies', value: stats.vacancies, icon: Briefcase, color: 'bg-blue-500', bg: 'bg-blue-50 dark:bg-blue-950', change: '+2 this week' },
-    { label: 'Total Candidates', value: stats.candidates, icon: Users, color: 'bg-indigo-500', bg: 'bg-indigo-50 dark:bg-indigo-950', change: '+12 this week' },
-    { label: 'Shortlisted', value: stats.shortlisted, icon: Star, color: 'bg-green-500', bg: 'bg-green-50 dark:bg-green-950', change: `${stats.candidates > 0 ? Math.round((stats.shortlisted / stats.candidates) * 100) : 0}% rate` },
-    { label: 'Avg. Match Score', value: `${stats.avgScore}%`, icon: TrendingUp, color: 'bg-amber-500', bg: 'bg-amber-50 dark:bg-amber-950', change: 'AI-powered' },
+    { label: s.activeVacancies, value: stats.vacancies, icon: Briefcase, color: 'bg-blue-500', bg: 'bg-blue-50 dark:bg-blue-950', change: `+2 ${s.thisWeek}` },
+    { label: s.totalCandidates, value: stats.candidates, icon: Users, color: 'bg-indigo-500', bg: 'bg-indigo-50 dark:bg-indigo-950', change: `+12 ${s.thisWeek}` },
+    { label: s.shortlisted, value: stats.shortlisted, icon: Star, color: 'bg-green-500', bg: 'bg-green-50 dark:bg-green-950', change: `${stats.candidates > 0 ? Math.round((stats.shortlisted / stats.candidates) * 100) : 0}% ${s.rate}` },
+    { label: s.avgMatchScore, value: `${stats.avgScore}%`, icon: TrendingUp, color: 'bg-amber-500', bg: 'bg-amber-50 dark:bg-amber-950', change: s.aiPowered },
   ]
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">

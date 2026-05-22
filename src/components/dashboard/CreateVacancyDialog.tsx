@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from '@/components/ui/use-toast'
 import { Loader2 } from 'lucide-react'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface Props {
   open: boolean
@@ -17,6 +18,8 @@ interface Props {
 }
 
 export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
+  const { t } = useLanguage()
+  const cv = t.dashboard.createVacancy
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({
     title: '', company: '', department: '', location: '',
@@ -36,10 +39,10 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
       if (!res.ok) throw new Error('Failed to create')
       const vacancy = await res.json()
       onCreated(vacancy)
-      toast({ title: 'Vacancy created!', description: `"${vacancy.title}" is now live.`, variant: 'default' })
+      toast({ title: cv.created, description: `"${vacancy.title}" is now live.`, variant: 'default' })
       setForm({ title: '', company: '', department: '', location: '', type: 'full-time', description: '', requirements: '', niceToHave: '', salary: '', language: 'en' })
     } catch {
-      toast({ title: 'Error', description: 'Failed to create vacancy', variant: 'destructive' })
+      toast({ title: cv.createError, variant: 'destructive' })
     } finally {
       setLoading(false)
     }
@@ -49,32 +52,32 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create New Vacancy</DialogTitle>
+          <DialogTitle>{cv.title}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Job Title *</Label>
-              <Input placeholder="e.g. Senior Developer" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} required />
+              <Label>{cv.jobTitle}</Label>
+              <Input placeholder={cv.jobTitlePlaceholder} value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} required />
             </div>
             <div className="space-y-1.5">
-              <Label>Company *</Label>
-              <Input placeholder="Company name" value={form.company} onChange={e => setForm(p => ({ ...p, company: e.target.value }))} required />
+              <Label>{cv.company}</Label>
+              <Input placeholder={cv.companyPlaceholder} value={form.company} onChange={e => setForm(p => ({ ...p, company: e.target.value }))} required />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Department</Label>
-              <Input placeholder="e.g. Engineering" value={form.department} onChange={e => setForm(p => ({ ...p, department: e.target.value }))} />
+              <Label>{cv.department}</Label>
+              <Input placeholder={cv.departmentPlaceholder} value={form.department} onChange={e => setForm(p => ({ ...p, department: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Location</Label>
-              <Input placeholder="e.g. Brussels, Remote" value={form.location} onChange={e => setForm(p => ({ ...p, location: e.target.value }))} />
+              <Label>{cv.location}</Label>
+              <Input placeholder={cv.locationPlaceholder} value={form.location} onChange={e => setForm(p => ({ ...p, location: e.target.value }))} />
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-1.5">
-              <Label>Type</Label>
+              <Label>{cv.type}</Label>
               <Select value={form.type} onValueChange={v => setForm(p => ({ ...p, type: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -87,7 +90,7 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Language</Label>
+              <Label>{cv.language}</Label>
               <Select value={form.language} onValueChange={v => setForm(p => ({ ...p, language: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -99,14 +102,14 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Salary</Label>
-              <Input placeholder="e.g. €50k–€70k" value={form.salary} onChange={e => setForm(p => ({ ...p, salary: e.target.value }))} />
+              <Label>{cv.salary}</Label>
+              <Input placeholder={cv.salaryPlaceholder} value={form.salary} onChange={e => setForm(p => ({ ...p, salary: e.target.value }))} />
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label>Job Description *</Label>
+            <Label>{cv.description}</Label>
             <Textarea
-              placeholder="Describe the role, responsibilities and company culture..."
+              placeholder={cv.descriptionPlaceholder}
               value={form.description}
               onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
               rows={4}
@@ -114,9 +117,9 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Requirements *</Label>
+            <Label>{cv.requirements}</Label>
             <Textarea
-              placeholder="List required skills, experience and qualifications..."
+              placeholder={cv.requirementsPlaceholder}
               value={form.requirements}
               onChange={e => setForm(p => ({ ...p, requirements: e.target.value }))}
               rows={3}
@@ -124,19 +127,19 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Nice to Have</Label>
+            <Label>{cv.niceToHave}</Label>
             <Textarea
-              placeholder="Optional bonus skills or experience..."
+              placeholder={cv.niceToHavePlaceholder}
               value={form.niceToHave}
               onChange={e => setForm(p => ({ ...p, niceToHave: e.target.value }))}
               rows={2}
             />
           </div>
           <div className="flex gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">Cancel</Button>
+            <Button type="button" variant="outline" onClick={onClose} className="flex-1">{cv.cancel}</Button>
             <Button type="submit" disabled={loading} className="flex-1 gradient-bg">
               {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Create Vacancy
+              {loading ? cv.creating : cv.create}
             </Button>
           </div>
         </form>

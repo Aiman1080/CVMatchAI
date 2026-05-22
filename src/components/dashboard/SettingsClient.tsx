@@ -40,7 +40,7 @@ export function SettingsClient({ user }: Props) {
         const data = await res.json().catch(() => ({}))
         throw new Error(data.error || 'Save failed')
       }
-      toast({ title: 'Settings saved!' })
+      toast({ title: t.dashboard.settingsProfile.saved })
     } catch (err: any) {
       toast({ title: err.message || 'Error saving settings', variant: 'destructive' })
     } finally { setSaving(false) }
@@ -49,11 +49,11 @@ export function SettingsClient({ user }: Props) {
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault()
     if (pwForm.newPassword !== pwForm.confirm) {
-      toast({ title: 'Passwords do not match', variant: 'destructive' })
+      toast({ title: t.dashboard.settingsPassword.noMatch, variant: 'destructive' })
       return
     }
     if (pwForm.newPassword.length < 8) {
-      toast({ title: 'Password must be at least 8 characters', variant: 'destructive' })
+      toast({ title: t.dashboard.settingsPassword.tooShort, variant: 'destructive' })
       return
     }
     setPwSaving(true)
@@ -67,7 +67,7 @@ export function SettingsClient({ user }: Props) {
         const data = await res.json().catch(() => ({}))
         throw new Error(data.error || 'Password change failed')
       }
-      toast({ title: 'Password updated!' })
+      toast({ title: t.dashboard.settingsPassword.updated })
       setPwForm({ currentPassword: '', newPassword: '', confirm: '' })
     } catch (err: any) {
       toast({ title: err.message || 'Error changing password', variant: 'destructive' })
@@ -77,31 +77,31 @@ export function SettingsClient({ user }: Props) {
   return (
     <Tabs defaultValue="profile" className="space-y-6">
       <TabsList className="dark:bg-gray-800">
-        <TabsTrigger value="profile">Profile</TabsTrigger>
-        <TabsTrigger value="subscription">Subscription</TabsTrigger>
-        <TabsTrigger value="privacy">Privacy & GDPR</TabsTrigger>
+        <TabsTrigger value="profile">{t.dashboard.settingsTabs.profile}</TabsTrigger>
+        <TabsTrigger value="subscription">{t.dashboard.settingsTabs.subscription}</TabsTrigger>
+        <TabsTrigger value="privacy">{t.dashboard.settingsTabs.privacy}</TabsTrigger>
       </TabsList>
 
       <TabsContent value="profile" className="space-y-6">
         {/* Profile info */}
         <Card className="border-0 shadow-sm max-w-lg">
-          <CardHeader><CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white"><User className="w-4 h-4" />Profile Settings</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white"><User className="w-4 h-4" />{t.dashboard.settingsProfile.title}</CardTitle></CardHeader>
           <CardContent>
             <form onSubmit={handleSave} className="space-y-4">
               <div className="space-y-1.5">
-                <Label className="text-gray-700 dark:text-gray-300">Full Name</Label>
+                <Label className="text-gray-700 dark:text-gray-300">{t.dashboard.settingsProfile.fullName}</Label>
                 <Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-gray-700 dark:text-gray-300">Email</Label>
+                <Label className="text-gray-700 dark:text-gray-300">{t.dashboard.settingsProfile.email}</Label>
                 <Input value={user.email || ''} disabled className="opacity-60" />
-                <p className="text-xs text-gray-400">Email cannot be changed</p>
+                <p className="text-xs text-gray-400">{t.dashboard.settingsProfile.emailNote}</p>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-gray-700 dark:text-gray-300">Company</Label>
-                <Input value={form.company} onChange={e => setForm(p => ({ ...p, company: e.target.value }))} placeholder="Your company name" />
+                <Label className="text-gray-700 dark:text-gray-300">{t.dashboard.settingsProfile.company}</Label>
+                <Input value={form.company} onChange={e => setForm(p => ({ ...p, company: e.target.value }))} placeholder={t.dashboard.settingsProfile.companyPlaceholder} />
               </div>
-              <Button type="submit" disabled={saving} className="gradient-bg gap-2"><Save size={14} />{saving ? 'Saving...' : 'Save Changes'}</Button>
+              <Button type="submit" disabled={saving} className="gradient-bg gap-2"><Save size={14} />{saving ? t.dashboard.settingsProfile.saving : t.dashboard.settingsProfile.saveChanges}</Button>
             </form>
           </CardContent>
         </Card>
@@ -123,19 +123,19 @@ export function SettingsClient({ user }: Props) {
         <Card className="border-0 shadow-sm max-w-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base text-gray-900 dark:text-white">
-              <Lock className="w-4 h-4" /> Change Password
+              <Lock className="w-4 h-4" /> {t.dashboard.settingsPassword.title}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handlePasswordChange} className="space-y-4">
               <div className="space-y-1.5">
-                <Label className="text-gray-700 dark:text-gray-300">Current Password</Label>
+                <Label className="text-gray-700 dark:text-gray-300">{t.dashboard.settingsPassword.current}</Label>
                 <div className="relative">
                   <Input
                     type={showCurrent ? 'text' : 'password'}
                     value={pwForm.currentPassword}
                     onChange={e => setPwForm(p => ({ ...p, currentPassword: e.target.value }))}
-                    placeholder="Enter your current password"
+                    placeholder={t.dashboard.settingsPassword.currentPlaceholder}
                   />
                   <button type="button" onClick={() => setShowCurrent(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                     {showCurrent ? <EyeOff size={15} /> : <Eye size={15} />}
@@ -143,13 +143,13 @@ export function SettingsClient({ user }: Props) {
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-gray-700 dark:text-gray-300">New Password</Label>
+                <Label className="text-gray-700 dark:text-gray-300">{t.dashboard.settingsPassword.new}</Label>
                 <div className="relative">
                   <Input
                     type={showNew ? 'text' : 'password'}
                     value={pwForm.newPassword}
                     onChange={e => setPwForm(p => ({ ...p, newPassword: e.target.value }))}
-                    placeholder="Minimum 8 characters"
+                    placeholder={t.dashboard.settingsPassword.newPlaceholder}
                   />
                   <button type="button" onClick={() => setShowNew(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                     {showNew ? <EyeOff size={15} /> : <Eye size={15} />}
@@ -157,16 +157,16 @@ export function SettingsClient({ user }: Props) {
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-gray-700 dark:text-gray-300">Confirm New Password</Label>
+                <Label className="text-gray-700 dark:text-gray-300">{t.dashboard.settingsPassword.confirm}</Label>
                 <Input
                   type="password"
                   value={pwForm.confirm}
                   onChange={e => setPwForm(p => ({ ...p, confirm: e.target.value }))}
-                  placeholder="Repeat your new password"
+                  placeholder={t.dashboard.settingsPassword.confirmPlaceholder}
                 />
               </div>
               <Button type="submit" variant="outline" disabled={pwSaving || !pwForm.currentPassword || !pwForm.newPassword || !pwForm.confirm} className="gap-2 dark:border-gray-700 dark:text-gray-300">
-                <Lock size={14} />{pwSaving ? 'Updating...' : 'Update Password'}
+                <Lock size={14} />{pwSaving ? t.dashboard.settingsPassword.updating : t.dashboard.settingsPassword.update}
               </Button>
             </form>
           </CardContent>

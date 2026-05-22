@@ -1,20 +1,25 @@
+'use client'
+
 import Link from 'next/link'
 import { ArrowRight, MapPin, Users, Clock } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { getStatusColor, formatRelativeTime } from '@/lib/utils'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface Vacancy { id: string; title: string; company: string; location: string | null; type: string; status: string; createdAt: Date; _count: { candidates: number } }
 
 export function RecentVacancies({ vacancies }: { vacancies: Vacancy[] }) {
+  const { t } = useLanguage()
+  const rv = t.dashboard.recentVacancies
   return (
     <Card className="border-0 shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-base">Active Vacancies</CardTitle>
-        <Link href="/vacancies" className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1">Manage <ArrowRight size={14} /></Link>
+        <CardTitle className="text-base">{rv.title}</CardTitle>
+        <Link href="/vacancies" className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1">{rv.manage} <ArrowRight size={14} /></Link>
       </CardHeader>
       <CardContent>
         {vacancies.length === 0 ? (
-          <div className="text-center py-8 text-gray-400"><p className="text-sm">No vacancies yet.</p></div>
+          <div className="text-center py-8 text-gray-400"><p className="text-sm">{rv.noVacancies}</p></div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {vacancies.map(v => (
