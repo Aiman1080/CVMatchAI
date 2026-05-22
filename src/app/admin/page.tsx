@@ -10,13 +10,13 @@ export default async function AdminPage() {
   const session = await getServerSession(authOptions)
   if (!session || (session.user as any).role !== 'admin') redirect('/dashboard')
 
-  const [users, tickets, subscriptions, counts, aiAnalysesCount, integrationsCount, emailInboxesCount, candidateStatusDist, latestVacancies] = await Promise.all([
+  const [users, tickets, subscriptions, counts, aiAnalysesCount, integrationsCount, emailInboxesCount, candidateStatusDist, latestVacancies, onlineCount, activeTodayCount, recentActivity] = await Promise.all([
     prisma.user.findMany({
       orderBy: { createdAt: 'desc' },
       select: {
         id: true, name: true, email: true, company: true,
         role: true, subscription: true, subscriptionEnd: true,
-        suspended: true, createdAt: true,
+        suspended: true, createdAt: true, lastSeenAt: true,
         _count: { select: { vacancies: true, candidates: true, supportTickets: true } },
       },
     }),
@@ -39,11 +39,17 @@ export default async function AdminPage() {
     prisma.vacancy.findMany({
       orderBy: { createdAt: 'desc' },
       take: 5,
+      select: { title: true, company: true, createdAt: true, _count: { select: { candidates: true } } },
+    }),
+    prisma.user.count({ where: { lastSeenAt: { gte: new Date(Date.now() - 5 * 60 * 1000) } } }),
+    prisma.user.count({ where: { lastSeenAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } } }),
+    prisma.candidate.findMany({
+      take: 25,
+      orderBy: { createdAt: 'desc' },
       select: {
-        title: true,
-        company: true,
-        createdAt: true,
-        _count: { select: { candidates: true } },
+        id: true, firstName: true, lastName: true, createdAt: true, analyzedAt: true, status: true,
+        user: { select: { name: true, company: true } },
+        vacancy: { select: { title: true } },
       },
     }),
   ])
@@ -65,6 +71,9 @@ export default async function AdminPage() {
             emailInboxesCount={emailInboxesCount}
             candidateStatusDist={candidateStatusDist}
             latestVacancies={latestVacancies as any}
+            onlineCount={onlineCount}
+            activeTodayCount={activeTodayCount}
+            recentActivity={recentActivity as any}
           />
         </div>
       </main>

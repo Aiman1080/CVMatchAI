@@ -8,7 +8,8 @@ import prisma from '@/lib/prisma'
 
 const USER_SELECT = {
   id: true, name: true, email: true, role: true,
-  subscription: true, suspended: true, company: true, createdAt: true,
+  subscription: true, subscriptionEnd: true, suspended: true,
+  company: true, createdAt: true, lastSeenAt: true,
 }
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -31,9 +32,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   const { id } = await params
   const body = await req.json()
-  const allowed = ['subscription', 'role', 'suspended', 'name', 'company']
+  const allowed = ['subscription', 'role', 'suspended', 'name', 'company', 'subscriptionEnd']
   const data: Record<string, any> = {}
   for (const key of allowed) if (key in body) data[key] = body[key]
+
+  if ('subscriptionEnd' in body) {
+    data.subscriptionEnd = body.subscriptionEnd ? new Date(body.subscriptionEnd) : null
+  }
 
   const user = await prisma.user.update({ where: { id }, data, select: USER_SELECT })
   return NextResponse.json(user)
