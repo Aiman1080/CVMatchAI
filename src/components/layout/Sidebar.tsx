@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { useTheme } from 'next-themes'
-import { LayoutDashboard, Briefcase, Users, BarChart3, Settings, Mail, LogOut, Zap, ShieldCheck, ChevronRight, CreditCard, LifeBuoy, Sun, Moon, Monitor } from 'lucide-react'
+import { LayoutDashboard, Briefcase, Users, BarChart3, Settings, Mail, LogOut, Zap, ShieldCheck, ChevronRight, CreditCard, LifeBuoy, Sun, Moon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
@@ -31,11 +31,7 @@ export function Sidebar() {
   const user = session?.user as any
   const initials = user?.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || 'U'
 
-  const themeOptions = [
-    { value: 'light', icon: Sun, label: 'Clair' },
-    { value: 'dark', icon: Moon, label: 'Sombre' },
-    { value: 'system', icon: Monitor, label: 'Système' },
-  ]
+  const isDark = theme === 'dark'
 
   return (
     <aside className="fixed left-0 top-0 h-full w-64 bg-white dark:bg-gray-950 border-r border-gray-100 dark:border-gray-800 flex flex-col z-40">
@@ -87,26 +83,23 @@ export function Sidebar() {
         )}
       </nav>
 
-      {/* Theme toggle */}
+      {/* Theme toggle — manual light/dark, ignores OS setting */}
       <div className="px-4 pb-2">
-        <p className="text-xs text-gray-400 dark:text-gray-600 mb-2 px-1">Thème</p>
-        <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-900 rounded-lg p-1">
-          {themeOptions.map(({ value, icon: Icon, label }) => (
-            <button
-              key={value}
-              onClick={() => setTheme(value)}
-              title={label}
-              className={cn(
-                'flex-1 flex items-center justify-center p-1.5 rounded-md text-xs transition-all',
-                theme === value
-                  ? 'bg-white dark:bg-gray-800 shadow-sm text-gray-800 dark:text-gray-200'
-                  : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
-              )}
-            >
-              <Icon size={14} />
-            </button>
-          ))}
-        </div>
+        <button
+          onClick={() => setTheme(isDark ? 'light' : 'dark')}
+          className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-900 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+        >
+          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+            {isDark ? 'Mode sombre' : 'Mode clair'}
+          </span>
+          <div className="flex items-center gap-1">
+            <Sun size={13} className={isDark ? 'text-gray-500' : 'text-amber-500'} />
+            <div className={cn('w-8 h-4 rounded-full transition-colors relative', isDark ? 'bg-blue-600' : 'bg-gray-300')}>
+              <div className={cn('absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-all', isDark ? 'left-4' : 'left-0.5')} />
+            </div>
+            <Moon size={13} className={isDark ? 'text-blue-400' : 'text-gray-400'} />
+          </div>
+        </button>
       </div>
 
       {user?.subscription === 'free' && (
