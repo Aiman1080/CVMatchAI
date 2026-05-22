@@ -6,6 +6,7 @@ import { Sidebar } from '@/components/layout/Sidebar'
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions)
   if (!session) redirect('/login')
+  if ((session.user as any)?.role === 'admin') redirect('/admin')
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex">
       <Sidebar />

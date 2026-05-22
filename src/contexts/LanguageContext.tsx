@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useState, ReactNode } from 'react'
 import { Locale, translations } from '@/lib/i18n'
 
 // Use a recursive string-keyed type so all locales are assignment-compatible
@@ -19,12 +19,13 @@ const LanguageContext = createContext<LanguageContextType>({
 })
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>('fr')
-
-  useEffect(() => {
-    const saved = localStorage.getItem('cvmatch-locale') as Locale
-    if (saved && ['en', 'nl', 'fr'].includes(saved)) setLocaleState(saved)
-  }, [])
+  const [locale, setLocaleState] = useState<Locale>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('cvmatch-locale') as Locale
+      if (saved && ['en', 'nl', 'fr'].includes(saved)) return saved
+    }
+    return 'fr'
+  })
 
   const setLocale = (l: Locale) => {
     setLocaleState(l)
