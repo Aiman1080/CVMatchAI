@@ -5,12 +5,15 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 import { parseDocument, saveUploadedFile } from '@/lib/pdf-parser'
 import { analyzeCVAgainstVacancy, detectDocumentType } from '@/lib/ai'
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  let placeholderCandidateId: string | null = null
 
   try {
     let formData: FormData
@@ -59,6 +62,7 @@ export async function POST(req: Request) {
         vacancyId, userId,
       },
     })
+    placeholderCandidateId = candidate.id
 
     const cvText = docType === 'cv' ? text : candidate.cvContent || ''
     const motivationText = docType === 'motivation' ? text : candidate.motivationText || undefined
@@ -92,6 +96,12 @@ export async function POST(req: Request) {
     }
     return NextResponse.json({ success: true, candidate })
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      if (placeholderCandidateId) {
+        await prisma.candidate.delete({ where: { id: placeholderCandidateId } }).catch(() => {})
+      }
+      return NextResponse.json({ error: 'Ce candidat a déjà été soumis pour ce poste.' }, { status: 409 })
+    }
     console.error('Upload error:', error)
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
   }
