@@ -210,14 +210,14 @@ export function CandidatesClient({ initialCandidates }: { initialCandidates: Can
                               <AvatarFallback className="text-xs gradient-bg text-white font-semibold">{initials}</AvatarFallback>
                             </Avatar>
                             {isUnread && (
-                              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-blue-500 border-2 border-white dark:border-gray-900 rounded-full" title={tc.unread} />
+                              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-blue-500 border-2 border-white dark:border-gray-900 rounded-full animate-pulse" title={tc.unread} />
                             )}
                           </div>
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1 flex-wrap mb-0.5">
                             <span className={`font-semibold text-sm truncate ${isUnread ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>{c.firstName} {c.lastName}</span>
-                            {isUnread && <span className="text-xs bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 px-1.5 rounded font-semibold">{tc.unread}</span>}
+                            {isUnread && <span className="text-xs bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 px-1.5 rounded font-semibold animate-pulse">{tc.unread}</span>}
                             {c.liked && <Star size={10} className="text-amber-500 shrink-0" fill="currentColor" />}
                             {c.priority && <Flag size={10} className="text-red-500 shrink-0" />}
                             {c.savedToPool && <span className="text-xs bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 px-1 rounded font-medium">{tc.pool_badge}</span>}
