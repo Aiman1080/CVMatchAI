@@ -359,7 +359,7 @@ function generateDemoAnalysis(cvText: string, vacancyTitle: string): CVAnalysisR
   if (detectedSkills.length === 0) detectedSkills.push('Communication', 'Problem-solving', 'Teamwork')
 
   const emailMatch = cvText.match(/[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}/)
-  const phoneMatch = cvText.match(/(?:\+\d{1,3}[\s.-]?)?\(?\d{2,4}\)?[\s.-]?\d{3,4}[\s.-]?\d{3,4}/)
+  const phoneMatch = cvText.match(/(?:\+\d{1,3}[\s.-]?)?\(?\d{1,4}\)?(?:[\s.-]?\d{2,4}){2,3}/)
   const { firstName, lastName } = extractName(cvText)
 
   const eduSection = extractSection(cvText, ['education', 'opleiding', 'formation', 'études', 'etudes', 'academic', 'diplom', 'degree'])

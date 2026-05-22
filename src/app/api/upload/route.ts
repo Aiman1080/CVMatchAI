@@ -34,7 +34,9 @@ export async function POST(req: Request) {
     const maxSize = parseInt(process.env.MAX_FILE_SIZE || '10485760')
     if (file.size > maxSize) return NextResponse.json({ error: 'File too large (max 10MB)' }, { status: 400 })
 
-    const vacancy = await prisma.vacancy.findUnique({ where: { id: vacancyId } })
+    const userId = (session.user as any).id
+    // findFirst with userId prevents IDOR — users can only upload to their own vacancies
+    const vacancy = await prisma.vacancy.findFirst({ where: { id: vacancyId, userId } })
     if (!vacancy) return NextResponse.json({ error: 'Vacancy not found' }, { status: 404 })
 
     const buffer = Buffer.from(await file.arrayBuffer())
@@ -48,7 +50,6 @@ export async function POST(req: Request) {
 
     // Detect whether this file is a CV or a motivation letter before creating the record
     const docType = await detectDocumentType(text)
-    const userId = (session.user as any).id
 
     // Create a placeholder candidate first so we have an ID for the analysis update
     let candidate = await prisma.candidate.create({
@@ -92,9 +93,9 @@ export async function POST(req: Request) {
           motivationText: docType === 'motivation' ? text : candidate.motivationText,
         },
       })
-      return NextResponse.json({ success: true, candidate, analysis })
+      return NextResponse.json({ success: true, candidate, analysis }, { status: 201 })
     }
-    return NextResponse.json({ success: true, candidate })
+    return NextResponse.json({ success: true, candidate }, { status: 201 })
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       if (placeholderCandidateId) {

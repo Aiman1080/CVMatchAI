@@ -1,9 +1,27 @@
-// Admin user management — PATCH to change subscription/role/suspended flag,
-// DELETE to remove an account. Only fields in the allowlist can be changed via PATCH.
+// Admin user management — GET/PATCH/DELETE a single user.
+// Only fields in the allowlist can be changed via PATCH.
+// Password is never returned in any response.
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+
+const USER_SELECT = {
+  id: true, name: true, email: true, role: true,
+  subscription: true, suspended: true, company: true, createdAt: true,
+}
+
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if ((session.user as any).role !== 'admin')
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
+  const { id } = await params
+  const user = await prisma.user.findUnique({ where: { id }, select: USER_SELECT })
+  if (!user) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  return NextResponse.json(user)
+}
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions)
@@ -17,7 +35,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const data: Record<string, any> = {}
   for (const key of allowed) if (key in body) data[key] = body[key]
 
-  const user = await prisma.user.update({ where: { id }, data })
+  const user = await prisma.user.update({ where: { id }, data, select: USER_SELECT })
   return NextResponse.json(user)
 }
 

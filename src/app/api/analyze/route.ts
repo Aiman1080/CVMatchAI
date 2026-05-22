@@ -15,9 +15,10 @@ export async function POST(req: Request) {
   try { body = await req.json() } catch { return NextResponse.json({ error: 'Invalid request body' }, { status: 400 }) }
   const { candidateId } = body
   if (!candidateId) return NextResponse.json({ error: 'candidateId required' }, { status: 400 })
+  const userId = (session.user as any).id
 
-  // Include vacancy so we have the title/description/requirements for the AI prompt
-  const candidate = await prisma.candidate.findUnique({ where: { id: candidateId }, include: { vacancy: true } })
+  // findFirst with userId scoping prevents IDOR — users can only re-analyze their own candidates
+  const candidate = await prisma.candidate.findFirst({ where: { id: candidateId, userId }, include: { vacancy: true } })
   if (!candidate || !candidate.cvContent) return NextResponse.json({ error: 'Candidate or CV not found' }, { status: 404 })
 
   const analysis = await analyzeCVAgainstVacancy(

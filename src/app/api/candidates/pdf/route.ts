@@ -171,11 +171,13 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url)
   const vacancyId = searchParams.get('vacancyId')
+  const candidateId = searchParams.get('candidateId')
   const userId = (session.user as any).id
   const isAdmin = (session.user as any).role === 'admin'
 
   const where: any = isAdmin ? {} : { userId }
   if (vacancyId) where.vacancyId = vacancyId
+  if (candidateId) where.id = candidateId
 
   const candidates = await prisma.candidate.findMany({
     where,
