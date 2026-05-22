@@ -9,9 +9,13 @@ export async function DELETE(_req: Request, context: { params: Promise<{ id: str
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const userId = (session.user as any).id
 
-  const integration = await prisma.integration.findFirst({ where: { id: params.id, userId } })
-  if (!integration) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  try {
+    const integration = await prisma.integration.findFirst({ where: { id: params.id, userId } })
+    if (!integration) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  await prisma.integration.delete({ where: { id: params.id } })
-  return NextResponse.json({ success: true })
+    await prisma.integration.delete({ where: { id: params.id } })
+    return NextResponse.json({ success: true })
+  } catch {
+    return NextResponse.json({ error: 'Failed to disconnect integration' }, { status: 500 })
+  }
 }

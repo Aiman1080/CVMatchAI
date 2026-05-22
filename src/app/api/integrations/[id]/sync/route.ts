@@ -10,7 +10,12 @@ export async function POST(_req: Request, context: { params: Promise<{ id: strin
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const userId = (session.user as any).id
 
-  const integration = await prisma.integration.findFirst({ where: { id: params.id, userId } })
+  let integration: any
+  try {
+    integration = await prisma.integration.findFirst({ where: { id: params.id, userId } })
+  } catch {
+    return NextResponse.json({ error: 'Failed to load integration' }, { status: 500 })
+  }
   if (!integration) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const since = integration.lastSyncAt || undefined

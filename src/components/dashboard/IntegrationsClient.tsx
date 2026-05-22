@@ -208,7 +208,11 @@ export function IntegrationsClient({ initialIntegrations }: { initialIntegration
       if (res.ok) {
         setIntegrations(prev => prev.filter(i => i.id !== integrationId))
         toast({ title: `${p?.name} ${ti.disconnected}`, description: ti.candidatesKept })
+      } else {
+        toast({ title: 'Disconnect failed', variant: 'destructive' })
       }
+    } catch {
+      toast({ title: 'Disconnect failed', variant: 'destructive' })
     } finally { setDeleting(null) }
   }
 

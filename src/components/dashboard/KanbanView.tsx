@@ -61,18 +61,23 @@ export function KanbanView({ candidates, onCandidatesChange }: Props) {
 
   const updateCandidate = async (id: string, patch: Partial<Candidate>) => {
     setUpdating(id)
-    const res = await fetch(`/api/candidates/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(patch),
-    })
-    if (res.ok) {
-      const updated = await res.json()
-      onCandidatesChange(candidates.map(c => c.id === id ? { ...c, ...updated } : c))
-    } else {
+    try {
+      const res = await fetch(`/api/candidates/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+      })
+      if (res.ok) {
+        const updated = await res.json()
+        onCandidatesChange(candidates.map(c => c.id === id ? { ...c, ...updated } : c))
+      } else {
+        toast({ title: 'Update failed', variant: 'destructive' })
+      }
+    } catch {
       toast({ title: 'Update failed', variant: 'destructive' })
+    } finally {
+      setUpdating(null)
     }
-    setUpdating(null)
   }
 
   const handleDrop = (colId: string) => {

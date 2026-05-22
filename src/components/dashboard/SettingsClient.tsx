@@ -30,6 +30,8 @@ export function SettingsClient({ user }: Props) {
   const [pwSaving, setPwSaving] = useState(false)
   const [showCurrent, setShowCurrent] = useState(false)
   const [showNew, setShowNew] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const [deletingAll, setDeletingAll] = useState(false)
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -216,8 +218,53 @@ export function SettingsClient({ user }: Props) {
               <div>
                 <h4 className="font-medium text-gray-900 dark:text-white text-sm mb-2">Data Processing Rights</h4>
                 <div className="space-y-2">
-                  <Button variant="outline" size="sm" className="w-full justify-start dark:border-gray-700 dark:text-gray-300">Export All My Data (GDPR Article 20)</Button>
-                  <Button variant="outline" size="sm" className="w-full justify-start text-red-600 hover:text-red-700 hover:border-red-300 dark:border-gray-700"><Trash2 size={14} className="mr-2" />Delete All Candidate Data</Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={exporting}
+                    className="w-full justify-start dark:border-gray-700 dark:text-gray-300"
+                    onClick={async () => {
+                      setExporting(true)
+                      try {
+                        const res = await fetch('/api/user/export')
+                        if (!res.ok) throw new Error('Export failed')
+                        const blob = await res.blob()
+                        const a = document.createElement('a')
+                        a.href = URL.createObjectURL(blob)
+                        a.download = `cvmatch-export-${new Date().toISOString().slice(0, 10)}.json`
+                        a.click()
+                        toast({ title: 'Data exported successfully' })
+                      } catch {
+                        toast({ title: 'Export failed', variant: 'destructive' })
+                      } finally { setExporting(false) }
+                    }}
+                  >
+                    {exporting ? 'Exporting…' : 'Export All My Data (GDPR Article 20)'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={deletingAll}
+                    className="w-full justify-start text-red-600 hover:text-red-700 hover:border-red-300 dark:border-gray-700"
+                    onClick={async () => {
+                      if (!confirm('Delete ALL candidate data? This is permanent and cannot be undone.')) return
+                      setDeletingAll(true)
+                      try {
+                        const res = await fetch('/api/candidates/delete-all', { method: 'DELETE' })
+                        const data = await res.json()
+                        if (res.ok) {
+                          toast({ title: `${data.deleted} candidate(s) deleted`, description: 'All candidate data has been removed.' })
+                        } else {
+                          toast({ title: data.error || 'Delete failed', variant: 'destructive' })
+                        }
+                      } catch {
+                        toast({ title: 'Delete failed', variant: 'destructive' })
+                      } finally { setDeletingAll(false) }
+                    }}
+                  >
+                    <Trash2 size={14} className="mr-2" />
+                    {deletingAll ? 'Deleting…' : 'Delete All Candidate Data'}
+                  </Button>
                 </div>
               </div>
             </CardContent>

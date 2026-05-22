@@ -18,17 +18,23 @@ export async function POST(req: Request) {
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const userId = (session.user as any).id
-  const { inboxId } = await req.json()
+  let inboxId: string
+  try { inboxId = (await req.json()).inboxId } catch { return NextResponse.json({ error: 'Invalid request body' }, { status: 400 }) }
 
-  // Ownership check — users can only scan their own inboxes
-  const inbox = await prisma.emailInbox.findFirst({ where: { id: inboxId, userId } })
-  if (!inbox) return NextResponse.json({ error: 'Inbox not found' }, { status: 404 })
+  let inbox: any, vacancies: any[]
+  try {
+    // Ownership check — users can only scan their own inboxes
+    inbox = await prisma.emailInbox.findFirst({ where: { id: inboxId, userId } })
+    if (!inbox) return NextResponse.json({ error: 'Inbox not found' }, { status: 404 })
 
-  // Require at least one active vacancy to match against before scanning
-  const vacancies = await prisma.vacancy.findMany({
-    where: { userId, status: 'active' },
-    select: { id: true, title: true, description: true, requirements: true },
-  })
+    // Require at least one active vacancy to match against before scanning
+    vacancies = await prisma.vacancy.findMany({
+      where: { userId, status: 'active' },
+      select: { id: true, title: true, description: true, requirements: true },
+    })
+  } catch {
+    return NextResponse.json({ error: 'Failed to load inbox or vacancies' }, { status: 500 })
+  }
 
   if (vacancies.length === 0) {
     return NextResponse.json({ error: 'No active vacancies to match against' }, { status: 400 })

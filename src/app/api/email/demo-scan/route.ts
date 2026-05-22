@@ -174,36 +174,40 @@ export async function POST() {
 
   const userId = (session.user as any).id
 
-  const vacancies = await prisma.vacancy.findMany({
-    where: { userId, status: 'active' },
-    select: { id: true, title: true, description: true, requirements: true },
-  })
+  let vacancies: any[], demoInbox: any, existingEmails: Set<string | null>
+  try {
+    vacancies = await prisma.vacancy.findMany({
+      where: { userId, status: 'active' },
+      select: { id: true, title: true, description: true, requirements: true },
+    })
 
-  if (vacancies.length === 0) {
-    return NextResponse.json({ error: 'Create at least one active vacancy before running a demo scan.' }, { status: 400 })
+    if (vacancies.length === 0) {
+      return NextResponse.json({ error: 'Create at least one active vacancy before running a demo scan.' }, { status: 400 })
+    }
+
+    // Reuse or create the demo inbox record — this is just a placeholder for the email source relation
+    demoInbox = await prisma.emailInbox.findFirst({ where: { userId, provider: 'demo' } })
+    if (!demoInbox) {
+      demoInbox = await prisma.emailInbox.create({
+        data: { email: 'demo@cvmatch.ai', provider: 'demo', host: 'demo', port: 993, username: 'demo@cvmatch.ai', password: 'demo', userId },
+      })
+    }
+
+    // Load all existing demo candidate emails in one query — used to skip duplicates.
+    // We check by sender email globally (not per vacancy) because the scoring function
+    // can pick a different vacancy on each run, which would otherwise create two rows
+    // for the same real person under different vacancies.
+    existingEmails = new Set(
+      (await prisma.candidate.findMany({
+        where: { userId, email: { in: DEMO_EMAILS.map(e => e.sender) } },
+        select: { email: true },
+      })).map(c => c.email)
+    )
+  } catch {
+    return NextResponse.json({ error: 'Failed to load data' }, { status: 500 })
   }
 
   let processed = 0
-
-  // Reuse or create the demo inbox record — this is just a placeholder for the email source relation
-  let demoInbox = await prisma.emailInbox.findFirst({ where: { userId, provider: 'demo' } })
-  if (!demoInbox) {
-    demoInbox = await prisma.emailInbox.create({
-      data: { email: 'demo@cvmatch.ai', provider: 'demo', host: 'demo', port: 993, username: 'demo@cvmatch.ai', password: 'demo', userId },
-    })
-  }
-
-  // Load all existing demo candidate emails in one query — used to skip duplicates.
-  // We check by sender email globally (not per vacancy) because the scoring function
-  // can pick a different vacancy on each run, which would otherwise create two rows
-  // for the same real person under different vacancies.
-  const existingEmails = new Set(
-    (await prisma.candidate.findMany({
-      where: { userId, email: { in: DEMO_EMAILS.map(e => e.sender) } },
-      select: { email: true },
-    })).map(c => c.email)
-  )
-
   for (const email of DEMO_EMAILS) {
     // Skip globally — same sender already exists under any vacancy for this user
     if (existingEmails.has(email.sender)) continue

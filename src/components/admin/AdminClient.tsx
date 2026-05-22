@@ -110,40 +110,55 @@ export function AdminClient({
   // ── Actions ───────────────────────────────────────────────────────────────
 
   const updateUser = async (id: string, data: Record<string, any>) => {
-    const res = await fetch(`/api/admin/users/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    })
-    if (res.ok) {
-      setUsers(prev => prev.map(u => u.id === id ? { ...u, ...data } : u))
-      toast({ title: 'Account updated' })
-    } else {
+    try {
+      const res = await fetch(`/api/admin/users/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (res.ok) {
+        setUsers(prev => prev.map(u => u.id === id ? { ...u, ...data } : u))
+        toast({ title: 'Account updated' })
+      } else {
+        const err = await res.json().catch(() => ({}))
+        toast({ title: err.error || 'Update failed', variant: 'destructive' })
+      }
+    } catch {
       toast({ title: 'Update failed', variant: 'destructive' })
     }
   }
 
   const deleteUser = async (id: string) => {
     if (!confirm('Permanently delete this account? All associated data will be lost. This action is irreversible.')) return
-    const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' })
-    if (res.ok) {
-      setUsers(prev => prev.filter(u => u.id !== id))
-      toast({ title: 'Account permanently deleted' })
-    } else {
+    try {
+      const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setUsers(prev => prev.filter(u => u.id !== id))
+        toast({ title: 'Account permanently deleted' })
+      } else {
+        const err = await res.json().catch(() => ({}))
+        toast({ title: err.error || 'Delete failed', variant: 'destructive' })
+      }
+    } catch {
       toast({ title: 'Delete failed', variant: 'destructive' })
     }
   }
 
   const resetPassword = async (id: string) => {
     setLoading(p => ({ ...p, [id]: true }))
-    const res = await fetch(`/api/admin/users/${id}/reset-password`, { method: 'POST' })
-    setLoading(p => ({ ...p, [id]: false }))
-    if (res.ok) {
-      const { tempPassword } = await res.json()
-      setTempPasswords(p => ({ ...p, [id]: tempPassword }))
-      toast({ title: 'Temporary password generated' })
-    } else {
+    try {
+      const res = await fetch(`/api/admin/users/${id}/reset-password`, { method: 'POST' })
+      if (res.ok) {
+        const { tempPassword } = await res.json()
+        setTempPasswords(p => ({ ...p, [id]: tempPassword }))
+        toast({ title: 'Temporary password generated' })
+      } else {
+        toast({ title: 'Reset failed', variant: 'destructive' })
+      }
+    } catch {
       toast({ title: 'Reset failed', variant: 'destructive' })
+    } finally {
+      setLoading(p => ({ ...p, [id]: false }))
     }
   }
 
@@ -153,16 +168,22 @@ export function AdminClient({
   }
 
   const updateTicket = async (id: string, data: Record<string, any>) => {
-    const res = await fetch(`/api/admin/support/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    })
-    if (res.ok) {
-      const updated = await res.json()
-      setTickets(prev => prev.map(t => t.id === id ? { ...t, ...updated } : t))
-      if (data.adminReply) setReplyText(p => ({ ...p, [id]: '' }))
-      toast({ title: 'Ticket updated' })
+    try {
+      const res = await fetch(`/api/admin/support/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (res.ok) {
+        const updated = await res.json()
+        setTickets(prev => prev.map(t => t.id === id ? { ...t, ...updated } : t))
+        if (data.adminReply) setReplyText(p => ({ ...p, [id]: '' }))
+        toast({ title: 'Ticket updated' })
+      } else {
+        toast({ title: 'Update failed', variant: 'destructive' })
+      }
+    } catch {
+      toast({ title: 'Update failed', variant: 'destructive' })
     }
   }
 

@@ -126,9 +126,17 @@ export function EmailClient() {
   }
 
   const handleDelete = async (inboxId: string) => {
-    await fetch('/api/email/connect', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: inboxId }) })
-    setInboxes(prev => prev.filter(i => i.id !== inboxId))
-    toast({ title: 'Inbox removed' })
+    try {
+      const res = await fetch('/api/email/connect', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: inboxId }) })
+      if (res.ok) {
+        setInboxes(prev => prev.filter(i => i.id !== inboxId))
+        toast({ title: 'Inbox removed' })
+      } else {
+        toast({ title: 'Failed to remove inbox', variant: 'destructive' })
+      }
+    } catch {
+      toast({ title: 'Failed to remove inbox', variant: 'destructive' })
+    }
   }
 
   return (

@@ -13,6 +13,13 @@ const nextConfig = {
       { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
     ],
   },
+  webpack(config, { isServer }) {
+    if (!isServer) {
+      // bcryptjs references 'crypto' which is only available server-side
+      config.resolve.fallback = { ...config.resolve.fallback, crypto: false }
+    }
+    return config
+  },
 }
 
 module.exports = nextConfig
