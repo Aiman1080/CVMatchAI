@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { useTheme } from 'next-themes'
-import { LayoutDashboard, Briefcase, Users, BarChart3, Settings, Mail, LogOut, Zap, ShieldCheck, ChevronRight, CreditCard, LifeBuoy, Sun, Moon, Plug } from 'lucide-react'
+import { LayoutDashboard, Briefcase, Users, BarChart3, Settings, Mail, LogOut, Zap, ShieldCheck, ChevronRight, LifeBuoy, Sun, Moon, Plug, Lock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -24,14 +24,16 @@ export function Sidebar() {
   const initials = user?.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || 'U'
 
   const isDark = theme === 'dark'
+  const subscription = user?.subscription || 'free'
+  const isFree = subscription === 'free'
 
   const navItems = [
     { href: '/dashboard', icon: LayoutDashboard, label: t.dashboard.nav.dashboard },
     { href: '/vacancies', icon: Briefcase, label: t.dashboard.nav.vacancies },
     { href: '/candidates', icon: Users, label: t.dashboard.nav.candidates },
-    { href: '/email', icon: Mail, label: t.dashboard.nav.email },
-    { href: '/integrations', icon: Plug, label: t.dashboard.nav.integrations },
-    { href: '/analytics', icon: BarChart3, label: t.dashboard.nav.analytics },
+    { href: '/email', icon: Mail, label: t.dashboard.nav.email, locked: isFree },
+    { href: '/integrations', icon: Plug, label: t.dashboard.nav.integrations, locked: isFree },
+    { href: '/analytics', icon: BarChart3, label: t.dashboard.nav.analytics, locked: isFree },
     { href: '/settings', icon: Settings, label: t.dashboard.nav.settings },
     { href: '/support', icon: LifeBuoy, label: t.dashboard.nav.support },
   ]
@@ -51,7 +53,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {navItems.map(({ href, icon: Icon, label }) => {
+        {navItems.map(({ href, icon: Icon, label, locked }) => {
           const active = pathname === href || pathname.startsWith(href + '/')
           return (
             <Link
@@ -59,6 +61,7 @@ export function Sidebar() {
               href={href}
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
+                locked && 'opacity-60',
                 active
                   ? 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-400'
                   : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-200'
@@ -66,7 +69,8 @@ export function Sidebar() {
             >
               <Icon className={cn(active ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-600')} size={18} />
               {label}
-              {active && <ChevronRight className="ml-auto w-3.5 h-3.5 text-blue-400" />}
+              {active && !locked && <ChevronRight className="ml-auto w-3.5 h-3.5 text-blue-400" />}
+              {locked && <Lock className="ml-auto w-3 h-3 text-gray-400 dark:text-gray-600" />}
             </Link>
           )
         })}
@@ -105,15 +109,14 @@ export function Sidebar() {
         </button>
       </div>
 
-      {user?.subscription === 'free' && (
-        <div className="px-4 pb-2">
-          <Link href="/upgrade" className="block p-3 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border border-blue-100 dark:border-blue-900 hover:border-blue-200 transition-colors">
-            <div className="flex items-center gap-2 mb-1">
-              <CreditCard size={14} className="text-blue-600 dark:text-blue-400" />
-              <span className="text-xs font-semibold text-blue-800 dark:text-blue-300">{t.dashboard.nav.upgradeTitle}</span>
-            </div>
-            <p className="text-xs text-blue-600 dark:text-blue-400">{t.dashboard.nav.upgradeDesc}</p>
-          </Link>
+      {isFree && (
+        <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800">
+          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">Plan Gratuit</p>
+          <div className="p-3 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/40 dark:to-purple-950/40 rounded-xl border border-blue-100 dark:border-blue-900">
+            <p className="text-xs font-bold text-blue-800 dark:text-blue-300 mb-1">{t.dashboard.nav.upgradeTitle}</p>
+            <p className="text-xs text-blue-600 dark:text-blue-400 mb-2">{t.dashboard.nav.upgradeDesc}</p>
+            <a href="/settings" className="block text-center text-xs bg-blue-600 text-white rounded-lg py-1.5 font-semibold hover:bg-blue-700 transition-colors">Upgrade →</a>
+          </div>
         </div>
       )}
 

@@ -25,8 +25,10 @@ export default function LoginPage() {
     else { toast({ title: 'Login failed', description: 'Invalid email or password', variant: 'destructive' }) }
   }
 
-  const fillDemo = (type: 'recruiter' | 'admin') => {
-    setForm(type === 'admin' ? { email: 'admin@cvmatch.ai', password: 'admin123' } : { email: 'demo@cvmatch.ai', password: 'recruiter123' })
+  const fillDemo = (type: 'free' | 'pro' | 'admin') => {
+    if (type === 'admin') setForm({ email: 'admin@cvmatch.ai', password: 'admin123' })
+    else if (type === 'pro') setForm({ email: 'pro@cvmatch.ai', password: 'pro123' })
+    else setForm({ email: 'demo@cvmatch.ai', password: 'recruiter123' })
   }
 
   return (
@@ -40,7 +42,8 @@ export default function LoginPage() {
           <p className="text-gray-500 text-sm mt-1">Sign in to CVMatch AI</p>
         </div>
         <div className="flex gap-2 mb-6">
-          <button onClick={() => fillDemo('recruiter')} className="flex-1 text-xs bg-blue-50 text-blue-700 px-3 py-2 rounded-lg hover:bg-blue-100 transition-colors font-medium">Demo Recruiter</button>
+          <button onClick={() => fillDemo('free')} className="flex-1 text-xs bg-blue-50 text-blue-700 px-3 py-2 rounded-lg hover:bg-blue-100 transition-colors font-medium">Demo Gratuit</button>
+          <button onClick={() => fillDemo('pro')} className="flex-1 text-xs bg-green-50 text-green-700 px-3 py-2 rounded-lg hover:bg-green-100 transition-colors font-medium">Demo Pro</button>
           <button onClick={() => fillDemo('admin')} className="flex-1 text-xs bg-purple-50 text-purple-700 px-3 py-2 rounded-lg hover:bg-purple-100 transition-colors font-medium">Demo Admin</button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">

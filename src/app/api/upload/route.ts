@@ -8,6 +8,7 @@ import prisma from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
 import { parseDocument, saveUploadedFile } from '@/lib/pdf-parser'
 import { analyzeCVAgainstVacancy, detectDocumentType } from '@/lib/ai'
+import { getPlanLimits } from '@/lib/plans'
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
@@ -35,6 +36,15 @@ export async function POST(req: Request) {
     if (file.size > maxSize) return NextResponse.json({ error: 'File too large (max 10MB)' }, { status: 400 })
 
     const userId = (session.user as any).id
+    const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { subscription: true } })
+    const limits = getPlanLimits(dbUser?.subscription || 'free')
+    if (limits.maxCandidatesPerMonth !== Infinity) {
+      const startOfMonth = new Date(); startOfMonth.setDate(1); startOfMonth.setHours(0, 0, 0, 0)
+      const monthCount = await prisma.candidate.count({ where: { userId, createdAt: { gte: startOfMonth } } })
+      if (monthCount >= limits.maxCandidatesPerMonth) {
+        return NextResponse.json({ error: `Monthly candidate limit (${limits.maxCandidatesPerMonth}) reached. Upgrade for more.`, upgrade: true }, { status: 403 })
+      }
+    }
     // findFirst with userId prevents IDOR — users can only upload to their own vacancies
     const vacancy = await prisma.vacancy.findFirst({ where: { id: vacancyId, userId } })
     if (!vacancy) return NextResponse.json({ error: 'Vacancy not found' }, { status: 404 })

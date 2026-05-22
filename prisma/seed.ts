@@ -14,6 +14,8 @@ function hashScore(cv: string, title: string): number {
 async function main() {
   const adminPassword = await bcrypt.hash('admin123', 12)
   const recruiterPassword = await bcrypt.hash('recruiter123', 12)
+  const proPassword = await bcrypt.hash('pro123', 12)
+  const freePassword = await bcrypt.hash('free123', 12)
 
   await prisma.user.upsert({
     where: { email: 'admin@cvmatch.ai' },
@@ -27,11 +29,31 @@ async function main() {
 
   const recruiter = await prisma.user.upsert({
     where: { email: 'demo@cvmatch.ai' },
-    update: {},
+    update: { subscription: 'free' },
     create: {
       email: 'demo@cvmatch.ai', name: 'Demo Recruiter',
       password: recruiterPassword, role: 'recruiter',
-      company: 'Acme Corp', subscription: 'pro',
+      company: 'Acme Corp', subscription: 'free',
+    },
+  })
+
+  const proUser = await prisma.user.upsert({
+    where: { email: 'pro@cvmatch.ai' },
+    update: { subscription: 'pro' },
+    create: {
+      email: 'pro@cvmatch.ai', name: 'Demo Pro',
+      password: proPassword, role: 'recruiter',
+      company: 'Pro Agency', subscription: 'pro',
+    },
+  })
+
+  await prisma.user.upsert({
+    where: { email: 'free@cvmatch.ai' },
+    update: { subscription: 'free' },
+    create: {
+      email: 'free@cvmatch.ai', name: 'Demo Gratuit',
+      password: freePassword, role: 'recruiter',
+      company: 'Startup Demo', subscription: 'free',
     },
   })
 
@@ -98,10 +120,45 @@ async function main() {
     })
   }
 
+  // ── Pro user vacancies & candidates (sample data for demo) ─────────────────
+
+  const proVacancyData = VACANCIES.slice(0, 4)
+  const proVacancyIds: string[] = []
+  for (const v of proVacancyData) {
+    const vacancy = await prisma.vacancy.create({
+      data: { ...v, userId: proUser.id },
+    })
+    proVacancyIds.push(vacancy.id)
+  }
+
+  const proCandidates = ALL_CANDIDATES.filter(c => c.vacancyIndex < 4).slice(0, 12)
+  for (const c of proCandidates) {
+    const { vacancyIndex, strengths, weaknesses, skills, ...rest } = c
+    const vacancyId = proVacancyIds[vacancyIndex]
+    const vacancyTitle = proVacancyData[vacancyIndex].title
+    await prisma.candidate.create({
+      data: {
+        ...rest,
+        vacancyId,
+        userId: proUser.id,
+        strengths: JSON.stringify(strengths),
+        weaknesses: JSON.stringify(weaknesses),
+        skills: JSON.stringify(skills),
+        matchScore: hashScore(rest.cvContent, vacancyTitle),
+        analyzedAt: new Date(),
+        gdprConsent: true,
+        gdprConsentDate: new Date(),
+      },
+    })
+  }
+
   console.log('✅ Database seeded successfully')
   console.log('👤 Admin:         admin@cvmatch.ai / admin123')
-  console.log('👤 Demo:          demo@cvmatch.ai / recruiter123')
-  console.log(`📋 ${VACANCIES.length} vacancies, ${ALL_CANDIDATES.length} candidates`)
+  console.log('👤 Demo (free):   demo@cvmatch.ai / recruiter123')
+  console.log('👤 Demo Pro:      pro@cvmatch.ai / pro123')
+  console.log('👤 Demo Gratuit:  free@cvmatch.ai / free123')
+  console.log(`📋 ${VACANCIES.length} vacancies, ${ALL_CANDIDATES.length} candidates (demo user)`)
+  console.log(`📋 ${proVacancyIds.length} vacancies, ${proCandidates.length} candidates (pro user)`)
 }
 
 main().catch(console.error).finally(() => prisma.$disconnect())

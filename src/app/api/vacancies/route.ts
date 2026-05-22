@@ -6,6 +6,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { z } from 'zod'
+import { getPlanLimits } from '@/lib/plans'
 
 const schema = z.object({
   title: z.string().min(2),
@@ -41,6 +42,14 @@ export async function POST(req: Request) {
     const body = await req.json()
     const data = schema.parse(body)
     const userId = (session.user as any).id
+    const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { subscription: true } })
+    const limits = getPlanLimits(dbUser?.subscription || 'free')
+    if (limits.maxVacancies !== Infinity) {
+      const count = await prisma.vacancy.count({ where: { userId } })
+      if (count >= limits.maxVacancies) {
+        return NextResponse.json({ error: `Free plan limited to ${limits.maxVacancies} vacancies. Upgrade to Pro for unlimited.`, upgrade: true }, { status: 403 })
+      }
+    }
     const vacancy = await prisma.vacancy.create({ data: { ...data, userId } })
     return NextResponse.json(vacancy, { status: 201 })
   } catch (error) {
