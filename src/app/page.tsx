@@ -3,16 +3,17 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useTheme } from 'next-themes'
-import { Sun, Moon, Zap, ArrowRight, CheckCircle, Upload, Brain, BarChart3, Mail, Shield, Users } from 'lucide-react'
+import { Sun, Moon, Zap, ArrowRight, CheckCircle, Upload, Brain, BarChart3, Mail, Shield, Users, Building2, MessageSquare, Layers } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { useLanguage } from '@/contexts/LanguageContext'
 
-const featureIcons = [Brain, Upload, Mail, BarChart3, Users, Shield]
+const featureIcons = [Brain, Upload, Mail, BarChart3, Users, Shield, Building2, MessageSquare, Layers]
 const featureColors = [
   'bg-blue-100 text-blue-600', 'bg-indigo-100 text-indigo-600',
   'bg-purple-100 text-purple-600', 'bg-green-100 text-green-600',
   'bg-amber-100 text-amber-600', 'bg-teal-100 text-teal-600',
+  'bg-rose-100 text-rose-600', 'bg-cyan-100 text-cyan-600', 'bg-violet-100 text-violet-600',
 ]
 
 export default function LandingPage() {
@@ -102,9 +103,9 @@ export default function LandingPage() {
             </div>
             <div className="grid grid-cols-3 gap-4 mb-4">
               {[
-                { label: 'Total Candidates', value: '247', color: 'text-blue-400' },
+                { label: 'Candidates Analyzed', value: '1,247', color: 'text-blue-400' },
                 { label: 'Avg. Match Score', value: '78%', color: 'text-green-400' },
-                { label: 'Shortlisted', value: '34', color: 'text-purple-400' },
+                { label: 'Time Saved', value: '80%', color: 'text-purple-400' },
               ].map(s => (
                 <div key={s.label} className="bg-white/5 rounded-xl p-4">
                   <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
@@ -127,6 +128,21 @@ export default function LandingPage() {
                   <div className="text-sm font-bold text-white">{c.score}%</div>
                 </div>
               ))}
+            </div>
+            <div className="mt-4 pt-4 border-t border-white/10">
+              <div className="text-xs text-gray-500 mb-2">Connected ATS platforms</div>
+              <div className="flex gap-2">
+                {[
+                  { name: 'Teamtailor', dot: 'bg-green-400' },
+                  { name: 'Recruitee', dot: 'bg-blue-400' },
+                  { name: 'SmartRecruiters', dot: 'bg-purple-400' },
+                ].map(ats => (
+                  <div key={ats.name} className="flex items-center gap-1.5 bg-white/10 rounded-full px-3 py-1">
+                    <div className={`w-1.5 h-1.5 rounded-full ${ats.dot}`} />
+                    <span className="text-xs text-gray-300">{ats.name}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { useTheme } from 'next-themes'
-import { LayoutDashboard, Briefcase, Users, BarChart3, Settings, Mail, LogOut, Zap, ShieldCheck, ChevronRight, CreditCard, LifeBuoy, Sun, Moon } from 'lucide-react'
+import { LayoutDashboard, Briefcase, Users, BarChart3, Settings, Mail, LogOut, Zap, ShieldCheck, ChevronRight, CreditCard, LifeBuoy, Sun, Moon, Plug } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
@@ -13,6 +13,7 @@ const navItems = [
   { href: '/vacancies', icon: Briefcase, label: 'Vacancies' },
   { href: '/candidates', icon: Users, label: 'Candidats' },
   { href: '/email', icon: Mail, label: 'Email Inbox' },
+  { href: '/integrations', icon: Plug, label: 'Intégrations ATS' },
   { href: '/analytics', icon: BarChart3, label: 'Analytics' },
   { href: '/settings', icon: Settings, label: 'Paramètres' },
   { href: '/support', icon: LifeBuoy, label: 'Support' },

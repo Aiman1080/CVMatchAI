@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { User, Shield, Save, Trash2, Plug, Lock, Eye, EyeOff } from 'lucide-react'
+import { User, Shield, Save, Trash2, Lock, Eye, EyeOff } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,11 +9,9 @@ import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from '@/components/ui/use-toast'
 import Link from 'next/link'
-import { IntegrationsClient } from './IntegrationsClient'
 
 interface Props {
   user: { name?: string; email?: string; company?: string; subscription?: string }
-  integrations: any[]
 }
 
 const PLANS = [
@@ -22,7 +20,7 @@ const PLANS = [
   { id: 'enterprise', name: 'Enterprise', price: 'Custom', features: ['Unlimited everything', 'Custom AI models', 'API access', 'Dedicated support'] },
 ]
 
-export function SettingsClient({ user, integrations }: Props) {
+export function SettingsClient({ user }: Props) {
   const [form, setForm] = useState({ name: user.name || '', company: user.company || '' })
   const [saving, setSaving] = useState(false)
   const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirm: '' })
@@ -77,7 +75,6 @@ export function SettingsClient({ user, integrations }: Props) {
     <Tabs defaultValue="profile" className="space-y-6">
       <TabsList className="dark:bg-gray-800">
         <TabsTrigger value="profile">Profile</TabsTrigger>
-        <TabsTrigger value="integrations" className="gap-1.5"><Plug size={13} />Intégrations ATS</TabsTrigger>
         <TabsTrigger value="subscription">Subscription</TabsTrigger>
         <TabsTrigger value="privacy">Privacy & GDPR</TabsTrigger>
       </TabsList>
@@ -158,12 +155,6 @@ export function SettingsClient({ user, integrations }: Props) {
             </form>
           </CardContent>
         </Card>
-      </TabsContent>
-
-      <TabsContent value="integrations">
-        <div className="max-w-2xl">
-          <IntegrationsClient initialIntegrations={integrations} />
-        </div>
       </TabsContent>
 
       <TabsContent value="subscription">
