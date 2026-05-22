@@ -126,7 +126,7 @@ export function Sidebar() {
             </span>
           </div>
           <button
-            onClick={() => signOut({ callbackUrl: typeof window !== 'undefined' ? window.location.origin : '/' })}
+            onClick={() => signOut({ callbackUrl: '/' })}
             className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded transition-colors"
             title="Se déconnecter"
           >
