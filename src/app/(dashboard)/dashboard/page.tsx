@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
-import { Header } from '@/components/layout/Header'
+import { DashboardGreeting } from '@/components/dashboard/DashboardGreeting'
 import { DashboardStats } from '@/components/dashboard/DashboardStats'
 import { RecentCandidates } from '@/components/dashboard/RecentCandidates'
 import { RecentVacancies } from '@/components/dashboard/RecentVacancies'
@@ -45,7 +45,7 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      <Header title={`Bienvenue, ${session?.user?.name?.split(' ')[0] || 'Recruteur'}`} description="Voici l'état de votre pipeline de recrutement" />
+      <DashboardGreeting firstName={session?.user?.name?.split(' ')[0] || ''} />
       <div className="p-8 space-y-8">
         <DashboardClient onboarding={onboarding} />
         <DashboardStats stats={stats} />
