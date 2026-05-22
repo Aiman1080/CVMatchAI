@@ -1,28 +1,15 @@
 // Runs once when the Next.js server starts (Node.js runtime only).
-// In DEVELOPMENT: auto-creates the schema and seeds demo accounts if DB is empty.
+// In DEVELOPMENT: seeds demo accounts if the database is empty.
 // In PRODUCTION: does nothing — client data is managed by the deployment pipeline.
 export async function register() {
   if (process.env.NEXT_RUNTIME !== 'nodejs') return
   if (process.env.NODE_ENV !== 'development') return
 
-  const { execSync } = await import('child_process')
-  const { default: prisma } = await import('@/lib/prisma')
-
-  // Push schema to database (creates tables if missing, never deletes data)
   try {
-    execSync('npx prisma db push --skip-generate', {
-      stdio: 'pipe',
-      cwd: process.cwd(),
-    })
-  } catch {
-    // Already up to date or non-fatal
-  }
-
-  // Create demo accounts only if the database is completely empty
-  try {
+    const { default: prisma } = await import('@/lib/prisma')
     const count = await prisma.user.count()
     if (count === 0) {
-      const { default: bcrypt } = await import('bcryptjs')
+      const bcrypt = await import('bcryptjs')
       await prisma.user.createMany({
         data: [
           {
@@ -46,6 +33,6 @@ export async function register() {
       console.log('✅ CVMatch AI: demo accounts created — admin@cvmatch.ai / admin123 | demo@cvmatch.ai / recruiter123')
     }
   } catch {
-    // DB not ready yet
+    // Tables not created yet — run: npx prisma db push
   }
 }
