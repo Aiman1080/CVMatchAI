@@ -61,11 +61,11 @@ export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploa
       try {
         const res = await fetch('/api/upload', { method: 'POST', body: formData })
         const data = await res.json()
-        if (data.success) {
+        if (res.ok && data.success) {
           uploaded.push({ file: file.name, success: true, candidate: data.candidate, score: data.candidate.matchScore })
           onUploaded(data.candidate)
         } else {
-          uploaded.push({ file: file.name, success: false, error: data.error })
+          uploaded.push({ file: file.name, success: false, error: data.error || 'Upload failed' })
         }
       } catch {
         uploaded.push({ file: file.name, success: false, error: 'Upload failed' })
