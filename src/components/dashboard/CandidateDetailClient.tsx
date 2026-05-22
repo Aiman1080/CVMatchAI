@@ -142,11 +142,10 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
   const handleGenerateEmail = async () => {
     setGeneratingEmail(true)
     try {
-      const type = emailType === 'interview' ? 'positive' : 'negative'
       const res = await fetch('/api/candidates/generate-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ candidateId: candidate.id, type }),
+        body: JSON.stringify({ candidateId: candidate.id, type: emailType, locale }),
       })
       const data = await res.json()
       if (res.ok) {

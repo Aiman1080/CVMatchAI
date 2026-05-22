@@ -1,9 +1,8 @@
 'use client'
 
-import { createContext, useContext, useState, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { Locale, translations } from '@/lib/i18n'
 
-// Use a recursive string-keyed type so all locales are assignment-compatible
 export type DeepStringRecord = { [key: string]: string | string[] | DeepStringRecord | DeepStringRecord[] }
 
 interface LanguageContextType {
@@ -13,13 +12,25 @@ interface LanguageContextType {
 }
 
 const LanguageContext = createContext<LanguageContextType>({
-  locale: 'en',
-  t: translations.en,
+  locale: 'fr',
+  t: translations.fr,
   setLocale: () => {},
 })
 
 export function LanguageProvider({ children, initialLocale = 'fr' }: { children: ReactNode; initialLocale?: Locale }) {
   const [locale, setLocaleState] = useState<Locale>(initialLocale)
+
+  useEffect(() => {
+    // Migrate from localStorage-only (old system) to cookie+localStorage (new system).
+    // Runs once: if localStorage has a locale the server didn't know about, adopt it
+    // and write it to the cookie so the server picks it up on the next request.
+    const lsLocale = localStorage.getItem('cvmatch-locale') as Locale
+    if (lsLocale && ['en', 'nl', 'fr'].includes(lsLocale) && lsLocale !== initialLocale) {
+      setLocaleState(lsLocale)
+      document.cookie = `cvmatch-locale=${lsLocale}; path=/; max-age=31536000; SameSite=Lax`
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const setLocale = (l: Locale) => {
     setLocaleState(l)
