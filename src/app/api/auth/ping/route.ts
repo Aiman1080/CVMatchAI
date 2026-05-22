@@ -7,6 +7,8 @@ export async function POST() {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ ok: false }, { status: 401 })
   const userId = (session.user as any).id
-  await prisma.user.update({ where: { id: userId }, data: { lastSeenAt: new Date() } })
+  try {
+    await prisma.user.update({ where: { id: userId }, data: { lastSeenAt: new Date() } })
+  } catch {}
   return NextResponse.json({ ok: true })
 }

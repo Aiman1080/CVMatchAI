@@ -11,12 +11,15 @@ export default async function AdminPage() {
   if (!session || (session.user as any).role !== 'admin') redirect('/dashboard')
 
   const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
 
   const [
     users, tickets, subscriptions, counts,
     aiAnalysesCount, integrationsCount, emailInboxesCount,
     candidateStatusDist, latestVacancies,
-    newUsersThisWeek, candidatesThisWeek,
+    newUsersThisWeek, candidatesThisWeek, candidatesToday,
+    integrationsByPlatform, candidatesBySource,
+    activeVacanciesCount,
   ] = await Promise.all([
     prisma.user.findMany({
       orderBy: { createdAt: 'desc' },
@@ -49,6 +52,10 @@ export default async function AdminPage() {
     }),
     prisma.user.count({ where: { createdAt: { gte: oneWeekAgo } } }),
     prisma.candidate.count({ where: { createdAt: { gte: oneWeekAgo } } }),
+    prisma.candidate.count({ where: { createdAt: { gte: oneDayAgo } } }),
+    prisma.integration.groupBy({ by: ['platform'], _count: true }),
+    prisma.candidate.groupBy({ by: ['source'], _count: true }),
+    prisma.vacancy.count({ where: { status: 'active' } }),
   ])
 
   return (
@@ -70,6 +77,10 @@ export default async function AdminPage() {
             latestVacancies={latestVacancies as any}
             newUsersThisWeek={newUsersThisWeek}
             candidatesThisWeek={candidatesThisWeek}
+            candidatesToday={candidatesToday}
+            integrationsByPlatform={integrationsByPlatform as any}
+            candidatesBySource={candidatesBySource as any}
+            activeVacanciesCount={activeVacanciesCount}
           />
         </div>
       </main>

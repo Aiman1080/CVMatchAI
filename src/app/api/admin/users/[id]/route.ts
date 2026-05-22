@@ -9,7 +9,7 @@ import prisma from '@/lib/prisma'
 const USER_SELECT = {
   id: true, name: true, email: true, role: true,
   subscription: true, subscriptionEnd: true, suspended: true,
-  company: true, createdAt: true, lastSeenAt: true,
+  company: true, createdAt: true,
 }
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {

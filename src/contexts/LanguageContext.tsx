@@ -19,7 +19,7 @@ const LanguageContext = createContext<LanguageContextType>({
 })
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>('en')
+  const [locale, setLocaleState] = useState<Locale>('fr')
 
   useEffect(() => {
     const saved = localStorage.getItem('cvmatch-locale') as Locale
