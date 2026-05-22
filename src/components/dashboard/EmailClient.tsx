@@ -133,7 +133,7 @@ export function EmailClient() {
 
   return (
     <div className="space-y-6">
-      <div className="p-4 rounded-xl bg-blue-50 border border-blue-100 flex gap-3">
+      <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950 border border-blue-100 dark:border-blue-900 flex gap-3">
         <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
         <div className="flex-1">
           <p className="text-sm font-semibold text-blue-800">AI-Powered Email Inbox Scanning</p>
@@ -166,7 +166,7 @@ export function EmailClient() {
       </div>
 
       {/* One-click duplicate cleanup — fixes databases that accumulated duplicates before the dedup fix */}
-      <div className="p-4 rounded-xl bg-amber-50 border border-amber-100 flex items-center gap-4">
+      <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950 border border-amber-100 dark:border-amber-900 flex items-center gap-4">
         <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center shrink-0">
           <Eraser className="w-5 h-5 text-white" />
         </div>
@@ -227,7 +227,7 @@ export function EmailClient() {
             <div className="space-y-3">
               {inboxes.map(inbox => (
                 <div key={inbox.id} className="flex items-center gap-4 p-4 border border-gray-100 rounded-xl">
-                  <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 bg-blue-50 dark:bg-blue-950 rounded-xl flex items-center justify-center shrink-0">
                     <Mail className="w-5 h-5 text-blue-600" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -290,7 +290,7 @@ export function EmailClient() {
                 </div>
               </div>
             )}
-            <div className="p-3 bg-amber-50 rounded-lg flex gap-2">
+            <div className="p-3 bg-amber-50 dark:bg-amber-950 rounded-lg flex gap-2">
               <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
               <p className="text-xs text-amber-700">Credentials are stored securely. We only read attachments, never send emails or modify your inbox.</p>
             </div>

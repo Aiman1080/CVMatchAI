@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Zap, ArrowRight, CheckCircle, Upload, Brain, BarChart3, Mail, Shield, Users } from 'lucide-react'
+import { useTheme } from 'next-themes'
+import { Sun, Moon, Zap, ArrowRight, CheckCircle, Upload, Brain, BarChart3, Mail, Shield, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { translations, Locale } from '@/lib/i18n'
@@ -29,24 +30,33 @@ export default function LandingPage() {
   }
 
   const t = translations[locale]
+  const { theme, setTheme } = useTheme()
+  const isDark = theme === 'dark'
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-gray-950">
       {/* Nav */}
-      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-gray-100">
+      <nav className="sticky top-0 z-50 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl gradient-bg flex items-center justify-center">
               <Zap className="w-4 h-4 text-white" />
             </div>
-            <span className="font-bold text-gray-900 text-lg">CVMatch AI</span>
+            <span className="font-bold text-gray-900 dark:text-white text-lg">CVMatch AI</span>
           </Link>
-          <div className="hidden md:flex items-center gap-8 text-sm text-gray-500">
-            <a href="#features" className="hover:text-gray-900 transition-colors">{t.nav.features}</a>
-            <a href="#how-it-works" className="hover:text-gray-900 transition-colors">{t.nav.howItWorks}</a>
-            <a href="#pricing" className="hover:text-gray-900 transition-colors">{t.nav.pricing}</a>
+          <div className="hidden md:flex items-center gap-8 text-sm text-gray-500 dark:text-gray-400">
+            <a href="#features" className="hover:text-gray-900 dark:hover:text-white transition-colors">{t.nav.features}</a>
+            <a href="#how-it-works" className="hover:text-gray-900 dark:hover:text-white transition-colors">{t.nav.howItWorks}</a>
+            <a href="#pricing" className="hover:text-gray-900 dark:hover:text-white transition-colors">{t.nav.pricing}</a>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setTheme(isDark ? 'light' : 'dark')}
+              className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              title={isDark ? 'Mode clair' : 'Mode sombre'}
+            >
+              {isDark ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
             <LanguageSwitcher locale={locale} setLocale={setLocale} />
             <Link href="/login"><Button variant="ghost" size="sm">{t.nav.signIn}</Button></Link>
             <Link href="/register"><Button size="sm" className="gradient-bg">{t.nav.startFree}</Button></Link>
