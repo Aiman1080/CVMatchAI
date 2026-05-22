@@ -47,7 +47,7 @@ export default async function DashboardPage() {
     <div>
       <DashboardGreeting firstName={session?.user?.name?.split(' ')[0] || ''} />
       <div className="p-8 space-y-8">
-        <DashboardClient onboarding={onboarding} />
+        <DashboardClient onboarding={onboarding} subscription={(session?.user as any)?.subscription || 'free'} />
         <DashboardStats stats={stats} />
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           <div className="xl:col-span-2"><RecentCandidates candidates={recentCandidates} /></div>

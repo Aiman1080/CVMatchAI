@@ -52,7 +52,12 @@ export function VacanciesClient({ initialVacancies }: { initialVacancies: Vacanc
         setVacancies(prev => prev.filter(v => v.id !== id))
         toast({ title: tv.deleted, description: `"${title}" and all its candidates have been removed.` })
       } else {
-        toast({ title: tv.deleteError, variant: 'destructive' })
+        const data = await res.json().catch(() => ({}))
+        if (data.upgrade) {
+          toast({ title: 'Upgrade required', description: 'Upgrade to Pro to manage more vacancies.', variant: 'destructive' })
+        } else {
+          toast({ title: data.error || tv.deleteError, variant: 'destructive' })
+        }
       }
     } finally { setDeleting(null) }
   }
