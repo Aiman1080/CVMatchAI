@@ -8,9 +8,9 @@ export async function register() {
   const { execSync } = await import('child_process')
   const { default: prisma } = await import('@/lib/prisma')
 
-  // Apply any pending migrations (safe to re-run, never destroys data)
+  // Push schema to database (creates tables if missing, never deletes data)
   try {
-    execSync('npx prisma migrate deploy', {
+    execSync('npx prisma db push --skip-generate', {
       stdio: 'pipe',
       cwd: process.cwd(),
     })
