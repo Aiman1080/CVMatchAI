@@ -42,7 +42,7 @@ const EMAIL_TEMPLATES: Record<string, { subject: string; body: string }> = {
 }
 
 export function CandidateDetailClient({ candidate: initial }: { candidate: any }) {
-  const { t } = useLanguage()
+  const { t, locale } = useLanguage()
   const cd = t.dashboard.candidateDetail
   const tc = t.dashboard.candidates
 

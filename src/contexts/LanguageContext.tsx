@@ -13,7 +13,7 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType>({
   locale: 'fr',
-  t: translations.fr,
+  t: translations.fr as unknown as typeof translations.en,
   setLocale: () => {},
 })
 
