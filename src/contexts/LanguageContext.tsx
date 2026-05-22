@@ -18,18 +18,13 @@ const LanguageContext = createContext<LanguageContextType>({
   setLocale: () => {},
 })
 
-export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('cvmatch-locale') as Locale
-      if (saved && ['en', 'nl', 'fr'].includes(saved)) return saved
-    }
-    return 'fr'
-  })
+export function LanguageProvider({ children, initialLocale = 'fr' }: { children: ReactNode; initialLocale?: Locale }) {
+  const [locale, setLocaleState] = useState<Locale>(initialLocale)
 
   const setLocale = (l: Locale) => {
     setLocaleState(l)
     localStorage.setItem('cvmatch-locale', l)
+    document.cookie = `cvmatch-locale=${l}; path=/; max-age=31536000; SameSite=Lax`
   }
 
   return (
