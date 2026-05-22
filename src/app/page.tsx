@@ -136,19 +136,19 @@ export default function LandingPage() {
       <section id="features" className="py-24 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">{t.features.title}</h2>
-            <p className="text-lg text-gray-500 max-w-2xl mx-auto">{t.features.subtitle}</p>
+            <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">{t.features.title}</h2>
+            <p className="text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">{t.features.subtitle}</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {t.features.items.map((f, i) => {
               const Icon = featureIcons[i]
               return (
-                <div key={i} className="p-6 rounded-2xl border border-gray-100 hover:border-blue-200 hover:shadow-md transition-all">
+                <div key={i} className="p-6 rounded-2xl border border-gray-100 dark:border-gray-800 hover:border-blue-200 dark:hover:border-blue-700 hover:shadow-md transition-all">
                   <div className={`w-12 h-12 rounded-xl ${featureColors[i]} flex items-center justify-center mb-4`}>
                     <Icon className="w-6 h-6" />
                   </div>
-                  <h3 className="font-semibold text-gray-900 mb-2">{f.title}</h3>
-                  <p className="text-gray-500 text-sm leading-relaxed">{f.desc}</p>
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2">{f.title}</h3>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">{f.desc}</p>
                 </div>
               )
             })}
@@ -157,10 +157,10 @@ export default function LandingPage() {
       </section>
 
       {/* How it works */}
-      <section id="how-it-works" className="py-24 px-6 bg-gray-50">
+      <section id="how-it-works" className="py-24 px-6 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">{t.howItWorks.title}</h2>
+            <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">{t.howItWorks.title}</h2>
           </div>
           <div className="space-y-8">
             {t.howItWorks.steps.map((step, i) => (
@@ -169,8 +169,8 @@ export default function LandingPage() {
                   <span className="text-white font-bold text-lg">{String(i + 1).padStart(2, '0')}</span>
                 </div>
                 <div className="pt-2">
-                  <h3 className="font-semibold text-gray-900 text-lg mb-1">{step.title}</h3>
-                  <p className="text-gray-500">{step.desc}</p>
+                  <h3 className="font-semibold text-gray-900 dark:text-white text-lg mb-1">{step.title}</h3>
+                  <p className="text-gray-500 dark:text-gray-400">{step.desc}</p>
                 </div>
               </div>
             ))}
@@ -182,27 +182,27 @@ export default function LandingPage() {
       <section id="pricing" className="py-24 px-6">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">{t.pricing.title}</h2>
-            <p className="text-gray-500 text-lg">{t.pricing.subtitle}</p>
+            <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">{t.pricing.title}</h2>
+            <p className="text-gray-500 dark:text-gray-400 text-lg">{t.pricing.subtitle}</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {t.pricing.plans.map((plan, idx) => {
               const highlight = idx === 1
               return (
-                <div key={plan.name} className={`p-8 rounded-2xl border-2 ${highlight ? 'border-blue-500 shadow-xl scale-105' : 'border-gray-100'}`}>
+                <div key={plan.name} className={`p-8 rounded-2xl border-2 ${highlight ? 'border-blue-500 shadow-xl scale-105' : 'border-gray-100 dark:border-gray-800'}`}>
                   {highlight && (
                     <div className="text-center mb-4">
                       <span className="gradient-bg text-white text-xs px-3 py-1 rounded-full font-medium">{t.pricing.mostPopular}</span>
                     </div>
                   )}
-                  <h3 className="font-bold text-gray-900 text-xl mb-1">{plan.name}</h3>
+                  <h3 className="font-bold text-gray-900 dark:text-white text-xl mb-1">{plan.name}</h3>
                   <div className="flex items-baseline gap-1 mb-6">
-                    <span className="text-4xl font-extrabold text-gray-900">{plan.price}</span>
-                    <span className="text-gray-400 text-sm">{plan.period}</span>
+                    <span className="text-4xl font-extrabold text-gray-900 dark:text-white">{plan.price}</span>
+                    <span className="text-gray-400 dark:text-gray-500 text-sm">{plan.period}</span>
                   </div>
                   <ul className="space-y-3 mb-8">
                     {plan.features.map((f, i) => (
-                      <li key={i} className="flex items-center gap-2 text-gray-600 text-sm">
+                      <li key={i} className="flex items-center gap-2 text-gray-600 dark:text-gray-300 text-sm">
                         <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />{f}
                       </li>
                     ))}

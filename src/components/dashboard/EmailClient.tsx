@@ -145,13 +145,13 @@ export function EmailClient() {
       </div>
 
       {/* Demo scan — manual only, global email dedup prevents any duplicates */}
-      <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 flex items-center gap-4">
+      <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border border-indigo-100 dark:border-indigo-900 flex items-center gap-4">
         <div className="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center shrink-0">
           <Zap className="w-5 h-5 text-white" />
         </div>
         <div className="flex-1">
-          <p className="text-sm font-semibold text-indigo-800">Demo Email Scan</p>
-          <p className="text-sm text-indigo-600">
+          <p className="text-sm font-semibold text-indigo-800 dark:text-indigo-300">Demo Email Scan</p>
+          <p className="text-sm text-indigo-600 dark:text-indigo-400">
             Simulates 4 recruitment emails with attached CVs. Safe to run multiple times — no duplicates will ever be created.
           </p>
         </div>
@@ -198,7 +198,7 @@ export function EmailClient() {
               <div className="w-8 h-8 rounded-lg gradient-bg flex items-center justify-center mb-3">
                 <item.icon className="w-4 h-4 text-white" />
               </div>
-              <h3 className="font-semibold text-gray-900 text-sm mb-1">{item.title}</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-1">{item.title}</h3>
               <p className="text-xs text-gray-500 leading-relaxed">{item.desc}</p>
             </CardContent>
           </Card>
@@ -226,18 +226,18 @@ export function EmailClient() {
           ) : (
             <div className="space-y-3">
               {inboxes.map(inbox => (
-                <div key={inbox.id} className="flex items-center gap-4 p-4 border border-gray-100 rounded-xl">
+                <div key={inbox.id} className="flex items-center gap-4 p-4 border border-gray-100 dark:border-gray-800 rounded-xl">
                   <div className="w-10 h-10 bg-blue-50 dark:bg-blue-950 rounded-xl flex items-center justify-center shrink-0">
                     <Mail className="w-5 h-5 text-blue-600" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 text-sm truncate">{inbox.email}</p>
+                    <p className="font-medium text-gray-900 dark:text-white text-sm truncate">{inbox.email}</p>
                     <p className="text-xs text-gray-400">
                       {inbox.provider} · Last scan: {inbox.lastScan ? formatRelativeTime(new Date(inbox.lastScan)) : 'Never'}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="flex items-center gap-1.5 text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                    <span className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30 px-2 py-1 rounded-full">
                       <CheckCircle size={11} /> Active
                     </span>
                     <Button size="sm" variant="outline" onClick={() => handleScan(inbox.id)} disabled={scanning === inbox.id} className="gap-1.5 text-xs h-8">

@@ -27,15 +27,15 @@ export function formatRelativeTime(date: Date | string): string {
 // Returns Tailwind color classes for status badges — unknown statuses get neutral grey
 export function getStatusColor(status: string): string {
   const colors: Record<string, string> = {
-    new: 'bg-blue-100 text-blue-700',
-    reviewing: 'bg-yellow-100 text-yellow-700',
-    shortlisted: 'bg-green-100 text-green-700',
-    rejected: 'bg-red-100 text-red-700',
-    hired: 'bg-purple-100 text-purple-700',
-    active: 'bg-green-100 text-green-700',
-    closed: 'bg-gray-100 text-gray-700',
+    new: 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-400',
+    reviewing: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-950/50 dark:text-yellow-400',
+    shortlisted: 'bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-400',
+    rejected: 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400',
+    hired: 'bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-400',
+    active: 'bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-400',
+    closed: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
   }
-  return colors[status] || 'bg-gray-100 text-gray-700'
+  return colors[status] || 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
 }
 
 // Safe JSON parse that returns a typed fallback instead of throwing on malformed input

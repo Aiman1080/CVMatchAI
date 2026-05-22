@@ -73,12 +73,12 @@ export function OnboardingChecklist({ hasVacancy, hasCandidate, hasEmail, onVaca
           </button>
           <div className="mb-5">
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-semibold text-gray-900">Premiers pas</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white">Premiers pas</h3>
               <span className="text-xs bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">
                 {completed}/{total} complétés
               </span>
             </div>
-            <p className="text-sm text-gray-500">Suivez ces étapes pour configurer votre pipeline de recrutement.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Suivez ces étapes pour configurer votre pipeline de recrutement.</p>
           </div>
 
           <div className="space-y-3">
@@ -96,7 +96,7 @@ export function OnboardingChecklist({ hasVacancy, hasCandidate, hasEmail, onVaca
                     {done ? <CheckCircle className="w-5 h-5 text-green-600" /> : <Icon className="w-5 h-5 text-blue-600" />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-medium ${done ? 'line-through text-gray-400' : 'text-gray-800'}`}>{step.title}</p>
+                    <p className={`text-sm font-medium ${done ? 'line-through text-gray-400' : 'text-gray-800 dark:text-gray-200'}`}>{step.title}</p>
                     <p className="text-xs text-gray-400">{step.description}</p>
                   </div>
                   {!done && !blocked && (

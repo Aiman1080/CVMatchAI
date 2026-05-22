@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Node-only packages that cannot be bundled for the browser — loaded at runtime on the server
-  serverExternalPackages: ['pdf-parse', 'mammoth', '@anthropic-ai/sdk', 'imapflow'],
+  serverExternalPackages: ['pdf-parse', 'mammoth', '@anthropic-ai/sdk', 'imapflow', 'bcryptjs'],
   images: {
     // `remotePatterns` replaces the deprecated `domains` array in Next.js 15
     remotePatterns: [

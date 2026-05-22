@@ -159,7 +159,7 @@ export function CandidatesClient({ initialCandidates }: { initialCandidates: Can
             <SelectItem value="name">Nom</SelectItem>
           </SelectContent>
         </Select>
-        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+        <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
           <button onClick={() => setView('grid')} className={`p-1.5 rounded-md transition-colors ${view === 'grid' ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-800 dark:text-gray-200' : 'text-gray-400 hover:text-gray-600'}`} title="Vue grille">
             <LayoutGrid size={16} />
           </button>
@@ -217,7 +217,7 @@ export function CandidatesClient({ initialCandidates }: { initialCandidates: Can
                             {isUnread && <span className="text-xs bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 px-1.5 rounded font-semibold">Nouveau</span>}
                             {c.liked && <Star size={10} className="text-amber-500 shrink-0" fill="currentColor" />}
                             {c.priority && <Flag size={10} className="text-red-500 shrink-0" />}
-                            {c.savedToPool && <span className="text-xs bg-amber-50 text-amber-600 px-1 rounded font-medium">vivier</span>}
+                            {c.savedToPool && <span className="text-xs bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 px-1 rounded font-medium">vivier</span>}
                           </div>
                           <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                             <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${getStatusColor(c.status)}`}>{c.status}</span>
@@ -227,7 +227,7 @@ export function CandidatesClient({ initialCandidates }: { initialCandidates: Can
                           {skills.length > 0 && (
                             <div className="flex gap-1 flex-wrap">
                               {skills.slice(0, 3).map((s, j) => (
-                                <span key={j} className="text-xs bg-gray-100 text-gray-500 px-1 py-0.5 rounded">{s}</span>
+                                <span key={j} className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 px-1 py-0.5 rounded">{s}</span>
                               ))}
                             </div>
                           )}
@@ -281,7 +281,7 @@ export function CandidatesClient({ initialCandidates }: { initialCandidates: Can
             <DialogTitle>Exporter les candidats</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 mt-2">
-            <p className="text-sm text-gray-500">{filtered.length} candidat(s) inclus dans l'export.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{filtered.length} candidat(s) inclus dans l'export.</p>
             <Button onClick={() => handleExport(null as any)} disabled={exporting} className="w-full gap-2" variant="outline">
               <FileText size={16} /> Rapport PDF brandé CVMatch AI
             </Button>

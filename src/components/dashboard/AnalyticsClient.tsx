@@ -1,6 +1,7 @@
 'use client'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useTheme } from 'next-themes'
 
 const COLORS = ['#3b82f6', '#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
 
@@ -10,6 +11,8 @@ interface Props {
 }
 
 export function AnalyticsClient({ candidates, vacancies }: Props) {
+  const { theme } = useTheme()
+  const gridColor = theme === 'dark' ? '#374151' : '#f0f0f0'
   const statusData = ['new', 'reviewing', 'shortlisted', 'rejected', 'hired'].map(s => ({ name: s.charAt(0).toUpperCase() + s.slice(1), value: candidates.filter(c => c.status === s).length })).filter(d => d.value > 0)
   const scoreDistribution = [
     { range: '0-40', count: candidates.filter(c => (c.matchScore || 0) <= 40).length },
@@ -45,7 +48,7 @@ export function AnalyticsClient({ candidates, vacancies }: Props) {
           <CardContent>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={scoreDistribution}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
                 <XAxis dataKey="range" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip />
@@ -76,7 +79,7 @@ export function AnalyticsClient({ candidates, vacancies }: Props) {
           {vacancyData.length > 0 ? (
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={vacancyData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
                 <XAxis type="number" tick={{ fontSize: 12 }} />
                 <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={150} />
                 <Tooltip />

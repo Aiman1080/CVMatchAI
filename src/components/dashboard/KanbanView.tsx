@@ -84,7 +84,7 @@ export function KanbanView({ candidates, onCandidatesChange }: Props) {
         return (
           <div
             key={col.id}
-            className={`flex-shrink-0 w-64 bg-gray-50 rounded-xl border-t-4 ${col.color} ${dragOver === col.id ? 'ring-2 ring-blue-300' : ''}`}
+            className={`flex-shrink-0 w-64 bg-gray-50 dark:bg-gray-800/50 rounded-xl border-t-4 ${col.color} ${dragOver === col.id ? 'ring-2 ring-blue-300' : ''}`}
             onDragOver={e => { e.preventDefault(); setDragOver(col.id) }}
             onDragLeave={() => setDragOver(null)}
             onDrop={() => handleDrop(col.id)}
@@ -92,7 +92,7 @@ export function KanbanView({ candidates, onCandidatesChange }: Props) {
             <div className="p-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className={`w-2 h-2 rounded-full ${col.dot}`} />
-                <span className="font-semibold text-sm text-gray-700">{col.label}</span>
+                <span className="font-semibold text-sm text-gray-700 dark:text-gray-300">{col.label}</span>
               </div>
               <span className="text-xs bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full font-medium">
                 {cards.length}
@@ -171,7 +171,7 @@ function KanbanCard({ candidate: c, isDragging, isUpdating, onDragStart, onDragE
 
       {skills.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-2">
-          {skills.map((s, i) => <span key={i} className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">{s}</span>)}
+          {skills.map((s, i) => <span key={i} className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded">{s}</span>)}
         </div>
       )}
 
@@ -181,7 +181,7 @@ function KanbanCard({ candidate: c, isDragging, isUpdating, onDragStart, onDragE
         </p>
       )}
 
-      <div className="flex items-center justify-between pt-2 border-t border-gray-50">
+      <div className="flex items-center justify-between pt-2 border-t border-gray-50 dark:border-gray-700/50">
         <div className="flex items-center gap-1">
           <button
             onClick={onToggleLiked}
