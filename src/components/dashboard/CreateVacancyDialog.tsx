@@ -36,7 +36,19 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
-      if (!res.ok) throw new Error('Failed to create')
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        if (res.status === 403 && data.upgrade) {
+          toast({
+            title: 'Limite atteinte',
+            description: 'Passez en Pro pour des vacatures illimitées',
+            variant: 'destructive',
+          })
+        } else {
+          toast({ title: cv.createError, variant: 'destructive' })
+        }
+        return
+      }
       const vacancy = await res.json()
       onCreated(vacancy)
       toast({ title: cv.created, description: `"${vacancy.title}" is now live.`, variant: 'default' })
