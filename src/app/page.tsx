@@ -257,9 +257,9 @@ export default function LandingPage() {
           </div>
           <p className="text-sm">{t.footer.copyright}</p>
           <div className="flex items-center gap-6 text-sm">
-            <a href="#" className="hover:text-white">{t.footer.privacy}</a>
-            <a href="#" className="hover:text-white">{t.footer.terms}</a>
-            <a href="#" className="hover:text-white">{t.footer.contact}</a>
+            <Link href="/privacy" className="hover:text-white">{t.footer.privacy}</Link>
+            <Link href="/terms" className="hover:text-white">{t.footer.terms}</Link>
+            <Link href="/contact" className="hover:text-white">{t.footer.contact}</Link>
             <LanguageSwitcher dark />
           </div>
         </div>
