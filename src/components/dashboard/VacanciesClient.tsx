@@ -91,7 +91,7 @@ export function VacanciesClient({ initialVacancies }: { initialVacancies: Vacanc
       const data = await res.json()
       if (res.ok) {
         setVacancies(prev => [{ ...data, _count: { candidates: 0 } }, ...prev])
-        toast({ title: 'Vacancy duplicated', description: `"${data.title}" has been created.` })
+        toast({ title: tv.duplicated, description: `"${data.title}" has been created.` })
       } else {
         if (data.upgrade) {
           toast({ title: 'Upgrade required', description: data.error, variant: 'destructive' })

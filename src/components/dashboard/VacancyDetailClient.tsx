@@ -23,6 +23,7 @@ import { UploadCVDialog } from './UploadCVDialog'
 import { getStatusColor, formatDate, parseJsonSafe } from '@/lib/utils'
 import { toast } from '@/components/ui/use-toast'
 import { exportCandidatesToExcel, exportCandidatesToPDF } from '@/lib/export'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface Candidate {
   id: string
@@ -56,6 +57,10 @@ interface Vacancy {
 
 export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) {
   const router = useRouter()
+  const { t } = useLanguage()
+  const vd = t.dashboard.vacancyDetail
+  const cv = t.dashboard.createVacancy
+  const tv = t.dashboard.vacancies
   const [vacancy, setVacancy] = useState(initial)
   const [duplicating, setDuplicating] = useState(false)
   const [showUpload, setShowUpload] = useState(false)
@@ -90,16 +95,16 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
         body: JSON.stringify({ status }),
       })
       if (!res.ok) {
-        toast({ title: 'Update failed', variant: 'destructive' })
+        toast({ title: vd.updateFailed, variant: 'destructive' })
         return
       }
       setVacancy(prev => ({
         ...prev,
         candidates: prev.candidates.map(c => c.id === candidateId ? { ...c, status } : c),
       }))
-      toast({ title: 'Status updated', description: `Candidate status changed to ${status}` })
+      toast({ title: vd.statusUpdated, description: `${vd.statusChangedTo} ${vd.statusLabels[status as keyof typeof vd.statusLabels] || status}` })
     } catch {
-      toast({ title: 'Update failed', variant: 'destructive' })
+      toast({ title: vd.updateFailed, variant: 'destructive' })
     }
   }
 
@@ -121,9 +126,9 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
       const updated = await res.json()
       setVacancy(prev => ({ ...prev, ...updated }))
       setShowEdit(false)
-      toast({ title: 'Vacancy updated', description: 'Your changes have been saved.' })
+      toast({ title: vd.vacancyUpdated, description: vd.changesSaved })
     } catch {
-      toast({ title: 'Save failed', description: 'Could not update the vacancy.', variant: 'destructive' })
+      toast({ title: vd.saveFailed, description: vd.saveFailedDesc, variant: 'destructive' })
     } finally {
       setSaving(false)
     }
@@ -135,7 +140,7 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
       const res = await fetch(`/api/vacancies/${vacancy.id}/duplicate`, { method: 'POST' })
       const data = await res.json()
       if (res.ok) {
-        toast({ title: 'Vacancy duplicated', description: `"${data.title}" has been created.` })
+        toast({ title: tv.duplicated, description: `"${data.title}" has been created.` })
         router.push(`/vacancies/${data.id}`)
       } else {
         if (data.upgrade) {
@@ -167,12 +172,12 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
       const data = await res.json()
       if (res.ok) {
         setRanking(data.ranking)
-        toast({ title: 'AI Ranking generated' })
+        toast({ title: vd.aiRankingGenerated })
       } else {
-        toast({ title: data.error || 'Ranking failed', variant: 'destructive' })
+        toast({ title: data.error || vd.rankingFailed, variant: 'destructive' })
       }
     } catch {
-      toast({ title: 'Ranking failed', variant: 'destructive' })
+      toast({ title: vd.rankingFailed, variant: 'destructive' })
     } finally {
       setRankingLoading(false)
     }
@@ -240,13 +245,13 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
               {vacancy.location && <span className="flex items-center gap-1.5"><MapPin size={14} />{vacancy.location}</span>}
               <span className="flex items-center gap-1.5"><Briefcase size={14} />{vacancy.type}</span>
               {vacancy.salary && <span className="flex items-center gap-1.5"><DollarSign size={14} />{vacancy.salary}</span>}
-              <span className="flex items-center gap-1.5"><Clock size={14} />Posted {formatDate(vacancy.createdAt)}</span>
+              <span className="flex items-center gap-1.5"><Clock size={14} />{vd.posted} {formatDate(vacancy.createdAt)}</span>
             </div>
 
             <Tabs defaultValue="description">
               <TabsList className="mb-4">
-                <TabsTrigger value="description">Description</TabsTrigger>
-                <TabsTrigger value="requirements">Requirements</TabsTrigger>
+                <TabsTrigger value="description">{vd.descriptionTab}</TabsTrigger>
+                <TabsTrigger value="requirements">{vd.requirementsTab}</TabsTrigger>
               </TabsList>
               <TabsContent value="description">
                 <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">{vacancy.description}</p>
@@ -255,7 +260,7 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
                 <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">{vacancy.requirements}</p>
                 {vacancy.niceToHave && (
                   <div className="mt-4">
-                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Nice to Have:</p>
+                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{vd.niceToHaveLabel}</p>
                     <p className="text-gray-600 dark:text-gray-400 text-sm">{vacancy.niceToHave}</p>
                   </div>
                 )}
@@ -269,14 +274,14 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
             <CardContent className="p-5">
               <div className="text-center mb-4">
                 <div className="text-4xl font-bold text-gray-900 dark:text-white">{vacancy.candidates.length}</div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">Total Candidates</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">{vd.totalCandidates}</div>
               </div>
               <div className="space-y-2 text-sm">
                 {['new', 'reviewing', 'shortlisted', 'rejected'].map(s => {
                   const count = vacancy.candidates.filter(c => c.status === s).length
                   return (
                     <div key={s} className="flex items-center justify-between">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(s)}`}>{s}</span>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(s)}`}>{vd.statusLabels[s as keyof typeof vd.statusLabels] || s}</span>
                       <span className="font-semibold text-gray-700 dark:text-gray-300">{count}</span>
                     </div>
                   )
@@ -286,7 +291,7 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
           </Card>
 
           <Button onClick={() => setShowUpload(true)} className="w-full gradient-bg gap-2">
-            <Upload size={16} /> Upload CV
+            <Upload size={16} /> {vd.uploadCV}
           </Button>
         </div>
       </div>
@@ -296,13 +301,13 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
         <CardHeader className="pb-3 flex flex-row items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
             <Star className="w-4 h-4 text-amber-500" />
-            Candidate Rankings
+            {vd.candidateRankings}
           </CardTitle>
           <div className="flex gap-2">
             {sortedCandidates.length >= 2 && (
               <Button size="sm" variant="outline" onClick={handleAIRanking} disabled={rankingLoading} className="gap-1.5 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-400">
                 {rankingLoading ? <Loader2 size={13} className="animate-spin" /> : <Trophy size={13} />}
-                {rankingLoading ? 'Ranking...' : 'AI Ranking'}
+                {rankingLoading ? vd.rankingInProgress : vd.aiRanking}
               </Button>
             )}
             {sortedCandidates.length > 0 && (
@@ -315,13 +320,13 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
                     setExportingExcel(true)
                     try {
                       await exportCandidatesToExcel(sortedCandidates, vacancy.title)
-                      toast({ title: 'Excel export downloaded!' })
-                    } catch { toast({ title: 'Export failed', variant: 'destructive' }) }
+                      toast({ title: vd.excelExportDone })
+                    } catch { toast({ title: vd.exportFailed, variant: 'destructive' }) }
                     finally { setExportingExcel(false) }
                   }}
                   className="gap-1.5"
                 >
-                  <Download size={13} /> {exportingExcel ? 'Exporting...' : 'Export Excel'}
+                  <Download size={13} /> {exportingExcel ? vd.exportingInProgress : vd.exportExcel}
                 </Button>
                 <Button
                   size="sm"
@@ -331,18 +336,18 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
                     setExportingPdf(true)
                     try {
                       await exportCandidatesToPDF(sortedCandidates, vacancy.title)
-                      toast({ title: 'PDF export downloaded!' })
-                    } catch { toast({ title: 'Export failed', variant: 'destructive' }) }
+                      toast({ title: vd.pdfExportDone })
+                    } catch { toast({ title: vd.exportFailed, variant: 'destructive' }) }
                     finally { setExportingPdf(false) }
                   }}
                   className="gap-1.5"
                 >
-                  <Download size={13} /> {exportingPdf ? 'Exporting...' : 'Export PDF'}
+                  <Download size={13} /> {exportingPdf ? vd.exportingInProgress : vd.exportPdf}
                 </Button>
               </>
             )}
             <Button size="sm" variant="outline" onClick={() => setShowUpload(true)} className="gap-1">
-              <Upload size={13} /> Add Candidate
+              <Upload size={13} /> {vd.addCandidate}
             </Button>
           </div>
         </CardHeader>
@@ -351,7 +356,7 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
             <div className="mb-4 p-4 bg-purple-50 dark:bg-purple-950/30 rounded-xl border border-purple-200 dark:border-purple-800">
               <div className="flex items-center gap-2 mb-3">
                 <Sparkles className="w-4 h-4 text-purple-600" />
-                <h4 className="text-sm font-bold text-purple-900 dark:text-purple-300">AI Ranking Analysis</h4>
+                <h4 className="text-sm font-bold text-purple-900 dark:text-purple-300">{vd.aiRankingAnalysis}</h4>
               </div>
               <div className="space-y-3">
                 {ranking.map(r => {
@@ -374,7 +379,7 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
           {sortedCandidates.length === 0 ? (
             <div className="text-center py-10">
               <Upload className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-              <p className="text-gray-400 text-sm">No candidates yet. Upload CVs to start AI matching.</p>
+              <p className="text-gray-400 text-sm">{vd.noCandidatesYet}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -399,7 +404,7 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
                         <Link href={`/candidates/${c.id}`} className="font-semibold text-gray-900 dark:text-white text-sm hover:text-blue-600">
                           {c.firstName} {c.lastName}
                         </Link>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getStatusColor(c.status)}`}>{c.status}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getStatusColor(c.status)}`}>{vd.statusLabels[c.status as keyof typeof vd.statusLabels] || c.status}</span>
                         {c.source === 'email' && <span className="text-xs text-blue-500 font-medium">via email</span>}
                       </div>
                       {c.email && <p className="text-xs text-gray-400 mb-1.5">{c.email}</p>}
@@ -422,14 +427,14 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
                         <button
                           onClick={() => handleStatusChange(c.id, 'shortlisted')}
                           className="p-1.5 hover:bg-green-50 rounded-lg transition-colors text-gray-400 hover:text-green-600"
-                          title="Shortlist"
+                          title={vd.shortlistTooltip}
                         >
                           <CheckCircle size={16} />
                         </button>
                         <button
                           onClick={() => handleStatusChange(c.id, 'rejected')}
                           className="p-1.5 hover:bg-red-50 rounded-lg transition-colors text-gray-400 hover:text-red-500"
-                          title="Reject"
+                          title={vd.rejectTooltip}
                         >
                           <XCircle size={16} />
                         </button>
@@ -447,7 +452,7 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
           {candidateTotalPages > 1 && (
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Showing {(candidatePage - 1) * VACANCY_PAGE_SIZE + 1}&ndash;{Math.min(candidatePage * VACANCY_PAGE_SIZE, sortedCandidates.length)} of {sortedCandidates.length} candidates
+                {vd.showingCandidates} {(candidatePage - 1) * VACANCY_PAGE_SIZE + 1}&ndash;{Math.min(candidatePage * VACANCY_PAGE_SIZE, sortedCandidates.length)} {vd.ofCandidates} {sortedCandidates.length} {vd.candidatesLabel}
               </p>
               <div className="flex items-center gap-1">
                 <Button
@@ -507,97 +512,97 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
       <Dialog open={showEdit} onOpenChange={setShowEdit}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Vacancy</DialogTitle>
+            <DialogTitle>{vd.editTitle}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 mt-2">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label>Job Title *</Label>
-                <Input value={editForm.title} onChange={e => setEditForm(p => ({ ...p, title: e.target.value }))} placeholder="e.g. Senior Developer" />
+                <Label>{vd.editJobTitle}</Label>
+                <Input value={editForm.title} onChange={e => setEditForm(p => ({ ...p, title: e.target.value }))} placeholder={cv.jobTitlePlaceholder} />
               </div>
               <div className="space-y-1.5">
-                <Label>Company *</Label>
-                <Input value={editForm.company} onChange={e => setEditForm(p => ({ ...p, company: e.target.value }))} placeholder="Company name" />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label>Department</Label>
-                <Input value={editForm.department} onChange={e => setEditForm(p => ({ ...p, department: e.target.value }))} placeholder="e.g. Engineering" />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Location</Label>
-                <Input value={editForm.location} onChange={e => setEditForm(p => ({ ...p, location: e.target.value }))} placeholder="e.g. Brussels (Remote)" />
+                <Label>{vd.editCompany}</Label>
+                <Input value={editForm.company} onChange={e => setEditForm(p => ({ ...p, company: e.target.value }))} placeholder={cv.companyPlaceholder} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label>Contract Type</Label>
+                <Label>{vd.editDepartment}</Label>
+                <Input value={editForm.department} onChange={e => setEditForm(p => ({ ...p, department: e.target.value }))} placeholder={cv.departmentPlaceholder} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>{vd.editLocation}</Label>
+                <Input value={editForm.location} onChange={e => setEditForm(p => ({ ...p, location: e.target.value }))} placeholder={cv.locationPlaceholder} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label>{vd.editContractType}</Label>
                 <Select value={editForm.type} onValueChange={v => setEditForm(p => ({ ...p, type: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {['full-time', 'part-time', 'contract', 'internship', 'remote'].map(t => (
-                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    {(['full-time', 'part-time', 'contract', 'internship', 'remote'] as const).map(ct => (
+                      <SelectItem key={ct} value={ct}>{vd.contractTypes[ct]}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Status</Label>
+                <Label>{vd.editStatus}</Label>
                 <Select value={editForm.status} onValueChange={v => setEditForm(p => ({ ...p, status: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="paused">Paused</SelectItem>
-                    <SelectItem value="closed">Closed</SelectItem>
+                    <SelectItem value="active">{vd.statusActive}</SelectItem>
+                    <SelectItem value="paused">{vd.statusPaused}</SelectItem>
+                    <SelectItem value="closed">{vd.statusClosed}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label>Salary Range</Label>
-              <Input value={editForm.salary} onChange={e => setEditForm(p => ({ ...p, salary: e.target.value }))} placeholder="e.g. €50,000 – €70,000" />
+              <Label>{vd.editSalaryRange}</Label>
+              <Input value={editForm.salary} onChange={e => setEditForm(p => ({ ...p, salary: e.target.value }))} placeholder={cv.salaryPlaceholder} />
             </div>
             <div className="space-y-1.5">
-              <Label>Job Description *</Label>
+              <Label>{vd.editDescription}</Label>
               <textarea
                 className="w-full border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-lg p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
                 rows={4}
                 value={editForm.description}
                 onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))}
-                placeholder="Describe the role, responsibilities and team..."
+                placeholder={cv.descriptionPlaceholder}
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Requirements *</Label>
+              <Label>{vd.editRequirements}</Label>
               <textarea
                 className="w-full border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-lg p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
                 rows={4}
                 value={editForm.requirements}
                 onChange={e => setEditForm(p => ({ ...p, requirements: e.target.value }))}
-                placeholder="Required skills, experience, education..."
+                placeholder={cv.requirementsPlaceholder}
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Nice to Have</Label>
+              <Label>{vd.editNiceToHave}</Label>
               <textarea
                 className="w-full border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-lg p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
                 rows={2}
                 value={editForm.niceToHave}
                 onChange={e => setEditForm(p => ({ ...p, niceToHave: e.target.value }))}
-                placeholder="Bonus skills or experience..."
+                placeholder={cv.niceToHavePlaceholder}
               />
             </div>
             <div className="flex gap-3 pt-2">
               <Button variant="outline" onClick={() => setShowEdit(false)} className="flex-1 gap-1.5">
-                <X size={14} /> Cancel
+                <X size={14} /> {vd.editCancel}
               </Button>
               <Button
                 onClick={handleSaveVacancy}
                 disabled={saving || !editForm.title.trim() || !editForm.company.trim()}
                 className="flex-1 gradient-bg gap-1.5"
               >
-                {saving ? <><Loader2 size={14} className="animate-spin" /> Saving...</> : <><Save size={14} /> Save Changes</>}
+                {saving ? <><Loader2 size={14} className="animate-spin" /> {vd.editSaving}</> : <><Save size={14} /> {vd.editSave}</>}
               </Button>
             </div>
           </div>

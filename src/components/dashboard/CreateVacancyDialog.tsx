@@ -52,7 +52,7 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
       }
       const vacancy = await res.json()
       onCreated(vacancy)
-      toast({ title: cv.created, description: `"${vacancy.title}" is now live.`, variant: 'default' })
+      toast({ title: cv.created, description: `"${vacancy.title}" ${cv.isNowLive}`, variant: 'default' })
       setForm({ title: '', company: '', department: '', location: '', type: 'full-time', description: '', requirements: '', niceToHave: '', salary: '', language: 'en' })
     } catch {
       toast({ title: cv.createError, variant: 'destructive' })
@@ -107,10 +107,10 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
               <Select value={form.language} onValueChange={v => setForm(p => ({ ...p, language: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="en">English</SelectItem>
-                  <SelectItem value="nl">Dutch</SelectItem>
-                  <SelectItem value="fr">French</SelectItem>
-                  <SelectItem value="de">German</SelectItem>
+                  <SelectItem value="en">{cv.languages.en}</SelectItem>
+                  <SelectItem value="nl">{cv.languages.nl}</SelectItem>
+                  <SelectItem value="fr">{cv.languages.fr}</SelectItem>
+                  <SelectItem value="de">{cv.languages.de}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -134,15 +134,15 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
                 const data = await res.json()
                 if (res.ok) {
                   setForm(p => ({ ...p, description: data.description, requirements: data.requirements, niceToHave: data.niceToHave }))
-                  toast({ title: 'Description generated with AI' })
+                  toast({ title: cv.descGenerated })
                 }
-              } catch { toast({ title: 'Generation failed', variant: 'destructive' }) }
+              } catch { toast({ title: cv.genFailed, variant: 'destructive' }) }
               finally { setGenerating(false) }
             }}
             className="w-full gap-2 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-400"
           >
             {generating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-            {generating ? 'Generating...' : 'Generate description, requirements & nice-to-have with AI'}
+            {generating ? cv.generatingAIBtn : cv.generateAIBtn}
           </Button>
           <div className="space-y-1.5">
             <Label>{cv.description} <span className="text-red-500">*</span></Label>

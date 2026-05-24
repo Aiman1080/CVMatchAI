@@ -259,6 +259,7 @@ export const translations = {
         createVacancy: 'Create Vacancy',
         deleted: 'Vacancy deleted',
         deleteError: 'Delete failed',
+        duplicated: 'Vacancy duplicated',
       },
       candidates: {
         search: 'Search...',
@@ -380,6 +381,12 @@ export const translations = {
         shortlistTooltip: 'Shortlist',
         rejectTooltip: 'Reject',
         rankingFailed: 'Ranking failed',
+        duplicated: 'Vacancy duplicated',
+        duplicatedDesc: 'has been created.',
+        duplicateFailed: 'Duplication failed',
+        upgradeRequired: 'Upgrade required',
+        duplicateTooltip: 'Duplicate vacancy',
+        editTooltip: 'Edit vacancy',
         contractTypes: {
           'full-time': 'Full-time',
           'part-time': 'Part-time',
@@ -794,6 +801,7 @@ export const translations = {
         createVacancy: 'Vacature aanmaken',
         deleted: 'Vacature verwijderd',
         deleteError: 'Verwijdering mislukt',
+        duplicated: 'Vacature gedupliceerd',
       },
       candidates: {
         search: 'Zoeken...',
@@ -1329,6 +1337,7 @@ export const translations = {
         createVacancy: "Créer une offre",
         deleted: 'Offre supprimée',
         deleteError: 'Suppression échouée',
+        duplicated: 'Offre dupliquée',
       },
       candidates: {
         search: 'Rechercher...',
