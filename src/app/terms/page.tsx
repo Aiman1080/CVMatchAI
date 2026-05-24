@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { Zap, ArrowLeft, FileText, AlertTriangle, CreditCard, Ban, Scale, RefreshCw, Globe, Mail } from 'lucide-react'
+import { ArrowLeft, FileText, AlertTriangle, CreditCard, Ban, Scale, RefreshCw, Globe, Mail } from 'lucide-react'
+import { Logo } from '@/components/Logo'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
@@ -175,9 +176,7 @@ export default function TermsPage() {
       <nav className="sticky top-0 z-50 bg-white/80 dark:bg-gray-950/80 backdrop-blur border-b border-gray-100 dark:border-gray-800">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg gradient-bg flex items-center justify-center">
-              <Zap className="w-4 h-4 text-white" />
-            </div>
+            <Logo size={32} />
             <span className="font-bold text-gray-900 dark:text-white">CVMatch AI</span>
           </Link>
           <div className="flex items-center gap-4">

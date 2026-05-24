@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Zap, ArrowLeft, Mail, MessageSquare, Clock, MapPin, ExternalLink, CheckCircle, Loader2 } from 'lucide-react'
+import { ArrowLeft, Mail, MessageSquare, Clock, MapPin, ExternalLink, CheckCircle, Loader2 } from 'lucide-react'
+import { Logo } from '@/components/Logo'
 import { Button } from '@/components/ui/button'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
@@ -24,8 +25,8 @@ export default function ContactPage() {
         placeholder_message: 'How can we help you?',
       },
       cards: [
-        { icon: Mail, title: 'General enquiries', value: 'hello@cvmatch.ai', href: 'mailto:hello@cvmatch.ai' },
-        { icon: MessageSquare, title: 'Support', value: 'support@cvmatch.ai', href: 'mailto:support@cvmatch.ai' },
+        { icon: Mail, title: 'General enquiries', value: 'contactcvmatchia@gmail.com', href: 'mailto:contactcvmatchia@gmail.com' },
+        { icon: MessageSquare, title: 'Support', value: 'contactcvmatchia@gmail.com', href: 'mailto:contactcvmatchia@gmail.com' },
         { icon: Clock, title: 'Response time', value: 'Within 24h (business days)', href: null },
         { icon: MapPin, title: 'Headquarters', value: 'Brussels, Belgium 🇧🇪', href: null },
       ],
@@ -41,8 +42,8 @@ export default function ContactPage() {
         placeholder_message: 'Hoe kunnen we u helpen?',
       },
       cards: [
-        { icon: Mail, title: 'Algemene vragen', value: 'hello@cvmatch.ai', href: 'mailto:hello@cvmatch.ai' },
-        { icon: MessageSquare, title: 'Ondersteuning', value: 'support@cvmatch.ai', href: 'mailto:support@cvmatch.ai' },
+        { icon: Mail, title: 'Algemene vragen', value: 'contactcvmatchia@gmail.com', href: 'mailto:contactcvmatchia@gmail.com' },
+        { icon: MessageSquare, title: 'Ondersteuning', value: 'contactcvmatchia@gmail.com', href: 'mailto:contactcvmatchia@gmail.com' },
         { icon: Clock, title: 'Reactietijd', value: 'Binnen 24u (werkdagen)', href: null },
         { icon: MapPin, title: 'Hoofdkantoor', value: 'Brussel, België 🇧🇪', href: null },
       ],
@@ -58,8 +59,8 @@ export default function ContactPage() {
         placeholder_message: 'Comment pouvons-nous vous aider ?',
       },
       cards: [
-        { icon: Mail, title: 'Renseignements généraux', value: 'hello@cvmatch.ai', href: 'mailto:hello@cvmatch.ai' },
-        { icon: MessageSquare, title: 'Support', value: 'support@cvmatch.ai', href: 'mailto:support@cvmatch.ai' },
+        { icon: Mail, title: 'Renseignements généraux', value: 'contactcvmatchia@gmail.com', href: 'mailto:contactcvmatchia@gmail.com' },
+        { icon: MessageSquare, title: 'Support', value: 'contactcvmatchia@gmail.com', href: 'mailto:contactcvmatchia@gmail.com' },
         { icon: Clock, title: 'Délai de réponse', value: 'Sous 24h (jours ouvrables)', href: null },
         { icon: MapPin, title: 'Siège social', value: 'Bruxelles, Belgique 🇧🇪', href: null },
       ],
@@ -74,11 +75,20 @@ export default function ContactPage() {
     e.preventDefault()
     if (!form.name || !form.email || !form.subject || !form.message) return
     setSending(true)
-    // Simulate sending — in production this would call an API route
-    await new Promise(r => setTimeout(r, 1200))
-    setSending(false)
-    setSent(true)
-    toast({ title: c.successTitle, description: c.successText })
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      if (!res.ok) throw new Error()
+      setSent(true)
+      toast({ title: c.successTitle, description: c.successText })
+    } catch {
+      toast({ title: 'Error', description: 'Failed to send message. Please try again.', variant: 'destructive' })
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
@@ -87,9 +97,7 @@ export default function ContactPage() {
       <nav className="sticky top-0 z-50 bg-white/80 dark:bg-gray-950/80 backdrop-blur border-b border-gray-100 dark:border-gray-800">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg gradient-bg flex items-center justify-center">
-              <Zap className="w-4 h-4 text-white" />
-            </div>
+            <Logo size={32} />
             <span className="font-bold text-gray-900 dark:text-white">CVMatch AI</span>
           </Link>
           <div className="flex items-center gap-4">

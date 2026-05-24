@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { signIn } from 'next-auth/react'
 import Link from 'next/link'
-import { Zap, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
+import { Logo } from '@/components/Logo'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -33,9 +34,7 @@ export default function RegisterPage() {
     <div className="relative z-10 w-full max-w-md">
       <div className="bg-white rounded-2xl shadow-2xl p-8" data-theme="light">
         <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-2xl gradient-bg flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <Zap className="w-6 h-6 text-white" />
-          </div>
+          <div className="mx-auto mb-4 w-fit"><Logo size={48} /></div>
           <h1 className="text-2xl font-bold text-gray-900">Start for free</h1>
           <p className="text-gray-500 text-sm mt-1">Create your CVMatch AI account</p>
         </div>

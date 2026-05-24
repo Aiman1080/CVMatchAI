@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Zap, Loader2, Eye, EyeOff } from 'lucide-react'
+import { Loader2, Eye, EyeOff } from 'lucide-react'
+import { Logo } from '@/components/Logo'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -35,9 +36,7 @@ export default function LoginPage() {
     <div className="relative z-10 w-full max-w-md">
       <div className="bg-white rounded-2xl shadow-2xl p-8" data-theme="light">
         <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-2xl gradient-bg flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <Zap className="w-6 h-6 text-white" />
-          </div>
+          <div className="mx-auto mb-4 w-fit"><Logo size={48} /></div>
           <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
           <p className="text-gray-500 text-sm mt-1">Sign in to CVMatch AI</p>
         </div>

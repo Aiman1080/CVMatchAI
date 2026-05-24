@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useTheme } from 'next-themes'
 import { Sun, Moon, Zap, ArrowRight, CheckCircle, Upload, Brain, BarChart3, Mail, Shield, Users, Building2, MessageSquare, Layers } from 'lucide-react'
+import { Logo } from '@/components/Logo'
 import { Button } from '@/components/ui/button'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -31,9 +32,7 @@ export default function LandingPage() {
       <nav className="sticky top-0 z-50 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl gradient-bg flex items-center justify-center">
-              <Zap className="w-4 h-4 text-white" />
-            </div>
+            <Logo size={32} />
             <span className="font-bold text-gray-900 dark:text-white text-lg">CVMatch AI</span>
           </Link>
           <div className="hidden md:flex items-center gap-8 text-sm text-gray-500 dark:text-gray-400">
@@ -250,9 +249,7 @@ export default function LandingPage() {
       <footer className="py-12 px-6 bg-gray-900 text-gray-400">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg gradient-bg flex items-center justify-center">
-              <Zap className="w-3.5 h-3.5 text-white" />
-            </div>
+            <Logo size={28} />
             <span className="text-white font-semibold">CVMatch AI</span>
           </div>
           <p className="text-sm">{t.footer.copyright}</p>

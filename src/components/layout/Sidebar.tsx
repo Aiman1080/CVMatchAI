@@ -4,7 +4,8 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { useTheme } from 'next-themes'
-import { LayoutDashboard, Briefcase, Users, BarChart3, Settings, Mail, LogOut, Zap, ShieldCheck, ChevronRight, LifeBuoy, Sun, Moon, Plug, Lock } from 'lucide-react'
+import { LayoutDashboard, Briefcase, Users, BarChart3, Settings, Mail, LogOut, ShieldCheck, ChevronRight, LifeBuoy, Sun, Moon, Plug, Lock } from 'lucide-react'
+import { Logo } from '@/components/Logo'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -49,9 +50,7 @@ export function Sidebar() {
     <aside className="fixed left-0 top-0 h-full w-64 bg-white dark:bg-gray-950 border-r border-gray-100 dark:border-gray-800 flex flex-col z-40">
       <div className="p-6 border-b border-gray-100 dark:border-gray-800">
         <Link href="/dashboard" className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl gradient-bg flex items-center justify-center shadow-md">
-            <Zap className="w-5 h-5 text-white" />
-          </div>
+          <Logo size={36} />
           <div>
             <span className="font-bold text-gray-900 dark:text-white text-lg leading-tight block">CVMatch</span>
             <span className="text-xs text-blue-600 font-semibold leading-tight">AI Platform</span>
