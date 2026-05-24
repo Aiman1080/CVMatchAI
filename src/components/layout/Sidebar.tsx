@@ -76,11 +76,11 @@ export function Sidebar() {
           return (
             <Link
               key={href}
-              href={href}
-              onClick={() => setMobileOpen(false)}
+              href={locked ? '#' : href}
+              onClick={(e) => { if (locked) e.preventDefault(); else setMobileOpen(false); }}
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
-                locked && 'opacity-60',
+                locked && 'opacity-60 pointer-events-none cursor-not-allowed',
                 active
                   ? 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-400'
                   : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-200'

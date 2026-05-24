@@ -39,9 +39,9 @@ export default function RegisterPage() {
           <p className="text-gray-500 text-sm mt-1">Create your CVMatch AI account</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Full Name</Label>
+              <Label>Full Name <span className="text-red-500">*</span></Label>
               <Input placeholder="John Doe" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} required />
             </div>
             <div className="space-y-1.5">
@@ -50,12 +50,27 @@ export default function RegisterPage() {
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label>Work Email</Label>
+            <Label>Work Email <span className="text-red-500">*</span></Label>
             <Input type="email" placeholder="you@company.com" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} required />
           </div>
           <div className="space-y-1.5">
-            <Label>Password</Label>
+            <Label>Password <span className="text-red-500">*</span></Label>
             <Input type="password" placeholder="Min. 8 characters" value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} required minLength={8} />
+            {form.password.length > 0 && (
+              <p className={`text-xs mt-1 ${
+                form.password.length < 8
+                  ? 'text-red-500'
+                  : /[A-Z]/.test(form.password) && /[0-9]/.test(form.password)
+                    ? 'text-green-600'
+                    : 'text-amber-500'
+              }`}>
+                {form.password.length < 8
+                  ? 'Too short (min. 8 characters)'
+                  : /[A-Z]/.test(form.password) && /[0-9]/.test(form.password)
+                    ? 'Strong'
+                    : 'Weak'}
+              </p>
+            )}
           </div>
           <p className="text-xs text-gray-400">By signing up you agree to our Terms of Service. Candidate data is processed in compliance with GDPR.</p>
           <Button type="submit" disabled={loading} className="w-full gradient-bg h-11">

@@ -4,10 +4,11 @@
 // the vacancy inline. The Pencil button opens an edit dialog that saves via PATCH.
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   MapPin, Briefcase, DollarSign, Users, Upload, Star, ChevronRight, ChevronLeft,
-  Pencil, Trash2, CheckCircle, XCircle, Clock, Loader2, Save, X, Sparkles, Trophy, Download
+  Pencil, Trash2, CheckCircle, XCircle, Clock, Loader2, Save, X, Sparkles, Trophy, Download, Copy
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -54,7 +55,9 @@ interface Vacancy {
 }
 
 export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) {
+  const router = useRouter()
   const [vacancy, setVacancy] = useState(initial)
+  const [duplicating, setDuplicating] = useState(false)
   const [showUpload, setShowUpload] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -126,6 +129,28 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
     }
   }
 
+  const handleDuplicate = async () => {
+    setDuplicating(true)
+    try {
+      const res = await fetch(`/api/vacancies/${vacancy.id}/duplicate`, { method: 'POST' })
+      const data = await res.json()
+      if (res.ok) {
+        toast({ title: 'Vacancy duplicated', description: `"${data.title}" has been created.` })
+        router.push(`/vacancies/${data.id}`)
+      } else {
+        if (data.upgrade) {
+          toast({ title: 'Upgrade required', description: data.error, variant: 'destructive' })
+        } else {
+          toast({ title: data.error || 'Duplication failed', variant: 'destructive' })
+        }
+      }
+    } catch {
+      toast({ title: 'Duplication failed', variant: 'destructive' })
+    } finally {
+      setDuplicating(false)
+    }
+  }
+
   const [ranking, setRanking] = useState<Array<{ candidateId: string; rank: number; reasoning: string; standoutFactor: string }> | null>(null)
   const [rankingLoading, setRankingLoading] = useState(false)
   const [exportingExcel, setExportingExcel] = useState(false)
@@ -165,7 +190,7 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
     <div className="space-y-6">
       {/* Vacancy Info */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2 border-0 shadow-sm">
+        <Card className="lg:col-span-2 border border-gray-200 dark:border-gray-800 shadow-sm">
           <CardContent className="p-6">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
@@ -179,6 +204,14 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
               </div>
               <div className="flex gap-2 items-center">
                 <span className={`text-sm px-3 py-1 rounded-full font-medium ${getStatusColor(vacancy.status)}`}>{vacancy.status}</span>
+                <button
+                  onClick={handleDuplicate}
+                  disabled={duplicating}
+                  className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  title="Duplicate vacancy"
+                >
+                  {duplicating ? <Loader2 size={16} className="animate-spin" /> : <Copy size={16} />}
+                </button>
                 <button
                   onClick={() => {
                     setEditForm({

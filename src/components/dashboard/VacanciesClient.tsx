@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Plus, Briefcase, MapPin, Users, Clock, Search, Trash2 } from 'lucide-react'
+import { Plus, Briefcase, MapPin, Users, Clock, Search, Trash2, Copy } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
@@ -31,6 +31,7 @@ export function VacanciesClient({ initialVacancies }: { initialVacancies: Vacanc
   const [search, setSearch] = useState('')
   const [showCreate, setShowCreate] = useState(false)
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [duplicating, setDuplicating] = useState<string | null>(null)
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean
     title: string
@@ -81,6 +82,30 @@ export function VacanciesClient({ initialVacancies }: { initialVacancies: Vacanc
     })
   }
 
+  const handleDuplicate = async (e: React.MouseEvent, id: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDuplicating(id)
+    try {
+      const res = await fetch(`/api/vacancies/${id}/duplicate`, { method: 'POST' })
+      const data = await res.json()
+      if (res.ok) {
+        setVacancies(prev => [{ ...data, _count: { candidates: 0 } }, ...prev])
+        toast({ title: 'Vacancy duplicated', description: `"${data.title}" has been created.` })
+      } else {
+        if (data.upgrade) {
+          toast({ title: 'Upgrade required', description: data.error, variant: 'destructive' })
+        } else {
+          toast({ title: data.error || 'Duplication failed', variant: 'destructive' })
+        }
+      }
+    } catch {
+      toast({ title: 'Duplication failed', variant: 'destructive' })
+    } finally {
+      setDuplicating(null)
+    }
+  }
+
   const typeColors: Record<string, string> = {
     'full-time': 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400',
     'part-time': 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400',
@@ -127,7 +152,7 @@ export function VacanciesClient({ initialVacancies }: { initialVacancies: Vacanc
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map(v => (
             <Link key={v.id} href={`/vacancies/${v.id}`}>
-              <Card className="border-0 shadow-sm card-hover cursor-pointer h-full">
+              <Card className="border border-gray-200 dark:border-gray-800 shadow-sm card-hover cursor-pointer h-full">
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between mb-3">
                     <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center shrink-0">
@@ -157,6 +182,14 @@ export function VacanciesClient({ initialVacancies }: { initialVacancies: Vacanc
                       <span className="flex items-center gap-1">
                         <Clock size={11} /> {formatRelativeTime(v.createdAt)}
                       </span>
+                      <button
+                        onClick={e => handleDuplicate(e, v.id)}
+                        disabled={duplicating === v.id}
+                        className="p-1 text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Duplicate vacancy"
+                      >
+                        <Copy size={13} />
+                      </button>
                       <button
                         onClick={e => handleDelete(e, v.id, v.title)}
                         disabled={deleting === v.id}

@@ -159,7 +159,7 @@ export default function ContactPage() {
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{c.form.name}</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{c.form.name} <span className="text-red-500">*</span></label>
                   <input
                     type="text" required
                     value={form.name}
@@ -168,7 +168,7 @@ export default function ContactPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{c.form.email}</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{c.form.email} <span className="text-red-500">*</span></label>
                   <input
                     type="email" required
                     value={form.email}
@@ -178,7 +178,7 @@ export default function ContactPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{c.form.subject}</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{c.form.subject} <span className="text-red-500">*</span></label>
                 <input
                   type="text" required
                   value={form.subject}
@@ -187,7 +187,7 @@ export default function ContactPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{c.form.message}</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{c.form.message} <span className="text-red-500">*</span></label>
                 <textarea
                   required rows={6}
                   value={form.message}

@@ -322,7 +322,7 @@ export default function LandingPage() {
             {t.pricing.plans.map((plan, idx) => {
               const highlight = idx === 1
               return (
-                <div key={plan.name} className={`p-8 rounded-2xl border-2 ${highlight ? 'border-blue-500 shadow-xl scale-105' : 'border-gray-100 dark:border-gray-800'}`}>
+                <div key={plan.name} className={`p-8 rounded-2xl border-2 ${highlight ? 'border-blue-500 shadow-xl md:scale-105' : 'border-gray-100 dark:border-gray-800'}`}>
                   {highlight && (
                     <div className="text-center mb-4">
                       <span className="gradient-bg text-white text-xs px-3 py-1 rounded-full font-medium">{t.pricing.mostPopular}</span>

@@ -70,11 +70,11 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>{cv.jobTitle}</Label>
+              <Label>{cv.jobTitle} <span className="text-red-500">*</span></Label>
               <Input placeholder={cv.jobTitlePlaceholder} value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} required />
             </div>
             <div className="space-y-1.5">
-              <Label>{cv.company}</Label>
+              <Label>{cv.company} <span className="text-red-500">*</span></Label>
               <Input placeholder={cv.companyPlaceholder} value={form.company} onChange={e => setForm(p => ({ ...p, company: e.target.value }))} required />
             </div>
           </div>
@@ -94,11 +94,11 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
               <Select value={form.type} onValueChange={v => setForm(p => ({ ...p, type: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="full-time">Full-time</SelectItem>
-                  <SelectItem value="part-time">Part-time</SelectItem>
-                  <SelectItem value="contract">Contract</SelectItem>
-                  <SelectItem value="internship">Internship</SelectItem>
-                  <SelectItem value="remote">Remote</SelectItem>
+                  <SelectItem value="full-time">{cv.contractTypes['full-time']}</SelectItem>
+                  <SelectItem value="part-time">{cv.contractTypes['part-time']}</SelectItem>
+                  <SelectItem value="contract">{cv.contractTypes.contract}</SelectItem>
+                  <SelectItem value="internship">{cv.contractTypes.internship}</SelectItem>
+                  <SelectItem value="remote">{cv.contractTypes.remote}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -145,7 +145,7 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
             {generating ? 'Generating...' : 'Generate description, requirements & nice-to-have with AI'}
           </Button>
           <div className="space-y-1.5">
-            <Label>{cv.description}</Label>
+            <Label>{cv.description} <span className="text-red-500">*</span></Label>
             <Textarea
               placeholder={cv.descriptionPlaceholder}
               value={form.description}
@@ -155,7 +155,7 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
             />
           </div>
           <div className="space-y-1.5">
-            <Label>{cv.requirements}</Label>
+            <Label>{cv.requirements} <span className="text-red-500">*</span></Label>
             <Textarea
               placeholder={cv.requirementsPlaceholder}
               value={form.requirements}
