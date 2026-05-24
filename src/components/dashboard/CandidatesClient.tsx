@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
-import { Search, Users, Mail, Trash2, LayoutGrid, Columns, Star, Flag, Download, Send, FileText, Eye, EyeOff, ChevronLeft, ChevronRight, Loader2, CheckSquare } from 'lucide-react'
+import { Search, Users, Mail, Trash2, LayoutGrid, Columns, Star, Flag, Download, Send, FileText, Eye, EyeOff, ChevronLeft, ChevronRight, Loader2, CheckSquare, Square, CheckCheck, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -96,27 +96,15 @@ export function CandidatesClient({ initialCandidates, initialTotal }: { initialC
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  // Reset to page 1 when filters change
-  const handleSearchChange = (value: string) => {
-    setSearch(value)
+  // Reset to page 1 and clear selection when any filter changes
+  const resetFilters = () => {
     if (page !== 1) { setPage(1); fetchPage(1) }
     setSelectedIds(new Set())
   }
-  const handleStatusFilterChange = (value: string) => {
-    setStatusFilter(value)
-    if (page !== 1) { setPage(1); fetchPage(1) }
-    setSelectedIds(new Set())
-  }
-  const handleScoreFilterChange = (value: string) => {
-    setScoreFilter(value)
-    if (page !== 1) { setPage(1); fetchPage(1) }
-    setSelectedIds(new Set())
-  }
-  const handleSortChange = (value: string) => {
-    setSortBy(value)
-    if (page !== 1) { setPage(1); fetchPage(1) }
-    setSelectedIds(new Set())
-  }
+  const handleSearchChange = (value: string) => { setSearch(value); resetFilters() }
+  const handleStatusFilterChange = (value: string) => { setStatusFilter(value); resetFilters() }
+  const handleScoreFilterChange = (value: string) => { setScoreFilter(value); resetFilters() }
+  const handleSortChange = (value: string) => { setSortBy(value); resetFilters() }
 
   const openConfirm = (opts: Omit<typeof confirmDialog, 'open'>) => {
     setConfirmDialog({ ...opts, open: true })
@@ -353,9 +341,9 @@ export function CandidatesClient({ initialCandidates, initialTotal }: { initialC
       <div className="flex flex-col sm:flex-row gap-3 mb-6 flex-wrap">
         <div className="relative flex-1 min-w-40">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <Input placeholder={tc.search} value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+          <Input placeholder={tc.search} value={search} onChange={e => handleSearchChange(e.target.value)} className="pl-9" />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
           <SelectTrigger className="w-36">
             <SelectValue placeholder={tc.status} />
           </SelectTrigger>
@@ -371,14 +359,26 @@ export function CandidatesClient({ initialCandidates, initialTotal }: { initialC
             <SelectItem value="pool">{tc.pool}</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={sortBy} onValueChange={setSortBy}>
-          <SelectTrigger className="w-32">
+        <Select value={scoreFilter} onValueChange={handleScoreFilterChange}>
+          <SelectTrigger className="w-36">
+            <SelectValue placeholder="Score" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{tc.all}</SelectItem>
+            <SelectItem value="high">75+ Strong</SelectItem>
+            <SelectItem value="medium">50-74 Medium</SelectItem>
+            <SelectItem value="low">0-49 Low</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={sortBy} onValueChange={handleSortChange}>
+          <SelectTrigger className="w-36">
             <SelectValue placeholder={tc.sortBy} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="score">{tc.score}</SelectItem>
-            <SelectItem value="date">{tc.date}</SelectItem>
-            <SelectItem value="name">{tc.name}</SelectItem>
+            <SelectItem value="score">{tc.score} (desc)</SelectItem>
+            <SelectItem value="name">{tc.name} (A-Z)</SelectItem>
+            <SelectItem value="date">{tc.date} (newest)</SelectItem>
+            <SelectItem value="date_oldest">{tc.date} (oldest)</SelectItem>
           </SelectContent>
         </Select>
         <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
@@ -426,6 +426,43 @@ export function CandidatesClient({ initialCandidates, initialTotal }: { initialC
         </Button>
       </div>
 
+      {/* Bulk action bar */}
+      {selectedIds.size > 0 && view === 'grid' && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+          <div className="flex items-center gap-2">
+            <CheckCheck size={16} className="text-blue-600 dark:text-blue-400" />
+            <span className="text-sm font-medium text-blue-700 dark:text-blue-300">{selectedIds.size} selected</span>
+            <button onClick={() => setSelectedIds(new Set())} className="p-0.5 rounded hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-500" title="Clear selection">
+              <X size={14} />
+            </button>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Select onValueChange={handleBulkStatusChange} value="">
+              <SelectTrigger className="w-44 h-8 text-xs">
+                <SelectValue placeholder="Change status to..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="new">{tc.new}</SelectItem>
+                <SelectItem value="reviewing">{tc.reviewing}</SelectItem>
+                <SelectItem value="shortlisted">{tc.shortlisted}</SelectItem>
+                <SelectItem value="rejected">{tc.rejected}</SelectItem>
+                <SelectItem value="hired">{tc.hired}</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="sm" disabled={exportingExcel || bulkUpdating} onClick={handleBulkExportExcel} className="gap-1 h-8 text-xs">
+              <Download size={13} /> Excel
+            </Button>
+            <Button variant="outline" size="sm" disabled={exportingPdf || bulkUpdating} onClick={handleBulkExportPdf} className="gap-1 h-8 text-xs">
+              <Download size={13} /> PDF
+            </Button>
+            <Button variant="destructive" size="sm" disabled={bulkUpdating} onClick={handleBulkDelete} className="gap-1 h-8 text-xs">
+              <Trash2 size={13} /> Delete
+            </Button>
+          </div>
+          {bulkUpdating && <Loader2 size={14} className="animate-spin text-blue-500" />}
+        </div>
+      )}
+
       {/* Kanban view */}
       {view === 'kanban' && (
         <KanbanView candidates={filtered} onCandidatesChange={setCandidates} />
@@ -441,6 +478,24 @@ export function CandidatesClient({ initialCandidates, initialTotal }: { initialC
             <p className="text-gray-500">{tc.noCandidates}</p>
           </div>
         ) : (
+          <>
+          {/* Select all header */}
+          <div className="flex items-center gap-2 mb-2 px-1">
+            <button
+              onClick={() => toggleSelectAll(filtered)}
+              className="p-0.5 rounded transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+              title={allFilteredSelected ? 'Deselect all' : 'Select all'}
+            >
+              {allFilteredSelected ? (
+                <CheckSquare size={16} className="text-blue-600 dark:text-blue-400" />
+              ) : (
+                <Square size={16} className="text-gray-400" />
+              )}
+            </button>
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {allFilteredSelected ? 'Deselect all' : 'Select all'} ({filtered.length})
+            </span>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             {filtered.map((c, i) => {
               const initials = `${c.firstName?.[0] ?? '?'}${c.lastName?.[0] ?? ''}`.toUpperCase()
@@ -448,14 +503,25 @@ export function CandidatesClient({ initialCandidates, initialTotal }: { initialC
               const skills = parseJsonSafe<string[]>(c.skills, [])
               const isUpdating = updating === c.id
               const isUnread = !c.viewedAt
+              const isSelected = selectedIds.has(c.id)
 
               return (
                 <Link key={c.id} href={`/candidates/${c.id}`} onClick={() => setCandidates(prev => prev.map(x => x.id === c.id ? { ...x, viewedAt: new Date() } : x))}>
-                  <Card className={`border-0 shadow-sm card-hover cursor-pointer h-full dark:bg-gray-900 ${c.priority ? 'ring-1 ring-red-200 dark:ring-red-900' : ''} ${c.liked && !c.priority ? 'ring-1 ring-amber-200 dark:ring-amber-900' : ''}`}>
+                  <Card className={`border-0 shadow-sm card-hover cursor-pointer h-full dark:bg-gray-900 ${isSelected ? 'ring-2 ring-blue-400 dark:ring-blue-600' : ''} ${c.priority && !isSelected ? 'ring-1 ring-red-200 dark:ring-red-900' : ''} ${c.liked && !c.priority && !isSelected ? 'ring-1 ring-amber-200 dark:ring-amber-900' : ''}`}>
                     <CardContent className="p-3">
                       <div className="flex items-start gap-2.5">
                         <div className="shrink-0 text-center relative">
-                          <div className="text-xs font-bold text-gray-200 dark:text-gray-700 mb-0.5">#{(page - 1) * PAGE_SIZE + i + 1}</div>
+                          <button
+                            onClick={e => { e.preventDefault(); e.stopPropagation(); toggleSelect(c.id) }}
+                            className="p-0.5 rounded transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 mb-0.5"
+                            title={isSelected ? 'Deselect' : 'Select'}
+                          >
+                            {isSelected ? (
+                              <CheckSquare size={14} className="text-blue-600 dark:text-blue-400" />
+                            ) : (
+                              <Square size={14} className="text-gray-300 dark:text-gray-600" />
+                            )}
+                          </button>
                           <div className="relative">
                             <Avatar className="w-8 h-8">
                               <AvatarFallback className="text-xs gradient-bg text-white font-semibold">{initials}</AvatarFallback>
@@ -525,6 +591,7 @@ export function CandidatesClient({ initialCandidates, initialTotal }: { initialC
               )
             })}
           </div>
+          </>
         )
       )}
 
@@ -613,6 +680,17 @@ export function CandidatesClient({ initialCandidates, initialTotal }: { initialC
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Confirmation dialog for destructive actions */}
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={closeConfirm}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        confirmText={confirmDialog.confirmText}
+        variant={confirmDialog.variant}
+      />
     </>
   )
 }

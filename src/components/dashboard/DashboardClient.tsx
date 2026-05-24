@@ -11,8 +11,8 @@ interface Props {
 export function DashboardClient({ onboarding, subscription = 'free' }: Props) {
   const [hasVacancy, setHasVacancy] = useState(onboarding.hasVacancy)
 
-  if (hasVacancy && onboarding.hasCandidate && onboarding.hasEmail && subscription !== 'free') return null
-
+  // The OnboardingChecklist handles its own visibility logic
+  // (all steps done, or user dismissed via localStorage)
   return (
     <OnboardingChecklist
       hasVacancy={hasVacancy}

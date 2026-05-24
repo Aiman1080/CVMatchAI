@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { CreateVacancyDialog } from './CreateVacancyDialog'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { toast } from '@/components/ui/use-toast'
 import { getStatusColor, formatRelativeTime } from '@/lib/utils'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -30,6 +31,14 @@ export function VacanciesClient({ initialVacancies }: { initialVacancies: Vacanc
   const [search, setSearch] = useState('')
   const [showCreate, setShowCreate] = useState(false)
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean
+    title: string
+    description: string
+    confirmText: string
+    variant: 'destructive' | 'default'
+    onConfirm: () => void
+  }>({ open: false, title: '', description: '', confirmText: 'Delete', variant: 'destructive', onConfirm: () => {} })
 
   const filtered = vacancies.filter(v =>
     v.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -41,25 +50,35 @@ export function VacanciesClient({ initialVacancies }: { initialVacancies: Vacanc
     setShowCreate(false)
   }
 
-  const handleDelete = async (e: React.MouseEvent, id: string, title: string) => {
+  const handleDelete = (e: React.MouseEvent, id: string, title: string) => {
     e.preventDefault()
     e.stopPropagation()
-    if (!confirm(`Delete "${title}"? All ${vacancies.find(v => v.id === id)?._count.candidates ?? 0} candidates in this vacancy will also be deleted. This cannot be undone.`)) return
-    setDeleting(id)
-    try {
-      const res = await fetch(`/api/vacancies/${id}`, { method: 'DELETE' })
-      if (res.ok) {
-        setVacancies(prev => prev.filter(v => v.id !== id))
-        toast({ title: tv.deleted, description: `"${title}" and all its candidates have been removed.` })
-      } else {
-        const data = await res.json().catch(() => ({}))
-        if (data.upgrade) {
-          toast({ title: 'Upgrade required', description: 'Upgrade to Pro to manage more vacancies.', variant: 'destructive' })
-        } else {
-          toast({ title: data.error || tv.deleteError, variant: 'destructive' })
-        }
-      }
-    } finally { setDeleting(null) }
+    const candidateCount = vacancies.find(v => v.id === id)?._count.candidates ?? 0
+    setConfirmDialog({
+      open: true,
+      title: 'Delete vacancy',
+      description: `Delete "${title}"? All ${candidateCount} candidate(s) in this vacancy will also be deleted. This action cannot be undone.`,
+      confirmText: 'Delete',
+      variant: 'destructive',
+      onConfirm: async () => {
+        setConfirmDialog(prev => ({ ...prev, open: false }))
+        setDeleting(id)
+        try {
+          const res = await fetch(`/api/vacancies/${id}`, { method: 'DELETE' })
+          if (res.ok) {
+            setVacancies(prev => prev.filter(v => v.id !== id))
+            toast({ title: tv.deleted, description: `"${title}" and all its candidates have been removed.` })
+          } else {
+            const data = await res.json().catch(() => ({}))
+            if (data.upgrade) {
+              toast({ title: 'Upgrade required', description: 'Upgrade to Pro to manage more vacancies.', variant: 'destructive' })
+            } else {
+              toast({ title: data.error || tv.deleteError, variant: 'destructive' })
+            }
+          }
+        } finally { setDeleting(null) }
+      },
+    })
   }
 
   const typeColors: Record<string, string> = {
@@ -156,6 +175,16 @@ export function VacanciesClient({ initialVacancies }: { initialVacancies: Vacanc
       )}
 
       <CreateVacancyDialog open={showCreate} onClose={() => setShowCreate(false)} onCreated={handleCreated} />
+
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog(prev => ({ ...prev, open: false }))}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        confirmText={confirmDialog.confirmText}
+        variant={confirmDialog.variant}
+      />
     </>
   )
 }
