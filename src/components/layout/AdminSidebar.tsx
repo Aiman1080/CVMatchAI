@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { useTheme } from 'next-themes'
 import { useState } from 'react'
-import { LayoutDashboard, LogOut, Sun, Moon, ArrowLeft, ShieldCheck, Menu, X } from 'lucide-react'
+import { LayoutDashboard, LogOut, Sun, Moon, ArrowLeft, ShieldCheck, Menu, X, Users, LifeBuoy, Settings } from 'lucide-react'
 import { LogoAdmin } from '@/components/Logo'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -40,6 +40,7 @@ export function AdminSidebar() {
 
       {/* Nav */}
       <nav className="flex-1 p-4 space-y-1">
+        <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide px-3 mb-2">Admin</p>
         <Link
           href="/admin"
           onClick={() => setMobileOpen(false)}
@@ -50,8 +51,41 @@ export function AdminSidebar() {
               : 'text-gray-400 hover:bg-gray-900 hover:text-gray-200'
           )}
         >
-          <ShieldCheck size={18} className={pathname === '/admin' ? 'text-purple-400' : 'text-gray-500'} />
-          Admin Panel
+          <LayoutDashboard size={18} className={pathname === '/admin' ? 'text-purple-400' : 'text-gray-500'} />
+          Dashboard
+        </Link>
+        <Link
+          href="/admin?tab=users"
+          onClick={() => setMobileOpen(false)}
+          className={cn(
+            'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
+            'text-gray-400 hover:bg-gray-900 hover:text-gray-200'
+          )}
+        >
+          <Users size={18} className="text-gray-500" />
+          Users
+        </Link>
+        <Link
+          href="/admin?tab=support"
+          onClick={() => setMobileOpen(false)}
+          className={cn(
+            'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
+            'text-gray-400 hover:bg-gray-900 hover:text-gray-200'
+          )}
+        >
+          <LifeBuoy size={18} className="text-gray-500" />
+          Support Tickets
+        </Link>
+        <Link
+          href="/admin?tab=actions"
+          onClick={() => setMobileOpen(false)}
+          className={cn(
+            'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
+            'text-gray-400 hover:bg-gray-900 hover:text-gray-200'
+          )}
+        >
+          <Settings size={18} className="text-gray-500" />
+          Admin Actions
         </Link>
 
         <div className="pt-4 mt-4 border-t border-gray-800">
@@ -62,15 +96,7 @@ export function AdminSidebar() {
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:bg-gray-900 hover:text-gray-200 transition-all"
           >
             <ArrowLeft size={18} className="text-gray-500" />
-            Back to Dashboard
-          </Link>
-          <Link
-            href="/dashboard"
-            onClick={() => setMobileOpen(false)}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:bg-gray-900 hover:text-gray-200 transition-all"
-          >
-            <LayoutDashboard size={18} className="text-gray-500" />
-            Recruiter Space
+            Back to App
           </Link>
         </div>
       </nav>

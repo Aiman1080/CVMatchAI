@@ -53,7 +53,7 @@ export async function exportCandidatesToExcel(
   candidates: ExportCandidate[],
   vacancyTitle?: string
 ): Promise<void> {
-  const XLSX = await import('xlsx')
+  const XLSX = (await import('xlsx' as any)) as typeof import('xlsx')
 
   const rows = candidates.map((c) => ({
     Name: `${c.firstName} ${c.lastName}`,

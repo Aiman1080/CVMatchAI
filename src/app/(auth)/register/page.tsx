@@ -32,7 +32,7 @@ export default function RegisterPage() {
 
   return (
     <div className="relative z-10 w-full max-w-md">
-      <div className="bg-white rounded-2xl shadow-2xl p-8" data-theme="light">
+      <div className="bg-white text-gray-900 rounded-2xl shadow-2xl p-8">
         <div className="text-center mb-8">
           <div className="mx-auto mb-4 w-fit"><Logo size={48} /></div>
           <h1 className="text-2xl font-bold text-gray-900">Start for free</h1>
