@@ -63,32 +63,44 @@ const PLATFORM_STATIC = [
 
 type PlatformId = 'teamtailor' | 'recruitee' | 'smartrecruiters'
 
-function HowToTooltip({ steps, docsUrl, openLabel }: { steps: readonly string[]; docsUrl: string; openLabel: string }) {
+/** Collapsible guide with numbered steps — shown inline inside the connection form */
+function HowToGuide({ steps, docsUrl, openLabel }: { steps: readonly string[]; docsUrl: string; openLabel: string }) {
+  const [open, setOpen] = useState(false)
   return (
-    <TooltipProvider delayDuration={100}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-blue-500 transition-colors">
-            <HelpCircle size={13} />
-          </button>
-        </TooltipTrigger>
-        <TooltipContent side="top" className="max-w-64 p-3">
+    <div className="rounded-lg border border-blue-100 dark:border-blue-900 bg-blue-50/60 dark:bg-blue-950/30 overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left"
+      >
+        <span className="flex items-center gap-1.5 text-xs font-medium text-blue-700 dark:text-blue-300">
+          <HelpCircle size={13} className="shrink-0" />
+          How to get your API key
+        </span>
+        {open ? <ChevronUp size={13} className="text-blue-500 shrink-0" /> : <ChevronDown size={13} className="text-blue-500 shrink-0" />}
+      </button>
+      {open && (
+        <div className="px-3 pb-3 space-y-2.5">
           <ol className="space-y-1.5">
             {steps.map((s, i) => (
-              <li key={i} className="flex gap-2">
-                <span className="shrink-0 w-4 h-4 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px] font-bold">{i + 1}</span>
-                <span className="leading-snug">{s}</span>
+              <li key={i} className="flex gap-2 text-xs text-blue-700 dark:text-blue-300">
+                <span className="shrink-0 w-4 h-4 rounded-full bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200 flex items-center justify-center text-[10px] font-bold mt-0.5">{i + 1}</span>
+                <span className="leading-relaxed">{s}</span>
               </li>
             ))}
           </ol>
-          <a href={docsUrl} target="_blank" rel="noopener noreferrer"
-            className="mt-2 flex items-center gap-1 text-blue-300 hover:text-blue-200 underline text-[11px]"
-            onClick={e => e.stopPropagation()}>
-            {openLabel} <ExternalLink size={9} />
+          <a
+            href={docsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+            onClick={e => e.stopPropagation()}
+          >
+            {openLabel} <ExternalLink size={10} />
           </a>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -420,7 +432,6 @@ export function IntegrationsClient({ initialIntegrations }: { initialIntegration
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
                         <Label className="text-xs text-gray-500">{pt.apiKeyLabel}</Label>
-                        <HowToTooltip steps={pt.howToGet} docsUrl={platform.docsUrl} openLabel={ti.openInAts} />
                       </div>
                       <Input
                         type="password"
@@ -445,6 +456,8 @@ export function IntegrationsClient({ initialIntegrations }: { initialIntegration
                         />
                       </div>
                     )}
+
+                    <HowToGuide steps={pt.howToGet} docsUrl={platform.docsUrl} openLabel={ti.openInAts} />
 
                     <div className="flex items-start gap-2 p-2.5 bg-amber-50 dark:bg-amber-950/30 rounded-lg">
                       <AlertCircle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />

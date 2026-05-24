@@ -1,23 +1,23 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Mail, Plus, Loader2, CheckCircle, AlertCircle, Scan, Info, Trash2, RefreshCw, Zap, Eraser } from 'lucide-react'
+import { Mail, Plus, Loader2, CheckCircle, AlertCircle, Scan, Info, Trash2, RefreshCw, Zap, Eraser, ChevronLeft, ChevronDown, ChevronUp } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from '@/components/ui/use-toast'
 import { formatRelativeTime } from '@/lib/utils'
 
-// Preset IMAP settings for common providers — users can also enter custom host/port
-const PROVIDERS = [
-  { id: 'gmail', label: 'Gmail', host: 'imap.gmail.com', port: 993 },
-  { id: 'outlook', label: 'Outlook / Office 365', host: 'outlook.office365.com', port: 993 },
-  { id: 'yahoo', label: 'Yahoo Mail', host: 'imap.mail.yahoo.com', port: 993 },
-  { id: 'custom', label: 'Custom IMAP', host: '', port: 993 },
-]
+// Preset IMAP settings for common providers
+const PROVIDER_PRESETS = {
+  gmail: { label: 'Gmail', host: 'imap.gmail.com', port: 993, providerKey: 'gmail' },
+  outlook: { label: 'Outlook / Office 365', host: 'outlook.office365.com', port: 993, providerKey: 'outlook' },
+  other: { label: 'Other', host: '', port: 993, providerKey: 'custom' },
+} as const
+
+type ProviderChoice = keyof typeof PROVIDER_PRESETS
 
 interface Inbox {
   id: string
@@ -30,8 +30,10 @@ interface Inbox {
 
 export function EmailClient() {
   const [showConnect, setShowConnect] = useState(false)
-  const [provider, setProvider] = useState('gmail')
-  const [form, setForm] = useState({ username: '', password: '', host: 'imap.gmail.com', port: 993 })
+  // Step 1: choose provider, Step 2: enter credentials
+  const [step, setStep] = useState<1 | 2>(1)
+  const [selectedProvider, setSelectedProvider] = useState<ProviderChoice | null>(null)
+  const [form, setForm] = useState({ email: '', password: '', host: '', port: 993 })
   const [connecting, setConnecting] = useState(false)
   const [scanning, setScanning] = useState<string | null>(null)
   const [demoScanning, setDemoScanning] = useState(false)
@@ -49,27 +51,48 @@ export function EmailClient() {
     } catch { /* silent — user sees empty list */ } finally { setLoading(false) }
   }
 
-  const handleProviderChange = (id: string) => {
-    setProvider(id)
-    const p = PROVIDERS.find(pr => pr.id === id)
-    if (p?.host) setForm(prev => ({ ...prev, host: p.host, port: p.port }))
+  const openConnectDialog = () => {
+    setStep(1)
+    setSelectedProvider(null)
+    setForm({ email: '', password: '', host: '', port: 993 })
+    setShowConnect(true)
+  }
+
+  const selectProvider = (choice: ProviderChoice) => {
+    setSelectedProvider(choice)
+    const preset = PROVIDER_PRESETS[choice]
+    setForm(prev => ({ ...prev, host: preset.host, port: preset.port }))
+    setStep(2)
   }
 
   const handleConnect = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!selectedProvider) return
     setConnecting(true)
+    const preset = PROVIDER_PRESETS[selectedProvider]
+    // For Gmail/Outlook username = email; for Other the user can enter independently
+    const username = form.email
     try {
       const res = await fetch('/api/email/connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: form.username, provider, host: form.host, port: form.port, username: form.username, password: form.password }),
+        body: JSON.stringify({
+          email: form.email,
+          provider: preset.providerKey,
+          host: form.host,
+          port: form.port,
+          username,
+          password: form.password,
+        }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       setInboxes(prev => [data, ...prev])
       setShowConnect(false)
-      toast({ title: 'Inbox connected!', description: `${form.username} is ready to scan.` })
-      setForm({ username: '', password: '', host: 'imap.gmail.com', port: 993 })
+      toast({ title: 'Inbox connected!', description: `${form.email} is ready to scan.` })
+      setForm({ email: '', password: '', host: '', port: 993 })
+      setStep(1)
+      setSelectedProvider(null)
     } catch (err: any) {
       toast({ title: 'Connection failed', description: err.message, variant: 'destructive' })
     } finally { setConnecting(false) }
@@ -216,7 +239,7 @@ export function EmailClient() {
       <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
         <CardHeader className="flex flex-row items-center justify-between pb-3">
           <CardTitle className="text-base">Connected Inboxes</CardTitle>
-          <Button onClick={() => setShowConnect(true)} size="sm" className="gradient-bg gap-1.5">
+          <Button onClick={openConnectDialog} size="sm" className="gradient-bg gap-1.5">
             <Plus size={14} /> Connect Inbox
           </Button>
         </CardHeader>
@@ -267,50 +290,198 @@ export function EmailClient() {
           <DialogHeader>
             <DialogTitle>Connect Email Inbox</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleConnect} className="space-y-4 mt-2">
-            <div className="space-y-1.5">
-              <Label>Email Provider</Label>
-              <Select value={provider} onValueChange={handleProviderChange}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {PROVIDERS.map(p => <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Email Address</Label>
-              <Input type="email" placeholder="recruitment@company.com" value={form.username} onChange={e => setForm(p => ({ ...p, username: e.target.value }))} required />
-            </div>
-            <div className="space-y-1.5">
-              <Label>App Password</Label>
-              <Input type="password" placeholder="App-specific password" value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} required />
-              <p className="text-xs text-gray-400">For Gmail: Settings → Security → 2-Step Verification → App Passwords.</p>
-            </div>
-            {provider === 'custom' && (
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label>IMAP Host</Label>
-                  <Input placeholder="imap.example.com" value={form.host} onChange={e => setForm(p => ({ ...p, host: e.target.value }))} required />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Port</Label>
-                  <Input type="number" value={form.port} onChange={e => setForm(p => ({ ...p, port: parseInt(e.target.value) }))} required />
-                </div>
+
+          {/* --- Step 1: Choose provider --- */}
+          {step === 1 && (
+            <div className="space-y-4 mt-2">
+              <p className="text-sm text-gray-500">Choose your email provider to get started.</p>
+              <div className="grid grid-cols-1 gap-3">
+                {/* Gmail card */}
+                <button
+                  type="button"
+                  onClick={() => selectProvider('gmail')}
+                  className="flex items-center gap-4 p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-950/30 transition-all text-left"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shrink-0">
+                    <span className="text-white font-bold text-lg">G</span>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-white">Gmail</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Google Workspace & personal Gmail</p>
+                  </div>
+                </button>
+
+                {/* Outlook card */}
+                <button
+                  type="button"
+                  onClick={() => selectProvider('outlook')}
+                  className="flex items-center gap-4 p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-purple-400 dark:hover:border-purple-500 hover:bg-purple-50/50 dark:hover:bg-purple-950/30 transition-all text-left"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shrink-0">
+                    <span className="text-white font-bold text-lg">O</span>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-white">Outlook / Office 365</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Microsoft Exchange & Outlook.com</p>
+                  </div>
+                </button>
+
+                {/* Other card */}
+                <button
+                  type="button"
+                  onClick={() => selectProvider('other')}
+                  className="flex items-center gap-4 p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-all text-left"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gray-400 to-gray-500 flex items-center justify-center shrink-0">
+                    <Mail className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-white">Other</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Any email with IMAP access</p>
+                  </div>
+                </button>
               </div>
-            )}
-            <div className="p-3 bg-amber-50 dark:bg-amber-950 rounded-lg flex gap-2">
-              <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-              <p className="text-xs text-amber-700">Credentials are stored securely. We only read attachments, never send emails or modify your inbox.</p>
             </div>
-            <div className="flex gap-3">
-              <Button type="button" variant="outline" onClick={() => setShowConnect(false)} className="flex-1">Cancel</Button>
-              <Button type="submit" disabled={connecting} className="flex-1 gradient-bg">
-                {connecting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Connecting...</> : 'Connect & Verify'}
-              </Button>
-            </div>
-          </form>
+          )}
+
+          {/* --- Step 2: Credentials --- */}
+          {step === 2 && selectedProvider && (
+            <form onSubmit={handleConnect} className="space-y-4 mt-2">
+              {/* Back link */}
+              <button
+                type="button"
+                onClick={() => { setStep(1); setSelectedProvider(null) }}
+                className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+              >
+                <ChevronLeft size={14} /> Change provider
+              </button>
+
+              {/* Selected provider badge */}
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                  selectedProvider === 'gmail' ? 'bg-gradient-to-br from-blue-500 to-blue-600' :
+                  selectedProvider === 'outlook' ? 'bg-gradient-to-br from-purple-500 to-purple-600' :
+                  'bg-gradient-to-br from-gray-400 to-gray-500'
+                }`}>
+                  {selectedProvider === 'other'
+                    ? <Mail className="w-4 h-4 text-white" />
+                    : <span className="text-white font-bold text-sm">{selectedProvider === 'gmail' ? 'G' : 'O'}</span>
+                  }
+                </div>
+                <span className="font-medium text-sm text-gray-900 dark:text-white">
+                  {PROVIDER_PRESETS[selectedProvider].label}
+                </span>
+              </div>
+
+              {/* Email field */}
+              <div className="space-y-1.5">
+                <Label>Email Address</Label>
+                <Input
+                  type="email"
+                  placeholder="recruitment@company.com"
+                  value={form.email}
+                  onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
+                  required
+                />
+              </div>
+
+              {/* Password field */}
+              <div className="space-y-1.5">
+                <Label>
+                  {selectedProvider === 'gmail' ? 'App Password' : selectedProvider === 'outlook' ? 'Password' : 'Password'}
+                </Label>
+                <Input
+                  type="password"
+                  placeholder={selectedProvider === 'gmail' ? '16-character App Password' : 'Your email password'}
+                  value={form.password}
+                  onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
+                  required
+                />
+              </div>
+
+              {/* Provider-specific help boxes */}
+              {selectedProvider === 'gmail' && (
+                <HelpGuide
+                  title="How to get a Gmail App Password"
+                  steps={[
+                    <>Go to <a href="https://myaccount.google.com/security" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">myaccount.google.com &rarr; Security</a></>,
+                    'Enable 2-Step Verification if not already on',
+                    <>Go to <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">App Passwords</a> &rarr; Create one for &quot;Mail&quot;</>,
+                    'Copy the 16-character password and paste it above',
+                  ]}
+                />
+              )}
+              {selectedProvider === 'outlook' && (
+                <HelpGuide
+                  title="Outlook password"
+                  steps={[
+                    'Use your regular Outlook password',
+                    'If you have 2FA enabled, create an App Password in your Microsoft account security settings',
+                  ]}
+                />
+              )}
+
+              {/* Manual IMAP fields for "Other" */}
+              {selectedProvider === 'other' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label>IMAP Host</Label>
+                    <Input placeholder="imap.example.com" value={form.host} onChange={e => setForm(p => ({ ...p, host: e.target.value }))} required />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Port</Label>
+                    <Input type="number" value={form.port} onChange={e => setForm(p => ({ ...p, port: parseInt(e.target.value) }))} required />
+                  </div>
+                </div>
+              )}
+
+              {/* Security note */}
+              <div className="p-3 bg-amber-50 dark:bg-amber-950 rounded-lg flex gap-2">
+                <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-700 dark:text-amber-400">Credentials are stored securely. We only read attachments, never send emails or modify your inbox.</p>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex gap-3">
+                <Button type="button" variant="outline" onClick={() => setShowConnect(false)} className="flex-1">Cancel</Button>
+                <Button type="submit" disabled={connecting} className="flex-1 gradient-bg">
+                  {connecting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Connecting...</> : 'Connect & Verify'}
+                </Button>
+              </div>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
+    </div>
+  )
+}
+
+/** Collapsible help guide with numbered steps — used inside the email connect dialog */
+function HelpGuide({ title, steps }: { title: string; steps: React.ReactNode[] }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="rounded-lg border border-blue-100 dark:border-blue-900 bg-blue-50/60 dark:bg-blue-950/30 overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left"
+      >
+        <span className="flex items-center gap-1.5 text-xs font-medium text-blue-700 dark:text-blue-300">
+          <Info size={13} className="shrink-0" />
+          {title}
+        </span>
+        {open ? <ChevronUp size={13} className="text-blue-500 shrink-0" /> : <ChevronDown size={13} className="text-blue-500 shrink-0" />}
+      </button>
+      {open && (
+        <ol className="px-3 pb-3 space-y-1.5">
+          {steps.map((s, i) => (
+            <li key={i} className="flex gap-2 text-xs text-blue-700 dark:text-blue-300">
+              <span className="shrink-0 w-4 h-4 rounded-full bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200 flex items-center justify-center text-[10px] font-bold mt-0.5">{i + 1}</span>
+              <span className="leading-relaxed">{s}</span>
+            </li>
+          ))}
+        </ol>
+      )}
     </div>
   )
 }
