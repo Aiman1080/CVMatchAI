@@ -47,12 +47,13 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
   const { t, locale } = useLanguage()
   const cd = t.dashboard.candidateDetail
   const tc = t.dashboard.candidates
+  const ci = t.dashboard.candidateInterview
 
   const RECOMMENDATION_LABELS: Record<string, string> = {
-    strong_yes: '🎯 Strongly recommended',
-    yes: '✅ Recommended',
-    maybe: '🤔 To consider',
-    no: '❌ Not recommended',
+    strong_yes: `🎯 ${ci.recommendationLabels.strong_yes}`,
+    yes: `✅ ${ci.recommendationLabels.yes}`,
+    maybe: `🤔 ${ci.recommendationLabels.maybe}`,
+    no: `❌ ${ci.recommendationLabels.no}`,
   }
 
   const [candidate, setCandidate] = useState(initial)
@@ -90,14 +91,14 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
       })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        toast({ title: err.error || 'Update failed', variant: 'destructive' })
+        toast({ title: err.error || tc.updateError, variant: 'destructive' })
         return null
       }
       const updated = await res.json()
       setCandidate((prev: any) => ({ ...prev, ...updated }))
       return updated
     } catch {
-      toast({ title: 'Update failed', variant: 'destructive' })
+      toast({ title: tc.updateError, variant: 'destructive' })
       return null
     } finally {
       setUpdating(false)
@@ -125,9 +126,9 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
           body: JSON.stringify({ notes: val }),
         })
         if (res.ok) setNotesSaved(true)
-        else toast({ title: 'Failed to save notes', variant: 'destructive' })
+        else toast({ title: ci.failedSaveNotes, variant: 'destructive' })
       } catch {
-        toast({ title: 'Failed to save notes', variant: 'destructive' })
+        toast({ title: ci.failedSaveNotes, variant: 'destructive' })
       }
     }, 800)
   }
@@ -222,12 +223,12 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
       const data = await res.json()
       if (res.ok) {
         setInterviewQuestions(data.questions)
-        toast({ title: 'Interview questions generated' })
+        toast({ title: ci.questionsGenerated })
       } else {
-        toast({ title: data.error || 'Failed to generate', variant: 'destructive' })
+        toast({ title: data.error || ci.questionGenerationFailed, variant: 'destructive' })
       }
     } catch {
-      toast({ title: 'Failed to generate questions', variant: 'destructive' })
+      toast({ title: ci.questionsFailed, variant: 'destructive' })
     } finally {
       setLoadingQuestions(false)
     }
@@ -244,12 +245,12 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
       const data = await res.json()
       if (res.ok) {
         setHiringReport(data.report)
-        toast({ title: 'Hiring report generated' })
+        toast({ title: ci.reportGenerated })
       } else {
-        toast({ title: data.error || 'Failed to generate', variant: 'destructive' })
+        toast({ title: data.error || ci.reportGenerationFailed, variant: 'destructive' })
       }
     } catch {
-      toast({ title: 'Failed to generate report', variant: 'destructive' })
+      toast({ title: ci.reportFailed, variant: 'destructive' })
     } finally {
       setLoadingReport(false)
     }
@@ -257,7 +258,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
-    toast({ title: 'Copied to clipboard' })
+    toast({ title: ci.copiedToClipboard })
   }
 
   const scoreColor = score >= 75 ? 'text-green-600' : score >= 50 ? 'text-amber-600' : 'text-red-500'
@@ -284,7 +285,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                 </div>
                 <p className="text-gray-500 dark:text-gray-400 mb-2">{candidate.vacancy?.title}</p>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className={`text-sm px-3 py-1 rounded-full font-medium ${getStatusColor(candidate.status)}`}>{candidate.status}</span>
+                  <span className={`text-sm px-3 py-1 rounded-full font-medium ${getStatusColor(candidate.status)}`}>{tc[candidate.status as keyof typeof tc] || candidate.status}</span>
                   {candidate.recommendation && (
                     <span className={`text-sm px-3 py-1 rounded-full font-medium ${RECOMMENDATION_COLORS[candidate.recommendation] || ''}`}>
                       AI: {RECOMMENDATION_LABELS[candidate.recommendation] || candidate.recommendation}
@@ -380,7 +381,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
           <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">
-                <User className="w-4 h-4 text-blue-500" /> Contact
+                <User className="w-4 h-4 text-blue-500" /> {ci.contact}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
@@ -403,9 +404,9 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                 </div>
               )}
               <div className="pt-2 border-t border-gray-100 dark:border-gray-800 text-xs text-gray-400 space-y-1">
-                <p>Added {formatDate(candidate.createdAt)}</p>
-                {candidate.analyzedAt && <p>Analyzed {formatDate(candidate.analyzedAt)}</p>}
-                {candidate.gdprConsent && <p className="text-green-600">GDPR: Consent ✓</p>}
+                <p>{ci.added} {formatDate(candidate.createdAt)}</p>
+                {candidate.analyzedAt && <p>{ci.analyzed} {formatDate(candidate.analyzedAt)}</p>}
+                {candidate.gdprConsent && <p className="text-green-600">{ci.gdprConsent} ✓</p>}
               </div>
             </CardContent>
           </Card>
@@ -437,9 +438,9 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                 </div>
                 <Progress value={score} className="h-2" />
                 <div className="grid grid-cols-3 text-center text-xs text-gray-400 dark:text-gray-500">
-                  <span className="text-red-500">0–49<br />Low</span>
-                  <span className="text-amber-500">50–74<br />Medium</span>
-                  <span className="text-green-500">75–100<br />Strong</span>
+                  <span className="text-red-500">0–49<br />{ci.matchLow}</span>
+                  <span className="text-amber-500">50–74<br />{ci.matchMedium}</span>
+                  <span className="text-green-500">75–100<br />{ci.matchStrong}</span>
                 </div>
               </CardContent>
             </Card>
@@ -453,10 +454,10 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
               <TabsTrigger value="analysis">{cd.aiAnalysis}</TabsTrigger>
               <TabsTrigger value="notes">{cd.notes}</TabsTrigger>
               {hasEmailSource && <TabsTrigger value="email">{cd.emailPanel}</TabsTrigger>}
-              <TabsTrigger value="interview" className="gap-1"><MessageSquareText size={14} /> Interview</TabsTrigger>
-              <TabsTrigger value="report" className="gap-1"><ClipboardList size={14} /> Report</TabsTrigger>
+              <TabsTrigger value="interview" className="gap-1"><MessageSquareText size={14} /> {ci.interviewTab}</TabsTrigger>
+              <TabsTrigger value="report" className="gap-1"><ClipboardList size={14} /> {ci.reportTab}</TabsTrigger>
               <TabsTrigger value="cv">CV</TabsTrigger>
-              {hasMotivationText && <TabsTrigger value="motivation">Motivation</TabsTrigger>}
+              {hasMotivationText && <TabsTrigger value="motivation">{ci.motivationTab}</TabsTrigger>}
             </TabsList>
 
             {/* ── AI Analysis tab ── */}
@@ -518,7 +519,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                           <CardContent className="p-4">
                             <div className="flex items-center gap-2 mb-2">
                               <Briefcase className="w-4 h-4 text-indigo-500" />
-                              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Experience</p>
+                              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">{ci.experience}</p>
                             </div>
                             <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{candidate.experience}</p>
                           </CardContent>
@@ -529,7 +530,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                           <CardContent className="p-4">
                             <div className="flex items-center gap-2 mb-2">
                               <GraduationCap className="w-4 h-4 text-purple-500" />
-                              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Education</p>
+                              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">{ci.education}</p>
                             </div>
                             <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{candidate.education}</p>
                           </CardContent>
@@ -543,7 +544,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                       <CardContent className="p-4 flex items-center gap-3">
                         <div className="text-2xl">{candidate.recommendation === 'strong_yes' ? '🎯' : candidate.recommendation === 'yes' ? '✅' : candidate.recommendation === 'maybe' ? '🤔' : '❌'}</div>
                         <div>
-                          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-0.5">AI Recommendation</p>
+                          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-0.5">{ci.aiRecommendation}</p>
                           <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{RECOMMENDATION_LABELS[candidate.recommendation] || candidate.recommendation}</p>
                         </div>
                       </CardContent>
@@ -604,11 +605,11 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                       <>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl text-sm">
                           <div>
-                            <p className="text-xs font-semibold text-gray-400 uppercase mb-1">From</p>
+                            <p className="text-xs font-semibold text-gray-400 uppercase mb-1">{ci.from}</p>
                             <p className="text-gray-700 dark:text-gray-300 font-medium">{candidate.emailSource.sender}</p>
                           </div>
                           <div>
-                            <p className="text-xs font-semibold text-gray-400 uppercase mb-1">Received</p>
+                            <p className="text-xs font-semibold text-gray-400 uppercase mb-1">{ci.received}</p>
                             <p className="text-gray-700 dark:text-gray-300">{formatDate(candidate.emailSource.receivedAt)}</p>
                           </div>
                           <div className="sm:col-span-2">
@@ -617,7 +618,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                           </div>
                           {candidate.emailSource.attachments && (
                             <div className="sm:col-span-2">
-                              <p className="text-xs font-semibold text-gray-400 uppercase mb-1">Attachments</p>
+                              <p className="text-xs font-semibold text-gray-400 uppercase mb-1">{ci.attachments}</p>
                               <div className="flex flex-wrap gap-2">
                                 {((() => { try { return JSON.parse(candidate.emailSource.attachments) as string[] } catch { return [] } })()).map((att: string, i: number) => (
                                   <span key={i} className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-md flex items-center gap-1">
@@ -628,13 +629,13 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                             </div>
                           )}
                         </div>
-                        <p className="text-xs text-gray-400">CV and cover letter extracted automatically from this email.</p>
+                        <p className="text-xs text-gray-400">{ci.cvExtractedFromEmail}</p>
                       </>
                     ) : (
                       <div className="py-8 text-center">
                         <Mail className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                        <p className="text-gray-500 text-sm">Candidate received by email</p>
-                        <p className="text-gray-400 text-xs mt-1">Email metadata not available for this candidate.</p>
+                        <p className="text-gray-500 text-sm">{ci.candidateViaEmail}</p>
+                        <p className="text-gray-400 text-xs mt-1">{ci.emailMetadataUnavailable}</p>
                       </div>
                     )}
                   </CardContent>
@@ -648,11 +649,11 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-sm flex items-center gap-2">
-                      <MessageSquareText className="w-4 h-4 text-purple-500" /> AI Interview Questions
+                      <MessageSquareText className="w-4 h-4 text-purple-500" /> {ci.aiInterviewQuestions}
                     </CardTitle>
                     <Button onClick={handleGenerateQuestions} disabled={loadingQuestions || !candidate.cvContent} size="sm" className="gap-2 gradient-bg">
                       {loadingQuestions ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                      {loadingQuestions ? 'Generating...' : interviewQuestions ? 'Regenerate' : 'Generate Questions'}
+                      {loadingQuestions ? ci.generatingQuestions : interviewQuestions ? ci.regenerate : ci.generateQuestions}
                     </Button>
                   </div>
                 </CardHeader>
@@ -661,7 +662,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                     <div className="space-y-4">
                       <div className="flex justify-end">
                         <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => copyToClipboard(interviewQuestions.map((q, i) => `${i + 1}. [${q.category}] ${q.question}\n   Why: ${q.rationale}`).join('\n\n'))}>
-                          <Copy size={12} /> Copy all
+                          <Copy size={12} /> {ci.copyAll}
                         </Button>
                       </div>
                       {interviewQuestions.map((q, i) => (
@@ -673,7 +674,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                               q.category === 'behavioral' ? 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400' :
                               q.category === 'situational' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400' :
                               'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-400'
-                            }`}>{q.category}</span>
+                            }`}>{ci.categories[q.category as keyof typeof ci.categories] || q.category}</span>
                           </div>
                           <p className="text-xs text-gray-500 dark:text-gray-400 italic">{q.rationale}</p>
                         </div>
@@ -682,8 +683,8 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                   ) : (
                     <div className="py-12 text-center">
                       <MessageSquareText className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                      <p className="text-gray-400 text-sm mb-1">Personalized interview questions</p>
-                      <p className="text-gray-400 text-xs">AI generates questions based on this candidate's CV and the vacancy requirements.</p>
+                      <p className="text-gray-400 text-sm mb-1">{ci.personalizedQuestions}</p>
+                      <p className="text-gray-400 text-xs">{ci.questionsExplainer}</p>
                     </div>
                   )}
                 </CardContent>
@@ -696,13 +697,13 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-sm flex items-center gap-2">
-                      <ClipboardList className="w-4 h-4 text-indigo-500" /> AI Hiring Report
+                      <ClipboardList className="w-4 h-4 text-indigo-500" /> {ci.aiHiringReport}
                     </CardTitle>
                     <div className="flex gap-2">
                       {hiringReport && (
                         <>
                           <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => copyToClipboard(hiringReport)}>
-                            <Copy size={12} /> Copy
+                            <Copy size={12} /> {ci.copy}
                           </Button>
                           <Button
                             variant="outline"
@@ -717,22 +718,22 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                                   `${candidate.firstName} ${candidate.lastName}`,
                                   candidate.vacancy?.title
                                 )
-                                toast({ title: 'PDF report downloaded!' })
+                                toast({ title: ci.pdfDownloaded })
                               } catch {
-                                toast({ title: 'PDF export failed', variant: 'destructive' })
+                                toast({ title: ci.pdfFailed, variant: 'destructive' })
                               } finally {
                                 setDownloadingReportPdf(false)
                               }
                             }}
                           >
                             {downloadingReportPdf ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
-                            {downloadingReportPdf ? 'Exporting...' : 'Download PDF'}
+                            {downloadingReportPdf ? ci.exportingPdf : ci.downloadPdf}
                           </Button>
                         </>
                       )}
                       <Button onClick={handleGenerateReport} disabled={loadingReport} size="sm" className="gap-2 gradient-bg">
                         {loadingReport ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                        {loadingReport ? 'Generating...' : hiringReport ? 'Regenerate' : 'Generate Report'}
+                        {loadingReport ? ci.generatingReport : hiringReport ? ci.regenerate : ci.generateReport}
                       </Button>
                     </div>
                   </div>
@@ -745,8 +746,8 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                   ) : (
                     <div className="py-12 text-center">
                       <ClipboardList className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                      <p className="text-gray-400 text-sm mb-1">Professional hiring report</p>
-                      <p className="text-gray-400 text-xs">Generate a 1-page report to share with the hiring manager.</p>
+                      <p className="text-gray-400 text-sm mb-1">{ci.professionalReport}</p>
+                      <p className="text-gray-400 text-xs">{ci.reportExplainer}</p>
                     </div>
                   )}
                 </CardContent>
@@ -767,7 +768,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                       {candidate.cvContent}
                     </pre>
                   ) : (
-                    <p className="text-gray-400 text-sm text-center py-8">No CV text available</p>
+                    <p className="text-gray-400 text-sm text-center py-8">{ci.noCvText}</p>
                   )}
                 </CardContent>
               </Card>

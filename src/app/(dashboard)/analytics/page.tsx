@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
-import { Header } from '@/components/layout/Header'
+import { AnalyticsHeader } from '@/components/dashboard/AnalyticsHeader'
 import { AnalyticsClient } from '@/components/dashboard/AnalyticsClient'
 import { UpgradePrompt } from '@/components/dashboard/UpgradePrompt'
 import { getPlanLimits } from '@/lib/plans'
@@ -19,7 +19,7 @@ export default async function AnalyticsPage() {
   if (!limits.analytics) {
     return (
       <div>
-        <Header title="Analytics" description="Recruitment performance overview" />
+        <AnalyticsHeader />
         <div className="p-8">
           <UpgradePrompt
             feature="Analytics — Pro Feature"
@@ -54,7 +54,7 @@ export default async function AnalyticsPage() {
 
   return (
     <div>
-      <Header title="Analytics" description="Recruitment performance overview" />
+      <AnalyticsHeader />
       <div className="p-8"><AnalyticsClient candidates={candidates} vacancies={vacancies} candidatesOverTime={candidatesOverTime} /></div>
     </div>
   )

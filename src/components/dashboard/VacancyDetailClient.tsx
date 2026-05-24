@@ -60,7 +60,6 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
   const { t } = useLanguage()
   const vd = t.dashboard.vacancyDetail
   const cv = t.dashboard.createVacancy
-  const tv = t.dashboard.vacancies
   const [vacancy, setVacancy] = useState(initial)
   const [duplicating, setDuplicating] = useState(false)
   const [showUpload, setShowUpload] = useState(false)
@@ -140,17 +139,17 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
       const res = await fetch(`/api/vacancies/${vacancy.id}/duplicate`, { method: 'POST' })
       const data = await res.json()
       if (res.ok) {
-        toast({ title: tv.duplicated, description: `"${data.title}" has been created.` })
+        toast({ title: vd.duplicated, description: `"${data.title}" ${vd.duplicatedDesc}` })
         router.push(`/vacancies/${data.id}`)
       } else {
         if (data.upgrade) {
-          toast({ title: 'Upgrade required', description: data.error, variant: 'destructive' })
+          toast({ title: vd.upgradeRequired, description: data.error, variant: 'destructive' })
         } else {
-          toast({ title: data.error || 'Duplication failed', variant: 'destructive' })
+          toast({ title: data.error || vd.duplicateFailed, variant: 'destructive' })
         }
       }
     } catch {
-      toast({ title: 'Duplication failed', variant: 'destructive' })
+      toast({ title: vd.duplicateFailed, variant: 'destructive' })
     } finally {
       setDuplicating(false)
     }
@@ -213,7 +212,7 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
                   onClick={handleDuplicate}
                   disabled={duplicating}
                   className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                  title="Duplicate vacancy"
+                  title={vd.duplicateTooltip}
                 >
                   {duplicating ? <Loader2 size={16} className="animate-spin" /> : <Copy size={16} />}
                 </button>
@@ -234,7 +233,7 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
                     setShowEdit(true)
                   }}
                   className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                  title="Edit vacancy"
+                  title={vd.editTooltip}
                 >
                   <Pencil size={16} />
                 </button>
