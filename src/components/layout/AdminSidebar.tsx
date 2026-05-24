@@ -4,7 +4,8 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { useTheme } from 'next-themes'
-import { LayoutDashboard, LogOut, Sun, Moon, ArrowLeft, ShieldCheck } from 'lucide-react'
+import { useState } from 'react'
+import { LayoutDashboard, LogOut, Sun, Moon, ArrowLeft, ShieldCheck, Menu, X } from 'lucide-react'
 import { LogoAdmin } from '@/components/Logo'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -13,27 +14,35 @@ export function AdminSidebar() {
   const pathname = usePathname()
   const { data: session } = useSession()
   const { theme, setTheme } = useTheme()
+  const [mobileOpen, setMobileOpen] = useState(false)
   const user = session?.user as any
   const initials = user?.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || 'A'
   const isDark = theme === 'dark'
 
-  return (
-    <aside className="fixed left-0 top-0 h-full w-64 bg-gray-950 border-r border-gray-800 flex flex-col z-40">
+  const sidebarContent = (
+    <>
       {/* Logo */}
-      <div className="p-6 border-b border-gray-800">
-        <Link href="/admin" className="flex items-center gap-2.5">
+      <div className="p-6 border-b border-gray-800 flex items-center justify-between">
+        <Link href="/admin" className="flex items-center gap-2.5" onClick={() => setMobileOpen(false)}>
           <LogoAdmin size={36} />
           <div>
             <span className="font-bold text-white text-lg leading-tight block">CVMatch</span>
             <span className="text-xs text-purple-400 font-semibold leading-tight">Admin Panel</span>
           </div>
         </Link>
+        <button
+          onClick={() => setMobileOpen(false)}
+          className="md:hidden p-1 text-gray-400 hover:text-gray-200 rounded transition-colors"
+        >
+          <X size={20} />
+        </button>
       </div>
 
       {/* Nav */}
       <nav className="flex-1 p-4 space-y-1">
         <Link
           href="/admin"
+          onClick={() => setMobileOpen(false)}
           className={cn(
             'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
             pathname === '/admin'
@@ -49,6 +58,7 @@ export function AdminSidebar() {
           <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide px-3 mb-2">Application</p>
           <Link
             href="/dashboard"
+            onClick={() => setMobileOpen(false)}
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:bg-gray-900 hover:text-gray-200 transition-all"
           >
             <ArrowLeft size={18} className="text-gray-500" />
@@ -56,6 +66,7 @@ export function AdminSidebar() {
           </Link>
           <Link
             href="/dashboard"
+            onClick={() => setMobileOpen(false)}
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:bg-gray-900 hover:text-gray-200 transition-all"
           >
             <LayoutDashboard size={18} className="text-gray-500" />
@@ -104,6 +115,38 @@ export function AdminSidebar() {
           </button>
         </div>
       </div>
-    </aside>
+    </>
+  )
+
+  return (
+    <>
+      {/* Mobile hamburger button */}
+      <button
+        onClick={() => setMobileOpen(true)}
+        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-gray-900 border border-gray-700 rounded-lg shadow-sm text-gray-300 hover:bg-gray-800 transition-colors"
+        aria-label="Open menu"
+      >
+        <Menu size={20} />
+      </button>
+
+      {/* Mobile backdrop */}
+      {mobileOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-50 bg-black/50 transition-opacity"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          'fixed left-0 top-0 h-full w-64 bg-gray-950 border-r border-gray-800 flex flex-col transition-transform duration-300 ease-in-out',
+          'md:translate-x-0 md:z-40',
+          mobileOpen ? 'translate-x-0 z-[51]' : '-translate-x-full z-[51]'
+        )}
+      >
+        {sidebarContent}
+      </aside>
+    </>
   )
 }

@@ -34,6 +34,7 @@ export const authOptions: NextAuthOptions = {
         return {
           id: user.id, email: user.email, name: user.name,
           role: user.role, subscription: user.subscription, company: user.company,
+          emailVerified: user.emailVerified,
         }
       },
     }),
@@ -46,6 +47,7 @@ export const authOptions: NextAuthOptions = {
         token.role = (user as any).role
         token.subscription = (user as any).subscription
         token.company = (user as any).company
+        token.emailVerified = (user as any).emailVerified
       }
       return token
     },
@@ -56,6 +58,7 @@ export const authOptions: NextAuthOptions = {
         ;(session.user as any).role = token.role
         ;(session.user as any).subscription = token.subscription
         ;(session.user as any).company = token.company
+        ;(session.user as any).emailVerified = token.emailVerified
       }
       return session
     },

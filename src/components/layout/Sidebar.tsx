@@ -4,8 +4,10 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { useTheme } from 'next-themes'
-import { LayoutDashboard, Briefcase, Users, BarChart3, Settings, Mail, LogOut, ShieldCheck, ChevronRight, LifeBuoy, Sun, Moon, Plug, Lock } from 'lucide-react'
+import { useState } from 'react'
+import { LayoutDashboard, Briefcase, Users, BarChart3, Settings, Mail, LogOut, ShieldCheck, ChevronRight, LifeBuoy, Sun, Moon, Plug, Lock, Menu, X } from 'lucide-react'
 import { Logo } from '@/components/Logo'
+import { NotificationBell } from '@/components/NotificationBell'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -28,6 +30,7 @@ export function Sidebar() {
   const { data: session } = useSession()
   const { theme, setTheme } = useTheme()
   const { t, locale, setLocale } = useLanguage()
+  const [mobileOpen, setMobileOpen] = useState(false)
   const user = session?.user as any
   const initials = user?.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || 'U'
 
@@ -46,16 +49,25 @@ export function Sidebar() {
     { href: '/support', icon: LifeBuoy, label: t.dashboard.nav.support },
   ]
 
-  return (
-    <aside className="fixed left-0 top-0 h-full w-64 bg-white dark:bg-gray-950 border-r border-gray-100 dark:border-gray-800 flex flex-col z-40">
-      <div className="p-6 border-b border-gray-100 dark:border-gray-800">
-        <Link href="/dashboard" className="flex items-center gap-2.5">
+  const sidebarContent = (
+    <>
+      <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+        <Link href="/dashboard" className="flex items-center gap-2.5" onClick={() => setMobileOpen(false)}>
           <Logo size={36} />
           <div>
             <span className="font-bold text-gray-900 dark:text-white text-lg leading-tight block">CVMatch</span>
             <span className="text-xs text-blue-600 font-semibold leading-tight">AI Platform</span>
           </div>
         </Link>
+        <div className="flex items-center gap-1">
+          <NotificationBell />
+          <button
+            onClick={() => setMobileOpen(false)}
+            className="md:hidden p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded transition-colors"
+          >
+            <X size={20} />
+          </button>
+        </div>
       </div>
 
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
@@ -65,6 +77,7 @@ export function Sidebar() {
             <Link
               key={href}
               href={href}
+              onClick={() => setMobileOpen(false)}
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
                 locked && 'opacity-60',
@@ -83,6 +96,7 @@ export function Sidebar() {
         {user?.role === 'admin' && (
           <Link
             href="/admin"
+            onClick={() => setMobileOpen(false)}
             className={cn(
               'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 mt-2',
               pathname.startsWith('/admin')
@@ -141,7 +155,7 @@ export function Sidebar() {
           <div className="p-3 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/40 dark:to-purple-950/40 rounded-xl border border-blue-100 dark:border-blue-900">
             <p className="text-xs font-bold text-blue-800 dark:text-blue-300 mb-1">{t.dashboard.nav.upgradeTitle}</p>
             <p className="text-xs text-blue-600 dark:text-blue-400 mb-2">{t.dashboard.nav.upgradeDesc}</p>
-            <a href="/settings" className="block text-center text-xs bg-blue-600 text-white rounded-lg py-1.5 font-semibold hover:bg-blue-700 transition-colors">Upgrade →</a>
+            <a href="/settings" onClick={() => setMobileOpen(false)} className="block text-center text-xs bg-blue-600 text-white rounded-lg py-1.5 font-semibold hover:bg-blue-700 transition-colors">Upgrade →</a>
           </div>
         </div>
       )}
@@ -166,6 +180,38 @@ export function Sidebar() {
           </button>
         </div>
       </div>
-    </aside>
+    </>
+  )
+
+  return (
+    <>
+      {/* Mobile hamburger button */}
+      <button
+        onClick={() => setMobileOpen(true)}
+        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+        aria-label="Open menu"
+      >
+        <Menu size={20} />
+      </button>
+
+      {/* Mobile backdrop */}
+      {mobileOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-50 bg-black/50 transition-opacity"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          'fixed left-0 top-0 h-full w-64 bg-white dark:bg-gray-950 border-r border-gray-100 dark:border-gray-800 flex flex-col transition-transform duration-300 ease-in-out',
+          'md:translate-x-0 md:z-40',
+          mobileOpen ? 'translate-x-0 z-[51]' : '-translate-x-full z-[51]'
+        )}
+      >
+        {sidebarContent}
+      </aside>
+    </>
   )
 }

@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { Search, Users, Mail, Trash2, LayoutGrid, Columns, Star, Flag, Download, Send, FileText, Eye, EyeOff } from 'lucide-react'
+import { Search, Users, Mail, Trash2, LayoutGrid, Columns, Star, Flag, Download, Send, FileText, Eye, EyeOff, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { toast } from '@/components/ui/use-toast'
 import { KanbanView } from './KanbanView'
 import { getStatusColor, formatRelativeTime, parseJsonSafe } from '@/lib/utils'
+import { exportCandidatesToExcel, exportCandidatesToPDF } from '@/lib/export'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 interface Candidate {
@@ -32,8 +33,10 @@ interface Candidate {
   vacancy?: { title: string; company: string } | null
 }
 
+const PAGE_SIZE = 30
+
 // Client component: compact grid + kanban toggle, like/priority/pool, export CSV
-export function CandidatesClient({ initialCandidates }: { initialCandidates: Candidate[] }) {
+export function CandidatesClient({ initialCandidates, initialTotal }: { initialCandidates: Candidate[]; initialTotal: number }) {
   const { t } = useLanguage()
   const tc = t.dashboard.candidates
   const [candidates, setCandidates] = useState(initialCandidates)
@@ -46,6 +49,35 @@ export function CandidatesClient({ initialCandidates }: { initialCandidates: Can
   const [showExport, setShowExport] = useState(false)
   const [exportEmail, setExportEmail] = useState('')
   const [exporting, setExporting] = useState(false)
+  const [exportingExcel, setExportingExcel] = useState(false)
+  const [exportingPdf, setExportingPdf] = useState(false)
+
+  // Pagination state
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(initialTotal)
+  const [loadingPage, setLoadingPage] = useState(false)
+  const totalPages = Math.ceil(total / PAGE_SIZE)
+
+  const fetchPage = useCallback(async (targetPage: number) => {
+    setLoadingPage(true)
+    try {
+      const res = await fetch(`/api/candidates?page=${targetPage}&limit=${PAGE_SIZE}`)
+      if (res.ok) {
+        const data = await res.json()
+        setCandidates(data.candidates)
+        setTotal(data.total)
+        setPage(data.page)
+      }
+    } finally {
+      setLoadingPage(false)
+    }
+  }, [])
+
+  const goToPage = (targetPage: number) => {
+    if (targetPage < 1 || targetPage > totalPages || targetPage === page || loadingPage) return
+    fetchPage(targetPage)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   const handleDelete = async (e: React.MouseEvent, id: string, name: string) => {
     e.preventDefault()
@@ -56,6 +88,11 @@ export function CandidatesClient({ initialCandidates }: { initialCandidates: Can
       const res = await fetch(`/api/candidates/${id}`, { method: 'DELETE' })
       if (res.ok) {
         setCandidates(prev => prev.filter(c => c.id !== id))
+        setTotal(prev => prev - 1)
+        // If the current page is now empty and it's not the first page, go back one page
+        if (candidates.length === 1 && page > 1) {
+          fetchPage(page - 1)
+        }
         toast({ title: tc.deleted, description: `${name} has been removed.` })
       } else {
         toast({ title: tc.deleteError, variant: 'destructive' })
@@ -178,6 +215,38 @@ export function CandidatesClient({ initialCandidates }: { initialCandidates: Can
         <Button variant="outline" size="sm" onClick={() => setShowExport(true)} className="gap-1.5 h-9">
           <Download size={15} /> {tc.exportCsv}
         </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={exportingExcel}
+          onClick={async () => {
+            setExportingExcel(true)
+            try {
+              await exportCandidatesToExcel(filtered)
+              toast({ title: 'Excel export downloaded!' })
+            } catch { toast({ title: 'Export failed', variant: 'destructive' }) }
+            finally { setExportingExcel(false) }
+          }}
+          className="gap-1.5 h-9"
+        >
+          <Download size={15} /> {exportingExcel ? 'Exporting...' : 'Export Excel'}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={exportingPdf}
+          onClick={async () => {
+            setExportingPdf(true)
+            try {
+              await exportCandidatesToPDF(filtered)
+              toast({ title: 'PDF export downloaded!' })
+            } catch { toast({ title: 'Export failed', variant: 'destructive' }) }
+            finally { setExportingPdf(false) }
+          }}
+          className="gap-1.5 h-9"
+        >
+          <Download size={15} /> {exportingPdf ? 'Exporting...' : 'Export PDF'}
+        </Button>
       </div>
 
       {/* Kanban view */}
@@ -209,7 +278,7 @@ export function CandidatesClient({ initialCandidates }: { initialCandidates: Can
                     <CardContent className="p-3">
                       <div className="flex items-start gap-2.5">
                         <div className="shrink-0 text-center relative">
-                          <div className="text-xs font-bold text-gray-200 dark:text-gray-700 mb-0.5">#{i + 1}</div>
+                          <div className="text-xs font-bold text-gray-200 dark:text-gray-700 mb-0.5">#{(page - 1) * PAGE_SIZE + i + 1}</div>
                           <div className="relative">
                             <Avatar className="w-8 h-8">
                               <AvatarFallback className="text-xs gradient-bg text-white font-semibold">{initials}</AvatarFallback>
@@ -280,6 +349,66 @@ export function CandidatesClient({ initialCandidates }: { initialCandidates: Can
             })}
           </div>
         )
+      )}
+
+      {/* Pagination controls */}
+      {totalPages > 1 && view === 'grid' && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Showing {Math.min((page - 1) * PAGE_SIZE + 1, total)}&ndash;{Math.min(page * PAGE_SIZE, total)} of {total} candidates
+          </p>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => goToPage(page - 1)}
+              disabled={page <= 1 || loadingPage}
+              className="h-8 w-8 p-0"
+            >
+              <ChevronLeft size={16} />
+            </Button>
+            {(() => {
+              const pages: (number | 'ellipsis')[] = []
+              if (totalPages <= 7) {
+                for (let i = 1; i <= totalPages; i++) pages.push(i)
+              } else {
+                pages.push(1)
+                if (page > 3) pages.push('ellipsis')
+                for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) {
+                  pages.push(i)
+                }
+                if (page < totalPages - 2) pages.push('ellipsis')
+                pages.push(totalPages)
+              }
+              return pages.map((p, idx) =>
+                p === 'ellipsis' ? (
+                  <span key={`ellipsis-${idx}`} className="px-1 text-gray-400 text-sm">...</span>
+                ) : (
+                  <Button
+                    key={p}
+                    variant={p === page ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => goToPage(p)}
+                    disabled={loadingPage}
+                    className={`h-8 w-8 p-0 text-sm ${p === page ? 'gradient-bg text-white' : ''}`}
+                  >
+                    {p}
+                  </Button>
+                )
+              )
+            })()}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => goToPage(page + 1)}
+              disabled={page >= totalPages || loadingPage}
+              className="h-8 w-8 p-0"
+            >
+              <ChevronRight size={16} />
+            </Button>
+            {loadingPage && <Loader2 size={16} className="animate-spin text-gray-400 ml-2" />}
+          </div>
+        </div>
       )}
 
       {/* Export dialog */}

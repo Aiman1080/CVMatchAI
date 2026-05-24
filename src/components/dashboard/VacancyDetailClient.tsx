@@ -6,8 +6,8 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import {
-  MapPin, Briefcase, DollarSign, Users, Upload, Star, ChevronRight,
-  Pencil, Trash2, CheckCircle, XCircle, Clock, Loader2, Save, X, Sparkles, Trophy
+  MapPin, Briefcase, DollarSign, Users, Upload, Star, ChevronRight, ChevronLeft,
+  Pencil, Trash2, CheckCircle, XCircle, Clock, Loader2, Save, X, Sparkles, Trophy, Download
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -21,6 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { UploadCVDialog } from './UploadCVDialog'
 import { getStatusColor, formatDate, parseJsonSafe } from '@/lib/utils'
 import { toast } from '@/components/ui/use-toast'
+import { exportCandidatesToExcel, exportCandidatesToPDF } from '@/lib/export'
 
 interface Candidate {
   id: string
@@ -127,6 +128,8 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
 
   const [ranking, setRanking] = useState<Array<{ candidateId: string; rank: number; reasoning: string; standoutFactor: string }> | null>(null)
   const [rankingLoading, setRankingLoading] = useState(false)
+  const [exportingExcel, setExportingExcel] = useState(false)
+  const [exportingPdf, setExportingPdf] = useState(false)
 
   const handleAIRanking = async () => {
     setRankingLoading(true)
@@ -150,7 +153,13 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
     }
   }
 
+  const VACANCY_PAGE_SIZE = 30
   const sortedCandidates = [...vacancy.candidates].sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0))
+  const [candidatePage, setCandidatePage] = useState(1)
+  const candidateTotalPages = Math.ceil(sortedCandidates.length / VACANCY_PAGE_SIZE)
+  const paginatedCandidates = candidateTotalPages > 1
+    ? sortedCandidates.slice((candidatePage - 1) * VACANCY_PAGE_SIZE, candidatePage * VACANCY_PAGE_SIZE)
+    : sortedCandidates
 
   return (
     <div className="space-y-6">
@@ -263,6 +272,42 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
                 {rankingLoading ? 'Ranking...' : 'AI Ranking'}
               </Button>
             )}
+            {sortedCandidates.length > 0 && (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={exportingExcel}
+                  onClick={async () => {
+                    setExportingExcel(true)
+                    try {
+                      await exportCandidatesToExcel(sortedCandidates, vacancy.title)
+                      toast({ title: 'Excel export downloaded!' })
+                    } catch { toast({ title: 'Export failed', variant: 'destructive' }) }
+                    finally { setExportingExcel(false) }
+                  }}
+                  className="gap-1.5"
+                >
+                  <Download size={13} /> {exportingExcel ? 'Exporting...' : 'Export Excel'}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={exportingPdf}
+                  onClick={async () => {
+                    setExportingPdf(true)
+                    try {
+                      await exportCandidatesToPDF(sortedCandidates, vacancy.title)
+                      toast({ title: 'PDF export downloaded!' })
+                    } catch { toast({ title: 'Export failed', variant: 'destructive' }) }
+                    finally { setExportingPdf(false) }
+                  }}
+                  className="gap-1.5"
+                >
+                  <Download size={13} /> {exportingPdf ? 'Exporting...' : 'Export PDF'}
+                </Button>
+              </>
+            )}
             <Button size="sm" variant="outline" onClick={() => setShowUpload(true)} className="gap-1">
               <Upload size={13} /> Add Candidate
             </Button>
@@ -300,7 +345,8 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
             </div>
           ) : (
             <div className="space-y-3">
-              {sortedCandidates.map((c, i) => {
+              {paginatedCandidates.map((c, i) => {
+                const globalIndex = (candidatePage - 1) * VACANCY_PAGE_SIZE + i
                 const initials = `${c.firstName?.[0] ?? '?'}${c.lastName?.[0] ?? ''}`.toUpperCase()
                 const score = c.matchScore || 0
                 const skills = parseJsonSafe<string[]>(c.skills, [])
@@ -308,8 +354,8 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
                 return (
                   <div key={c.id} className="flex items-center gap-4 p-4 border border-gray-100 dark:border-gray-800 rounded-xl hover:border-blue-200 dark:hover:border-blue-800 transition-colors">
                     <div className="flex items-center gap-1 shrink-0 w-6 text-center">
-                      <span className={`text-sm font-bold ${i === 0 ? 'text-amber-500' : i === 1 ? 'text-gray-400' : i === 2 ? 'text-orange-500' : 'text-gray-300'}`}>
-                        #{i + 1}
+                      <span className={`text-sm font-bold ${globalIndex === 0 ? 'text-amber-500' : globalIndex === 1 ? 'text-gray-400' : globalIndex === 2 ? 'text-orange-500' : 'text-gray-300'}`}>
+                        #{globalIndex + 1}
                       </span>
                     </div>
                     <Avatar className="w-9 h-9 shrink-0">
@@ -362,6 +408,63 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
                   </div>
                 )
               })}
+            </div>
+          )}
+          {/* Pagination controls for candidate list */}
+          {candidateTotalPages > 1 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Showing {(candidatePage - 1) * VACANCY_PAGE_SIZE + 1}&ndash;{Math.min(candidatePage * VACANCY_PAGE_SIZE, sortedCandidates.length)} of {sortedCandidates.length} candidates
+              </p>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCandidatePage(p => Math.max(1, p - 1))}
+                  disabled={candidatePage <= 1}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronLeft size={16} />
+                </Button>
+                {(() => {
+                  const pages: (number | 'ellipsis')[] = []
+                  if (candidateTotalPages <= 7) {
+                    for (let i = 1; i <= candidateTotalPages; i++) pages.push(i)
+                  } else {
+                    pages.push(1)
+                    if (candidatePage > 3) pages.push('ellipsis')
+                    for (let i = Math.max(2, candidatePage - 1); i <= Math.min(candidateTotalPages - 1, candidatePage + 1); i++) {
+                      pages.push(i)
+                    }
+                    if (candidatePage < candidateTotalPages - 2) pages.push('ellipsis')
+                    pages.push(candidateTotalPages)
+                  }
+                  return pages.map((p, idx) =>
+                    p === 'ellipsis' ? (
+                      <span key={`ellipsis-${idx}`} className="px-1 text-gray-400 text-sm">...</span>
+                    ) : (
+                      <Button
+                        key={p}
+                        variant={p === candidatePage ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setCandidatePage(p)}
+                        className={`h-8 w-8 p-0 text-sm ${p === candidatePage ? 'gradient-bg text-white' : ''}`}
+                      >
+                        {p}
+                      </Button>
+                    )
+                  )
+                })()}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCandidatePage(p => Math.min(candidateTotalPages, p + 1))}
+                  disabled={candidatePage >= candidateTotalPages}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronRight size={16} />
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>

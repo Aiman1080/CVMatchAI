@@ -5,7 +5,7 @@ import {
   Mail, Phone, Linkedin, CheckCircle, XCircle, Clock, Star,
   TrendingUp, TrendingDown, Loader2, RefreshCw, FileText, User, Briefcase,
   GraduationCap, Languages, Award, Flag, Archive, Send, X, Video,
-  MessageSquareText, ClipboardList, Sparkles, Copy
+  MessageSquareText, ClipboardList, Sparkles, Copy, Download
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/use-toast'
 import { getStatusColor, parseJsonSafe, formatDate } from '@/lib/utils'
+import { exportHiringReportPDF } from '@/lib/export'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 const RECOMMENDATION_COLORS: Record<string, string> = {
@@ -70,6 +71,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
   const [loadingQuestions, setLoadingQuestions] = useState(false)
   const [hiringReport, setHiringReport] = useState<string | null>(null)
   const [loadingReport, setLoadingReport] = useState(false)
+  const [downloadingReportPdf, setDownloadingReportPdf] = useState(false)
   const notesTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const score = candidate.matchScore || 0
@@ -698,9 +700,35 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                     </CardTitle>
                     <div className="flex gap-2">
                       {hiringReport && (
-                        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => copyToClipboard(hiringReport)}>
-                          <Copy size={12} /> Copy
-                        </Button>
+                        <>
+                          <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => copyToClipboard(hiringReport)}>
+                            <Copy size={12} /> Copy
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-1.5 text-xs"
+                            disabled={downloadingReportPdf}
+                            onClick={async () => {
+                              setDownloadingReportPdf(true)
+                              try {
+                                await exportHiringReportPDF(
+                                  hiringReport,
+                                  `${candidate.firstName} ${candidate.lastName}`,
+                                  candidate.vacancy?.title
+                                )
+                                toast({ title: 'PDF report downloaded!' })
+                              } catch {
+                                toast({ title: 'PDF export failed', variant: 'destructive' })
+                              } finally {
+                                setDownloadingReportPdf(false)
+                              }
+                            }}
+                          >
+                            {downloadingReportPdf ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
+                            {downloadingReportPdf ? 'Exporting...' : 'Download PDF'}
+                          </Button>
+                        </>
                       )}
                       <Button onClick={handleGenerateReport} disabled={loadingReport} size="sm" className="gap-2 gradient-bg">
                         {loadingReport ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}

@@ -56,6 +56,7 @@ model User {
   emailInboxes    EmailInbox[]
   supportTickets  SupportTicket[]
   integrations    Integration[]
+  notifications   Notification[]
 }
 
 model VerificationToken {
@@ -67,25 +68,25 @@ model VerificationToken {
 }
 
 model Vacancy {
-  id           String      @id @default(cuid())
-  title        String
-  company      String
-  department   String?
-  location     String?
-  type         String      @default("full-time")
-  description  String
-  requirements String
-  niceToHave   String?
-  salary       String?
-  status       String      @default("active")
-  language     String      @default("nl")
-  externalId   String?
+  id             String      @id @default(cuid())
+  title          String
+  company        String
+  department     String?
+  location       String?
+  type           String      @default("full-time")
+  description    String
+  requirements   String
+  niceToHave     String?
+  salary         String?
+  status         String      @default("active")
+  language       String      @default("nl")
+  externalId     String?
   externalSource String?
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  userId       String
-  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  candidates   Candidate[]
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  userId         String
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  candidates     Candidate[]
 }
 
 model Integration {
@@ -105,7 +106,7 @@ model Integration {
 }
 
 model Candidate {
-  id              String    @id @default(cuid())
+  id              String     @id @default(cuid())
   firstName       String
   lastName        String
   email           String?
@@ -116,7 +117,7 @@ model Candidate {
   cvContent       String?
   motivationText  String?
   motivationUrl   String?
-  language        String    @default("nl")
+  language        String     @default("nl")
   matchScore      Float?
   summary         String?
   strengths       String?
@@ -125,24 +126,24 @@ model Candidate {
   experience      String?
   education       String?
   recommendation  String?
-  status          String    @default("new")
-  source          String    @default("upload")
+  status          String     @default("new")
+  source          String     @default("upload")
   externalId      String?
   externalSource  String?
-  gdprConsent     Boolean   @default(false)
+  gdprConsent     Boolean    @default(false)
   gdprConsentDate DateTime?
   analyzedAt      DateTime?
   notes           String?
-  liked           Boolean   @default(false)
-  priority        Boolean   @default(false)
-  savedToPool     Boolean   @default(false)
+  liked           Boolean    @default(false)
+  priority        Boolean    @default(false)
+  savedToPool     Boolean    @default(false)
   viewedAt        DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
   vacancyId       String
   userId          String
-  vacancy         Vacancy   @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vacancy         Vacancy    @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   emailSource     EmailScan?
 
   // One candidate per email per vacancy — prevents duplicates from repeated demo scans or uploads
@@ -182,17 +183,31 @@ model EmailScan {
 }
 
 model SupportTicket {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   userId     String
   subject    String
   message    String
-  status     String   @default("open")     // open | in_progress | resolved | closed
-  priority   String   @default("normal")   // low | normal | high | urgent
+  status     String    @default("open") // open | in_progress | resolved | closed
+  priority   String    @default("normal") // low | normal | high | urgent
   adminReply String?
   repliedAt  DateTime?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String // cv_analyzed, ticket_reply, new_candidate, scan_complete
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
 }
 
 model Subscription {

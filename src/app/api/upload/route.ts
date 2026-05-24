@@ -9,6 +9,7 @@ import { Prisma } from '@prisma/client'
 import { parseDocument, saveUploadedFile } from '@/lib/pdf-parser'
 import { analyzeCVAgainstVacancy, detectDocumentType } from '@/lib/ai'
 import { getPlanLimits } from '@/lib/plans'
+import { createNotification } from '@/lib/notifications'
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
@@ -102,6 +103,15 @@ export async function POST(req: Request) {
           motivationText: docType === 'motivation' ? text : candidate.motivationText,
         },
       })
+      const candidateName = `${candidate.firstName} ${candidate.lastName}`
+      const score = Math.round(analysis.matchScore ?? 0)
+      await createNotification(
+        userId,
+        'cv_analyzed',
+        `CV analyzed: ${candidateName}`,
+        `${candidateName} scored ${score}% for ${vacancy.title}`
+      )
+
       return NextResponse.json({ success: true, candidate, analysis }, { status: 201 })
     }
     return NextResponse.json({ success: true, candidate }, { status: 201 })
