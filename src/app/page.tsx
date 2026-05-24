@@ -3,18 +3,68 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useTheme } from 'next-themes'
-import { Sun, Moon, Zap, ArrowRight, CheckCircle, Upload, Brain, BarChart3, Mail, Shield, Users, Building2, MessageSquare, Layers } from 'lucide-react'
+import {
+  Sun, Moon, ArrowRight, CheckCircle, Sparkles,
+  Brain, FileText, MessageSquareText, Trophy, ClipboardList, Mail,
+  Upload, Plug, Shield, Users, BarChart3, Kanban
+} from 'lucide-react'
 import { Logo } from '@/components/Logo'
 import { Button } from '@/components/ui/button'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { useLanguage } from '@/contexts/LanguageContext'
 
-const featureIcons = [Brain, Upload, Mail, BarChart3, Users, Shield, Building2, MessageSquare, Layers]
-const featureColors = [
-  'bg-blue-100 text-blue-600', 'bg-indigo-100 text-indigo-600',
-  'bg-purple-100 text-purple-600', 'bg-green-100 text-green-600',
-  'bg-amber-100 text-amber-600', 'bg-teal-100 text-teal-600',
-  'bg-rose-100 text-rose-600', 'bg-cyan-100 text-cyan-600', 'bg-violet-100 text-violet-600',
+const AI_FEATURES = [
+  {
+    icon: Brain,
+    title: 'AI CV Analysis',
+    desc: 'Upload a CV, get an instant match score (0-100), strengths, weaknesses, skills extraction, and a hire/reject recommendation.',
+    tag: 'Core feature',
+    color: 'from-blue-500 to-cyan-500',
+  },
+  {
+    icon: MessageSquareText,
+    title: 'AI Interview Questions',
+    desc: 'Generate 8 personalized interview questions based on each candidate\'s CV and the job requirements. Technical, behavioral, situational — not generic.',
+    tag: 'Save 30 min per interview',
+    color: 'from-violet-500 to-purple-500',
+  },
+  {
+    icon: FileText,
+    title: 'AI Job Description',
+    desc: 'Type a job title and a few keywords. Get a complete, professional job description with requirements and nice-to-haves in seconds.',
+    tag: 'Write vacancies 10x faster',
+    color: 'from-pink-500 to-rose-500',
+  },
+  {
+    icon: Trophy,
+    title: 'AI Candidate Ranking',
+    desc: 'Compare all candidates side-by-side with AI reasoning. Know exactly WHY candidate #1 is better than #2 for this specific role.',
+    tag: 'Data-driven hiring decisions',
+    color: 'from-amber-500 to-orange-500',
+  },
+  {
+    icon: ClipboardList,
+    title: 'AI Hiring Report',
+    desc: 'Generate a professional 1-page report for the hiring manager. Candidate overview, score, strengths, concerns, recommendation — ready to share.',
+    tag: 'Professional reports in 1 click',
+    color: 'from-green-500 to-emerald-500',
+  },
+  {
+    icon: Mail,
+    title: 'AI Email Generator',
+    desc: 'Generate personalized interview invitations or rejection emails. One click, professional tone, in the candidate\'s language (EN/NL/FR).',
+    tag: 'Multilingual AI emails',
+    color: 'from-sky-500 to-blue-500',
+  },
+]
+
+const PLATFORM_FEATURES = [
+  { icon: Upload, title: 'Bulk CV Upload', desc: 'Upload PDF, DOCX, or text files. Parser extracts text and triggers AI analysis automatically.', color: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400' },
+  { icon: Mail, title: 'Email Inbox Scanning', desc: 'Connect your recruitment inbox. AI auto-detects CVs in emails, ignores spam, creates candidate profiles.', color: 'bg-purple-100 text-purple-600 dark:bg-purple-950 dark:text-purple-400' },
+  { icon: Plug, title: 'ATS Integrations', desc: 'Connect Teamtailor, Recruitee, SmartRecruiters. Import candidates and vacancies with one click.', color: 'bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400' },
+  { icon: Users, title: 'Pipeline Management', desc: 'Move candidates through stages: New, Reviewing, Shortlisted, Hired. Full recruitment workflow.', color: 'bg-green-100 text-green-600 dark:bg-green-950 dark:text-green-400' },
+  { icon: BarChart3, title: 'Analytics Dashboard', desc: 'Track hiring metrics, pipeline conversion rates, time-to-hire, and candidate source performance.', color: 'bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400' },
+  { icon: Shield, title: 'GDPR Compliant', desc: 'Encrypted storage, consent tracking, data export, automatic deletion. Full GDPR compliance built-in.', color: 'bg-teal-100 text-teal-600 dark:bg-teal-950 dark:text-teal-400' },
 ]
 
 export default function LandingPage() {
@@ -36,8 +86,8 @@ export default function LandingPage() {
             <span className="font-bold text-gray-900 dark:text-white text-lg">CVMatch AI</span>
           </Link>
           <div className="hidden md:flex items-center gap-8 text-sm text-gray-500 dark:text-gray-400">
-            <a href="#features" className="hover:text-gray-900 dark:hover:text-white transition-colors">{t.nav.features}</a>
-            <a href="#how-it-works" className="hover:text-gray-900 dark:hover:text-white transition-colors">{t.nav.howItWorks}</a>
+            <a href="#ai-features" className="hover:text-gray-900 dark:hover:text-white transition-colors">AI Features</a>
+            <a href="#platform" className="hover:text-gray-900 dark:hover:text-white transition-colors">Platform</a>
             <a href="#pricing" className="hover:text-gray-900 dark:hover:text-white transition-colors">{t.nav.pricing}</a>
           </div>
           <div className="flex items-center gap-3">
@@ -45,7 +95,6 @@ export default function LandingPage() {
               <button
                 onClick={() => setTheme(isDark ? 'light' : 'dark')}
                 className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                title={isDark ? t.dashboard.nav.lightMode : t.dashboard.nav.darkMode}
               >
                 {isDark ? <Sun size={18} /> : <Moon size={18} />}
               </button>
@@ -65,7 +114,7 @@ export default function LandingPage() {
         </div>
         <div className="relative max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 text-blue-300 text-sm px-4 py-1.5 rounded-full mb-8">
-            <Zap size={14} className="text-blue-400" />
+            <Sparkles size={14} className="text-blue-400" />
             {t.hero.badge}
           </div>
           <h1 className="text-5xl md:text-6xl font-extrabold leading-tight mb-6">
@@ -147,79 +196,67 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Features */}
-      <section id="features" className="py-24 px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">{t.features.title}</h2>
-            <p className="text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">{t.features.subtitle}</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {t.features.items.map((f, i) => {
-              const Icon = featureIcons[i]
-              return (
-                <div key={i} className="p-6 rounded-2xl border border-gray-100 dark:border-gray-800 hover:border-blue-200 dark:hover:border-blue-700 hover:shadow-md transition-all">
-                  <div className={`w-12 h-12 rounded-xl ${featureColors[i]} flex items-center justify-center mb-4`}>
-                    <Icon className="w-6 h-6" />
-                  </div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2">{f.title}</h3>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">{f.desc}</p>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* AI Superpowers */}
-      <section className="py-24 px-6 bg-gradient-to-br from-blue-950 to-indigo-950 text-white">
+      {/* ═══ AI FEATURES ═══ */}
+      <section id="ai-features" className="py-24 px-6 bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 text-white">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 bg-blue-500/20 border border-blue-500/30 text-blue-300 text-sm px-4 py-1.5 rounded-full mb-6">
-              <Zap size={14} /> AI-Powered Features
+              <Sparkles size={14} /> 6 AI-Powered Features
             </div>
-            <h2 className="text-4xl font-bold mb-4">Your AI Recruitment Assistant</h2>
-            <p className="text-lg text-gray-400 max-w-2xl mx-auto">Stop spending hours on manual tasks. Let AI handle the heavy lifting so you can focus on what matters — finding the perfect match.</p>
+            <h2 className="text-4xl font-bold mb-4">AI That Does the Work For You</h2>
+            <p className="text-lg text-gray-400 max-w-2xl mx-auto">Every repetitive HR task — automated. Every decision — backed by AI analysis. Save hours every week and hire with confidence.</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {[
-              {
-                icon: Brain,
-                title: 'AI Interview Questions',
-                desc: 'Generate personalized interview questions based on each candidate\'s CV and the job requirements. Technical, behavioral, and situational questions — tailored, not generic.',
-                tag: 'Save 30 min per interview',
-                color: 'from-blue-500 to-cyan-500',
-              },
-              {
-                icon: Upload,
-                title: 'AI Job Description Generator',
-                desc: 'Type a job title and a few keywords. Get a complete, professional job description with requirements and nice-to-haves in seconds.',
-                tag: 'Write vacancies 10x faster',
-                color: 'from-purple-500 to-pink-500',
-              },
-              {
-                icon: BarChart3,
-                title: 'AI Candidate Ranking',
-                desc: 'Compare all candidates side-by-side with AI reasoning. Know exactly WHY candidate #1 is better than #2 for THIS specific role.',
-                tag: 'Data-driven hiring decisions',
-                color: 'from-amber-500 to-orange-500',
-              },
-              {
-                icon: Mail,
-                title: 'AI Hiring Report',
-                desc: 'Generate a professional 1-page report for the hiring manager. Candidate overview, match score, strengths, concerns, and recommendation — ready to share.',
-                tag: 'Professional reports in 1 click',
-                color: 'from-green-500 to-emerald-500',
-              },
-            ].map((feature, i) => {
+
+          {/* Main AI feature: CV Analysis (hero card) */}
+          <div className="mb-8 p-8 rounded-2xl bg-gradient-to-r from-blue-600/20 to-cyan-600/20 border border-blue-500/30 backdrop-blur-sm">
+            <div className="flex flex-col md:flex-row items-center gap-8">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg">
+                    <Brain className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold">AI CV Analysis</h3>
+                    <span className="text-xs bg-blue-500/30 text-blue-200 px-2 py-0.5 rounded-full">Core feature</span>
+                  </div>
+                </div>
+                <p className="text-gray-300 leading-relaxed mb-4">Upload a CV, get an instant match score (0-100), detailed strengths and weaknesses, skills extraction, experience summary, and a hire/reject recommendation. Works with PDF, DOCX, and plain text. Supports English, Dutch, French, and German CVs.</p>
+                <div className="flex flex-wrap gap-3">
+                  {['Match Score 0-100', 'Strengths & Weaknesses', 'Skills Extraction', 'Hire Recommendation', 'Multi-language'].map(tag => (
+                    <span key={tag} className="text-xs bg-white/10 text-gray-300 px-3 py-1 rounded-full">{tag}</span>
+                  ))}
+                </div>
+              </div>
+              <div className="w-full md:w-72 shrink-0">
+                <div className="bg-white/10 rounded-xl p-5 backdrop-blur-sm border border-white/10">
+                  <div className="text-center mb-3">
+                    <div className="text-4xl font-extrabold text-green-400">87%</div>
+                    <div className="text-xs text-gray-400 mt-1">Match Score</div>
+                  </div>
+                  <div className="space-y-2 text-xs">
+                    <div className="flex items-center gap-2"><CheckCircle size={12} className="text-green-400 shrink-0" /><span className="text-gray-300">5 years React experience</span></div>
+                    <div className="flex items-center gap-2"><CheckCircle size={12} className="text-green-400 shrink-0" /><span className="text-gray-300">TypeScript & Node.js</span></div>
+                    <div className="flex items-center gap-2"><CheckCircle size={12} className="text-amber-400 shrink-0" /><span className="text-gray-300">No Kubernetes experience</span></div>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-white/10 text-center">
+                    <span className="text-xs bg-green-500/20 text-green-300 px-3 py-1 rounded-full font-medium">Recommended</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Other 5 AI features in grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {AI_FEATURES.slice(1).map((feature, i) => {
               const Icon = feature.icon
               return (
-                <div key={i} className="relative p-8 rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 transition-all group">
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-5 shadow-lg`}>
-                    <Icon className="w-6 h-6 text-white" />
+                <div key={i} className="p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 transition-all">
+                  <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4 shadow-lg`}>
+                    <Icon className="w-5 h-5 text-white" />
                   </div>
-                  <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
-                  <p className="text-gray-400 text-sm leading-relaxed mb-4">{feature.desc}</p>
+                  <h3 className="text-lg font-bold mb-2">{feature.title}</h3>
+                  <p className="text-gray-400 text-sm leading-relaxed mb-3">{feature.desc}</p>
                   <span className="inline-block text-xs bg-white/10 text-blue-300 px-3 py-1 rounded-full font-medium">{feature.tag}</span>
                 </div>
               )
@@ -228,8 +265,32 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ═══ PLATFORM FEATURES ═══ */}
+      <section id="platform" className="py-24 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">Built for Modern Recruiters</h2>
+            <p className="text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">Everything you need to manage your recruitment pipeline, from intake to hire.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {PLATFORM_FEATURES.map((feature, i) => {
+              const Icon = feature.icon
+              return (
+                <div key={i} className="p-6 rounded-2xl border border-gray-100 dark:border-gray-800 hover:border-blue-200 dark:hover:border-blue-700 hover:shadow-md transition-all">
+                  <div className={`w-12 h-12 rounded-xl ${feature.color} flex items-center justify-center mb-4`}>
+                    <Icon className="w-6 h-6" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2">{feature.title}</h3>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">{feature.desc}</p>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
       {/* How it works */}
-      <section id="how-it-works" className="py-24 px-6 bg-gray-50 dark:bg-gray-900">
+      <section className="py-24 px-6 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">{t.howItWorks.title}</h2>
