@@ -47,50 +47,49 @@ function getRecommendationLabel(rec: string | null | undefined): string {
 }
 
 /**
- * Export candidates to an Excel (.xlsx) file and trigger a download.
+ * Export candidates to a CSV file (opens in Excel, Google Sheets, etc.).
+ * No external dependency needed — pure browser API.
  */
 export async function exportCandidatesToExcel(
   candidates: ExportCandidate[],
   vacancyTitle?: string
 ): Promise<void> {
-  const XLSX = (await import('xlsx' as any)) as typeof import('xlsx')
+  const headers = ['Name', 'Email', 'Phone', 'Match Score', 'Status', 'Recommendation', 'Skills', 'Source', 'Date']
 
-  const rows = candidates.map((c) => ({
-    Name: `${c.firstName} ${c.lastName}`,
-    Email: c.email || '',
-    Phone: c.phone || '',
-    'Match Score': c.matchScore != null ? `${c.matchScore.toFixed(0)}%` : '',
-    Status: c.status,
-    Recommendation: getRecommendationLabel(c.recommendation),
-    Skills: parseSkills(c.skills),
-    Source: c.source,
-    Date: formatDate(c.createdAt),
-  }))
+  const rows = candidates.map((c) => [
+    `${c.firstName} ${c.lastName}`,
+    c.email || '',
+    c.phone || '',
+    c.matchScore != null ? `${c.matchScore.toFixed(0)}%` : '',
+    c.status,
+    getRecommendationLabel(c.recommendation),
+    parseSkills(c.skills),
+    c.source,
+    formatDate(c.createdAt),
+  ])
 
-  const worksheet = XLSX.utils.json_to_sheet(rows)
+  const escapeCsv = (val: string) => {
+    if (val.includes(',') || val.includes('"') || val.includes('\n')) {
+      return `"${val.replace(/"/g, '""')}"`
+    }
+    return val
+  }
 
-  // Set column widths for readability
-  worksheet['!cols'] = [
-    { wch: 25 }, // Name
-    { wch: 30 }, // Email
-    { wch: 18 }, // Phone
-    { wch: 12 }, // Match Score
-    { wch: 14 }, // Status
-    { wch: 22 }, // Recommendation
-    { wch: 40 }, // Skills
-    { wch: 10 }, // Source
-    { wch: 12 }, // Date
-  ]
+  const csv = [
+    headers.map(escapeCsv).join(','),
+    ...rows.map(row => row.map(escapeCsv).join(',')),
+  ].join('\n')
 
-  const workbook = XLSX.utils.book_new()
-  const sheetName = vacancyTitle ? vacancyTitle.slice(0, 31) : 'Candidates'
-  XLSX.utils.book_append_sheet(workbook, worksheet, sheetName)
-
-  const filename = vacancyTitle
-    ? `candidates-${vacancyTitle.replace(/[^a-zA-Z0-9]/g, '_').slice(0, 40)}-${new Date().toISOString().slice(0, 10)}.xlsx`
-    : `candidates-${new Date().toISOString().slice(0, 10)}.xlsx`
-
-  XLSX.writeFile(workbook, filename)
+  const BOM = '﻿'
+  const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = vacancyTitle
+    ? `candidates-${vacancyTitle.replace(/[^a-zA-Z0-9]/g, '_').slice(0, 40)}-${new Date().toISOString().slice(0, 10)}.csv`
+    : `candidates-${new Date().toISOString().slice(0, 10)}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
 }
 
 /**
