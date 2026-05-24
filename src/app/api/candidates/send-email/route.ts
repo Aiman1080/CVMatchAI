@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { escapeHtml } from '@/lib/utils'
 import nodemailer from 'nodemailer'
 
 export async function POST(req: Request) {
@@ -49,7 +50,7 @@ export async function POST(req: Request) {
       replyTo: smtpUser,
       subject,
       text: finalBody,
-      html: finalBody.replace(/\n/g, '<br>').replace(/(https?:\/\/[^\s]+)/g, '<a href="$1">$1</a>'),
+      html: escapeHtml(finalBody).replace(/\n/g, '<br>').replace(/(https?:\/\/[^\s]+)/g, '<a href="$1">$1</a>'),
     })
 
     // Update candidate status based on email type

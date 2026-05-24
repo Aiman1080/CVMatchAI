@@ -22,8 +22,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     if (!candidate) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     // Mark as viewed on first open
     if (!candidate.viewedAt) {
-      const updated = await prisma.candidate.update({ where: { id }, data: { viewedAt: new Date() } })
-      return NextResponse.json(updated)
+      await prisma.candidate.update({ where: { id }, data: { viewedAt: new Date() } })
+      return NextResponse.json({ ...candidate, viewedAt: new Date() })
     }
     return NextResponse.json(candidate)
   } catch {

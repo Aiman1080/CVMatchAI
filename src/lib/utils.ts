@@ -33,9 +33,19 @@ export function getStatusColor(status: string): string {
     rejected: 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400',
     hired: 'bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-400',
     active: 'bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-400',
+    paused: 'bg-orange-100 text-orange-700 dark:bg-orange-950/50 dark:text-orange-400',
     closed: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
   }
   return colors[status] || 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
+}
+
+export function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
 }
 
 // Safe JSON parse that returns a typed fallback instead of throwing on malformed input
