@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import { Providers } from '@/components/layout/Providers'
 import { Toaster } from '@/components/ui/toaster'
 import type { Locale } from '@/lib/i18n'
+import { Analytics } from '@/components/Analytics'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -49,6 +50,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           {children}
           <Toaster />
         </Providers>
+        <Analytics />
       </body>
     </html>
   )

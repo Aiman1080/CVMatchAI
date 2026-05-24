@@ -403,8 +403,9 @@ const INTERVIEW_QUESTIONS_TOOL: Anthropic.Tool = {
             question: { type: 'string', description: 'The interview question' },
             category: { type: 'string', enum: ['technical', 'behavioral', 'situational', 'cultural'], description: 'Category of the question' },
             rationale: { type: 'string', description: 'Why this question is relevant for this candidate and role' },
+            expectedAnswer: { type: 'string', description: 'A concise 1-2 sentence expected good answer or key points to listen for' },
           },
-          required: ['question', 'category', 'rationale'],
+          required: ['question', 'category', 'rationale', 'expectedAnswer'],
         },
         description: 'Array of 8 personalized interview questions',
       },
@@ -419,16 +420,16 @@ export async function generateInterviewQuestions(
   vacancyDescription: string,
   vacancyRequirements: string,
   language: string = 'en',
-): Promise<{ questions: Array<{ question: string; category: string; rationale: string }> }> {
+): Promise<{ questions: Array<{ question: string; category: string; rationale: string; expectedAnswer: string }> }> {
   if (isDemoMode()) {
     return {
       questions: [
-        { question: 'Can you describe a challenging technical problem you solved recently and how you approached it?', category: 'technical', rationale: 'Assesses problem-solving ability and technical depth relevant to the role.' },
-        { question: 'How do you stay current with new technologies and industry trends?', category: 'technical', rationale: 'Evaluates continuous learning mindset important for technical roles.' },
-        { question: 'Tell me about a time you had to work with a difficult team member. How did you handle the situation?', category: 'behavioral', rationale: 'Assesses interpersonal skills and conflict resolution ability.' },
-        { question: 'Describe a project where you had to meet a tight deadline. What was your approach?', category: 'behavioral', rationale: 'Evaluates time management and performance under pressure.' },
-        { question: 'If you were assigned a project using a technology you have never worked with, how would you approach it?', category: 'situational', rationale: 'Tests adaptability and learning strategy in unfamiliar situations.' },
-        { question: 'Imagine a stakeholder changes the requirements midway through a sprint. How would you handle this?', category: 'situational', rationale: 'Assesses flexibility and stakeholder management skills.' },
+        { question: 'Can you describe a challenging technical problem you solved recently and how you approached it?', category: 'technical', rationale: 'Assesses problem-solving ability and technical depth relevant to the role.', expectedAnswer: 'A strong answer describes a specific problem, the systematic debugging or design approach taken, and the measurable outcome or lesson learned.' },
+        { question: 'How do you stay current with new technologies and industry trends?', category: 'technical', rationale: 'Evaluates continuous learning mindset important for technical roles.', expectedAnswer: 'Look for concrete habits such as following specific blogs, attending conferences, contributing to open source, or dedicating regular time to side projects and courses.' },
+        { question: 'Tell me about a time you had to work with a difficult team member. How did you handle the situation?', category: 'behavioral', rationale: 'Assesses interpersonal skills and conflict resolution ability.', expectedAnswer: 'A good response shows empathy, direct communication, and a focus on finding common ground or involving a mediator rather than escalating conflict.' },
+        { question: 'Describe a project where you had to meet a tight deadline. What was your approach?', category: 'behavioral', rationale: 'Evaluates time management and performance under pressure.', expectedAnswer: 'Expect mention of prioritization techniques, scope negotiation, clear communication with stakeholders, and delegation where appropriate.' },
+        { question: 'If you were assigned a project using a technology you have never worked with, how would you approach it?', category: 'situational', rationale: 'Tests adaptability and learning strategy in unfamiliar situations.', expectedAnswer: 'Strong candidates mention structured learning (documentation, tutorials), building a small proof-of-concept, and seeking guidance from experienced colleagues.' },
+        { question: 'Imagine a stakeholder changes the requirements midway through a sprint. How would you handle this?', category: 'situational', rationale: 'Assesses flexibility and stakeholder management skills.', expectedAnswer: 'Look for impact assessment, transparent communication about trade-offs, re-prioritization with the product owner, and a pragmatic approach to scope adjustment.' },
       ],
     }
   }
@@ -441,7 +442,7 @@ export async function generateInterviewQuestions(
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 4096,
-      system: `You are an expert HR interviewer with deep experience in structured interviewing techniques. Generate 8 personalized interview questions based on the candidate's CV, focusing on gaps, strengths, and the specific role requirements. Include a mix of technical, behavioral, situational, and cultural fit questions. Each question should be tailored — not generic. ${langInstruction}`,
+      system: `You are an expert HR interviewer with deep experience in structured interviewing techniques. Generate 8 personalized interview questions based on the candidate's CV, focusing on gaps, strengths, and the specific role requirements. Include a mix of technical, behavioral, situational, and cultural fit questions. Each question should be tailored — not generic. For each question, also provide a concise expected answer (1-2 sentences) describing what a good response should include. ${langInstruction}`,
       tool_choice: { type: 'any' as const },
       tools: [INTERVIEW_QUESTIONS_TOOL],
       messages: [{
@@ -462,7 +463,7 @@ Call submit_interview_questions now.`,
 
     const block = response.content?.find((b: any) => b.type === 'tool_use')
     if (block?.type === 'tool_use') {
-      return (block as any).input as { questions: Array<{ question: string; category: string; rationale: string }> }
+      return (block as any).input as { questions: Array<{ question: string; category: string; rationale: string; expectedAnswer: string }> }
     }
   } catch (error) {
     console.error('[AI] generateInterviewQuestions error:', error)
@@ -471,12 +472,12 @@ Call submit_interview_questions now.`,
   // Fallback to demo questions
   return {
     questions: [
-      { question: 'Can you describe a challenging technical problem you solved recently and how you approached it?', category: 'technical', rationale: 'Assesses problem-solving ability and technical depth relevant to the role.' },
-      { question: 'How do you stay current with new technologies and industry trends?', category: 'technical', rationale: 'Evaluates continuous learning mindset important for technical roles.' },
-      { question: 'Tell me about a time you had to work with a difficult team member. How did you handle the situation?', category: 'behavioral', rationale: 'Assesses interpersonal skills and conflict resolution ability.' },
-      { question: 'Describe a project where you had to meet a tight deadline. What was your approach?', category: 'behavioral', rationale: 'Evaluates time management and performance under pressure.' },
-      { question: 'If you were assigned a project using a technology you have never worked with, how would you approach it?', category: 'situational', rationale: 'Tests adaptability and learning strategy in unfamiliar situations.' },
-      { question: 'Imagine a stakeholder changes the requirements midway through a sprint. How would you handle this?', category: 'situational', rationale: 'Assesses flexibility and stakeholder management skills.' },
+      { question: 'Can you describe a challenging technical problem you solved recently and how you approached it?', category: 'technical', rationale: 'Assesses problem-solving ability and technical depth relevant to the role.', expectedAnswer: 'A strong answer describes a specific problem, the systematic debugging or design approach taken, and the measurable outcome or lesson learned.' },
+      { question: 'How do you stay current with new technologies and industry trends?', category: 'technical', rationale: 'Evaluates continuous learning mindset important for technical roles.', expectedAnswer: 'Look for concrete habits such as following specific blogs, attending conferences, contributing to open source, or dedicating regular time to side projects and courses.' },
+      { question: 'Tell me about a time you had to work with a difficult team member. How did you handle the situation?', category: 'behavioral', rationale: 'Assesses interpersonal skills and conflict resolution ability.', expectedAnswer: 'A good response shows empathy, direct communication, and a focus on finding common ground or involving a mediator rather than escalating conflict.' },
+      { question: 'Describe a project where you had to meet a tight deadline. What was your approach?', category: 'behavioral', rationale: 'Evaluates time management and performance under pressure.', expectedAnswer: 'Expect mention of prioritization techniques, scope negotiation, clear communication with stakeholders, and delegation where appropriate.' },
+      { question: 'If you were assigned a project using a technology you have never worked with, how would you approach it?', category: 'situational', rationale: 'Tests adaptability and learning strategy in unfamiliar situations.', expectedAnswer: 'Strong candidates mention structured learning (documentation, tutorials), building a small proof-of-concept, and seeking guidance from experienced colleagues.' },
+      { question: 'Imagine a stakeholder changes the requirements midway through a sprint. How would you handle this?', category: 'situational', rationale: 'Assesses flexibility and stakeholder management skills.', expectedAnswer: 'Look for impact assessment, transparent communication about trade-offs, re-prioritization with the product owner, and a pragmatic approach to scope adjustment.' },
     ],
   }
 }

@@ -6,7 +6,7 @@ import {
   TrendingUp, TrendingDown, Loader2, RefreshCw, FileText, User, Briefcase,
   GraduationCap, Languages, Award, Flag, Archive, Send, X, Video,
   MessageSquareText, ClipboardList, Sparkles, Copy, Download,
-  History, ArrowRight, Brain, Plus
+  History, ArrowRight, Brain, Plus, Eye, EyeOff
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -69,7 +69,8 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
   const [teamsLink, setTeamsLink] = useState('')
   const [sendingEmail, setSendingEmail] = useState(false)
   const [generatingEmail, setGeneratingEmail] = useState(false)
-  const [interviewQuestions, setInterviewQuestions] = useState<Array<{ question: string; category: string; rationale: string }> | null>(null)
+  const [interviewQuestions, setInterviewQuestions] = useState<Array<{ question: string; category: string; rationale: string; expectedAnswer: string }> | null>(null)
+  const [visibleAnswers, setVisibleAnswers] = useState<Set<number>>(new Set())
   const [loadingQuestions, setLoadingQuestions] = useState(false)
   const [hiringReport, setHiringReport] = useState<string | null>(null)
   const [loadingReport, setLoadingReport] = useState(false)
@@ -227,6 +228,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
       const data = await res.json()
       if (res.ok) {
         setInterviewQuestions(data.questions)
+        setVisibleAnswers(new Set())
         toast({ title: ci.questionsGenerated })
       } else {
         toast({ title: data.error || ci.questionGenerationFailed, variant: 'destructive' })
@@ -720,7 +722,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                   {interviewQuestions ? (
                     <div className="space-y-4">
                       <div className="flex justify-end">
-                        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => copyToClipboard(interviewQuestions.map((q, i) => `${i + 1}. [${q.category}] ${q.question}\n   Why: ${q.rationale}`).join('\n\n'))}>
+                        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => copyToClipboard(interviewQuestions.map((q, i) => `${i + 1}. [${q.category}] ${q.question}\n   Why: ${q.rationale}\n   Expected answer: ${q.expectedAnswer}`).join('\n\n'))}>
                           <Copy size={12} /> {ci.copyAll}
                         </Button>
                       </div>
@@ -736,6 +738,27 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                             }`}>{ci.categories[q.category as keyof typeof ci.categories] || q.category}</span>
                           </div>
                           <p className="text-xs text-gray-500 dark:text-gray-400 italic">{q.rationale}</p>
+                          {q.expectedAnswer && (
+                            <div className="pt-1">
+                              <button
+                                onClick={() => setVisibleAnswers(prev => {
+                                  const next = new Set(prev)
+                                  if (next.has(i)) next.delete(i)
+                                  else next.add(i)
+                                  return next
+                                })}
+                                className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 font-medium transition-colors"
+                              >
+                                {visibleAnswers.has(i) ? <EyeOff size={12} /> : <Eye size={12} />}
+                                {visibleAnswers.has(i) ? 'Hide expected answer' : 'Show expected answer'}
+                              </button>
+                              {visibleAnswers.has(i) && (
+                                <div className="mt-2 p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg">
+                                  <p className="text-xs text-green-800 dark:text-green-300 leading-relaxed">{q.expectedAnswer}</p>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
