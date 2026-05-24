@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { getPlanLimits } from '@/lib/plans'
 
 // Returns connected inboxes without exposing stored passwords
 export async function GET() {
@@ -25,6 +26,13 @@ export async function POST(req: Request) {
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const userId = (session.user as any).id
+
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { subscription: true } })
+  const limits = getPlanLimits(user?.subscription || 'free')
+  if (!limits.emailInbox) {
+    return NextResponse.json({ error: 'Email scanning requires a Pro plan', upgrade: true }, { status: 403 })
+  }
+
   const { email, provider, host, port, username, password } = await req.json()
 
   if (!email || !host || !username || !password) {

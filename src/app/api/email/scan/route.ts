@@ -9,6 +9,7 @@ import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { parseDocument } from '@/lib/pdf-parser'
 import { analyzeCVAgainstVacancy, classifyRecruitmentEmail, detectDocumentType } from '@/lib/ai'
+import { getPlanLimits } from '@/lib/plans'
 
 // Allow up to 5 minutes — IMAP + multiple AI calls can easily take 2–3 min
 export const maxDuration = 300
@@ -18,6 +19,13 @@ export async function POST(req: Request) {
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const userId = (session.user as any).id
+
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { subscription: true } })
+  const limits = getPlanLimits(user?.subscription || 'free')
+  if (!limits.emailInbox) {
+    return NextResponse.json({ error: 'Email scanning requires a Pro plan', upgrade: true }, { status: 403 })
+  }
+
   let inboxId: string
   try { inboxId = (await req.json()).inboxId } catch { return NextResponse.json({ error: 'Invalid request body' }, { status: 400 }) }
 

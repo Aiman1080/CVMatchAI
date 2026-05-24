@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { getPlanLimits } from '@/lib/plans'
 import { teamtailorTestConnection } from '@/lib/integrations/teamtailor'
 import { recruiteeTestConnection } from '@/lib/integrations/recruitee'
 import { smartrecruitersTestConnection } from '@/lib/integrations/smartrecruiters'
@@ -25,6 +26,12 @@ export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const userId = (session.user as any).id
+
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { subscription: true } })
+  const limits = getPlanLimits(user?.subscription || 'free')
+  if (!limits.atsIntegrations) {
+    return NextResponse.json({ error: 'ATS integrations require a Pro plan', upgrade: true }, { status: 403 })
+  }
 
   const body = await req.json()
   const { platform, apiKey, companySlug } = body

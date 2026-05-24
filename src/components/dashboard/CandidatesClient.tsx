@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
-import { Search, Users, Mail, Trash2, LayoutGrid, Columns, Star, Flag, Download, Send, FileText, Eye, EyeOff, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
+import { Search, Users, Mail, Trash2, LayoutGrid, Columns, Star, Flag, Download, Send, FileText, Eye, EyeOff, ChevronLeft, ChevronRight, Loader2, CheckSquare } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -11,6 +11,7 @@ import { Progress } from '@/components/ui/progress'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from '@/components/ui/use-toast'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { KanbanView } from './KanbanView'
 import { getStatusColor, formatRelativeTime, parseJsonSafe } from '@/lib/utils'
 import { exportCandidatesToExcel, exportCandidatesToPDF } from '@/lib/export'
@@ -42,6 +43,7 @@ export function CandidatesClient({ initialCandidates, initialTotal }: { initialC
   const [candidates, setCandidates] = useState(initialCandidates)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [scoreFilter, setScoreFilter] = useState('all')
   const [sortBy, setSortBy] = useState('score')
   const [view, setView] = useState<'grid' | 'kanban'>('grid')
   const [deleting, setDeleting] = useState<string | null>(null)
@@ -52,6 +54,20 @@ export function CandidatesClient({ initialCandidates, initialTotal }: { initialC
   const [exportingExcel, setExportingExcel] = useState(false)
   const [exportingPdf, setExportingPdf] = useState(false)
 
+  // Bulk selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkUpdating, setBulkUpdating] = useState(false)
+
+  // Confirm dialog state
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean
+    title: string
+    description: string
+    confirmText: string
+    variant: 'destructive' | 'default'
+    onConfirm: () => void
+  }>({ open: false, title: '', description: '', confirmText: 'Delete', variant: 'destructive', onConfirm: () => {} })
+
   // Pagination state
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(initialTotal)
@@ -60,6 +76,7 @@ export function CandidatesClient({ initialCandidates, initialTotal }: { initialC
 
   const fetchPage = useCallback(async (targetPage: number) => {
     setLoadingPage(true)
+    setSelectedIds(new Set())
     try {
       const res = await fetch(`/api/candidates?page=${targetPage}&limit=${PAGE_SIZE}`)
       if (res.ok) {
@@ -79,25 +96,177 @@ export function CandidatesClient({ initialCandidates, initialTotal }: { initialC
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  // Reset to page 1 when filters change
+  const handleSearchChange = (value: string) => {
+    setSearch(value)
+    if (page !== 1) { setPage(1); fetchPage(1) }
+    setSelectedIds(new Set())
+  }
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value)
+    if (page !== 1) { setPage(1); fetchPage(1) }
+    setSelectedIds(new Set())
+  }
+  const handleScoreFilterChange = (value: string) => {
+    setScoreFilter(value)
+    if (page !== 1) { setPage(1); fetchPage(1) }
+    setSelectedIds(new Set())
+  }
+  const handleSortChange = (value: string) => {
+    setSortBy(value)
+    if (page !== 1) { setPage(1); fetchPage(1) }
+    setSelectedIds(new Set())
+  }
+
+  const openConfirm = (opts: Omit<typeof confirmDialog, 'open'>) => {
+    setConfirmDialog({ ...opts, open: true })
+  }
+  const closeConfirm = () => {
+    setConfirmDialog(prev => ({ ...prev, open: false }))
+  }
+
   const handleDelete = async (e: React.MouseEvent, id: string, name: string) => {
     e.preventDefault()
     e.stopPropagation()
-    if (!confirm(`Delete ${name}? This action cannot be undone.`)) return
-    setDeleting(id)
+    openConfirm({
+      title: 'Delete candidate',
+      description: `Delete ${name}? This action cannot be undone.`,
+      confirmText: 'Delete',
+      variant: 'destructive',
+      onConfirm: async () => {
+        closeConfirm()
+        setDeleting(id)
+        try {
+          const res = await fetch(`/api/candidates/${id}`, { method: 'DELETE' })
+          if (res.ok) {
+            setCandidates(prev => prev.filter(c => c.id !== id))
+            setTotal(prev => prev - 1)
+            setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next })
+            if (candidates.length === 1 && page > 1) {
+              fetchPage(page - 1)
+            }
+            toast({ title: tc.deleted, description: `${name} has been removed.` })
+          } else {
+            toast({ title: tc.deleteError, variant: 'destructive' })
+          }
+        } finally { setDeleting(null) }
+      },
+    })
+  }
+
+  // Bulk actions
+  const handleBulkStatusChange = async (newStatus: string) => {
+    if (selectedIds.size === 0 || bulkUpdating) return
+    setBulkUpdating(true)
     try {
-      const res = await fetch(`/api/candidates/${id}`, { method: 'DELETE' })
-      if (res.ok) {
-        setCandidates(prev => prev.filter(c => c.id !== id))
-        setTotal(prev => prev - 1)
-        // If the current page is now empty and it's not the first page, go back one page
-        if (candidates.length === 1 && page > 1) {
-          fetchPage(page - 1)
+      const ids = Array.from(selectedIds)
+      const results = await Promise.allSettled(
+        ids.map(id =>
+          fetch(`/api/candidates/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus }),
+          }).then(r => r.ok ? r.json() : Promise.reject())
+        )
+      )
+      const successCount = results.filter(r => r.status === 'fulfilled').length
+      setCandidates(prev =>
+        prev.map(c => selectedIds.has(c.id) ? { ...c, status: newStatus } : c)
+      )
+      setSelectedIds(new Set())
+      toast({ title: `${successCount} candidate(s) updated to "${newStatus}"` })
+    } catch {
+      toast({ title: tc.updateError, variant: 'destructive' })
+    } finally {
+      setBulkUpdating(false)
+    }
+  }
+
+  const handleBulkDelete = () => {
+    if (selectedIds.size === 0) return
+    openConfirm({
+      title: 'Delete selected candidates',
+      description: `Delete ${selectedIds.size} selected candidate(s)? This action cannot be undone.`,
+      confirmText: `Delete ${selectedIds.size}`,
+      variant: 'destructive',
+      onConfirm: async () => {
+        closeConfirm()
+        setBulkUpdating(true)
+        try {
+          const ids = Array.from(selectedIds)
+          const results = await Promise.allSettled(
+            ids.map(id =>
+              fetch(`/api/candidates/${id}`, { method: 'DELETE' }).then(r =>
+                r.ok ? id : Promise.reject()
+              )
+            )
+          )
+          const deletedIds = new Set(
+            results
+              .filter((r): r is PromiseFulfilledResult<string> => r.status === 'fulfilled')
+              .map(r => r.value)
+          )
+          setCandidates(prev => prev.filter(c => !deletedIds.has(c.id)))
+          setTotal(prev => prev - deletedIds.size)
+          setSelectedIds(new Set())
+          toast({ title: `${deletedIds.size} candidate(s) deleted` })
+          if (candidates.length === deletedIds.size && page > 1) {
+            fetchPage(page - 1)
+          }
+        } catch {
+          toast({ title: tc.deleteError, variant: 'destructive' })
+        } finally {
+          setBulkUpdating(false)
         }
-        toast({ title: tc.deleted, description: `${name} has been removed.` })
-      } else {
-        toast({ title: tc.deleteError, variant: 'destructive' })
-      }
-    } finally { setDeleting(null) }
+      },
+    })
+  }
+
+  const handleBulkExportExcel = async () => {
+    if (selectedIds.size === 0) return
+    setExportingExcel(true)
+    try {
+      const selected = filtered.filter(c => selectedIds.has(c.id))
+      await exportCandidatesToExcel(selected)
+      toast({ title: `Excel export of ${selected.length} candidate(s) downloaded!` })
+    } catch {
+      toast({ title: 'Export failed', variant: 'destructive' })
+    } finally {
+      setExportingExcel(false)
+    }
+  }
+
+  const handleBulkExportPdf = async () => {
+    if (selectedIds.size === 0) return
+    setExportingPdf(true)
+    try {
+      const selected = filtered.filter(c => selectedIds.has(c.id))
+      await exportCandidatesToPDF(selected)
+      toast({ title: `PDF export of ${selected.length} candidate(s) downloaded!` })
+    } catch {
+      toast({ title: 'Export failed', variant: 'destructive' })
+    } finally {
+      setExportingPdf(false)
+    }
+  }
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const toggleSelectAll = (filteredCandidates: Candidate[]) => {
+    const allFilteredIds = filteredCandidates.map(c => c.id)
+    const allSelected = allFilteredIds.length > 0 && allFilteredIds.every(id => selectedIds.has(id))
+    if (allSelected) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(allFilteredIds))
+    }
   }
 
   const updateCandidate = async (id: string, patch: Partial<Candidate>) => {
@@ -152,7 +321,7 @@ export function CandidatesClient({ initialCandidates, initialTotal }: { initialC
     } finally { setExporting(false) }
   }
 
-  const filtered = candidates
+  const filtered = useMemo(() => candidates
     .filter(c => {
       const name = `${c.firstName} ${c.lastName}`.toLowerCase()
       const matchSearch = name.includes(search.toLowerCase()) ||
@@ -162,13 +331,21 @@ export function CandidatesClient({ initialCandidates, initialTotal }: { initialC
         (statusFilter === 'liked' && c.liked) ||
         (statusFilter === 'priority' && c.priority) ||
         (statusFilter === 'pool' && c.savedToPool)
-      return matchSearch && matchStatus
+      const score = c.matchScore || 0
+      const matchScore = scoreFilter === 'all' ||
+        (scoreFilter === 'high' && score >= 75) ||
+        (scoreFilter === 'medium' && score >= 50 && score < 75) ||
+        (scoreFilter === 'low' && score >= 0 && score < 50)
+      return matchSearch && matchStatus && matchScore
     })
     .sort((a, b) => {
       if (sortBy === 'score') return (b.matchScore || 0) - (a.matchScore || 0)
       if (sortBy === 'date') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      if (sortBy === 'date_oldest') return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
       return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`)
-    })
+    }), [candidates, search, statusFilter, scoreFilter, sortBy])
+
+  const allFilteredSelected = filtered.length > 0 && filtered.every(c => selectedIds.has(c.id))
 
   return (
     <>

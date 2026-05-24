@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/use-toast'
 
 export default function LoginPage() {
+  const showDemo = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
   const router = useRouter()
   const [form, setForm] = useState({ email: '', password: '' })
   const [loading, setLoading] = useState(false)
@@ -40,6 +41,7 @@ export default function LoginPage() {
           <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
           <p className="text-gray-500 text-sm mt-1">Sign in to CVMatch AI</p>
         </div>
+        {showDemo && (
         <div className="flex gap-2 mb-6">
           <button
             onClick={() => fillDemo('free')}
@@ -66,6 +68,7 @@ export default function LoginPage() {
             <span className="block text-purple-400 font-normal" style={{ fontSize: '10px' }}>admin123</span>
           </button>
         </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="email">Email</Label>

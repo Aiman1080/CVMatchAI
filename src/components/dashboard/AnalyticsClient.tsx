@@ -1,6 +1,7 @@
 'use client'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, ReferenceLine } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { AnimatedCounter } from '@/components/ui/animated-counter'
 import { useTheme } from 'next-themes'
 import { TrendingUp } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -29,8 +30,8 @@ export function AnalyticsClient({ candidates, vacancies, candidatesOverTime }: P
     { range: '91-100', count: candidates.filter(c => (c.matchScore || 0) > 90).length },
   ]
   const vacancyData = vacancies.map(v => ({ name: v.title.slice(0, 20) + (v.title.length > 20 ? '…' : ''), candidates: v._count.candidates }))
-  const avgScore = candidates.length ? (candidates.reduce((sum, c) => sum + (c.matchScore || 0), 0) / candidates.length).toFixed(1) : 0
-  const shortlistRate = candidates.length ? ((candidates.filter(c => c.status === 'shortlisted').length / candidates.length) * 100).toFixed(1) : 0
+  const avgScore = candidates.length ? candidates.reduce((sum, c) => sum + (c.matchScore || 0), 0) / candidates.length : 0
+  const shortlistRate = candidates.length ? (candidates.filter(c => c.status === 'shortlisted').length / candidates.length) * 100 : 0
 
   // Sources data
   const sourceCounts: Record<string, number> = {}
@@ -47,14 +48,16 @@ export function AnalyticsClient({ candidates, vacancies, candidatesOverTime }: P
       {/* KPI cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: ta.totalCandidates, value: candidates.length, color: 'text-blue-600' },
-          { label: ta.avgMatchScore, value: `${avgScore}%`, color: 'text-green-600' },
-          { label: ta.shortlistRate, value: `${shortlistRate}%`, color: 'text-purple-600' },
-          { label: ta.activeVacancies, value: vacancies.length, color: 'text-amber-600' },
+          { label: ta.totalCandidates, value: candidates.length, suffix: '', decimals: 0, color: 'text-blue-600' },
+          { label: ta.avgMatchScore, value: avgScore, suffix: '%', decimals: 1, color: 'text-green-600' },
+          { label: ta.shortlistRate, value: shortlistRate, suffix: '%', decimals: 1, color: 'text-purple-600' },
+          { label: ta.activeVacancies, value: vacancies.length, suffix: '', decimals: 0, color: 'text-amber-600' },
         ].map(kpi => (
           <Card key={kpi.label} className="border border-gray-200 shadow-sm dark:border-gray-800">
             <CardContent className="p-5 text-center">
-              <div className={`text-3xl font-bold ${kpi.color}`}>{kpi.value}</div>
+              <div className={`text-3xl font-bold ${kpi.color}`}>
+                <AnimatedCounter target={kpi.value} suffix={kpi.suffix} decimals={kpi.decimals} />
+              </div>
               <div className="text-xs text-gray-500 mt-1">{kpi.label}</div>
             </CardContent>
           </Card>
