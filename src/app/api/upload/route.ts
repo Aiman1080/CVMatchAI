@@ -10,6 +10,7 @@ import { parseDocument, saveUploadedFile } from '@/lib/pdf-parser'
 import { analyzeCVAgainstVacancy, detectDocumentType } from '@/lib/ai'
 import { getPlanLimits } from '@/lib/plans'
 import { createNotification } from '@/lib/notifications'
+import { logActivity } from '@/lib/activity'
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
@@ -112,8 +113,10 @@ export async function POST(req: Request) {
         `${candidateName} scored ${score}% for ${vacancy.title}`
       )
 
+      await logActivity(candidate.id, 'created', 'Candidate created via CV upload')
       return NextResponse.json({ success: true, candidate, analysis }, { status: 201 })
     }
+    await logActivity(candidate.id, 'created', 'Candidate created via CV upload')
     return NextResponse.json({ success: true, candidate }, { status: 201 })
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {

@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
-import { Search, Users, Mail, Trash2, LayoutGrid, Columns, Star, Flag, Download, Send, FileText, Eye, EyeOff, ChevronLeft, ChevronRight, Loader2, CheckSquare, Square, CheckCheck, X } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Search, Users, Mail, Trash2, LayoutGrid, Columns, Star, Flag, Download, Send, FileText, Eye, EyeOff, ChevronLeft, ChevronRight, Loader2, CheckSquare, Square, CheckCheck, X, GitCompareArrows, Upload } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -13,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { toast } from '@/components/ui/use-toast'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { KanbanView } from './KanbanView'
+import { ImportCSVDialog } from './ImportCSVDialog'
 import { getStatusColor, formatRelativeTime, parseJsonSafe } from '@/lib/utils'
 import { exportCandidatesToExcel, exportCandidatesToPDF } from '@/lib/export'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -38,6 +40,7 @@ const PAGE_SIZE = 30
 
 // Client component: compact grid + kanban toggle, like/priority/pool, export CSV
 export function CandidatesClient({ initialCandidates, initialTotal }: { initialCandidates: Candidate[]; initialTotal: number }) {
+  const router = useRouter()
   const { t } = useLanguage()
   const tc = t.dashboard.candidates
   const [candidates, setCandidates] = useState(initialCandidates)
@@ -53,6 +56,7 @@ export function CandidatesClient({ initialCandidates, initialTotal }: { initialC
   const [exporting, setExporting] = useState(false)
   const [exportingExcel, setExportingExcel] = useState(false)
   const [exportingPdf, setExportingPdf] = useState(false)
+  const [showImportCSV, setShowImportCSV] = useState(false)
 
   // Bulk selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -389,6 +393,9 @@ export function CandidatesClient({ initialCandidates, initialTotal }: { initialC
             <Columns size={16} />
           </button>
         </div>
+        <Button variant="outline" size="sm" onClick={() => setShowImportCSV(true)} className="gap-1.5 h-9">
+          <Upload size={15} /> Import CSV
+        </Button>
         <Button variant="outline" size="sm" onClick={() => setShowExport(true)} className="gap-1.5 h-9">
           <Download size={15} /> {tc.exportCsv}
         </Button>
@@ -449,6 +456,19 @@ export function CandidatesClient({ initialCandidates, initialTotal }: { initialC
                 <SelectItem value="hired">{tc.hired}</SelectItem>
               </SelectContent>
             </Select>
+            {selectedIds.size >= 2 && selectedIds.size <= 3 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const ids = Array.from(selectedIds).join(',')
+                  router.push(`/candidates/compare?ids=${ids}`)
+                }}
+                className="gap-1 h-8 text-xs border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-400 dark:hover:bg-indigo-950"
+              >
+                <GitCompareArrows size={13} /> Compare ({selectedIds.size})
+              </Button>
+            )}
             <Button variant="outline" size="sm" disabled={exportingExcel || bulkUpdating} onClick={handleBulkExportExcel} className="gap-1 h-8 text-xs">
               <Download size={13} /> Excel
             </Button>
@@ -680,6 +700,13 @@ export function CandidatesClient({ initialCandidates, initialTotal }: { initialC
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Import CSV dialog */}
+      <ImportCSVDialog
+        open={showImportCSV}
+        onOpenChange={setShowImportCSV}
+        onImportComplete={() => fetchPage(page)}
+      />
 
       {/* Confirmation dialog for destructive actions */}
       <ConfirmDialog

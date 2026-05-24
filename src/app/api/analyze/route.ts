@@ -6,6 +6,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { analyzeCVAgainstVacancy } from '@/lib/ai'
+import { logActivity } from '@/lib/activity'
 
 // Re-runs AI analysis on an existing candidate — useful after editing vacancy requirements
 export async function POST(req: Request) {
@@ -48,6 +49,10 @@ export async function POST(req: Request) {
         ...contactPatch,
       },
     })
+
+    const score = Math.round(analysis.matchScore ?? 0)
+    await logActivity(candidateId, 'cv_analyzed', `CV re-analyzed, score: ${score}%`, { matchScore: score })
+
     return NextResponse.json({ success: true, candidate: updated, analysis })
   } catch (error) {
     console.error('Analyze error:', error)

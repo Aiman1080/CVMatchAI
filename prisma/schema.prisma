@@ -145,10 +145,21 @@ model Candidate {
   vacancy         Vacancy    @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
   user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   emailSource     EmailScan?
+  activities      CandidateActivity[]
 
   // One candidate per email per vacancy — prevents duplicates from repeated demo scans or uploads
   @@unique([email, vacancyId])
   @@unique([externalId, externalSource, userId])
+}
+
+model CandidateActivity {
+  id          String    @id @default(cuid())
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  type        String    // status_change, note_added, email_sent, cv_analyzed, created
+  description String
+  metadata    String?   // JSON string for extra data
+  createdAt   DateTime  @default(now())
 }
 
 model EmailInbox {

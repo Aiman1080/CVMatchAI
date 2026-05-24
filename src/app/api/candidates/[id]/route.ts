@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { logActivity } from '@/lib/activity'
 
 // Fetches a single candidate with full vacancy details for the detail page
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -51,6 +52,16 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       return NextResponse.json({ error: 'Invalid status value' }, { status: 400 })
     }
     const candidate = await prisma.candidate.update({ where: { id }, data })
+
+    // Log status changes
+    if (data.status && data.status !== existing.status) {
+      await logActivity(id, 'status_change', `Status changed from ${existing.status} to ${data.status}`, { from: existing.status, to: data.status })
+    }
+    // Log note updates
+    if (data.notes !== undefined && data.notes !== existing.notes) {
+      await logActivity(id, 'note_added', 'Notes updated')
+    }
+
     return NextResponse.json(candidate)
   } catch {
     return NextResponse.json({ error: 'Failed to update candidate' }, { status: 500 })

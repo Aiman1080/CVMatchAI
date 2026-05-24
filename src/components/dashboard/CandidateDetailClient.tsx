@@ -5,7 +5,8 @@ import {
   Mail, Phone, Linkedin, CheckCircle, XCircle, Clock, Star,
   TrendingUp, TrendingDown, Loader2, RefreshCw, FileText, User, Briefcase,
   GraduationCap, Languages, Award, Flag, Archive, Send, X, Video,
-  MessageSquareText, ClipboardList, Sparkles, Copy, Download
+  MessageSquareText, ClipboardList, Sparkles, Copy, Download,
+  History, ArrowRight, Brain, Plus
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -73,6 +74,9 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
   const [hiringReport, setHiringReport] = useState<string | null>(null)
   const [loadingReport, setLoadingReport] = useState(false)
   const [downloadingReportPdf, setDownloadingReportPdf] = useState(false)
+  const [activities, setActivities] = useState<any[]>([])
+  const [loadingActivities, setLoadingActivities] = useState(false)
+  const [activitiesLoaded, setActivitiesLoaded] = useState(false)
   const notesTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const score = candidate.matchScore || 0
@@ -259,6 +263,60 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
     toast({ title: ci.copiedToClipboard })
+  }
+
+  const fetchActivities = async () => {
+    if (activitiesLoaded) return
+    setLoadingActivities(true)
+    try {
+      const res = await fetch(`/api/candidates/${candidate.id}/activity`)
+      if (res.ok) {
+        const data = await res.json()
+        setActivities(data)
+      }
+    } catch {
+      // Silent fail — activity is non-critical
+    } finally {
+      setLoadingActivities(false)
+      setActivitiesLoaded(true)
+    }
+  }
+
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'status_change': return <ArrowRight className="w-3.5 h-3.5 text-blue-500" />
+      case 'note_added': return <FileText className="w-3.5 h-3.5 text-purple-500" />
+      case 'email_sent': return <Mail className="w-3.5 h-3.5 text-green-500" />
+      case 'cv_analyzed': return <Brain className="w-3.5 h-3.5 text-amber-500" />
+      case 'created': return <Plus className="w-3.5 h-3.5 text-gray-500" />
+      default: return <Clock className="w-3.5 h-3.5 text-gray-400" />
+    }
+  }
+
+  const getActivityDotColor = (type: string) => {
+    switch (type) {
+      case 'status_change': return 'bg-blue-500'
+      case 'note_added': return 'bg-purple-500'
+      case 'email_sent': return 'bg-green-500'
+      case 'cv_analyzed': return 'bg-amber-500'
+      case 'created': return 'bg-gray-500'
+      default: return 'bg-gray-400'
+    }
+  }
+
+  const timeAgo = (dateStr: string) => {
+    const now = new Date()
+    const date = new Date(dateStr)
+    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+    if (seconds < 60) return 'just now'
+    const minutes = Math.floor(seconds / 60)
+    if (minutes < 60) return `${minutes}m ago`
+    const hours = Math.floor(minutes / 60)
+    if (hours < 24) return `${hours}h ago`
+    const days = Math.floor(hours / 24)
+    if (days < 30) return `${days}d ago`
+    const months = Math.floor(days / 30)
+    return `${months}mo ago`
   }
 
   const scoreColor = score >= 75 ? 'text-green-600' : score >= 50 ? 'text-amber-600' : 'text-red-500'
@@ -456,6 +514,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
               {hasEmailSource && <TabsTrigger value="email">{cd.emailPanel}</TabsTrigger>}
               <TabsTrigger value="interview" className="gap-1"><MessageSquareText size={14} /> {ci.interviewTab}</TabsTrigger>
               <TabsTrigger value="report" className="gap-1"><ClipboardList size={14} /> {ci.reportTab}</TabsTrigger>
+              <TabsTrigger value="activity" className="gap-1" onClick={fetchActivities}><History size={14} /> Activity</TabsTrigger>
               <TabsTrigger value="cv">CV</TabsTrigger>
               {hasMotivationText && <TabsTrigger value="motivation">{ci.motivationTab}</TabsTrigger>}
             </TabsList>
@@ -748,6 +807,53 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                       <ClipboardList className="w-8 h-8 text-gray-300 mx-auto mb-2" />
                       <p className="text-gray-400 text-sm mb-1">{ci.professionalReport}</p>
                       <p className="text-gray-400 text-xs">{ci.reportExplainer}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* ── Activity tab ── */}
+            <TabsContent value="activity" className="mt-4">
+              <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <History className="w-4 h-4 text-blue-500" /> Activity Timeline
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {loadingActivities ? (
+                    <div className="py-12 text-center">
+                      <Loader2 className="w-6 h-6 text-gray-300 mx-auto mb-2 animate-spin" />
+                      <p className="text-gray-400 text-sm">Loading activity...</p>
+                    </div>
+                  ) : activities.length === 0 ? (
+                    <div className="py-12 text-center">
+                      <History className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                      <p className="text-gray-400 text-sm">No activity yet</p>
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      {/* Timeline line */}
+                      <div className="absolute left-[15px] top-2 bottom-2 w-px bg-gray-200 dark:bg-gray-700" />
+                      <div className="space-y-4">
+                        {activities.map((activity: any) => (
+                          <div key={activity.id} className="relative flex items-start gap-4 pl-1">
+                            {/* Dot on the timeline */}
+                            <div className="relative z-10 flex items-center justify-center w-[30px] shrink-0">
+                              <div className={`w-2.5 h-2.5 rounded-full ${getActivityDotColor(activity.type)} ring-4 ring-white dark:ring-gray-900`} />
+                            </div>
+                            {/* Content */}
+                            <div className="flex-1 min-w-0 pb-1">
+                              <div className="flex items-center gap-2 mb-0.5">
+                                {getActivityIcon(activity.type)}
+                                <p className="text-sm text-gray-700 dark:text-gray-300">{activity.description}</p>
+                              </div>
+                              <p className="text-xs text-gray-400">{timeAgo(activity.createdAt)}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </CardContent>

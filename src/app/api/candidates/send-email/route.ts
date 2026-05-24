@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { escapeHtml } from '@/lib/utils'
+import { logActivity } from '@/lib/activity'
 import nodemailer from 'nodemailer'
 
 export async function POST(req: Request) {
@@ -58,6 +59,9 @@ export async function POST(req: Request) {
     if (statusMap[type]) {
       await prisma.candidate.update({ where: { id: candidateId }, data: { status: statusMap[type] } })
     }
+
+    const emailLabel = type === 'interview' ? 'Interview email sent' : type === 'rejection' ? 'Rejection email sent' : 'Follow-up email sent'
+    await logActivity(candidateId, 'email_sent', emailLabel, { emailType: type, subject, to: candidate.email })
 
     return NextResponse.json({ success: true })
   } catch (err: any) {
