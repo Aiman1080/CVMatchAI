@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { useTheme } from 'next-themes'
 import { useState } from 'react'
@@ -12,12 +12,15 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
 export function AdminSidebar() {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
   const { data: session } = useSession()
   const { theme, setTheme } = useTheme()
   const [mobileOpen, setMobileOpen] = useState(false)
   const user = session?.user as any
   const initials = user?.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || 'A'
   const isDark = theme === 'dark'
+  const currentTab = searchParams.get('tab')
+  const isAdmin = pathname === '/admin'
 
   const sidebarContent = (
     <>
@@ -46,12 +49,12 @@ export function AdminSidebar() {
           onClick={() => setMobileOpen(false)}
           className={cn(
             'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
-            pathname === '/admin'
+            isAdmin && !currentTab
               ? 'bg-purple-900/50 text-purple-300'
               : 'text-gray-400 hover:bg-gray-900 hover:text-gray-200'
           )}
         >
-          <LayoutDashboard size={18} className={pathname === '/admin' ? 'text-purple-400' : 'text-gray-500'} />
+          <LayoutDashboard size={18} className={isAdmin && !currentTab ? 'text-purple-400' : 'text-gray-500'} />
           Dashboard
         </Link>
         <Link
@@ -59,10 +62,12 @@ export function AdminSidebar() {
           onClick={() => setMobileOpen(false)}
           className={cn(
             'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
-            'text-gray-400 hover:bg-gray-900 hover:text-gray-200'
+            isAdmin && currentTab === 'users'
+              ? 'bg-purple-900/50 text-purple-300'
+              : 'text-gray-400 hover:bg-gray-900 hover:text-gray-200'
           )}
         >
-          <Users size={18} className="text-gray-500" />
+          <Users size={18} className={isAdmin && currentTab === 'users' ? 'text-purple-400' : 'text-gray-500'} />
           Users
         </Link>
         <Link
@@ -70,10 +75,12 @@ export function AdminSidebar() {
           onClick={() => setMobileOpen(false)}
           className={cn(
             'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
-            'text-gray-400 hover:bg-gray-900 hover:text-gray-200'
+            isAdmin && currentTab === 'support'
+              ? 'bg-purple-900/50 text-purple-300'
+              : 'text-gray-400 hover:bg-gray-900 hover:text-gray-200'
           )}
         >
-          <LifeBuoy size={18} className="text-gray-500" />
+          <LifeBuoy size={18} className={isAdmin && currentTab === 'support' ? 'text-purple-400' : 'text-gray-500'} />
           Support Tickets
         </Link>
         <Link
@@ -81,10 +88,12 @@ export function AdminSidebar() {
           onClick={() => setMobileOpen(false)}
           className={cn(
             'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
-            'text-gray-400 hover:bg-gray-900 hover:text-gray-200'
+            isAdmin && currentTab === 'actions'
+              ? 'bg-purple-900/50 text-purple-300'
+              : 'text-gray-400 hover:bg-gray-900 hover:text-gray-200'
           )}
         >
-          <Settings size={18} className="text-gray-500" />
+          <Settings size={18} className={isAdmin && currentTab === 'actions' ? 'text-purple-400' : 'text-gray-500'} />
           Admin Actions
         </Link>
 
