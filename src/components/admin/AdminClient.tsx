@@ -79,6 +79,10 @@ interface Props {
   integrationsByPlatform: Array<{ platform: string; _count: number }>
   candidatesBySource: Array<{ source: string; _count: number }>
   activeVacanciesCount: number
+  hasSmtp?: boolean
+  activeToday?: number
+  weeklySignups?: any[]
+  recentActivity?: any[]
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────

@@ -4,7 +4,8 @@ import { useMemo } from 'react'
 import Link from 'next/link'
 import {
   ArrowLeft, TrendingUp, TrendingDown, CheckCircle, XCircle,
-  Briefcase, GraduationCap, Award, Crown, Trophy
+  Briefcase, GraduationCap, Award, Crown, Trophy,
+  ThumbsUp, Sparkles
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -30,11 +31,11 @@ interface CompareCandidate {
   vacancy?: { title: string; company: string } | null
 }
 
-const RECOMMENDATION_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  strong_yes: { label: 'Strong Yes', color: 'text-green-700 dark:text-green-400', bg: 'bg-green-100 dark:bg-green-950/50 border-green-200 dark:border-green-800' },
-  yes: { label: 'Yes', color: 'text-blue-700 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-950/50 border-blue-200 dark:border-blue-800' },
-  maybe: { label: 'Maybe', color: 'text-amber-700 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-950/50 border-amber-200 dark:border-amber-800' },
-  no: { label: 'No', color: 'text-red-700 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-950/50 border-red-200 dark:border-red-800' },
+const RECOMMENDATION_CONFIG: Record<string, { label: string; color: string; bg: string; rank: number }> = {
+  strong_yes: { label: 'Strong Yes', color: 'text-green-700 dark:text-green-400', bg: 'bg-green-100 dark:bg-green-950/50 border-green-200 dark:border-green-800', rank: 4 },
+  yes: { label: 'Yes', color: 'text-blue-700 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-950/50 border-blue-200 dark:border-blue-800', rank: 3 },
+  maybe: { label: 'Maybe', color: 'text-amber-700 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-950/50 border-amber-200 dark:border-amber-800', rank: 2 },
+  no: { label: 'No', color: 'text-red-700 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-950/50 border-red-200 dark:border-red-800', rank: 1 },
 }
 
 function getScoreColor(score: number): string {
@@ -65,6 +66,12 @@ export function CompareClient({ candidates }: { candidates: CompareCandidate[] }
     return Math.max(...candidates.map(c => c.matchScore || 0))
   }, [candidates])
 
+  // Find the lowest score (for difference highlighting)
+  const lowestScore = useMemo(() => {
+    const scores = candidates.map(c => c.matchScore || 0).filter(s => s > 0)
+    return scores.length > 0 ? Math.min(...scores) : 0
+  }, [candidates])
+
   // Collect all skills across candidates for cross-highlighting
   const allSkills = useMemo(() => {
     const skillSets = candidates.map(c => parseJsonSafe<string[]>(c.skills, []))
@@ -78,15 +85,43 @@ export function CompareClient({ candidates }: { candidates: CompareCandidate[] }
     return skillCount
   }, [candidates])
 
-  // Recommendation ranking for comparison
-  const recRank: Record<string, number> = { strong_yes: 4, yes: 3, maybe: 2, no: 1 }
-  const bestRec = useMemo(() => {
-    return Math.max(...candidates.map(c => recRank[c.recommendation || ''] || 0))
+  // Best recommendation
+  const bestRecRank = useMemo(() => {
+    return Math.max(...candidates.map(c => RECOMMENDATION_CONFIG[c.recommendation || '']?.rank || 0))
   }, [candidates])
+
+  // Determine the overall winner
+  const winner = useMemo(() => {
+    if (candidates.length < 2) return null
+    const scored = candidates.map(c => ({
+      candidate: c,
+      score: c.matchScore || 0,
+      recRank: RECOMMENDATION_CONFIG[c.recommendation || '']?.rank || 0,
+      strengthsCount: parseJsonSafe<string[]>(c.strengths, []).length,
+      weaknessesCount: parseJsonSafe<string[]>(c.weaknesses, []).length,
+    }))
+    // Sort by score, then recommendation, then strengths-weaknesses
+    scored.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score
+      if (b.recRank !== a.recRank) return b.recRank - a.recRank
+      return (b.strengthsCount - b.weaknessesCount) - (a.strengthsCount - a.weaknessesCount)
+    })
+    // Only declare a winner if there is a clear distinction
+    if (scored[0].score > scored[1].score || scored[0].recRank > scored[1].recRank) {
+      return scored[0].candidate
+    }
+    return null
+  }, [candidates])
+
+  // Score difference
+  const scoreDiff = useMemo(() => {
+    if (highestScore === 0 || lowestScore === 0) return 0
+    return highestScore - lowestScore
+  }, [highestScore, lowestScore])
 
   return (
     <div className="space-y-6">
-      {/* Back button */}
+      {/* Back button + header */}
       <div className="flex items-center gap-4">
         <Link href="/candidates">
           <Button variant="outline" size="sm" className="gap-2">
@@ -103,70 +138,118 @@ export function CompareClient({ candidates }: { candidates: CompareCandidate[] }
         </div>
       </div>
 
-      {/* ── Score overview cards ── */}
-      <div className={`grid ${colClass} gap-4`}>
-        {candidates.map((c) => {
-          const score = c.matchScore || 0
-          const initials = `${c.firstName?.[0] ?? '?'}${c.lastName?.[0] ?? ''}`.toUpperCase()
-          const isHighest = score > 0 && score === highestScore
-          const rec = c.recommendation ? RECOMMENDATION_CONFIG[c.recommendation] : null
+      {/* Winner banner */}
+      {winner && (
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 dark:from-amber-950/30 dark:via-yellow-950/20 dark:to-amber-950/30 border border-amber-200 dark:border-amber-800 p-4">
+          <div className="absolute -right-4 -top-4 w-24 h-24 bg-amber-200/20 dark:bg-amber-600/10 rounded-full blur-2xl" />
+          <div className="flex items-center gap-3 relative">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center shadow-lg shadow-amber-200/50 dark:shadow-amber-900/30">
+              <Crown size={18} className="text-white" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-amber-800 dark:text-amber-300">
+                  {winner.firstName} {winner.lastName}
+                </span>
+                <span className="text-sm text-amber-600 dark:text-amber-400">
+                  is the top candidate
+                </span>
+              </div>
+              <p className="text-xs text-amber-600/80 dark:text-amber-400/70 mt-0.5">
+                {winner.matchScore?.toFixed(0)}% match score
+                {scoreDiff > 0 && ` (+${scoreDiff.toFixed(0)} points ahead)`}
+                {winner.recommendation && ` | AI: ${RECOMMENDATION_CONFIG[winner.recommendation]?.label || winner.recommendation}`}
+              </p>
+            </div>
+            <Sparkles size={16} className="text-amber-400 dark:text-amber-500 animate-pulse" />
+          </div>
+        </div>
+      )}
 
-          return (
-            <Card
-              key={c.id}
-              className={`border-0 shadow-sm transition-all ${isHighest ? `ring-2 ${getScoreRingColor(score, true)}` : ''}`}
-            >
-              <CardContent className="p-5">
-                <div className="flex items-center gap-4">
-                  <div className="relative">
-                    <Avatar className="w-14 h-14">
-                      <AvatarFallback className="text-lg gradient-bg text-white font-bold">
-                        {initials}
-                      </AvatarFallback>
-                    </Avatar>
-                    {isHighest && (
-                      <div className="absolute -top-1 -right-1 w-5 h-5 bg-amber-400 rounded-full flex items-center justify-center shadow-sm">
-                        <Crown size={11} className="text-white" />
+      {/* Score overview cards (sticky) */}
+      <div className="sticky top-[73px] z-20 -mx-2 px-2 py-3 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm">
+        <div className={`grid ${colClass} gap-4`}>
+          {candidates.map((c, idx) => {
+            const score = c.matchScore || 0
+            const initials = `${c.firstName?.[0] ?? '?'}${c.lastName?.[0] ?? ''}`.toUpperCase()
+            const isHighest = score > 0 && score === highestScore
+            const isLowest = score > 0 && score < highestScore
+            const rec = c.recommendation ? RECOMMENDATION_CONFIG[c.recommendation] : null
+
+            return (
+              <Card
+                key={c.id}
+                className={`border-0 shadow-sm transition-all ${isHighest ? `ring-2 ${getScoreRingColor(score, true)}` : ''}`}
+              >
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <Avatar className="w-14 h-14">
+                        <AvatarFallback className="text-lg gradient-bg text-white font-bold">
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      {isHighest && count > 1 && (
+                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-amber-400 rounded-full flex items-center justify-center shadow-sm">
+                          <Crown size={11} className="text-white" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <Link
+                        href={`/candidates/${c.id}`}
+                        className="font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors truncate block"
+                      >
+                        {c.firstName} {c.lastName}
+                      </Link>
+                      {c.vacancy && (
+                        <p className="text-xs text-blue-600 dark:text-blue-400 truncate">{c.vacancy.title}</p>
+                      )}
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getStatusColor(c.status)}`}>
+                          {c.status}
+                        </span>
                       </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <Link
-                      href={`/candidates/${c.id}`}
-                      className="font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors truncate block"
-                    >
-                      {c.firstName} {c.lastName}
-                    </Link>
-                    {c.vacancy && (
-                      <p className="text-xs text-blue-600 dark:text-blue-400 truncate">{c.vacancy.title}</p>
-                    )}
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getStatusColor(c.status)}`}>
-                        {c.status}
-                      </span>
+                    </div>
+                    <div className="flex flex-col items-center gap-1 shrink-0">
+                      <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${getScoreGradient(score)} flex flex-col items-center justify-center shadow-lg`}>
+                        <span className="text-lg font-bold text-white leading-none">
+                          {score > 0 ? `${score.toFixed(0)}%` : '--'}
+                        </span>
+                        <span className="text-[10px] text-white/70">match</span>
+                      </div>
+                      {isHighest && count > 1 && (
+                        <div className="flex items-center gap-0.5 text-green-600 dark:text-green-400">
+                          <TrendingUp size={10} />
+                          <span className="text-[10px] font-semibold">Best</span>
+                        </div>
+                      )}
+                      {isLowest && (
+                        <div className="flex items-center gap-0.5 text-red-500 dark:text-red-400">
+                          <TrendingDown size={10} />
+                          <span className="text-[10px] font-semibold">-{(highestScore - score).toFixed(0)}pts</span>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${getScoreGradient(score)} flex flex-col items-center justify-center shadow-lg shrink-0`}>
-                    <span className="text-lg font-bold text-white leading-none">
-                      {score > 0 ? `${score.toFixed(0)}%` : '--'}
-                    </span>
-                    <span className="text-[10px] text-white/70">match</span>
-                  </div>
-                </div>
 
-                {/* Recommendation */}
-                {rec && (
-                  <div className={`mt-3 px-3 py-1.5 rounded-lg border text-xs font-semibold text-center ${rec.bg} ${rec.color}`}>
-                    AI: {rec.label}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )
-        })}
+                  {/* Recommendation */}
+                  {rec && (
+                    <div className={`mt-3 px-3 py-1.5 rounded-lg border text-xs font-semibold text-center ${rec.bg} ${rec.color} ${rec.rank === bestRecRank && bestRecRank > 0 ? 'ring-1 ring-offset-1 ring-current/20' : ''}`}>
+                      AI: {rec.label}
+                      {rec.rank === bestRecRank && count > 1 && bestRecRank > 0 && (
+                        <ThumbsUp size={10} className="inline ml-1.5 -mt-0.5" />
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
       </div>
 
-      {/* ── Detailed comparison sections ── */}
+      {/* Detailed comparison sections */}
 
       {/* Match Score Comparison Bar */}
       <CompareSection title="Match Score" icon={<Trophy size={16} className="text-amber-500" />}>
@@ -174,20 +257,35 @@ export function CompareClient({ candidates }: { candidates: CompareCandidate[] }
           {candidates.map((c) => {
             const score = c.matchScore || 0
             const isHighest = score > 0 && score === highestScore
+            const diff = highestScore - score
             return (
               <div key={c.id} className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
                     {c.firstName} {c.lastName}
                   </span>
-                  <span className={`text-lg font-bold ${isHighest ? getScoreColor(score) : 'text-gray-400 dark:text-gray-500'}`}>
-                    {score > 0 ? `${score.toFixed(0)}%` : '--'}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {isHighest && count > 1 && score > 0 && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-950/50 text-green-700 dark:text-green-400 font-semibold">
+                        BEST
+                      </span>
+                    )}
+                    {!isHighest && diff > 0 && score > 0 && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-50 dark:bg-red-950/30 text-red-500 dark:text-red-400 font-semibold">
+                        -{diff.toFixed(0)}
+                      </span>
+                    )}
+                    <span className={`text-lg font-bold ${isHighest ? getScoreColor(score) : 'text-gray-400 dark:text-gray-500'}`}>
+                      {score > 0 ? `${score.toFixed(0)}%` : '--'}
+                    </span>
+                  </div>
                 </div>
-                <Progress value={score} className="h-3" />
-                {isHighest && count > 1 && (
-                  <p className="text-xs text-green-600 dark:text-green-400 font-medium">
-                    Highest match
+                <div className="relative">
+                  <Progress value={score} className="h-3" />
+                </div>
+                {isHighest && count > 1 && score > 0 && (
+                  <p className="text-xs text-green-600 dark:text-green-400 font-medium flex items-center gap-1">
+                    <CheckCircle size={10} /> Highest match
                   </p>
                 )}
               </div>
@@ -195,6 +293,39 @@ export function CompareClient({ candidates }: { candidates: CompareCandidate[] }
           })}
         </div>
       </CompareSection>
+
+      {/* AI Recommendation Comparison */}
+      {candidates.some(c => c.recommendation) && (
+        <CompareSection title="AI Recommendation" icon={<ThumbsUp size={16} className="text-blue-500" />}>
+          <div className={`grid ${colClass} gap-4`}>
+            {candidates.map((c) => {
+              const rec = c.recommendation ? RECOMMENDATION_CONFIG[c.recommendation] : null
+              const isBest = rec && rec.rank === bestRecRank && count > 1
+              return (
+                <div key={c.id} className="space-y-2">
+                  <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">
+                    {c.firstName} {c.lastName}
+                  </p>
+                  {rec ? (
+                    <div className={`px-4 py-3 rounded-xl border ${rec.bg} ${rec.color} text-center ${isBest ? 'ring-2 ring-offset-2 ring-current/20 dark:ring-offset-gray-950' : ''}`}>
+                      <p className="text-lg font-bold">{rec.label}</p>
+                      {isBest && (
+                        <p className="text-[10px] mt-1 opacity-70 font-medium flex items-center justify-center gap-1">
+                          <Crown size={10} /> Top recommendation
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 text-center">
+                      <p className="text-sm text-gray-400 dark:text-gray-500 italic">No recommendation</p>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </CompareSection>
+      )}
 
       {/* AI Summary */}
       <CompareSection title="AI Summary" icon={<Award size={16} className="text-blue-500" />}>
@@ -225,9 +356,12 @@ export function CompareClient({ candidates }: { candidates: CompareCandidate[] }
             const skills = parseJsonSafe<string[]>(c.skills, [])
             return (
               <div key={c.id} className="space-y-2">
-                <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">
-                  {c.firstName} {c.lastName}
-                </p>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">
+                    {c.firstName} {c.lastName}
+                  </p>
+                  <Badge variant="secondary" className="text-[10px]">{skills.length} skills</Badge>
+                </div>
                 {skills.length > 0 ? (
                   <div className="flex flex-wrap gap-1.5">
                     {skills.map((s, i) => {
@@ -270,14 +404,23 @@ export function CompareClient({ candidates }: { candidates: CompareCandidate[] }
         <div className={`grid ${colClass} gap-4`}>
           {candidates.map((c) => {
             const strengths = parseJsonSafe<string[]>(c.strengths, [])
+            const maxStrengths = Math.max(...candidates.map(x => parseJsonSafe<string[]>(x.strengths, []).length))
+            const hasMost = strengths.length === maxStrengths && maxStrengths > 0 && count > 1
             return (
               <div key={c.id} className="space-y-2">
-                <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">
-                  {c.firstName} {c.lastName}
+                <div className="flex items-center gap-2">
+                  <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">
+                    {c.firstName} {c.lastName}
+                  </p>
                   {strengths.length > 0 && (
-                    <Badge variant="success" className="ml-2 text-[10px]">{strengths.length}</Badge>
+                    <Badge variant="success" className="text-[10px]">{strengths.length}</Badge>
                   )}
-                </p>
+                  {hasMost && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-950/50 text-green-700 dark:text-green-400 font-semibold">
+                      MOST
+                    </span>
+                  )}
+                </div>
                 {strengths.length > 0 ? (
                   <div className="space-y-1.5">
                     {strengths.map((s, i) => (
@@ -301,14 +444,23 @@ export function CompareClient({ candidates }: { candidates: CompareCandidate[] }
         <div className={`grid ${colClass} gap-4`}>
           {candidates.map((c) => {
             const weaknesses = parseJsonSafe<string[]>(c.weaknesses, [])
+            const minWeaknesses = Math.min(...candidates.map(x => parseJsonSafe<string[]>(x.weaknesses, []).length))
+            const hasFewest = weaknesses.length === minWeaknesses && count > 1 && candidates.some(x => parseJsonSafe<string[]>(x.weaknesses, []).length > minWeaknesses)
             return (
               <div key={c.id} className="space-y-2">
-                <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">
-                  {c.firstName} {c.lastName}
+                <div className="flex items-center gap-2">
+                  <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">
+                    {c.firstName} {c.lastName}
+                  </p>
                   {weaknesses.length > 0 && (
-                    <Badge variant="warning" className="ml-2 text-[10px]">{weaknesses.length}</Badge>
+                    <Badge variant="warning" className="text-[10px]">{weaknesses.length}</Badge>
                   )}
-                </p>
+                  {hasFewest && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-950/50 text-green-700 dark:text-green-400 font-semibold">
+                      FEWEST
+                    </span>
+                  )}
+                </div>
                 {weaknesses.length > 0 ? (
                   <div className="space-y-1.5">
                     {weaknesses.map((w, i) => (
@@ -366,6 +518,69 @@ export function CompareClient({ candidates }: { candidates: CompareCandidate[] }
           ))}
         </div>
       </CompareSection>
+
+      {/* Quick verdict */}
+      <Card className="border-2 border-dashed border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50">
+        <CardContent className="p-6">
+          <div className="text-center space-y-3">
+            <div className="flex items-center justify-center gap-2 text-gray-600 dark:text-gray-400">
+              <Sparkles size={16} />
+              <span className="text-sm font-semibold uppercase tracking-wider">Quick Verdict</span>
+            </div>
+            <div className={`grid ${colClass} gap-4`}>
+              {candidates.map((c) => {
+                const score = c.matchScore || 0
+                const strengths = parseJsonSafe<string[]>(c.strengths, [])
+                const weaknesses = parseJsonSafe<string[]>(c.weaknesses, [])
+                const skills = parseJsonSafe<string[]>(c.skills, [])
+                const isWinner = winner?.id === c.id
+
+                return (
+                  <div
+                    key={c.id}
+                    className={`p-4 rounded-xl border transition-all ${
+                      isWinner
+                        ? 'bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800'
+                        : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700'
+                    }`}
+                  >
+                    <p className="font-bold text-gray-900 dark:text-white mb-2">
+                      {c.firstName} {c.lastName}
+                      {isWinner && <Crown size={14} className="inline ml-1.5 -mt-0.5 text-amber-500" />}
+                    </p>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="flex items-center gap-1.5">
+                        <Trophy size={11} className="text-amber-500 shrink-0" />
+                        <span className="text-gray-600 dark:text-gray-400">
+                          Score: <strong className={getScoreColor(score)}>{score > 0 ? `${score.toFixed(0)}%` : '--'}</strong>
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Award size={11} className="text-indigo-500 shrink-0" />
+                        <span className="text-gray-600 dark:text-gray-400">
+                          Skills: <strong>{skills.length}</strong>
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <TrendingUp size={11} className="text-green-500 shrink-0" />
+                        <span className="text-gray-600 dark:text-gray-400">
+                          Strengths: <strong className="text-green-600 dark:text-green-400">{strengths.length}</strong>
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <TrendingDown size={11} className="text-amber-500 shrink-0" />
+                        <span className="text-gray-600 dark:text-gray-400">
+                          Weaknesses: <strong className="text-amber-600 dark:text-amber-400">{weaknesses.length}</strong>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

@@ -12,6 +12,13 @@ export default async function AdminPage() {
   const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
 
+  // Weekly signup counts for growth chart (last 4 weeks)
+  const weekBoundaries = Array.from({ length: 4 }, (_, i) => {
+    const end = new Date(Date.now() - i * 7 * 24 * 60 * 60 * 1000)
+    const start = new Date(end.getTime() - 7 * 24 * 60 * 60 * 1000)
+    return { start, end, label: `W-${i}` }
+  }).reverse()
+
   const [
     users, tickets, subscriptions, counts,
     aiAnalysesCount, integrationsCount, emailInboxesCount,
@@ -19,20 +26,23 @@ export default async function AdminPage() {
     newUsersThisWeek, candidatesThisWeek, candidatesToday,
     integrationsByPlatform, candidatesBySource,
     activeVacanciesCount,
+    activeToday,
+    weeklySignups,
+    recentActivity,
   ] = await Promise.all([
     prisma.user.findMany({
       orderBy: { createdAt: 'desc' },
       select: {
         id: true, name: true, email: true, company: true, role: true,
         subscription: true, subscriptionEnd: true,
-        suspended: true, createdAt: true,
+        suspended: true, createdAt: true, lastSeenAt: true,
         _count: { select: { vacancies: true, candidates: true, supportTickets: true } },
       },
     }),
     prisma.supportTicket.findMany({
       orderBy: { createdAt: 'desc' },
       take: 50,
-      include: { user: { select: { subscription: true } } },
+      include: { user: { select: { name: true, email: true, company: true, subscription: true } } },
     }),
     prisma.user.groupBy({ by: ['subscription'], _count: true }),
     Promise.all([
@@ -56,6 +66,45 @@ export default async function AdminPage() {
     prisma.integration.groupBy({ by: ['platform'], _count: true }),
     prisma.candidate.groupBy({ by: ['source'], _count: true }),
     prisma.vacancy.count({ where: { status: 'active' } }),
+    // Active today: users seen in last 24h
+    prisma.user.count({ where: { lastSeenAt: { gte: oneDayAgo } } }),
+    // Weekly signups for growth chart
+    Promise.all(
+      weekBoundaries.map(w =>
+        prisma.user.count({ where: { createdAt: { gte: w.start, lt: w.end } } })
+          .then(count => ({ label: w.label, start: w.start.toISOString(), end: w.end.toISOString(), count }))
+      )
+    ),
+    // Recent activity: last 10 events across new users, new vacancies, and new analyses
+    Promise.all([
+      prisma.user.findMany({
+        orderBy: { createdAt: 'desc' }, take: 5,
+        select: { id: true, name: true, email: true, createdAt: true },
+      }).then(rows => rows.map(r => ({
+        type: 'new_user' as const,
+        description: `${r.name || r.email || 'Unknown'} signed up`,
+        createdAt: r.createdAt.toISOString(),
+      }))),
+      prisma.vacancy.findMany({
+        orderBy: { createdAt: 'desc' }, take: 5,
+        select: { title: true, createdAt: true, user: { select: { name: true, email: true } } },
+      }).then(rows => rows.map(r => ({
+        type: 'new_vacancy' as const,
+        description: `${r.user.name || r.user.email || 'Unknown'} created vacancy "${r.title}"`,
+        createdAt: r.createdAt.toISOString(),
+      }))),
+      prisma.candidate.findMany({
+        orderBy: { analyzedAt: 'desc' }, take: 5,
+        where: { analyzedAt: { not: null } },
+        select: { firstName: true, lastName: true, analyzedAt: true, vacancy: { select: { title: true } } },
+      }).then(rows => rows.map(r => ({
+        type: 'analysis' as const,
+        description: `CV analyzed: ${r.firstName} ${r.lastName} for "${r.vacancy.title}"`,
+        createdAt: (r.analyzedAt ?? new Date()).toISOString(),
+      }))),
+    ]).then(([u, v, a]) =>
+      [...u, ...v, ...a].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 10)
+    ),
   ])
 
   return (
@@ -68,6 +117,7 @@ export default async function AdminPage() {
           subscriptions={subscriptions}
           counts={counts}
           hasAiKey={!!process.env.ANTHROPIC_API_KEY}
+          hasSmtp={!!(process.env.SMTP_HOST && process.env.SMTP_USER)}
           aiAnalysesCount={aiAnalysesCount}
           integrationsCount={integrationsCount}
           emailInboxesCount={emailInboxesCount}
@@ -79,6 +129,9 @@ export default async function AdminPage() {
           integrationsByPlatform={integrationsByPlatform as any}
           candidatesBySource={candidatesBySource as any}
           activeVacanciesCount={activeVacanciesCount}
+          activeToday={activeToday}
+          weeklySignups={weeklySignups}
+          recentActivity={recentActivity}
         />
       </div>
     </div>
