@@ -130,6 +130,11 @@ export function AdminClient({
   integrationsByPlatform, candidatesBySource, activeVacanciesCount,
   activeToday, weeklySignups, recentActivity,
 }: Props) {
+  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
+  const urlTab = searchParams?.get('tab')
+  const tabMap: Record<string, string> = { users: 'accounts', support: 'support', actions: 'actions' }
+  const initialTab = urlTab ? tabMap[urlTab] || 'accounts' : 'accounts'
+
   const [users, setUsers] = useState(initialUsers)
   const [tickets, setTickets] = useState(initialTickets)
   const [expandedUser, setExpandedUser] = useState<string | null>(null)
@@ -410,7 +415,7 @@ export function AdminClient({
       </Card>
 
       {/* ── Main Tabs ── */}
-      <Tabs defaultValue="accounts">
+      <Tabs defaultValue={initialTab}>
         <TabsList>
           <TabsTrigger value="accounts">Accounts ({users.length})</TabsTrigger>
           <TabsTrigger value="support">
