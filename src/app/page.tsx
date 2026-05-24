@@ -86,8 +86,8 @@ export default function LandingPage() {
             <span className="font-bold text-gray-900 dark:text-white text-lg">CVMatch AI</span>
           </Link>
           <div className="hidden md:flex items-center gap-8 text-sm text-gray-500 dark:text-gray-400">
-            <a href="#ai-features" className="hover:text-gray-900 dark:hover:text-white transition-colors">AI Features</a>
-            <a href="#platform" className="hover:text-gray-900 dark:hover:text-white transition-colors">Platform</a>
+            <a href="#ai-features" className="hover:text-gray-900 dark:hover:text-white transition-colors">{t.landing.navAiFeatures}</a>
+            <a href="#platform" className="hover:text-gray-900 dark:hover:text-white transition-colors">{t.landing.navPlatform}</a>
             <a href="#pricing" className="hover:text-gray-900 dark:hover:text-white transition-colors">{t.nav.pricing}</a>
           </div>
           <div className="flex items-center gap-3">
@@ -151,9 +151,9 @@ export default function LandingPage() {
             </div>
             <div className="grid grid-cols-3 gap-4 mb-4">
               {[
-                { label: 'Candidates Analyzed', value: '1,247', color: 'text-blue-400' },
-                { label: 'Avg. Match Score', value: '78%', color: 'text-green-400' },
-                { label: 'Time Saved', value: '80%', color: 'text-purple-400' },
+                { label: t.landing.mockUi.candidatesAnalyzed, value: '1,247', color: 'text-blue-400' },
+                { label: t.landing.mockUi.avgMatchScore, value: '78%', color: 'text-green-400' },
+                { label: t.landing.mockUi.timeSaved, value: '80%', color: 'text-purple-400' },
               ].map(s => (
                 <div key={s.label} className="bg-white/5 rounded-xl p-4">
                   <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
@@ -178,7 +178,7 @@ export default function LandingPage() {
               ))}
             </div>
             <div className="mt-4 pt-4 border-t border-white/10">
-              <div className="text-xs text-gray-500 mb-2">Connected ATS platforms</div>
+              <div className="text-xs text-gray-500 mb-2">{t.landing.mockUi.connectedAts}</div>
               <div className="flex gap-2">
                 {[
                   { name: 'Teamtailor', dot: 'bg-green-400' },
@@ -239,7 +239,7 @@ export default function LandingPage() {
                     <div className="flex items-center gap-2"><CheckCircle size={12} className="text-amber-400 shrink-0" /><span className="text-gray-300">No Kubernetes experience</span></div>
                   </div>
                   <div className="mt-3 pt-3 border-t border-white/10 text-center">
-                    <span className="text-xs bg-green-500/20 text-green-300 px-3 py-1 rounded-full font-medium">Recommended</span>
+                    <span className="text-xs bg-green-500/20 text-green-300 px-3 py-1 rounded-full font-medium">{t.landing.mockUi.recommended}</span>
                   </div>
                 </div>
               </div>
@@ -269,8 +269,8 @@ export default function LandingPage() {
       <section id="platform" className="py-24 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">Built for Modern Recruiters</h2>
-            <p className="text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">Everything you need to manage your recruitment pipeline, from intake to hire.</p>
+            <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">{t.landing.platformSection.title}</h2>
+            <p className="text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">{t.landing.platformSection.subtitle}</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {PLATFORM_FEATURES.map((feature, i) => {
