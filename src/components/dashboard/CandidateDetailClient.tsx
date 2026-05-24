@@ -4,7 +4,8 @@ import { useState, useRef } from 'react'
 import {
   Mail, Phone, Linkedin, CheckCircle, XCircle, Clock, Star,
   TrendingUp, TrendingDown, Loader2, RefreshCw, FileText, User, Briefcase,
-  GraduationCap, Languages, Award, Flag, Archive, Send, X, Video
+  GraduationCap, Languages, Award, Flag, Archive, Send, X, Video,
+  MessageSquareText, ClipboardList, Sparkles, Copy
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -65,6 +66,10 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
   const [teamsLink, setTeamsLink] = useState('')
   const [sendingEmail, setSendingEmail] = useState(false)
   const [generatingEmail, setGeneratingEmail] = useState(false)
+  const [interviewQuestions, setInterviewQuestions] = useState<Array<{ question: string; category: string; rationale: string }> | null>(null)
+  const [loadingQuestions, setLoadingQuestions] = useState(false)
+  const [hiringReport, setHiringReport] = useState<string | null>(null)
+  const [loadingReport, setLoadingReport] = useState(false)
   const notesTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const score = candidate.matchScore || 0
@@ -202,6 +207,55 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
     } finally {
       setSendingEmail(false)
     }
+  }
+
+  const handleGenerateQuestions = async () => {
+    setLoadingQuestions(true)
+    try {
+      const res = await fetch('/api/candidates/interview-questions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ candidateId: candidate.id }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setInterviewQuestions(data.questions)
+        toast({ title: 'Interview questions generated' })
+      } else {
+        toast({ title: data.error || 'Failed to generate', variant: 'destructive' })
+      }
+    } catch {
+      toast({ title: 'Failed to generate questions', variant: 'destructive' })
+    } finally {
+      setLoadingQuestions(false)
+    }
+  }
+
+  const handleGenerateReport = async () => {
+    setLoadingReport(true)
+    try {
+      const res = await fetch('/api/candidates/hiring-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ candidateId: candidate.id }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setHiringReport(data.report)
+        toast({ title: 'Hiring report generated' })
+      } else {
+        toast({ title: data.error || 'Failed to generate', variant: 'destructive' })
+      }
+    } catch {
+      toast({ title: 'Failed to generate report', variant: 'destructive' })
+    } finally {
+      setLoadingReport(false)
+    }
+  }
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+    toast({ title: 'Copied to clipboard' })
   }
 
   const scoreColor = score >= 75 ? 'text-green-600' : score >= 50 ? 'text-amber-600' : 'text-red-500'
@@ -397,6 +451,8 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
               <TabsTrigger value="analysis">{cd.aiAnalysis}</TabsTrigger>
               <TabsTrigger value="notes">{cd.notes}</TabsTrigger>
               {hasEmailSource && <TabsTrigger value="email">{cd.emailPanel}</TabsTrigger>}
+              <TabsTrigger value="interview" className="gap-1"><MessageSquareText size={14} /> Interview</TabsTrigger>
+              <TabsTrigger value="report" className="gap-1"><ClipboardList size={14} /> Report</TabsTrigger>
               <TabsTrigger value="cv">CV</TabsTrigger>
               {hasMotivationText && <TabsTrigger value="motivation">Motivation</TabsTrigger>}
             </TabsList>
@@ -583,6 +639,91 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                 </Card>
               </TabsContent>
             )}
+
+            {/* ── Interview Questions tab ── */}
+            <TabsContent value="interview" className="mt-4">
+              <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <MessageSquareText className="w-4 h-4 text-purple-500" /> AI Interview Questions
+                    </CardTitle>
+                    <Button onClick={handleGenerateQuestions} disabled={loadingQuestions || !candidate.cvContent} size="sm" className="gap-2 gradient-bg">
+                      {loadingQuestions ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                      {loadingQuestions ? 'Generating...' : interviewQuestions ? 'Regenerate' : 'Generate Questions'}
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {interviewQuestions ? (
+                    <div className="space-y-4">
+                      <div className="flex justify-end">
+                        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => copyToClipboard(interviewQuestions.map((q, i) => `${i + 1}. [${q.category}] ${q.question}\n   Why: ${q.rationale}`).join('\n\n'))}>
+                          <Copy size={12} /> Copy all
+                        </Button>
+                      </div>
+                      {interviewQuestions.map((q, i) => (
+                        <div key={i} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl space-y-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">{i + 1}. {q.question}</p>
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${
+                              q.category === 'technical' ? 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400' :
+                              q.category === 'behavioral' ? 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400' :
+                              q.category === 'situational' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400' :
+                              'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-400'
+                            }`}>{q.category}</span>
+                          </div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 italic">{q.rationale}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-12 text-center">
+                      <MessageSquareText className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                      <p className="text-gray-400 text-sm mb-1">Personalized interview questions</p>
+                      <p className="text-gray-400 text-xs">AI generates questions based on this candidate's CV and the vacancy requirements.</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* ── Hiring Report tab ── */}
+            <TabsContent value="report" className="mt-4">
+              <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <ClipboardList className="w-4 h-4 text-indigo-500" /> AI Hiring Report
+                    </CardTitle>
+                    <div className="flex gap-2">
+                      {hiringReport && (
+                        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => copyToClipboard(hiringReport)}>
+                          <Copy size={12} /> Copy
+                        </Button>
+                      )}
+                      <Button onClick={handleGenerateReport} disabled={loadingReport} size="sm" className="gap-2 gradient-bg">
+                        {loadingReport ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                        {loadingReport ? 'Generating...' : hiringReport ? 'Regenerate' : 'Generate Report'}
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {hiringReport ? (
+                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                      <pre className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-sans leading-relaxed bg-gray-50 dark:bg-gray-800 rounded-xl p-6">{hiringReport}</pre>
+                    </div>
+                  ) : (
+                    <div className="py-12 text-center">
+                      <ClipboardList className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                      <p className="text-gray-400 text-sm mb-1">Professional hiring report</p>
+                      <p className="text-gray-400 text-xs">Generate a 1-page report to share with the hiring manager.</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             {/* ── CV tab ── */}
             <TabsContent value="cv" className="mt-4">

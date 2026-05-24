@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from '@/components/ui/use-toast'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Sparkles } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 interface Props {
@@ -21,6 +21,7 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
   const { t } = useLanguage()
   const cv = t.dashboard.createVacancy
   const [loading, setLoading] = useState(false)
+  const [generating, setGenerating] = useState(false)
   const [form, setForm] = useState({
     title: '', company: '', department: '', location: '',
     type: 'full-time', description: '', requirements: '',
@@ -118,6 +119,31 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
               <Input placeholder={cv.salaryPlaceholder} value={form.salary} onChange={e => setForm(p => ({ ...p, salary: e.target.value }))} />
             </div>
           </div>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={generating || !form.title.trim()}
+            onClick={async () => {
+              setGenerating(true)
+              try {
+                const res = await fetch('/api/vacancies/generate-description', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ title: form.title, keywords: form.department, language: form.language, company: form.company }),
+                })
+                const data = await res.json()
+                if (res.ok) {
+                  setForm(p => ({ ...p, description: data.description, requirements: data.requirements, niceToHave: data.niceToHave }))
+                  toast({ title: 'Description generated with AI' })
+                }
+              } catch { toast({ title: 'Generation failed', variant: 'destructive' }) }
+              finally { setGenerating(false) }
+            }}
+            className="w-full gap-2 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-400"
+          >
+            {generating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+            {generating ? 'Generating...' : 'Generate description, requirements & nice-to-have with AI'}
+          </Button>
           <div className="space-y-1.5">
             <Label>{cv.description}</Label>
             <Textarea

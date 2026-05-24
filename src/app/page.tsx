@@ -171,6 +171,63 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* AI Superpowers */}
+      <section className="py-24 px-6 bg-gradient-to-br from-blue-950 to-indigo-950 text-white">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 bg-blue-500/20 border border-blue-500/30 text-blue-300 text-sm px-4 py-1.5 rounded-full mb-6">
+              <Zap size={14} /> AI-Powered Features
+            </div>
+            <h2 className="text-4xl font-bold mb-4">Your AI Recruitment Assistant</h2>
+            <p className="text-lg text-gray-400 max-w-2xl mx-auto">Stop spending hours on manual tasks. Let AI handle the heavy lifting so you can focus on what matters — finding the perfect match.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {[
+              {
+                icon: Brain,
+                title: 'AI Interview Questions',
+                desc: 'Generate personalized interview questions based on each candidate\'s CV and the job requirements. Technical, behavioral, and situational questions — tailored, not generic.',
+                tag: 'Save 30 min per interview',
+                color: 'from-blue-500 to-cyan-500',
+              },
+              {
+                icon: Upload,
+                title: 'AI Job Description Generator',
+                desc: 'Type a job title and a few keywords. Get a complete, professional job description with requirements and nice-to-haves in seconds.',
+                tag: 'Write vacancies 10x faster',
+                color: 'from-purple-500 to-pink-500',
+              },
+              {
+                icon: BarChart3,
+                title: 'AI Candidate Ranking',
+                desc: 'Compare all candidates side-by-side with AI reasoning. Know exactly WHY candidate #1 is better than #2 for THIS specific role.',
+                tag: 'Data-driven hiring decisions',
+                color: 'from-amber-500 to-orange-500',
+              },
+              {
+                icon: Mail,
+                title: 'AI Hiring Report',
+                desc: 'Generate a professional 1-page report for the hiring manager. Candidate overview, match score, strengths, concerns, and recommendation — ready to share.',
+                tag: 'Professional reports in 1 click',
+                color: 'from-green-500 to-emerald-500',
+              },
+            ].map((feature, i) => {
+              const Icon = feature.icon
+              return (
+                <div key={i} className="relative p-8 rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 transition-all group">
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-5 shadow-lg`}>
+                    <Icon className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
+                  <p className="text-gray-400 text-sm leading-relaxed mb-4">{feature.desc}</p>
+                  <span className="inline-block text-xs bg-white/10 text-blue-300 px-3 py-1 rounded-full font-medium">{feature.tag}</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
       {/* How it works */}
       <section id="how-it-works" className="py-24 px-6 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-4xl mx-auto">
