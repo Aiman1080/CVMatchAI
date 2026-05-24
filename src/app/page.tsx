@@ -13,64 +13,64 @@ import { Button } from '@/components/ui/button'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { useLanguage } from '@/contexts/LanguageContext'
 
-const AI_FEATURES = [
-  {
-    icon: Brain,
-    title: 'AI CV Analysis',
-    desc: 'Upload a CV, get an instant match score (0-100), strengths, weaknesses, skills extraction, and a hire/reject recommendation.',
-    tag: 'Core feature',
-    color: 'from-blue-500 to-cyan-500',
-  },
-  {
-    icon: MessageSquareText,
-    title: 'AI Interview Questions',
-    desc: 'Generate 8 personalized interview questions based on each candidate\'s CV and the job requirements. Technical, behavioral, situational — not generic.',
-    tag: 'Save 30 min per interview',
-    color: 'from-violet-500 to-purple-500',
-  },
-  {
-    icon: FileText,
-    title: 'AI Job Description',
-    desc: 'Type a job title and a few keywords. Get a complete, professional job description with requirements and nice-to-haves in seconds.',
-    tag: 'Write vacancies 10x faster',
-    color: 'from-pink-500 to-rose-500',
-  },
-  {
-    icon: Trophy,
-    title: 'AI Candidate Ranking',
-    desc: 'Compare all candidates side-by-side with AI reasoning. Know exactly WHY candidate #1 is better than #2 for this specific role.',
-    tag: 'Data-driven hiring decisions',
-    color: 'from-amber-500 to-orange-500',
-  },
-  {
-    icon: ClipboardList,
-    title: 'AI Hiring Report',
-    desc: 'Generate a professional 1-page report for the hiring manager. Candidate overview, score, strengths, concerns, recommendation — ready to share.',
-    tag: 'Professional reports in 1 click',
-    color: 'from-green-500 to-emerald-500',
-  },
-  {
-    icon: Mail,
-    title: 'AI Email Generator',
-    desc: 'Generate personalized interview invitations or rejection emails. One click, professional tone, in the candidate\'s language (EN/NL/FR).',
-    tag: 'Multilingual AI emails',
-    color: 'from-sky-500 to-blue-500',
-  },
-]
-
-const PLATFORM_FEATURES = [
-  { icon: Upload, title: 'Bulk CV Upload', desc: 'Upload PDF, DOCX, or text files. Parser extracts text and triggers AI analysis automatically.', color: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400' },
-  { icon: Mail, title: 'Email Inbox Scanning', desc: 'Connect your recruitment inbox. AI auto-detects CVs in emails, ignores spam, creates candidate profiles.', color: 'bg-purple-100 text-purple-600 dark:bg-purple-950 dark:text-purple-400' },
-  { icon: Plug, title: 'ATS Integrations', desc: 'Connect Teamtailor, Recruitee, SmartRecruiters. Import candidates and vacancies with one click.', color: 'bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400' },
-  { icon: Users, title: 'Pipeline Management', desc: 'Move candidates through stages: New, Reviewing, Shortlisted, Hired. Full recruitment workflow.', color: 'bg-green-100 text-green-600 dark:bg-green-950 dark:text-green-400' },
-  { icon: BarChart3, title: 'Analytics Dashboard', desc: 'Track hiring metrics, pipeline conversion rates, time-to-hire, and candidate source performance.', color: 'bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400' },
-  { icon: Shield, title: 'GDPR Compliant', desc: 'Encrypted storage, consent tracking, data export, automatic deletion. Full GDPR compliance built-in.', color: 'bg-teal-100 text-teal-600 dark:bg-teal-950 dark:text-teal-400' },
-]
-
 export default function LandingPage() {
   const { t } = useLanguage()
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
+
+  const AI_FEATURES = [
+    {
+      icon: Brain,
+      title: t.landing.aiFeatures.cvAnalysis.title,
+      desc: t.landing.aiFeatures.cvAnalysis.desc,
+      tag: t.landing.aiFeatures.cvAnalysis.tag,
+      color: 'from-blue-500 to-cyan-500',
+    },
+    {
+      icon: MessageSquareText,
+      title: t.landing.aiFeatures.interviewQuestions.title,
+      desc: t.landing.aiFeatures.interviewQuestions.desc,
+      tag: t.landing.aiFeatures.interviewQuestions.tag,
+      color: 'from-violet-500 to-purple-500',
+    },
+    {
+      icon: FileText,
+      title: t.landing.aiFeatures.jobDescription.title,
+      desc: t.landing.aiFeatures.jobDescription.desc,
+      tag: t.landing.aiFeatures.jobDescription.tag,
+      color: 'from-pink-500 to-rose-500',
+    },
+    {
+      icon: Trophy,
+      title: t.landing.aiFeatures.candidateRanking.title,
+      desc: t.landing.aiFeatures.candidateRanking.desc,
+      tag: t.landing.aiFeatures.candidateRanking.tag,
+      color: 'from-amber-500 to-orange-500',
+    },
+    {
+      icon: ClipboardList,
+      title: t.landing.aiFeatures.hiringReport.title,
+      desc: t.landing.aiFeatures.hiringReport.desc,
+      tag: t.landing.aiFeatures.hiringReport.tag,
+      color: 'from-green-500 to-emerald-500',
+    },
+    {
+      icon: Mail,
+      title: t.landing.aiFeatures.emailGenerator.title,
+      desc: t.landing.aiFeatures.emailGenerator.desc,
+      tag: t.landing.aiFeatures.emailGenerator.tag,
+      color: 'from-sky-500 to-blue-500',
+    },
+  ]
+
+  const PLATFORM_FEATURES = [
+    { icon: Upload, title: t.landing.platformFeatures.bulkUpload.title, desc: t.landing.platformFeatures.bulkUpload.desc, color: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400' },
+    { icon: Mail, title: t.landing.platformFeatures.emailScanning.title, desc: t.landing.platformFeatures.emailScanning.desc, color: 'bg-purple-100 text-purple-600 dark:bg-purple-950 dark:text-purple-400' },
+    { icon: Plug, title: t.landing.platformFeatures.atsIntegrations.title, desc: t.landing.platformFeatures.atsIntegrations.desc, color: 'bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400' },
+    { icon: Users, title: t.landing.platformFeatures.pipeline.title, desc: t.landing.platformFeatures.pipeline.desc, color: 'bg-green-100 text-green-600 dark:bg-green-950 dark:text-green-400' },
+    { icon: BarChart3, title: t.landing.platformFeatures.analytics.title, desc: t.landing.platformFeatures.analytics.desc, color: 'bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400' },
+    { icon: Shield, title: t.landing.platformFeatures.gdpr.title, desc: t.landing.platformFeatures.gdpr.desc, color: 'bg-teal-100 text-teal-600 dark:bg-teal-950 dark:text-teal-400' },
+  ]
 
   useEffect(() => setMounted(true), [])
 
@@ -201,10 +201,10 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 bg-blue-500/20 border border-blue-500/30 text-blue-300 text-sm px-4 py-1.5 rounded-full mb-6">
-              <Sparkles size={14} /> 6 AI-Powered Features
+              <Sparkles size={14} /> {t.landing.aiSection.badge}
             </div>
-            <h2 className="text-4xl font-bold mb-4">AI That Does the Work For You</h2>
-            <p className="text-lg text-gray-400 max-w-2xl mx-auto">Every repetitive HR task — automated. Every decision — backed by AI analysis. Save hours every week and hire with confidence.</p>
+            <h2 className="text-4xl font-bold mb-4">{t.landing.aiSection.title}</h2>
+            <p className="text-lg text-gray-400 max-w-2xl mx-auto">{t.landing.aiSection.subtitle}</p>
           </div>
 
           {/* Main AI feature: CV Analysis (hero card) */}
@@ -216,13 +216,13 @@ export default function LandingPage() {
                     <Brain className="w-7 h-7 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-bold">AI CV Analysis</h3>
-                    <span className="text-xs bg-blue-500/30 text-blue-200 px-2 py-0.5 rounded-full">Core feature</span>
+                    <h3 className="text-2xl font-bold">{t.landing.aiFeatures.cvAnalysis.title}</h3>
+                    <span className="text-xs bg-blue-500/30 text-blue-200 px-2 py-0.5 rounded-full">{t.landing.aiFeatures.cvAnalysis.tag}</span>
                   </div>
                 </div>
-                <p className="text-gray-300 leading-relaxed mb-4">Upload a CV, get an instant match score (0-100), detailed strengths and weaknesses, skills extraction, experience summary, and a hire/reject recommendation. Works with PDF, DOCX, and plain text. Supports English, Dutch, French, and German CVs.</p>
+                <p className="text-gray-300 leading-relaxed mb-4">{t.landing.aiFeatures.cvAnalysis.desc}</p>
                 <div className="flex flex-wrap gap-3">
-                  {['Match Score 0-100', 'Strengths & Weaknesses', 'Skills Extraction', 'Hire Recommendation', 'Multi-language'].map(tag => (
+                  {t.landing.aiFeatures.cvAnalysis.tags.map(tag => (
                     <span key={tag} className="text-xs bg-white/10 text-gray-300 px-3 py-1 rounded-full">{tag}</span>
                   ))}
                 </div>
@@ -231,7 +231,7 @@ export default function LandingPage() {
                 <div className="bg-white/10 rounded-xl p-5 backdrop-blur-sm border border-white/10">
                   <div className="text-center mb-3">
                     <div className="text-4xl font-extrabold text-green-400">87%</div>
-                    <div className="text-xs text-gray-400 mt-1">Match Score</div>
+                    <div className="text-xs text-gray-400 mt-1">{t.landing.mockUi.matchScore}</div>
                   </div>
                   <div className="space-y-2 text-xs">
                     <div className="flex items-center gap-2"><CheckCircle size={12} className="text-green-400 shrink-0" /><span className="text-gray-300">5 years React experience</span></div>

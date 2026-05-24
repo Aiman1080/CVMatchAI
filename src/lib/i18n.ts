@@ -66,6 +66,68 @@ export const translations = {
       terms: 'Terms',
       contact: 'Contact',
     },
+    landing: {
+      navAiFeatures: 'AI Features',
+      navPlatform: 'Platform',
+      aiSection: {
+        badge: '6 AI-Powered Features',
+        title: 'AI That Does the Work For You',
+        subtitle: 'Every repetitive HR task — automated. Every decision — backed by AI analysis. Save hours every week and hire with confidence.',
+      },
+      aiFeatures: {
+        cvAnalysis: {
+          title: 'AI CV Analysis',
+          tag: 'Core feature',
+          desc: 'Upload a CV, get an instant match score (0-100), detailed strengths and weaknesses, skills extraction, experience summary, and a hire/reject recommendation. Works with PDF, DOCX, and plain text. Supports English, Dutch, French, and German CVs.',
+          tags: ['Match Score 0-100', 'Strengths & Weaknesses', 'Skills Extraction', 'Hire Recommendation', 'Multi-language'],
+        },
+        interviewQuestions: {
+          title: 'AI Interview Questions',
+          desc: 'Generate 8 personalized interview questions based on each candidate\'s CV and the job requirements. Technical, behavioral, situational — not generic.',
+          tag: 'Save 30 min per interview',
+        },
+        jobDescription: {
+          title: 'AI Job Description',
+          desc: 'Type a job title and a few keywords. Get a complete, professional job description with requirements and nice-to-haves in seconds.',
+          tag: 'Write vacancies 10x faster',
+        },
+        candidateRanking: {
+          title: 'AI Candidate Ranking',
+          desc: 'Compare all candidates side-by-side with AI reasoning. Know exactly WHY candidate #1 is better than #2 for this specific role.',
+          tag: 'Data-driven hiring decisions',
+        },
+        hiringReport: {
+          title: 'AI Hiring Report',
+          desc: 'Generate a professional 1-page report for the hiring manager. Candidate overview, score, strengths, concerns, recommendation — ready to share.',
+          tag: 'Professional reports in 1 click',
+        },
+        emailGenerator: {
+          title: 'AI Email Generator',
+          desc: 'Generate personalized interview invitations or rejection emails. One click, professional tone, in the candidate\'s language (EN/NL/FR).',
+          tag: 'Multilingual AI emails',
+        },
+      },
+      platformSection: {
+        title: 'Built for Modern Recruiters',
+        subtitle: 'Everything you need to manage your recruitment pipeline, from intake to hire.',
+      },
+      platformFeatures: {
+        bulkUpload: { title: 'Bulk CV Upload', desc: 'Upload PDF, DOCX, or text files. Parser extracts text and triggers AI analysis automatically.' },
+        emailScanning: { title: 'Email Inbox Scanning', desc: 'Connect your recruitment inbox. AI auto-detects CVs in emails, ignores spam, creates candidate profiles.' },
+        atsIntegrations: { title: 'ATS Integrations', desc: 'Connect Teamtailor, Recruitee, SmartRecruiters. Import candidates and vacancies with one click.' },
+        pipeline: { title: 'Pipeline Management', desc: 'Move candidates through stages: New, Reviewing, Shortlisted, Hired. Full recruitment workflow.' },
+        analytics: { title: 'Analytics Dashboard', desc: 'Track hiring metrics, pipeline conversion rates, time-to-hire, and candidate source performance.' },
+        gdpr: { title: 'GDPR Compliant', desc: 'Encrypted storage, consent tracking, data export, automatic deletion. Full GDPR compliance built-in.' },
+      },
+      mockUi: {
+        candidatesAnalyzed: 'Candidates Analyzed',
+        avgMatchScore: 'Avg. Match Score',
+        timeSaved: 'Time Saved',
+        connectedAts: 'Connected ATS platforms',
+        matchScore: 'Match Score',
+        recommended: 'Recommended',
+      },
+    },
     dashboard: {
       nav: {
         dashboard: 'Dashboard',
@@ -608,6 +670,68 @@ export const translations = {
       terms: 'Voorwaarden',
       contact: 'Contact',
     },
+    landing: {
+      navAiFeatures: 'AI-functies',
+      navPlatform: 'Platform',
+      aiSection: {
+        badge: '6 AI-functies',
+        title: 'AI die het werk voor u doet',
+        subtitle: 'Elke repetitieve HR-taak — geautomatiseerd. Elke beslissing — onderbouwd door AI-analyse. Bespaar uren per week en werf met vertrouwen.',
+      },
+      aiFeatures: {
+        cvAnalysis: {
+          title: 'AI CV-analyse',
+          tag: 'Kernfunctie',
+          desc: 'Upload een cv en ontvang direct een matchscore (0-100), gedetailleerde sterke en zwakke punten, vaardigheden, ervaringsoverzicht en een aanbeveling om aan te nemen of af te wijzen. Werkt met PDF, DOCX en platte tekst. Ondersteunt Engelstalige, Nederlandstalige, Franstalige en Duitstalige cv\'s.',
+          tags: ['Matchscore 0-100', 'Sterktes & zwaktes', 'Vaardigheden', 'Aanwervaanbeveling', 'Meertalig'],
+        },
+        interviewQuestions: {
+          title: 'AI-interviewvragen',
+          desc: 'Genereer 8 gepersonaliseerde interviewvragen op basis van het cv van de kandidaat en de functie-eisen. Technisch, gedragsmatig, situationeel — geen standaardvragen.',
+          tag: 'Bespaar 30 min per interview',
+        },
+        jobDescription: {
+          title: 'AI-vacaturetekst',
+          desc: 'Typ een functietitel en enkele trefwoorden. Ontvang in seconden een volledige, professionele vacaturetekst met vereisten en pluspunten.',
+          tag: 'Schrijf vacatures 10x sneller',
+        },
+        candidateRanking: {
+          title: 'AI-kandidaatrangschikking',
+          desc: 'Vergelijk alle kandidaten naast elkaar met AI-onderbouwing. Weet precies WAAROM kandidaat #1 beter past dan #2 voor deze specifieke functie.',
+          tag: 'Datagedreven wervingsbeslissingen',
+        },
+        hiringReport: {
+          title: 'AI-wervingsrapport',
+          desc: 'Genereer een professioneel rapport van 1 pagina voor de hiring manager. Kandidaatoverzicht, score, sterktes, aandachtspunten, aanbeveling — klaar om te delen.',
+          tag: 'Professionele rapporten in 1 klik',
+        },
+        emailGenerator: {
+          title: 'AI-e-mailgenerator',
+          desc: 'Genereer gepersonaliseerde uitnodigingen voor gesprekken of afwijzingsmails. Eén klik, professionele toon, in de taal van de kandidaat (EN/NL/FR).',
+          tag: 'Meertalige AI-e-mails',
+        },
+      },
+      platformSection: {
+        title: 'Gebouwd voor moderne recruiters',
+        subtitle: 'Alles wat u nodig hebt om uw wervingspipeline te beheren, van intake tot aanwerving.',
+      },
+      platformFeatures: {
+        bulkUpload: { title: 'Bulk CV-upload', desc: 'Upload PDF-, DOCX- of tekstbestanden. De parser extraheert tekst en start de AI-analyse automatisch.' },
+        emailScanning: { title: 'E-mailinbox scannen', desc: 'Verbind uw recruitmentinbox. AI detecteert automatisch cv\'s in e-mails, negeert spam en maakt kandidaatprofielen aan.' },
+        atsIntegrations: { title: 'ATS-integraties', desc: 'Verbind Teamtailor, Recruitee en SmartRecruiters. Importeer kandidaten en vacatures met één klik.' },
+        pipeline: { title: 'Pipeline-beheer', desc: 'Verplaats kandidaten door stadia: Nieuw, In beoordeling, Shortlist, Aangenomen. Complete wervingsworkflow.' },
+        analytics: { title: 'Analysedashboard', desc: 'Volg wervingsstatistieken, pipelineconversie, doorlooptijd en prestaties per kandidaatbron.' },
+        gdpr: { title: 'AVG-conform', desc: 'Versleutelde opslag, toestemmingsregistratie, gegevensexport, automatische verwijdering. Volledige AVG-compliance ingebouwd.' },
+      },
+      mockUi: {
+        candidatesAnalyzed: 'Kandidaten geanalyseerd',
+        avgMatchScore: 'Gem. matchscore',
+        timeSaved: 'Tijdsbesparing',
+        connectedAts: 'Verbonden ATS-platforms',
+        matchScore: 'Matchscore',
+        recommended: 'Aanbevolen',
+      },
+    },
     dashboard: {
       nav: {
         dashboard: 'Dashboard',
@@ -1149,6 +1273,68 @@ export const translations = {
       privacy: 'Confidentialité',
       terms: 'Conditions',
       contact: 'Contact',
+    },
+    landing: {
+      navAiFeatures: 'Fonctionnalités IA',
+      navPlatform: 'Plateforme',
+      aiSection: {
+        badge: '6 Fonctionnalités IA',
+        title: "L'IA qui travaille pour vous",
+        subtitle: "Chaque tâche RH répétitive — automatisée. Chaque décision — appuyée par l'analyse IA. Gagnez des heures chaque semaine et recrutez en toute confiance.",
+      },
+      aiFeatures: {
+        cvAnalysis: {
+          title: 'Analyse IA de CV',
+          tag: 'Fonction principale',
+          desc: "Uploadez un CV et obtenez instantanément un score de correspondance (0-100), les points forts et faibles détaillés, l'extraction des compétences, un résumé d'expérience et une recommandation d'embauche. Compatible PDF, DOCX et texte brut. Supporte les CV en anglais, néerlandais, français et allemand.",
+          tags: ['Score 0-100', 'Forces & faiblesses', 'Extraction compétences', 'Recommandation', 'Multilingue'],
+        },
+        interviewQuestions: {
+          title: "Questions d'entretien IA",
+          desc: "Générez 8 questions d'entretien personnalisées basées sur le CV du candidat et les exigences du poste. Techniques, comportementales, situationnelles — pas génériques.",
+          tag: "30 min gagnées par entretien",
+        },
+        jobDescription: {
+          title: "Fiche de poste IA",
+          desc: "Saisissez un titre de poste et quelques mots-clés. Obtenez en quelques secondes une description de poste complète et professionnelle avec exigences et atouts souhaités.",
+          tag: 'Rédigez vos offres 10x plus vite',
+        },
+        candidateRanking: {
+          title: 'Classement IA des candidats',
+          desc: "Comparez tous les candidats côte à côte avec l'analyse IA. Comprenez précisément POURQUOI le candidat n°1 est meilleur que le n°2 pour ce poste.",
+          tag: 'Recrutement basé sur les données',
+        },
+        hiringReport: {
+          title: "Rapport d'embauche IA",
+          desc: "Générez un rapport professionnel d'une page pour le responsable du recrutement. Profil candidat, score, points forts, points d'attention, recommandation — prêt à partager.",
+          tag: 'Rapports professionnels en 1 clic',
+        },
+        emailGenerator: {
+          title: "Générateur d'e-mails IA",
+          desc: "Générez des invitations à des entretiens ou des e-mails de refus personnalisés. Un clic, ton professionnel, dans la langue du candidat (EN/NL/FR).",
+          tag: 'E-mails IA multilingues',
+        },
+      },
+      platformSection: {
+        title: 'Conçu pour les recruteurs modernes',
+        subtitle: "Tout ce dont vous avez besoin pour gérer votre pipeline de recrutement, de l'intake à l'embauche.",
+      },
+      platformFeatures: {
+        bulkUpload: { title: 'Upload de CV en masse', desc: "Uploadez des fichiers PDF, DOCX ou texte. Le parseur extrait le texte et lance l'analyse IA automatiquement." },
+        emailScanning: { title: 'Scan de la boîte mail', desc: "Connectez votre boîte de recrutement. L'IA détecte automatiquement les CV dans les e-mails, ignore le spam et crée des profils candidats." },
+        atsIntegrations: { title: 'Intégrations ATS', desc: 'Connectez Teamtailor, Recruitee et SmartRecruiters. Importez candidats et offres en un clic.' },
+        pipeline: { title: 'Gestion du pipeline', desc: 'Faites avancer les candidats par étapes : Nouveau, En cours, Shortlisté, Embauché. Workflow de recrutement complet.' },
+        analytics: { title: 'Tableau de bord analytique', desc: "Suivez vos indicateurs de recrutement, taux de conversion du pipeline, délai d'embauche et performance par source." },
+        gdpr: { title: 'Conforme RGPD', desc: 'Stockage chiffré, suivi des consentements, export de données, suppression automatique. Conformité RGPD complète intégrée.' },
+      },
+      mockUi: {
+        candidatesAnalyzed: 'Candidats analysés',
+        avgMatchScore: 'Score moyen',
+        timeSaved: 'Temps gagné',
+        connectedAts: 'Plateformes ATS connectées',
+        matchScore: 'Score',
+        recommended: 'Recommandé',
+      },
     },
     dashboard: {
       nav: {
