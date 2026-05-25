@@ -72,6 +72,7 @@ export async function analyzeCVAgainstVacancy(
   vacancyDescription: string,
   vacancyRequirements: string,
   motivationText?: string,
+  outputLocale?: string,
 ): Promise<CVAnalysisResult> {
   if (isDemoMode()) {
     return generateDemoAnalysis(cvText, vacancyTitle)
@@ -79,8 +80,13 @@ export async function analyzeCVAgainstVacancy(
 
   const client = getClient()
 
+  const langInstruction = outputLocale === 'fr' ? '\n\nIMPORTANT: Write ALL text fields (summary, strengths, weaknesses, experience, education) in French.'
+    : outputLocale === 'nl' ? '\n\nIMPORTANT: Write ALL text fields (summary, strengths, weaknesses, experience, education) in Dutch.'
+    : outputLocale === 'de' ? '\n\nIMPORTANT: Write ALL text fields (summary, strengths, weaknesses, experience, education) in German.'
+    : ''
+
   const userContent =
-    `Carefully analyze the job application below against the vacancy requirements, then call submit_cv_analysis with your complete assessment.
+    `Carefully analyze the job application below against the vacancy requirements, then call submit_cv_analysis with your complete assessment.${langInstruction}
 
 VACANCY:
 Title: ${vacancyTitle}

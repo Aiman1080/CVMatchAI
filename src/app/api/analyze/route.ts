@@ -29,6 +29,7 @@ export async function POST(req: Request) {
       candidate.vacancy?.description ?? '',
       candidate.vacancy?.requirements ?? '',
       candidate.motivationText || undefined,
+      candidate.vacancy?.language || undefined,
     )
 
     // Also update contact fields extracted from the CV (only overwrite if currently unknown/empty)

@@ -81,7 +81,7 @@ export async function POST(req: Request) {
     const motivationText = docType === 'motivation' ? text : candidate.motivationText || undefined
 
     if (cvText) {
-      const analysis = await analyzeCVAgainstVacancy(cvText, vacancy.title, vacancy.description, vacancy.requirements, motivationText)
+      const analysis = await analyzeCVAgainstVacancy(cvText, vacancy.title, vacancy.description, vacancy.requirements, motivationText, vacancy.language)
       candidate = await prisma.candidate.update({
         where: { id: candidate.id },
         data: {

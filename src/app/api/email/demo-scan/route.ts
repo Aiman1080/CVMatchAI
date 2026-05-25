@@ -224,6 +224,7 @@ export async function POST() {
       vacancy.description,
       vacancy.requirements,
       email.motivationText || undefined,
+      (vacancy as any).language,
     )
 
     await prisma.candidate.create({

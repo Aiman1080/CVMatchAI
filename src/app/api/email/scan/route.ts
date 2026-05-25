@@ -176,7 +176,7 @@ export async function POST(req: Request) {
           // Match against the first active vacancy — multi-vacancy matching is a future improvement
           const vacancy = vacancies[0]
           const analysis = await analyzeCVAgainstVacancy(
-            cvText, vacancy.title, vacancy.description, vacancy.requirements, motivationText || undefined,
+            cvText, vacancy.title, vacancy.description, vacancy.requirements, motivationText || undefined, (vacancy as any).language,
           )
 
           const candidate = await prisma.candidate.create({
