@@ -97,7 +97,7 @@ ${cvText.slice(0, 6000)}` +
 
   try {
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       systemInstruction: SYSTEM_PROMPT,
       generationConfig: { temperature: 0.3 },
       tools: [{ functionDeclarations: [CV_ANALYSIS_TOOL] }],
@@ -159,7 +159,7 @@ export async function classifyRecruitmentEmail(
 
   try {
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       generationConfig: { temperature: 0.1 },
       tools: [{ functionDeclarations: [EMAIL_CLASSIFY_TOOL] }],
       toolConfig: { functionCallingConfig: { mode: FunctionCallingMode.ANY } },
@@ -216,7 +216,7 @@ export async function detectDocumentType(text: string): Promise<'cv' | 'motivati
 
   try {
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       generationConfig: { temperature: 0.1 },
       tools: [{ functionDeclarations: [DOC_TYPE_TOOL] }],
       toolConfig: { functionCallingConfig: { mode: FunctionCallingMode.ANY } },
@@ -419,7 +419,7 @@ export async function generateInterviewQuestions(
 
   try {
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       systemInstruction: `You are an expert HR interviewer with deep experience in structured interviewing techniques. Generate 8 personalized interview questions based on the candidate's CV, focusing on gaps, strengths, and the specific role requirements. Include a mix of technical, behavioral, situational, and cultural fit questions. Each question should be tailored — not generic. For each question, also provide a concise expected answer (1-2 sentences) describing what a good response should include. ${langInstruction}`,
       generationConfig: { temperature: 0.3 },
       tools: [{ functionDeclarations: [INTERVIEW_QUESTIONS_TOOL] }],
@@ -499,7 +499,7 @@ export async function generateJobDescription(
 
   try {
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       systemInstruction: `You are an expert HR copywriter specializing in creating professional, attractive, and inclusive job descriptions that attract top talent. Write compelling descriptions that clearly communicate the role, responsibilities, and growth opportunities. ${langInstruction}`,
       generationConfig: { temperature: 0.3 },
       tools: [{ functionDeclarations: [JOB_DESCRIPTION_TOOL] }],
@@ -589,7 +589,7 @@ export async function rankCandidates(
 
   try {
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       systemInstruction: `You are an expert talent evaluator. Rank the candidates for the specified role. Explain clearly WHY each candidate is ranked in their position — what makes #1 better than #2, etc. Focus on role fit, not just overall quality. ${langInstruction}`,
       generationConfig: { temperature: 0.3 },
       tools: [{ functionDeclarations: [RANKING_TOOL] }],
@@ -694,7 +694,7 @@ ${candidate.recommendation === 'strong_yes' || candidate.recommendation === 'yes
 
   try {
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       systemInstruction: `You are an expert HR professional. Generate a professional 1-page hiring report for a hiring manager. Include: candidate overview, match score with interpretation, key qualifications, strengths summary, areas of concern, skills assessment, and final recommendation. Keep it concise and actionable. Format in clean markdown. ${langInstruction}`,
       generationConfig: { temperature: 0.3 },
       tools: [{ functionDeclarations: [HIRING_REPORT_TOOL] }],

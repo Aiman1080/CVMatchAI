@@ -318,13 +318,13 @@ export function AdminClient({
   const aiFeatures = [
     {
       name: 'CV Analysis & Scoring', icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/30',
-      status: hasAiKey ? 'live' : 'demo', model: 'gemini-1.5-flash', thinking: 'Function calling mode',
+      status: hasAiKey ? 'live' : 'demo', model: 'gemini-2.5-flash', thinking: 'Function calling mode',
       details: ['Extraction of skills, experience, degrees', 'Match score 0-100 against the job posting', 'Detailed strengths & weaknesses', 'Executive summary of the candidate', 'Automatic language detection from CV'],
       stat: `${aiAnalysesCount} analysis${aiAnalysesCount !== 1 ? 'es' : ''} performed`,
     },
     {
       name: 'AI Email Generator', icon: Mail, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-950/30',
-      status: hasAiKey ? 'live' : 'demo', model: 'gemini-1.5-flash', thinking: 'Fast inference',
+      status: hasAiKey ? 'live' : 'demo', model: 'gemini-2.5-flash', thinking: 'Fast inference',
       details: ['Interview invitation', 'Rejection - worded with respect', 'Follow-up - re-engagement after interview', 'Language auto-detected from candidate CV', 'Personalized with name, position and company'],
       stat: '3 email types supported',
     },
@@ -394,7 +394,7 @@ export function AdminClient({
             <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">System Status</span>
             {[
               { label: 'Database', ok: true },
-              { label: `AI - ${hasAiKey ? 'Live (gemini-1.5-flash)' : 'Demo mode'}`, ok: hasAiKey },
+              { label: `AI - ${hasAiKey ? 'Live (gemini-2.5-flash)' : 'Demo mode'}`, ok: hasAiKey },
               { label: `SMTP - ${hasSmtp ? 'Configured' : 'Not configured'}`, ok: hasSmtp },
               { label: `Email - ${emailInboxesCount} inbox${emailInboxesCount !== 1 ? 'es' : ''}`, ok: true },
               { label: `Support - ${openCount} open`, ok: openCount === 0 },
@@ -921,7 +921,7 @@ export function AdminClient({
                 <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
                   <div className="flex items-center gap-2 text-xs text-gray-500">
                     <div className={`w-2 h-2 rounded-full ${hasAiKey ? 'bg-green-400' : 'bg-amber-400'}`} />
-                    {hasAiKey ? 'AI Engine: Live (gemini-1.5-flash)' : 'AI Engine: Demo mode'}
+                    {hasAiKey ? 'AI Engine: Live (gemini-2.5-flash)' : 'AI Engine: Demo mode'}
                   </div>
                 </div>
               </CardContent>
@@ -1000,7 +1000,7 @@ export function AdminClient({
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                  { label: 'Model', value: 'gemini-1.5-flash', icon: Brain, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-950/30' },
+                  { label: 'Model', value: 'gemini-2.5-flash', icon: Brain, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-950/30' },
                   { label: 'Mode', value: 'Function calling', icon: Cpu, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/30' },
                   { label: 'Gemini API Key', value: hasAiKey ? 'Configured' : 'Missing', icon: hasAiKey ? CheckCircle2 : AlertCircle, color: hasAiKey ? 'text-green-600' : 'text-red-500', bg: hasAiKey ? 'bg-green-50 dark:bg-green-950/30' : 'bg-red-50 dark:bg-red-950/30' },
                   { label: 'Operational mode', value: hasAiKey ? 'Live AI' : 'Simulated demo', icon: hasAiKey ? ToggleRight : ToggleLeft, color: hasAiKey ? 'text-green-600' : 'text-amber-600', bg: hasAiKey ? 'bg-green-50 dark:bg-green-950/30' : 'bg-amber-50 dark:bg-amber-950/30' },
@@ -1023,7 +1023,7 @@ export function AdminClient({
               <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
                   { label: 'Provider', value: 'Google AI' },
-                  { label: 'Model', value: 'gemini-1.5-flash' },
+                  { label: 'Model', value: 'gemini-2.5-flash' },
                   { label: 'Rate limit', value: '15 req/min (free tier)' },
                   { label: 'Cost', value: 'Free tier / ~$0.01/1M tokens' },
                 ].map(item => (
@@ -1374,7 +1374,7 @@ export function AdminClient({
                   { label: 'Database', value: 'PostgreSQL (Neon)' },
                   { label: 'ORM', value: 'Prisma 5.22' },
                   { label: 'Auth', value: 'NextAuth.js v4 JWT' },
-                  { label: 'IA', value: 'Google Gemini SDK (gemini-1.5-flash)' },
+                  { label: 'IA', value: 'Google Gemini SDK (gemini-2.5-flash)' },
                   { label: 'Email', value: 'ImapFlow (IMAP/IMAPS)' },
                   { label: 'Parser', value: 'pdf-parse + mammoth' },
                   { label: 'UI', value: 'Tailwind CSS + shadcn/ui' },

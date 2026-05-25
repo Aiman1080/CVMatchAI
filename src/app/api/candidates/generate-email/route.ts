@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
-import { GoogleGenerativeAI } from '@google/generative-ai'
 
 const isDemoMode = () => !process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY.trim() === ''
 
@@ -37,118 +36,50 @@ export async function POST(req: Request) {
   if (isDemoMode()) {
     const demos: Record<string, Record<string, { subject: string; body: string }>> = {
       en: {
-        interview: {
-          subject: `Interview Invitation — ${vacancyTitle}`,
-          body: `Dear ${candidate.firstName},\n\nThank you for applying for the ${vacancyTitle} position at ${company}. We were impressed by your application and would be delighted to invite you for an interview.\n\nPlease let us know your availability over the coming days so we can schedule a time that works for you.\n\nWe look forward to meeting you.\n\nKind regards,\n${recruiterName}\n${company}`,
-        },
-        rejection: {
-          subject: `Your Application — ${vacancyTitle}`,
-          body: `Dear ${candidate.firstName},\n\nThank you for your interest in the ${vacancyTitle} position at ${company} and for the time you invested in your application.\n\nAfter careful consideration, we regret to inform you that we will not be moving forward with your application at this time. This was a difficult decision given the high calibre of candidates we received.\n\nWe wish you every success in your job search.\n\nKind regards,\n${recruiterName}\n${company}`,
-        },
-        followup: {
-          subject: `Update on Your Application — ${vacancyTitle}`,
-          body: `Dear ${candidate.firstName},\n\nWe wanted to reach out regarding your application for the ${vacancyTitle} position at ${company}. Your application is currently under review and we appreciate your patience.\n\nWe will be in touch shortly with a final decision.\n\nKind regards,\n${recruiterName}\n${company}`,
-        },
+        interview: { subject: `Interview Invitation — ${vacancyTitle}`, body: `Dear ${candidate.firstName},\n\nThank you for applying for the ${vacancyTitle} position at ${company}. We were impressed by your application and would be delighted to invite you for an interview.\n\nPlease let us know your availability.\n\nKind regards,\n${recruiterName}\n${company}` },
+        rejection: { subject: `Your Application — ${vacancyTitle}`, body: `Dear ${candidate.firstName},\n\nThank you for your interest in the ${vacancyTitle} position at ${company}.\n\nAfter careful consideration, we regret to inform you that we will not be moving forward with your application at this time.\n\nWe wish you every success.\n\nKind regards,\n${recruiterName}\n${company}` },
+        followup: { subject: `Update — ${vacancyTitle}`, body: `Dear ${candidate.firstName},\n\nYour application for ${vacancyTitle} at ${company} is currently under review. We will be in touch shortly.\n\nKind regards,\n${recruiterName}\n${company}` },
       },
       nl: {
-        interview: {
-          subject: `Uitnodiging voor een gesprek — ${vacancyTitle}`,
-          body: `Beste ${candidate.firstName},\n\nBedankt voor uw sollicitatie naar de functie van ${vacancyTitle} bij ${company}. Uw kandidatuur heeft onze aandacht gewekt en wij nodigen u graag uit voor een gesprek.\n\nGelieve uw beschikbaarheid de komende dagen door te geven, zodat wij een gepast moment kunnen inplannen.\n\nWij kijken ernaar uit u te ontmoeten.\n\nMet vriendelijke groeten,\n${recruiterName}\n${company}`,
-        },
-        rejection: {
-          subject: `Uw sollicitatie — ${vacancyTitle}`,
-          body: `Beste ${candidate.firstName},\n\nBedankt voor uw interesse in de functie van ${vacancyTitle} bij ${company} en voor de tijd die u in uw sollicitatie heeft geïnvesteerd.\n\nNa zorgvuldige overweging moeten wij u helaas meedelen dat wij uw kandidatuur niet zullen weerhouden. Deze beslissing was moeilijk gezien het hoge niveau van de kandidaten.\n\nWij wensen u veel succes bij uw verdere zoektocht.\n\nMet vriendelijke groeten,\n${recruiterName}\n${company}`,
-        },
-        followup: {
-          subject: `Stand van zaken — ${vacancyTitle}`,
-          body: `Beste ${candidate.firstName},\n\nWij contacteren u in verband met uw sollicitatie voor de functie van ${vacancyTitle} bij ${company}. Uw dossier wordt momenteel nog beoordeeld en wij danken u voor uw geduld.\n\nWij nemen binnenkort contact met u op met een definitief antwoord.\n\nMet vriendelijke groeten,\n${recruiterName}\n${company}`,
-        },
+        interview: { subject: `Uitnodiging gesprek — ${vacancyTitle}`, body: `Beste ${candidate.firstName},\n\nBedankt voor uw sollicitatie voor ${vacancyTitle} bij ${company}. Wij nodigen u graag uit voor een gesprek.\n\nGelieve uw beschikbaarheid door te geven.\n\nMet vriendelijke groeten,\n${recruiterName}\n${company}` },
+        rejection: { subject: `Uw sollicitatie — ${vacancyTitle}`, body: `Beste ${candidate.firstName},\n\nBedankt voor uw interesse in ${vacancyTitle} bij ${company}.\n\nHelaas moeten wij u meedelen dat uw kandidatuur niet weerhouden werd.\n\nVeel succes verder.\n\nMet vriendelijke groeten,\n${recruiterName}\n${company}` },
+        followup: { subject: `Stand van zaken — ${vacancyTitle}`, body: `Beste ${candidate.firstName},\n\nUw sollicitatie voor ${vacancyTitle} bij ${company} wordt nog beoordeeld. Wij nemen binnenkort contact op.\n\nMet vriendelijke groeten,\n${recruiterName}\n${company}` },
       },
       fr: {
-        interview: {
-          subject: `Invitation à un entretien — ${vacancyTitle}`,
-          body: `Bonjour ${candidate.firstName},\n\nNous avons bien pris connaissance de votre candidature pour le poste de ${vacancyTitle} chez ${company} et nous sommes ravis de vous informer qu'elle a retenu toute notre attention.\n\nNous souhaiterions vous inviter à un entretien afin d'échanger plus en détail sur votre parcours et sur cette opportunité. Merci de nous faire part de vos disponibilités dans les prochains jours.\n\nCordialement,\n${recruiterName}\n${company}`,
-        },
-        rejection: {
-          subject: `Suite de votre candidature — ${vacancyTitle}`,
-          body: `Bonjour ${candidate.firstName},\n\nNous vous remercions de l'intérêt que vous portez à notre offre et du temps que vous avez consacré à votre candidature pour le poste de ${vacancyTitle} chez ${company}.\n\nAprès examen attentif de votre dossier, nous avons le regret de vous informer que votre candidature n'a pas été retenue. Nous vous souhaitons plein succès dans vos recherches.\n\nCordialement,\n${recruiterName}\n${company}`,
-        },
-        followup: {
-          subject: `Suivi de votre candidature — ${vacancyTitle}`,
-          body: `Bonjour ${candidate.firstName},\n\nNous souhaitons vous informer que votre candidature pour le poste de ${vacancyTitle} chez ${company} est actuellement en cours d'examen.\n\nNous reviendrons vers vous dans les meilleurs délais. Nous vous remercions de votre patience.\n\nCordialement,\n${recruiterName}\n${company}`,
-        },
+        interview: { subject: `Invitation entretien — ${vacancyTitle}`, body: `Bonjour ${candidate.firstName},\n\nNous avons pris connaissance de votre candidature pour le poste de ${vacancyTitle} chez ${company} et souhaitons vous inviter à un entretien.\n\nMerci de nous indiquer vos disponibilités.\n\nCordialement,\n${recruiterName}\n${company}` },
+        rejection: { subject: `Suite candidature — ${vacancyTitle}`, body: `Bonjour ${candidate.firstName},\n\nNous vous remercions pour votre candidature au poste de ${vacancyTitle} chez ${company}.\n\nAprès examen, nous avons le regret de vous informer que votre candidature n'a pas été retenue.\n\nNous vous souhaitons plein succès.\n\nCordialement,\n${recruiterName}\n${company}` },
+        followup: { subject: `Suivi candidature — ${vacancyTitle}`, body: `Bonjour ${candidate.firstName},\n\nVotre candidature pour ${vacancyTitle} chez ${company} est en cours d'examen. Nous reviendrons vers vous prochainement.\n\nCordialement,\n${recruiterName}\n${company}` },
       },
     }
     const localeKey = ['en', 'nl', 'fr'].includes(locale) ? locale : 'fr'
     return NextResponse.json((demos[localeKey][type] || demos[localeKey].interview))
   }
 
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-
-  const prompts: Record<string, string> = {
-    interview: `Write a warm, professional recruitment email in ${langName} inviting ${candidate.firstName} ${candidate.lastName} to an interview for the position of "${vacancyTitle}" at ${company}.
-
-Recruiter name: ${recruiterName}
-Company: ${company}
-
-The email should:
-1. Be warm and enthusiastic but professional
-2. Invite them to an interview and ask for their availability
-3. Be 120-160 words max
-4. Do NOT mention any score, rating, ranking, or percentage
-5. Do NOT mention specific strengths, weaknesses, or skills
-6. Write entirely in ${langName}
-
-Return JSON: {"subject": "...", "body": "..."}`,
-    rejection: `Write a professional, empathetic rejection email in ${langName} to ${candidate.firstName} ${candidate.lastName} who applied for "${vacancyTitle}" at ${company}.
-
-Recruiter name: ${recruiterName}
-Company: ${company}
-
-The email should:
-1. Thank them sincerely for their time and interest
-2. Inform them politely that their application was not selected
-3. Wish them success in their search
-4. Be 120-160 words max, empathetic tone
-5. Do NOT mention any score, rating, ranking, or percentage
-6. Write entirely in ${langName}
-
-Return JSON: {"subject": "...", "body": "..."}`,
-    followup: `Write a professional follow-up email in ${langName} to ${candidate.firstName} ${candidate.lastName} who applied for "${vacancyTitle}" at ${company}, informing them their application is still under review.
-
-Recruiter name: ${recruiterName}
-Company: ${company}
-
-The email should:
-1. Acknowledge their application is being reviewed
-2. Thank them for their patience
-3. Give a positive, encouraging tone
-4. Be 80-120 words max
-5. Write entirely in ${langName}
-
-Return JSON: {"subject": "...", "body": "..."}`,
-  }
-  const prompt = prompts[type] || prompts.interview
+  const prompt = `Write a professional recruitment email in ${langName} for ${candidate.firstName} ${candidate.lastName} regarding "${vacancyTitle}" at ${company}. Type: ${type}. Recruiter: ${recruiterName}. 120-160 words max. Return JSON: {"subject":"...","body":"..."}`
 
   try {
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
-      generationConfig: { temperature: 0.3 },
-    })
-
+    const { GoogleGenerativeAI } = await import('@google/generative-ai')
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash', generationConfig: { temperature: 0.3 } })
     const result = await model.generateContent(prompt)
     const text = result.response.text() || ''
     const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (jsonMatch) {
       try {
-        const parsed = JSON.parse(jsonMatch[0])
-        return NextResponse.json(parsed)
+        return NextResponse.json(JSON.parse(jsonMatch[0]))
       } catch {
         return NextResponse.json({ error: 'Could not parse AI response' }, { status: 500 })
       }
     }
     return NextResponse.json({ error: 'Could not parse AI response' }, { status: 500 })
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    console.error('[AI] Generate email error:', err.message)
+    const localeKey = ['en', 'nl', 'fr'].includes(locale) ? locale : 'fr'
+    const demos: Record<string, { subject: string; body: string }> = {
+      en: { subject: `${type === 'interview' ? 'Interview Invitation' : type === 'rejection' ? 'Application Update' : 'Follow-up'} — ${vacancyTitle}`, body: `Dear ${candidate.firstName},\n\nThank you for your application for ${vacancyTitle} at ${company}.\n\nKind regards,\n${recruiterName}` },
+      nl: { subject: `${type === 'interview' ? 'Uitnodiging' : type === 'rejection' ? 'Sollicitatie update' : 'Opvolging'} — ${vacancyTitle}`, body: `Beste ${candidate.firstName},\n\nBedankt voor uw sollicitatie voor ${vacancyTitle} bij ${company}.\n\nMet vriendelijke groeten,\n${recruiterName}` },
+      fr: { subject: `${type === 'interview' ? 'Invitation entretien' : type === 'rejection' ? 'Suite candidature' : 'Suivi'} — ${vacancyTitle}`, body: `Bonjour ${candidate.firstName},\n\nMerci pour votre candidature pour ${vacancyTitle} chez ${company}.\n\nCordialement,\n${recruiterName}` },
+    }
+    return NextResponse.json(demos[localeKey])
   }
 }
