@@ -5,15 +5,21 @@ import { Card, CardContent } from '@/components/ui/card'
 import { AnimatedCounter } from '@/components/ui/animated-counter'
 import { useLanguage } from '@/contexts/LanguageContext'
 
-interface Stats { vacancies: number; candidates: number; shortlisted: number; avgScore: number }
+interface Stats {
+  vacancies: number
+  candidates: number
+  shortlisted: number
+  avgScore: number
+  vacanciesThisWeek?: number
+  candidatesThisWeek?: number
+}
 
-// Four KPI cards shown at the top of the dashboard
 export function DashboardStats({ stats }: { stats: Stats }) {
   const { t } = useLanguage()
   const s = t.dashboard.stats
   const items = [
-    { label: s.activeVacancies, value: stats.vacancies, suffix: '', icon: Briefcase, color: 'bg-blue-500', bg: 'bg-blue-50 dark:bg-blue-950', change: `+2 ${s.thisWeek}` },
-    { label: s.totalCandidates, value: stats.candidates, suffix: '', icon: Users, color: 'bg-indigo-500', bg: 'bg-indigo-50 dark:bg-indigo-950', change: `+12 ${s.thisWeek}` },
+    { label: s.activeVacancies, value: stats.vacancies, suffix: '', icon: Briefcase, color: 'bg-blue-500', bg: 'bg-blue-50 dark:bg-blue-950', change: `+${stats.vacanciesThisWeek || 0} ${s.thisWeek}` },
+    { label: s.totalCandidates, value: stats.candidates, suffix: '', icon: Users, color: 'bg-indigo-500', bg: 'bg-indigo-50 dark:bg-indigo-950', change: `+${stats.candidatesThisWeek || 0} ${s.thisWeek}` },
     { label: s.shortlisted, value: stats.shortlisted, suffix: '', icon: Star, color: 'bg-green-500', bg: 'bg-green-50 dark:bg-green-950', change: `${stats.candidates > 0 ? Math.round((stats.shortlisted / stats.candidates) * 100) : 0}% ${s.rate}` },
     { label: s.avgMatchScore, value: stats.avgScore, suffix: '%', icon: TrendingUp, color: 'bg-amber-500', bg: 'bg-amber-50 dark:bg-amber-950', change: s.aiPowered },
   ]
@@ -30,7 +36,6 @@ export function DashboardStats({ stats }: { stats: Stats }) {
                 </p>
                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{item.change}</p>
               </div>
-              {/* Convert bg- class to text- class for the icon color */}
               <div className={`p-3 rounded-xl ${item.bg}`}>
                 <item.icon className={`w-5 h-5 ${item.color.replace('bg-', 'text-')}`} />
               </div>

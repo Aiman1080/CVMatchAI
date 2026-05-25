@@ -14,12 +14,14 @@ export default async function DashboardPage() {
   const isAdmin = (session?.user as any)?.role === 'admin'
   const where = isAdmin ? {} : { userId }
 
-  const [vacancyCount, candidateCount, shortlistedCount, avgScore, inboxCount] = await Promise.all([
+  const [vacancyCount, candidateCount, shortlistedCount, avgScore, inboxCount, vacanciesThisWeek, candidatesThisWeek] = await Promise.all([
     prisma.vacancy.count({ where }),
     prisma.candidate.count({ where }),
     prisma.candidate.count({ where: { ...where, status: 'shortlisted' } }),
     prisma.candidate.aggregate({ where, _avg: { matchScore: true } }),
     prisma.emailInbox.count({ where: isAdmin ? {} : { userId } }),
+    prisma.vacancy.count({ where: { ...where, createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } } }),
+    prisma.candidate.count({ where: { ...where, createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } } }),
   ])
 
   const recentCandidates = await prisma.candidate.findMany({
@@ -35,6 +37,7 @@ export default async function DashboardPage() {
   const stats = {
     vacancies: vacancyCount, candidates: candidateCount,
     shortlisted: shortlistedCount, avgScore: Math.round(avgScore._avg.matchScore || 0),
+    vacanciesThisWeek, candidatesThisWeek,
   }
 
   const onboarding = {
