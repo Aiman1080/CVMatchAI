@@ -51,7 +51,7 @@ export const translations = {
       mostPopular: 'Most Popular',
       plans: [
         { name: 'Free', price: '€0', period: 'forever', cta: 'Get started free', features: ['3 active vacancies', '25 candidates/month', 'AI match scoring', 'Basic dashboard', 'CV upload & analysis'] },
-        { name: 'Pro', price: '€49', period: '/month', cta: 'Start Pro trial', features: ['Unlimited vacancies', 'Unlimited candidates', 'AI interview questions', 'AI hiring reports', 'AI candidate ranking', 'Email inbox scanning', 'ATS integrations', 'Analytics & export', 'Priority support'] },
+        { name: 'Pro', price: '€55', period: '/month', cta: 'Start Pro trial', features: ['Unlimited vacancies', 'Unlimited candidates', 'AI interview questions', 'AI hiring reports', 'AI candidate ranking', 'Email inbox scanning', 'ATS integrations', 'Analytics & export', 'Priority support'] },
       ],
     },
     cta: {
@@ -193,7 +193,7 @@ export const translations = {
         empty: 'No new candidates',
       },
       upgrade: {
-        cta: 'Upgrade to Pro — €49/month',
+        cta: 'Upgrade to Pro — €55/month',
         trial: '14-day free trial · Cancel anytime',
         onboardingTitle: 'Upgrade to Pro',
         onboardingDesc: 'Unlock advanced AI analysis, ATS integrations and more.',
@@ -955,7 +955,7 @@ export const translations = {
       proPlan: 'Pro',
       freePrice: '€0',
       freePeriod: 'forever',
-      proPrice: '€49',
+      proPrice: '€55',
       proPeriod: '/month',
       freeFeatures: ['3 active vacancies', '25 candidates/month', 'AI match scoring', 'CV upload & analysis', 'Basic dashboard'],
       proFeatures: [
@@ -1041,7 +1041,7 @@ export const translations = {
       mostPopular: 'Meest Populair',
       plans: [
         { name: 'Gratis', price: '€0', period: 'voor altijd', cta: 'Gratis starten', features: ['3 actieve vacatures', '25 kandidaten/maand', 'AI match scoring', 'Basis dashboard', 'CV upload & analyse'] },
-        { name: 'Pro', price: '€49', period: '/maand', cta: 'Pro proberen', features: ['Onbeperkte vacatures', 'Onbeperkte kandidaten', 'AI interviewvragen', 'AI wervingsrapporten', 'AI kandidaatrangschikking', 'E-mail inbox scanning', 'ATS-integraties', 'Analytics & export', 'Prioriteitsondersteuning'] },
+        { name: 'Pro', price: '€55', period: '/maand', cta: 'Pro proberen', features: ['Onbeperkte vacatures', 'Onbeperkte kandidaten', 'AI interviewvragen', 'AI wervingsrapporten', 'AI kandidaatrangschikking', 'E-mail inbox scanning', 'ATS-integraties', 'Analytics & export', 'Prioriteitsondersteuning'] },
       ],
     },
     cta: {
@@ -1183,7 +1183,7 @@ export const translations = {
         empty: 'Geen nieuwe kandidaten',
       },
       upgrade: {
-        cta: 'Upgraden naar Pro — €49/maand',
+        cta: 'Upgraden naar Pro — €55/maand',
         trial: '14 dagen gratis proberen · Op elk moment opzeggen',
         onboardingTitle: 'Upgraden naar Pro',
         onboardingDesc: 'Ontgrendel geavanceerde AI-analyse, ATS-integraties en meer.',
@@ -1945,7 +1945,7 @@ export const translations = {
       proPlan: 'Pro',
       freePrice: '€0',
       freePeriod: 'voor altijd',
-      proPrice: '€49',
+      proPrice: '€55',
       proPeriod: '/maand',
       freeFeatures: ['3 actieve vacatures', '25 kandidaten/maand', 'AI match scoring', 'CV upload & analyse', 'Basis dashboard'],
       proFeatures: [
@@ -2031,7 +2031,7 @@ export const translations = {
       mostPopular: 'Le Plus Populaire',
       plans: [
         { name: 'Gratuit', price: '€0', period: 'pour toujours', cta: 'Commencer gratuitement', features: ['3 offres actives', '25 candidats/mois', 'Score de correspondance IA', 'Tableau de bord de base', 'Upload & analyse de CV'] },
-        { name: 'Pro', price: '€49', period: '/mois', cta: 'Essayer Pro', features: ['Offres illimitées', 'Candidats illimités', "Questions d'entretien IA", 'Rapports de recrutement IA', 'Classement IA des candidats', 'Scan de la boîte mail', 'Intégrations ATS', 'Analytics & export', 'Support prioritaire'] },
+        { name: 'Pro', price: '€55', period: '/mois', cta: 'Essayer Pro', features: ['Offres illimitées', 'Candidats illimités', "Questions d'entretien IA", 'Rapports de recrutement IA', 'Classement IA des candidats', 'Scan de la boîte mail', 'Intégrations ATS', 'Analytics & export', 'Support prioritaire'] },
       ],
     },
     cta: {
@@ -2173,7 +2173,7 @@ export const translations = {
         empty: 'Aucun nouveau candidat',
       },
       upgrade: {
-        cta: 'Passer en Pro — €49/mois',
+        cta: 'Passer en Pro — €55/mois',
         trial: 'Essai gratuit 14 jours · Annulation à tout moment',
         onboardingTitle: 'Passez en Pro',
         onboardingDesc: "Débloquez l'analyse IA avancée, les intégrations ATS et plus.",
@@ -2935,7 +2935,7 @@ export const translations = {
       proPlan: 'Pro',
       freePrice: '€0',
       freePeriod: 'pour toujours',
-      proPrice: '€49',
+      proPrice: '€55',
       proPeriod: '/mois',
       freeFeatures: ['3 offres actives', '25 candidats/mois', 'Score de correspondance IA', 'Upload & analyse de CV', 'Tableau de bord de base'],
       proFeatures: [
