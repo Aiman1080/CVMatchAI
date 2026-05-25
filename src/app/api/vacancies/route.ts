@@ -7,6 +7,7 @@ import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { z } from 'zod'
 import { getPlanLimits } from '@/lib/plans'
+import { isDemoAccount } from '@/lib/demo-guard'
 
 const schema = z.object({
   title: z.string().min(2),
@@ -42,6 +43,9 @@ export async function GET() {
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (isDemoAccount(session.user?.email)) {
+    return NextResponse.json({ error: 'Demo accounts cannot modify data', demo: true }, { status: 403 })
+  }
   try {
     const body = await req.json()
     const data = schema.parse(body)

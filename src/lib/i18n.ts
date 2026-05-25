@@ -965,6 +965,32 @@ export const translations = {
         'Analytics & export (CSV, PDF)', 'Priority support',
       ],
     },
+    stripe: {
+      firstMonthFree: 'First month free',
+      manageSubscription: 'Manage subscription',
+      comingSoon: 'Coming soon',
+      redirecting: 'Redirecting...',
+      currentPlan: 'Current Plan',
+    },
+    demo: {
+      blocked: 'Demo account - modifications disabled',
+      readOnly: 'This is a demo account. Data cannot be modified.',
+    },
+    tabGuides: {
+      dashboard: 'View your recruitment overview: active vacancies, candidate stats, AI insights, and recent activity.',
+      vacancies: 'Create and manage job openings. Use AI to generate descriptions. Upload CVs to start matching.',
+      candidates: 'Browse all candidates, filter by score/status, export to CSV/PDF, compare side-by-side.',
+      email: 'Connect your recruitment inbox for automatic CV scanning. AI detects applications and creates candidates.',
+      integrations: 'Connect your ATS (Teamtailor, Recruitee, SmartRecruiters) to sync vacancies and candidates.',
+      analytics: 'Track hiring metrics: pipeline conversion, source performance, time-to-hire.',
+      settings: 'Manage your profile, change password, export data, GDPR compliance.',
+      support: 'Submit support tickets and track responses.',
+    },
+    guidePrompt: {
+      title: 'Would you like guided tips?',
+      yes: 'Yes, show me',
+      no: 'No thanks',
+    },
   },
 
   nl: {
@@ -1929,6 +1955,32 @@ export const translations = {
         'Analytics & export (CSV, PDF)', 'Prioriteitsondersteuning',
       ],
     },
+    stripe: {
+      firstMonthFree: 'Eerste maand gratis',
+      manageSubscription: 'Abonnement beheren',
+      comingSoon: 'Binnenkort beschikbaar',
+      redirecting: 'Doorverwijzen...',
+      currentPlan: 'Huidig plan',
+    },
+    demo: {
+      blocked: 'Demo-account - wijzigingen uitgeschakeld',
+      readOnly: 'Dit is een demo-account. Gegevens kunnen niet worden gewijzigd.',
+    },
+    tabGuides: {
+      dashboard: 'Bekijk uw wervingsoverzicht: actieve vacatures, kandidaatstatistieken, AI-inzichten en recente activiteit.',
+      vacancies: 'Maak en beheer vacatures. Gebruik AI om beschrijvingen te genereren. Upload CV\'s om matching te starten.',
+      candidates: 'Blader door alle kandidaten, filter op score/status, exporteer naar CSV/PDF, vergelijk naast elkaar.',
+      email: 'Verbind uw recruitmentinbox voor automatische CV-scanning. AI detecteert sollicitaties en maakt kandidaten aan.',
+      integrations: 'Verbind uw ATS (Teamtailor, Recruitee, SmartRecruiters) om vacatures en kandidaten te synchroniseren.',
+      analytics: 'Volg wervingsstatistieken: pipelineconversie, bronprestaties, doorlooptijd.',
+      settings: 'Beheer uw profiel, wijzig wachtwoord, exporteer gegevens, AVG-conformiteit.',
+      support: 'Dien supporttickets in en volg reacties op.',
+    },
+    guidePrompt: {
+      title: 'Wilt u begeleide tips?',
+      yes: 'Ja, toon me',
+      no: 'Nee, bedankt',
+    },
   },
 
   fr: {
@@ -2892,6 +2944,32 @@ export const translations = {
         'Scan de la boîte mail', 'Intégrations ATS (Teamtailor, Recruitee, SmartRecruiters)',
         'Analytics & export (CSV, PDF)', 'Support prioritaire',
       ],
+    },
+    stripe: {
+      firstMonthFree: 'Premier mois gratuit',
+      manageSubscription: 'Gérer l\'abonnement',
+      comingSoon: 'Bientôt disponible',
+      redirecting: 'Redirection...',
+      currentPlan: 'Plan actuel',
+    },
+    demo: {
+      blocked: 'Compte démo - modifications désactivées',
+      readOnly: 'Ceci est un compte démo. Les données ne peuvent pas être modifiées.',
+    },
+    tabGuides: {
+      dashboard: 'Consultez votre aperçu de recrutement : offres actives, statistiques candidats, insights IA et activité récente.',
+      vacancies: 'Créez et gérez vos offres d\'emploi. Utilisez l\'IA pour générer des descriptions. Uploadez des CV pour lancer le matching.',
+      candidates: 'Parcourez tous les candidats, filtrez par score/statut, exportez en CSV/PDF, comparez côte à côte.',
+      email: 'Connectez votre boîte de recrutement pour le scan automatique des CV. L\'IA détecte les candidatures et crée les candidats.',
+      integrations: 'Connectez votre ATS (Teamtailor, Recruitee, SmartRecruiters) pour synchroniser offres et candidats.',
+      analytics: 'Suivez les indicateurs de recrutement : conversion pipeline, performance des sources, délai d\'embauche.',
+      settings: 'Gérez votre profil, changez de mot de passe, exportez vos données, conformité RGPD.',
+      support: 'Soumettez des tickets de support et suivez les réponses.',
+    },
+    guidePrompt: {
+      title: 'Souhaitez-vous des conseils guidés ?',
+      yes: 'Oui, montrez-moi',
+      no: 'Non merci',
     },
   },
 } as const
