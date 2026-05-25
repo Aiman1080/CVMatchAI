@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     const user = await prisma.user.findUnique({ where: { email } })
     if (!user) return successResponse
 
-    const token = crypto.randomUUID()
+    const token = crypto.randomBytes(32).toString('hex')
     const expires = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
 
     // Remove any existing reset tokens for this user before creating a new one

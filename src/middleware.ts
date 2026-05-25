@@ -48,6 +48,8 @@ function checkRateLimit(key: string, maxRequests: number, windowMs: number): boo
 // ── Rate limit rules ────────────────────────────────────────────────
 // Each rule maps a path prefix to its limit configuration.
 
+const ONE_HOUR = 3_600_000
+
 const RATE_LIMIT_RULES: {
   path: string
   maxRequests: number
@@ -56,6 +58,14 @@ const RATE_LIMIT_RULES: {
   { path: '/api/auth/register', maxRequests: 5, windowMs: 60_000 },
   { path: '/api/auth/forgot-password', maxRequests: 3, windowMs: 60_000 },
   { path: '/api/contact', maxRequests: 5, windowMs: 60_000 },
+  { path: '/api/upload', maxRequests: 10, windowMs: ONE_HOUR },
+  { path: '/api/analyze', maxRequests: 10, windowMs: ONE_HOUR },
+  { path: '/api/candidates/interview-questions', maxRequests: 10, windowMs: ONE_HOUR },
+  { path: '/api/candidates/hiring-report', maxRequests: 10, windowMs: ONE_HOUR },
+  { path: '/api/candidates/generate-email', maxRequests: 10, windowMs: ONE_HOUR },
+  { path: '/api/vacancies/generate-description', maxRequests: 10, windowMs: ONE_HOUR },
+  { path: '/api/vacancies/ranking', maxRequests: 10, windowMs: ONE_HOUR },
+  { path: '/api/email/scan', maxRequests: 5, windowMs: ONE_HOUR },
 ]
 
 function getClientIP(req: NextRequest): string {
@@ -97,5 +107,13 @@ export const config = {
     '/api/auth/register/:path*',
     '/api/auth/forgot-password/:path*',
     '/api/contact/:path*',
+    '/api/upload/:path*',
+    '/api/analyze/:path*',
+    '/api/candidates/interview-questions/:path*',
+    '/api/candidates/hiring-report/:path*',
+    '/api/candidates/generate-email/:path*',
+    '/api/vacancies/generate-description/:path*',
+    '/api/vacancies/ranking/:path*',
+    '/api/email/scan/:path*',
   ],
 }

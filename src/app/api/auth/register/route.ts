@@ -34,7 +34,7 @@ export async function POST(req: Request) {
     // Send verification email — non-blocking so registration succeeds even if email fails
     if (isEmailConfigured()) {
       try {
-        const token = crypto.randomUUID()
+        const token = crypto.randomBytes(32).toString('hex')
         const expires = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
 
         await prisma.verificationToken.create({

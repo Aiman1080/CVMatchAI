@@ -150,6 +150,10 @@ model Candidate {
   // One candidate per email per vacancy — prevents duplicates from repeated demo scans or uploads
   @@unique([email, vacancyId])
   @@unique([externalId, externalSource, userId])
+  @@index([vacancyId])
+  @@index([status])
+  @@index([userId, vacancyId])
+  @@index([userId, status])
 }
 
 model CandidateActivity {
@@ -160,6 +164,8 @@ model CandidateActivity {
   description String
   metadata    String?   // JSON string for extra data
   createdAt   DateTime  @default(now())
+
+  @@index([candidateId])
 }
 
 model EmailInbox {
@@ -191,6 +197,8 @@ model EmailScan {
   inbox       EmailInbox @relation(fields: [inboxId], references: [id], onDelete: Cascade)
   candidateId String?    @unique
   candidate   Candidate? @relation(fields: [candidateId], references: [id])
+
+  @@index([inboxId])
 }
 
 model SupportTicket {

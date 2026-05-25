@@ -31,6 +31,21 @@ export async function POST(req: Request) {
 
     if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     if (!vacancyId) return NextResponse.json({ error: 'Vacancy ID required' }, { status: 400 })
+
+    // Validate file type — only allow PDF, DOCX, and TXT
+    const allowedExtensions = ['.pdf', '.docx', '.txt']
+    const allowedMimeTypes = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/plain',
+    ]
+    const fileExtension = file.name.toLowerCase().slice(file.name.lastIndexOf('.'))
+    if (!allowedExtensions.includes(fileExtension)) {
+      return NextResponse.json({ error: 'Invalid file type. Only PDF, DOCX, and TXT files are allowed.' }, { status: 400 })
+    }
+    if (!allowedMimeTypes.includes(file.type)) {
+      return NextResponse.json({ error: 'Invalid MIME type. Only PDF, DOCX, and TXT files are allowed.' }, { status: 400 })
+    }
     // GDPR consent must be explicitly confirmed by the recruiter before storing any PII
     if (!gdprConsent) return NextResponse.json({ error: 'GDPR consent required' }, { status: 400 })
 

@@ -31,7 +31,7 @@ export async function POST() {
     // Delete any existing tokens for this email before creating a new one
     await prisma.verificationToken.deleteMany({ where: { identifier: email } })
 
-    const token = crypto.randomUUID()
+    const token = crypto.randomBytes(32).toString('hex')
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
 
     await prisma.verificationToken.create({
