@@ -60,7 +60,7 @@ export const translations = {
       button: 'Start for free today',
     },
     footer: {
-      copyright: '© 2025 CVMatch AI. Built for modern recruiters. GDPR compliant.',
+      copyright: '© 2026 CVMatch AI. Built for modern recruiters. Powered by Gemini AI. GDPR compliant.',
       privacy: 'Privacy',
       terms: 'Terms',
       contact: 'Contact',
@@ -1050,7 +1050,7 @@ export const translations = {
       button: 'Start vandaag gratis',
     },
     footer: {
-      copyright: '© 2025 CVMatch AI. Gebouwd voor moderne recruiters. GDPR-conform.',
+      copyright: '© 2026 CVMatch AI. Gebouwd voor moderne recruiters. Aangedreven door Gemini AI. GDPR-conform.',
       privacy: 'Privacy',
       terms: 'Voorwaarden',
       contact: 'Contact',
@@ -2040,7 +2040,7 @@ export const translations = {
       button: "Commencer gratuitement aujourd'hui",
     },
     footer: {
-      copyright: '© 2025 CVMatch AI. Conçu pour les recruteurs modernes. Conforme RGPD.',
+      copyright: '© 2026 CVMatch AI. Conçu pour les recruteurs modernes. Propulsé par Gemini AI. Conforme RGPD.',
       privacy: 'Confidentialité',
       terms: 'Conditions',
       contact: 'Contact',
