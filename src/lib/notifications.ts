@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma'
 
-type NotificationType = 'cv_analyzed' | 'ticket_reply' | 'new_candidate' | 'scan_complete'
+type NotificationType = 'cv_analyzed' | 'ticket_reply' | 'new_candidate' | 'scan_complete' | 'broadcast'
 
 export async function createNotification(
   userId: string,

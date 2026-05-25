@@ -108,6 +108,22 @@ export async function POST(req: Request) {
       }
 
       try {
+        // When email is empty, check for existing candidate with same name in this vacancy
+        if (!email.trim()) {
+          const existing = await prisma.candidate.findFirst({
+            where: {
+              firstName: firstName.trim(),
+              lastName: lastName.trim(),
+              vacancyId,
+            },
+          })
+          if (existing) {
+            skipped++
+            errors.push(`Row ${rowNum}: skipped — duplicate candidate "${firstName.trim()} ${lastName.trim()}" for this vacancy`)
+            continue
+          }
+        }
+
         await prisma.candidate.create({
           data: {
             firstName: firstName.trim(),

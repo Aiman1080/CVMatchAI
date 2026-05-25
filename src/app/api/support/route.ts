@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { sendEmail, isEmailConfigured } from '@/lib/email'
 
-const ADMIN_EMAIL = 'contactcvmatchia@gmail.com'
+const ADMIN_EMAIL = process.env.CONTACT_EMAIL || 'contactcvmatchia@gmail.com'
 
 export async function GET() {
   const session = await getServerSession(authOptions)

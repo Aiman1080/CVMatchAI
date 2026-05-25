@@ -12,7 +12,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   const { id } = await params
   const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#'
   const tempPassword = Array.from({ length: 12 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
-  const hash = await bcrypt.hash(tempPassword, 10)
+  const hash = await bcrypt.hash(tempPassword, 12)
 
   try {
     const user = await prisma.user.update({ where: { id }, data: { password: hash }, select: { email: true } })

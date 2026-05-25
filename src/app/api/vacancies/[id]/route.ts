@@ -43,6 +43,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (data.type && !validTypes.includes(data.type)) {
       return NextResponse.json({ error: 'Invalid type value' }, { status: 400 })
     }
+    const validStatuses = ['active', 'archived', 'filled', 'on_hold']
+    if (data.status && !validStatuses.includes(data.status)) {
+      return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
+    }
     const vacancy = await prisma.vacancy.update({ where: { id }, data })
     return NextResponse.json(vacancy)
   } catch {

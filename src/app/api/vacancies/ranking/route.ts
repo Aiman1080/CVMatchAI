@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     },
   })
 
-  if (candidates.length === 0) return NextResponse.json({ error: 'No candidates to rank' }, { status: 400 })
+  if (candidates.length < 2) return NextResponse.json({ error: 'Need at least 2 candidates to rank' }, { status: 400 })
 
   const result = await rankCandidates(
     candidates.map(c => ({

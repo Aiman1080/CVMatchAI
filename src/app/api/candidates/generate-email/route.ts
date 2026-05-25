@@ -139,8 +139,12 @@ Return JSON: {"subject": "...", "body": "..."}`,
     const text = response.content.find(b => b.type === 'text')?.text || ''
     const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0])
-      return NextResponse.json(parsed)
+      try {
+        const parsed = JSON.parse(jsonMatch[0])
+        return NextResponse.json(parsed)
+      } catch {
+        return NextResponse.json({ error: 'Could not parse AI response' }, { status: 500 })
+      }
     }
     return NextResponse.json({ error: 'Could not parse AI response' }, { status: 500 })
   } catch (err: any) {

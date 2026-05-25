@@ -22,6 +22,7 @@ export async function POST(req: Request) {
     // findFirst with userId scoping prevents IDOR — users can only re-analyze their own candidates
     const candidate = await prisma.candidate.findFirst({ where: { id: candidateId, userId }, include: { vacancy: true } })
     if (!candidate || !candidate.cvContent) return NextResponse.json({ error: 'Candidate or CV not found' }, { status: 404 })
+    if (!candidate.vacancy) return NextResponse.json({ error: 'Vacancy not found' }, { status: 404 })
 
     const analysis = await analyzeCVAgainstVacancy(
       candidate.cvContent,

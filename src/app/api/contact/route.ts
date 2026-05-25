@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { sendEmail, isEmailConfigured } from '@/lib/email'
 
-const ADMIN_EMAIL = 'contactcvmatchia@gmail.com'
+const ADMIN_EMAIL = process.env.CONTACT_EMAIL || 'contactcvmatchia@gmail.com'
 
 export async function POST(req: Request) {
   try {
