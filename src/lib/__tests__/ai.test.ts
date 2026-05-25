@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Ensure demo mode (no API key)
 beforeEach(() => {
-  delete process.env.ANTHROPIC_API_KEY
+  delete process.env.GEMINI_API_KEY
 })
 
 // Dynamic import after env is set so isDemoMode() picks it up.

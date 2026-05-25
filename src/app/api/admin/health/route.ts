@@ -38,7 +38,7 @@ export async function GET() {
   return NextResponse.json({
     status: dbStatus === 'ok' ? 'healthy' : 'degraded',
     db: { status: dbStatus, latencyMs: dbLatencyMs },
-    ai: { status: process.env.ANTHROPIC_API_KEY ? 'configured' : 'demo_mode' },
+    ai: { status: process.env.GEMINI_API_KEY ? 'configured' : 'demo_mode' },
     counts: { users: userCount, vacancies: vacancyCount, candidates: candidateCount, openTickets },
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),

@@ -116,7 +116,7 @@ export default async function AdminPage() {
           tickets={tickets as any}
           subscriptions={subscriptions}
           counts={counts}
-          hasAiKey={!!process.env.ANTHROPIC_API_KEY}
+          hasAiKey={!!process.env.GEMINI_API_KEY}
           hasSmtp={!!(process.env.SMTP_HOST && process.env.SMTP_USER)}
           aiAnalysesCount={aiAnalysesCount}
           integrationsCount={integrationsCount}

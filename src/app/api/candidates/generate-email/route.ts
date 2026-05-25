@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
-import Anthropic from '@anthropic-ai/sdk'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 
-const isDemoMode = () => !process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY.trim() === ''
+const isDemoMode = () => !process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY.trim() === ''
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
@@ -83,7 +83,7 @@ export async function POST(req: Request) {
     return NextResponse.json((demos[localeKey][type] || demos[localeKey].interview))
   }
 
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
   const prompts: Record<string, string> = {
     interview: `Write a warm, professional recruitment email in ${langName} inviting ${candidate.firstName} ${candidate.lastName} to an interview for the position of "${vacancyTitle}" at ${company}.
@@ -131,12 +131,13 @@ Return JSON: {"subject": "...", "body": "..."}`,
   const prompt = prompts[type] || prompts.interview
 
   try {
-    const response = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1024,
-      messages: [{ role: 'user', content: prompt }],
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.0-flash',
+      generationConfig: { temperature: 0.3 },
     })
-    const text = response.content.find(b => b.type === 'text')?.text || ''
+
+    const result = await model.generateContent(prompt)
+    const text = result.response.text() || ''
     const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (jsonMatch) {
       try {

@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Test all AI functions in demo mode by forcing no API key
-const originalEnv = process.env.ANTHROPIC_API_KEY
-beforeEach(() => { process.env.ANTHROPIC_API_KEY = '' })
+const originalEnv = process.env.GEMINI_API_KEY
+beforeEach(() => { process.env.GEMINI_API_KEY = '' })
 
 describe('AI Demo Mode - Full Integration', () => {
   describe('CV Analysis', () => {

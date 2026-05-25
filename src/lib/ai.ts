@@ -1,12 +1,12 @@
-// AI analysis module — uses the Anthropic SDK (messages.create with tool_choice:'any')
+// AI analysis module — uses the Google Gemini SDK (function calling with mode:'ANY')
 // for structured CV and email analysis. Falls back to generateDemoAnalysis() when no
 // API key is configured so the app works out-of-the-box without a paid account.
-import Anthropic, { BadRequestError, RateLimitError, AuthenticationError } from '@anthropic-ai/sdk'
+import { GoogleGenerativeAI, FunctionCallingMode, type FunctionDeclaration, SchemaType } from '@google/generative-ai'
 
 const isDemoMode = () =>
-  !process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY.trim() === ''
+  !process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY.trim() === ''
 
-const getClient = () => new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const getClient = () => new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
 export interface CVAnalysisResult {
   matchScore: number
@@ -25,28 +25,26 @@ export interface CVAnalysisResult {
 }
 
 // JSON Schema for the CV analysis tool — matches CVAnalysisResult fields exactly.
-// Defined manually to avoid the @anthropic-ai/sdk/helpers/beta/zod subpath import
-// which isn't in the package exports map and breaks Next.js webpack resolution.
-const CV_ANALYSIS_TOOL: Anthropic.Tool = {
+const CV_ANALYSIS_TOOL: FunctionDeclaration = {
   name: 'submit_cv_analysis',
   description:
     'Submit your complete structured analysis after reviewing all documents. Call this exactly once with all fields populated.',
-  input_schema: {
-    type: 'object' as const,
+  parameters: {
+    type: SchemaType.OBJECT,
     properties: {
-      matchScore: { type: 'number', description: 'Match score 0-100. Be strict — average candidates score 50-65, only exceptional candidates score 80+.' },
-      summary: { type: 'string', description: '3-4 sentence professional summary covering the candidate\'s overall profile, key experience, main skills, and fit for this specific role.' },
-      strengths: { type: 'array', items: { type: 'string' }, description: '4-6 specific strengths relevant to this vacancy. Each item should be a complete sentence explaining WHY it is a strength for this role (e.g. "5 years of Python development directly matching the backend requirements").' },
-      weaknesses: { type: 'array', items: { type: 'string' }, description: '3-5 specific gaps or concerns relative to the vacancy requirements. Each item should be concrete (e.g. "No experience with Kubernetes mentioned despite it being a key requirement").' },
-      skills: { type: 'array', items: { type: 'string' }, description: 'Technical and soft skills extracted from the CV' },
-      experience: { type: 'string', description: 'Chronological summary of job roles only. Do NOT include education here.' },
-      education: { type: 'string', description: 'Degrees with institution and year, e.g. "Master CS — KU Leuven (2021)". Do NOT list jobs here.' },
-      recommendation: { type: 'string', enum: ['strong_yes', 'yes', 'maybe', 'no'], description: 'Hiring recommendation based on fit' },
-      language: { type: 'string', enum: ['nl', 'en', 'fr', 'de'], description: 'Dominant language detected in the CV' },
-      firstName: { type: 'string', description: "Candidate's personal first name from the first line of the CV. Never a school or company name." },
-      lastName: { type: 'string', description: "Candidate's family name. Never a school, company, or header word." },
-      email: { type: 'string', description: 'Email address from the CV if present' },
-      phone: { type: 'string', description: 'Phone number from the CV if present' },
+      matchScore: { type: SchemaType.NUMBER, description: 'Match score 0-100. Be strict — average candidates score 50-65, only exceptional candidates score 80+.' },
+      summary: { type: SchemaType.STRING, description: '3-4 sentence professional summary covering the candidate\'s overall profile, key experience, main skills, and fit for this specific role.' },
+      strengths: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING }, description: '4-6 specific strengths relevant to this vacancy. Each item should be a complete sentence explaining WHY it is a strength for this role (e.g. "5 years of Python development directly matching the backend requirements").' },
+      weaknesses: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING }, description: '3-5 specific gaps or concerns relative to the vacancy requirements. Each item should be concrete (e.g. "No experience with Kubernetes mentioned despite it being a key requirement").' },
+      skills: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING }, description: 'Technical and soft skills extracted from the CV' },
+      experience: { type: SchemaType.STRING, description: 'Chronological summary of job roles only. Do NOT include education here.' },
+      education: { type: SchemaType.STRING, description: 'Degrees with institution and year, e.g. "Master CS — KU Leuven (2021)". Do NOT list jobs here.' },
+      recommendation: { type: SchemaType.STRING, description: 'Hiring recommendation based on fit. Must be one of: strong_yes, yes, maybe, no' },
+      language: { type: SchemaType.STRING, description: 'Dominant language detected in the CV. Must be one of: nl, en, fr, de' },
+      firstName: { type: SchemaType.STRING, description: "Candidate's personal first name from the first line of the CV. Never a school or company name." },
+      lastName: { type: SchemaType.STRING, description: "Candidate's family name. Never a school, company, or header word." },
+      email: { type: SchemaType.STRING, description: 'Email address from the CV if present' },
+      phone: { type: SchemaType.STRING, description: 'Phone number from the CV if present' },
     },
     required: ['matchScore', 'summary', 'strengths', 'weaknesses', 'skills', 'experience', 'education', 'recommendation', 'language'],
   },
@@ -78,7 +76,7 @@ export async function analyzeCVAgainstVacancy(
     return generateDemoAnalysis(cvText, vacancyTitle)
   }
 
-  const client = getClient()
+  const genAI = getClient()
 
   const langInstruction = outputLocale === 'fr' ? '\n\nIMPORTANT: Write ALL text fields (summary, strengths, weaknesses, experience, education) in French.'
     : outputLocale === 'nl' ? '\n\nIMPORTANT: Write ALL text fields (summary, strengths, weaknesses, experience, education) in Dutch.'
@@ -98,51 +96,26 @@ ${cvText.slice(0, 6000)}` +
     (motivationText ? `\n\nMOTIVATION LETTER:\n${motivationText.slice(0, 2000)}` : '')
 
   try {
-    // tool_choice:'any' forces the model to call the tool on the first turn,
-    // so we get the structured result in a single API call with no loop needed.
-    const response = await (client.messages.create as any)({
-      model: 'claude-opus-4-7',
-      max_tokens: 4096,
-      thinking: { type: 'adaptive' },
-      system: [
-        {
-          type: 'text',
-          text: SYSTEM_PROMPT,
-          // Prompt caching: static system prompt cached after first request (~90% cost saving)
-          cache_control: { type: 'ephemeral' },
-        },
-      ],
-      tool_choice: { type: 'any' },
-      tools: [CV_ANALYSIS_TOOL],
-      messages: [{ role: 'user', content: userContent }],
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.0-flash',
+      systemInstruction: SYSTEM_PROMPT,
+      generationConfig: { temperature: 0.3 },
+      tools: [{ functionDeclarations: [CV_ANALYSIS_TOOL] }],
+      toolConfig: { functionCallingConfig: { mode: FunctionCallingMode.ANY } },
     })
 
-    const toolBlock = response.content?.find((b: any) => b.type === 'tool_use')
-    if (toolBlock?.type === 'tool_use') {
-      return toolBlock.input as CVAnalysisResult
+    const result = await model.generateContent(userContent)
+    const call = result.response.functionCalls()?.[0]
+    if (call) {
+      return call.args as unknown as CVAnalysisResult
     }
-  } catch (error) {
-    if (error instanceof RateLimitError) {
+  } catch (error: any) {
+    if (error?.status === 429) {
       console.error('[AI] Rate limit — using demo analysis')
-    } else if (error instanceof AuthenticationError) {
+    } else if (error?.status === 401 || error?.status === 403) {
       console.error('[AI] Invalid API key — using demo analysis')
-    } else if (error instanceof BadRequestError) {
-      console.error('[AI] Bad request:', (error as any).message)
-      // Retry without thinking parameter (some model versions may not support it)
-      try {
-        const retry = await client.messages.create({
-          model: 'claude-opus-4-7',
-          max_tokens: 4096,
-          system: SYSTEM_PROMPT,
-          tool_choice: { type: 'any' as const },
-          tools: [CV_ANALYSIS_TOOL],
-          messages: [{ role: 'user', content: userContent }],
-        })
-        const block = retry.content?.find((b: any) => b.type === 'tool_use')
-        if (block?.type === 'tool_use') return (block as any).input as CVAnalysisResult
-      } catch (retryErr) {
-        console.error('[AI] Retry also failed:', retryErr)
-      }
+    } else if (error?.status === 400) {
+      console.error('[AI] Bad request:', error?.message)
     } else {
       console.error('[AI] Analysis error:', error)
     }
@@ -153,17 +126,17 @@ ${cvText.slice(0, 6000)}` +
 
 // ── Email classification ──────────────────────────────────────────────────────
 
-const EMAIL_CLASSIFY_TOOL: Anthropic.Tool = {
+const EMAIL_CLASSIFY_TOOL: FunctionDeclaration = {
   name: 'classify_email',
   description: 'Classify whether this email is a recruitment job application',
-  input_schema: {
-    type: 'object' as const,
+  parameters: {
+    type: SchemaType.OBJECT,
     properties: {
-      isRelevant: { type: 'boolean', description: 'True if this is a job application with CV or motivation letter' },
-      candidateName: { type: 'string', description: 'Candidate name if detectable' },
-      appliedPosition: { type: 'string', description: 'Position applied for if mentioned' },
-      hasAttachments: { type: 'boolean', description: 'Whether the email has document attachments' },
-      confidence: { type: 'number', description: 'Confidence score 0-100' },
+      isRelevant: { type: SchemaType.BOOLEAN, description: 'True if this is a job application with CV or motivation letter' },
+      candidateName: { type: SchemaType.STRING, description: 'Candidate name if detectable' },
+      appliedPosition: { type: SchemaType.STRING, description: 'Position applied for if mentioned' },
+      hasAttachments: { type: SchemaType.BOOLEAN, description: 'Whether the email has document attachments' },
+      confidence: { type: SchemaType.NUMBER, description: 'Confidence score 0-100' },
     },
     required: ['isRelevant', 'hasAttachments', 'confidence'],
   },
@@ -182,23 +155,23 @@ export async function classifyRecruitmentEmail(
     return { isRelevant, confidence: isRelevant ? 85 : 20 }
   }
 
-  const client = getClient()
+  const genAI = getClient()
 
   try {
-    const response = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 512,
-      tool_choice: { type: 'any' as const },
-      tools: [EMAIL_CLASSIFY_TOOL],
-      messages: [{
-        role: 'user',
-        content: `Classify this email:\n\nSubject: ${subject}\nBody: ${bodyPreview.slice(0, 500)}\nAttachments: ${attachmentNames.join(', ') || 'none'}\n\nCall classify_email now.`,
-      }],
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.0-flash',
+      generationConfig: { temperature: 0.1 },
+      tools: [{ functionDeclarations: [EMAIL_CLASSIFY_TOOL] }],
+      toolConfig: { functionCallingConfig: { mode: FunctionCallingMode.ANY } },
     })
 
-    const block = response.content?.find((b: any) => b.type === 'tool_use')
-    if (block?.type === 'tool_use') {
-      const input = (block as any).input
+    const result = await model.generateContent(
+      `Classify this email:\n\nSubject: ${subject}\nBody: ${bodyPreview.slice(0, 500)}\nAttachments: ${attachmentNames.join(', ') || 'none'}\n\nCall classify_email now.`
+    )
+
+    const call = result.response.functionCalls()?.[0]
+    if (call) {
+      const input = call.args as any
       return {
         isRelevant: input.isRelevant,
         candidateName: input.candidateName,
@@ -215,13 +188,13 @@ export async function classifyRecruitmentEmail(
 
 // ── Document type detection ───────────────────────────────────────────────────
 
-const DOC_TYPE_TOOL: Anthropic.Tool = {
+const DOC_TYPE_TOOL: FunctionDeclaration = {
   name: 'set_document_type',
   description: 'Set the detected document type',
-  input_schema: {
-    type: 'object' as const,
+  parameters: {
+    type: SchemaType.OBJECT,
     properties: {
-      type: { type: 'string', enum: ['cv', 'motivation', 'other'], description: "'cv', 'motivation', or 'other'" },
+      type: { type: SchemaType.STRING, description: "Must be one of: cv, motivation, other" },
     },
     required: ['type'],
   },
@@ -239,21 +212,21 @@ export async function detectDocumentType(text: string): Promise<'cv' | 'motivati
     return 'other'
   }
 
-  const client = getClient()
+  const genAI = getClient()
 
   try {
-    const response = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 256,
-      tool_choice: { type: 'any' as const },
-      tools: [DOC_TYPE_TOOL],
-      messages: [{
-        role: 'user',
-        content: `Is this a CV/resume, motivation/cover letter, or something else?\n\n${text.slice(0, 800)}\n\nCall set_document_type now.`,
-      }],
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.0-flash',
+      generationConfig: { temperature: 0.1 },
+      tools: [{ functionDeclarations: [DOC_TYPE_TOOL] }],
+      toolConfig: { functionCallingConfig: { mode: FunctionCallingMode.ANY } },
     })
-    const block = response.content?.find((b: any) => b.type === 'tool_use')
-    if (block?.type === 'tool_use') return ((block as any).input as any).type
+
+    const result = await model.generateContent(
+      `Is this a CV/resume, motivation/cover letter, or something else?\n\n${text.slice(0, 800)}\n\nCall set_document_type now.`
+    )
+    const call = result.response.functionCalls()?.[0]
+    if (call) return (call.args as any).type
   } catch (error) {
     console.error('[AI] detectDocumentType error:', error)
   }
@@ -378,7 +351,7 @@ function generateDemoAnalysis(cvText: string, vacancyTitle: string): CVAnalysisR
 
   return {
     matchScore: score,
-    summary: `Candidate presents relevant background for the ${vacancyTitle} role. Profile reviewed in demo mode — add an ANTHROPIC_API_KEY for full AI assessment.`,
+    summary: `Candidate presents relevant background for the ${vacancyTitle} role. Profile reviewed in demo mode — add a GEMINI_API_KEY for full AI assessment.`,
     strengths: ['Relevant professional experience', 'Technical skills matching vacancy', 'Clear structured CV'],
     weaknesses: ['Demo mode: detailed analysis requires AI key', 'Some requirements need interview confirmation'],
     skills: detectedSkills,
@@ -395,21 +368,21 @@ function generateDemoAnalysis(cvText: string, vacancyTitle: string): CVAnalysisR
 
 // ── Interview Questions Generation ───────────────────────────────────────────
 
-const INTERVIEW_QUESTIONS_TOOL: Anthropic.Tool = {
+const INTERVIEW_QUESTIONS_TOOL: FunctionDeclaration = {
   name: 'submit_interview_questions',
   description: 'Submit personalized interview questions based on the candidate CV and vacancy requirements.',
-  input_schema: {
-    type: 'object' as const,
+  parameters: {
+    type: SchemaType.OBJECT,
     properties: {
       questions: {
-        type: 'array',
+        type: SchemaType.ARRAY,
         items: {
-          type: 'object',
+          type: SchemaType.OBJECT,
           properties: {
-            question: { type: 'string', description: 'The interview question' },
-            category: { type: 'string', enum: ['technical', 'behavioral', 'situational', 'cultural'], description: 'Category of the question' },
-            rationale: { type: 'string', description: 'Why this question is relevant for this candidate and role' },
-            expectedAnswer: { type: 'string', description: 'A concise 1-2 sentence expected good answer or key points to listen for' },
+            question: { type: SchemaType.STRING, description: 'The interview question' },
+            category: { type: SchemaType.STRING, description: 'Category of the question. Must be one of: technical, behavioral, situational, cultural' },
+            rationale: { type: SchemaType.STRING, description: 'Why this question is relevant for this candidate and role' },
+            expectedAnswer: { type: SchemaType.STRING, description: 'A concise 1-2 sentence expected good answer or key points to listen for' },
           },
           required: ['question', 'category', 'rationale', 'expectedAnswer'],
         },
@@ -440,20 +413,21 @@ export async function generateInterviewQuestions(
     }
   }
 
-  const client = getClient()
+  const genAI = getClient()
 
   const langInstruction = language === 'nl' ? 'Respond in Dutch.' : language === 'fr' ? 'Respond in French.' : 'Respond in English.'
 
   try {
-    const response = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 4096,
-      system: `You are an expert HR interviewer with deep experience in structured interviewing techniques. Generate 8 personalized interview questions based on the candidate's CV, focusing on gaps, strengths, and the specific role requirements. Include a mix of technical, behavioral, situational, and cultural fit questions. Each question should be tailored — not generic. For each question, also provide a concise expected answer (1-2 sentences) describing what a good response should include. ${langInstruction}`,
-      tool_choice: { type: 'any' as const },
-      tools: [INTERVIEW_QUESTIONS_TOOL],
-      messages: [{
-        role: 'user',
-        content: `Generate 8 personalized interview questions for this candidate and role.
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.0-flash',
+      systemInstruction: `You are an expert HR interviewer with deep experience in structured interviewing techniques. Generate 8 personalized interview questions based on the candidate's CV, focusing on gaps, strengths, and the specific role requirements. Include a mix of technical, behavioral, situational, and cultural fit questions. Each question should be tailored — not generic. For each question, also provide a concise expected answer (1-2 sentences) describing what a good response should include. ${langInstruction}`,
+      generationConfig: { temperature: 0.3 },
+      tools: [{ functionDeclarations: [INTERVIEW_QUESTIONS_TOOL] }],
+      toolConfig: { functionCallingConfig: { mode: FunctionCallingMode.ANY } },
+    })
+
+    const result = await model.generateContent(
+      `Generate 8 personalized interview questions for this candidate and role.
 
 VACANCY:
 Title: ${vacancyTitle}
@@ -463,13 +437,12 @@ Requirements: ${vacancyRequirements.slice(0, 1000)}
 CANDIDATE CV:
 ${cvText.slice(0, 5000)}
 
-Call submit_interview_questions now.`,
-      }],
-    })
+Call submit_interview_questions now.`
+    )
 
-    const block = response.content?.find((b: any) => b.type === 'tool_use')
-    if (block?.type === 'tool_use') {
-      return (block as any).input as { questions: Array<{ question: string; category: string; rationale: string; expectedAnswer: string }> }
+    const call = result.response.functionCalls()?.[0]
+    if (call) {
+      return call.args as unknown as { questions: Array<{ question: string; category: string; rationale: string; expectedAnswer: string }> }
     }
   } catch (error) {
     console.error('[AI] generateInterviewQuestions error:', error)
@@ -490,15 +463,15 @@ Call submit_interview_questions now.`,
 
 // ── Job Description Generation ───────────────────────────────────────────────
 
-const JOB_DESCRIPTION_TOOL: Anthropic.Tool = {
+const JOB_DESCRIPTION_TOOL: FunctionDeclaration = {
   name: 'submit_job_description',
   description: 'Submit a generated job description with requirements and nice-to-haves.',
-  input_schema: {
-    type: 'object' as const,
+  parameters: {
+    type: SchemaType.OBJECT,
     properties: {
-      description: { type: 'string', description: 'Full job description, 200-300 words, professional and attractive' },
-      requirements: { type: 'string', description: 'Bullet list of must-have requirements (each on new line starting with -)' },
-      niceToHave: { type: 'string', description: 'Bullet list of nice-to-have qualifications (each on new line starting with -)' },
+      description: { type: SchemaType.STRING, description: 'Full job description, 200-300 words, professional and attractive' },
+      requirements: { type: SchemaType.STRING, description: 'Bullet list of must-have requirements (each on new line starting with -)' },
+      niceToHave: { type: SchemaType.STRING, description: 'Bullet list of nice-to-have qualifications (each on new line starting with -)' },
     },
     required: ['description', 'requirements', 'niceToHave'],
   },
@@ -519,32 +492,32 @@ export async function generateJobDescription(
     }
   }
 
-  const client = getClient()
+  const genAI = getClient()
 
   const langInstruction = language === 'nl' ? 'Write in Dutch.' : language === 'fr' ? 'Write in French.' : 'Write in English.'
   const companyContext = company ? ` The company is "${company}".` : ''
 
   try {
-    const response = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 4096,
-      system: `You are an expert HR copywriter specializing in creating professional, attractive, and inclusive job descriptions that attract top talent. Write compelling descriptions that clearly communicate the role, responsibilities, and growth opportunities. ${langInstruction}`,
-      tool_choice: { type: 'any' as const },
-      tools: [JOB_DESCRIPTION_TOOL],
-      messages: [{
-        role: 'user',
-        content: `Generate a professional job description for the following role.
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.0-flash',
+      systemInstruction: `You are an expert HR copywriter specializing in creating professional, attractive, and inclusive job descriptions that attract top talent. Write compelling descriptions that clearly communicate the role, responsibilities, and growth opportunities. ${langInstruction}`,
+      generationConfig: { temperature: 0.3 },
+      tools: [{ functionDeclarations: [JOB_DESCRIPTION_TOOL] }],
+      toolConfig: { functionCallingConfig: { mode: FunctionCallingMode.ANY } },
+    })
+
+    const result = await model.generateContent(
+      `Generate a professional job description for the following role.
 
 Title: ${title}
 Keywords/Focus areas: ${keywords || 'Not specified'}${companyContext}
 
-Create a compelling description (200-300 words), a clear list of must-have requirements, and a list of nice-to-have qualifications. Call submit_job_description now.`,
-      }],
-    })
+Create a compelling description (200-300 words), a clear list of must-have requirements, and a list of nice-to-have qualifications. Call submit_job_description now.`
+    )
 
-    const block = response.content?.find((b: any) => b.type === 'tool_use')
-    if (block?.type === 'tool_use') {
-      return (block as any).input as { description: string; requirements: string; niceToHave: string }
+    const call = result.response.functionCalls()?.[0]
+    if (call) {
+      return call.args as unknown as { description: string; requirements: string; niceToHave: string }
     }
   } catch (error) {
     console.error('[AI] generateJobDescription error:', error)
@@ -561,21 +534,21 @@ Create a compelling description (200-300 words), a clear list of must-have requi
 
 // ── Candidate Ranking ────────────────────────────────────────────────────────
 
-const RANKING_TOOL: Anthropic.Tool = {
+const RANKING_TOOL: FunctionDeclaration = {
   name: 'submit_ranking',
   description: 'Submit the ranked list of candidates with reasoning.',
-  input_schema: {
-    type: 'object' as const,
+  parameters: {
+    type: SchemaType.OBJECT,
     properties: {
       ranking: {
-        type: 'array',
+        type: SchemaType.ARRAY,
         items: {
-          type: 'object',
+          type: SchemaType.OBJECT,
           properties: {
-            candidateId: { type: 'string', description: 'The candidate ID' },
-            rank: { type: 'number', description: 'Rank position (1 = best)' },
-            reasoning: { type: 'string', description: '2-3 sentences explaining why this candidate is ranked here' },
-            standoutFactor: { type: 'string', description: '1 sentence describing what uniquely differentiates this candidate' },
+            candidateId: { type: SchemaType.STRING, description: 'The candidate ID' },
+            rank: { type: SchemaType.NUMBER, description: 'Rank position (1 = best)' },
+            reasoning: { type: SchemaType.STRING, description: '2-3 sentences explaining why this candidate is ranked here' },
+            standoutFactor: { type: SchemaType.STRING, description: '1 sentence describing what uniquely differentiates this candidate' },
           },
           required: ['candidateId', 'rank', 'reasoning', 'standoutFactor'],
         },
@@ -606,7 +579,7 @@ export async function rankCandidates(
     return { ranking }
   }
 
-  const client = getClient()
+  const genAI = getClient()
 
   const langInstruction = language === 'nl' ? 'Respond in Dutch.' : language === 'fr' ? 'Respond in French.' : 'Respond in English.'
 
@@ -615,15 +588,16 @@ export async function rankCandidates(
   ).join('\n\n')
 
   try {
-    const response = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 4096,
-      system: `You are an expert talent evaluator. Rank the candidates for the specified role. Explain clearly WHY each candidate is ranked in their position — what makes #1 better than #2, etc. Focus on role fit, not just overall quality. ${langInstruction}`,
-      tool_choice: { type: 'any' as const },
-      tools: [RANKING_TOOL],
-      messages: [{
-        role: 'user',
-        content: `Rank these candidates for the following vacancy.
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.0-flash',
+      systemInstruction: `You are an expert talent evaluator. Rank the candidates for the specified role. Explain clearly WHY each candidate is ranked in their position — what makes #1 better than #2, etc. Focus on role fit, not just overall quality. ${langInstruction}`,
+      generationConfig: { temperature: 0.3 },
+      tools: [{ functionDeclarations: [RANKING_TOOL] }],
+      toolConfig: { functionCallingConfig: { mode: FunctionCallingMode.ANY } },
+    })
+
+    const result = await model.generateContent(
+      `Rank these candidates for the following vacancy.
 
 VACANCY:
 Title: ${vacancyTitle}
@@ -633,13 +607,12 @@ Requirements: ${vacancyRequirements.slice(0, 800)}
 CANDIDATES:
 ${candidateSummaries}
 
-Call submit_ranking now.`,
-      }],
-    })
+Call submit_ranking now.`
+    )
 
-    const block = response.content?.find((b: any) => b.type === 'tool_use')
-    if (block?.type === 'tool_use') {
-      return (block as any).input as { ranking: Array<{ candidateId: string; rank: number; reasoning: string; standoutFactor: string }> }
+    const call = result.response.functionCalls()?.[0]
+    if (call) {
+      return call.args as unknown as { ranking: Array<{ candidateId: string; rank: number; reasoning: string; standoutFactor: string }> }
     }
   } catch (error) {
     console.error('[AI] rankCandidates error:', error)
@@ -657,13 +630,13 @@ Call submit_ranking now.`,
 
 // ── Hiring Report Generation ─────────────────────────────────────────────────
 
-const HIRING_REPORT_TOOL: Anthropic.Tool = {
+const HIRING_REPORT_TOOL: FunctionDeclaration = {
   name: 'submit_hiring_report',
   description: 'Submit the formatted hiring report.',
-  input_schema: {
-    type: 'object' as const,
+  parameters: {
+    type: SchemaType.OBJECT,
     properties: {
-      report: { type: 'string', description: 'Complete hiring report in markdown format' },
+      report: { type: SchemaType.STRING, description: 'Complete hiring report in markdown format' },
     },
     required: ['report'],
   },
@@ -715,20 +688,21 @@ ${candidate.recommendation === 'strong_yes' || candidate.recommendation === 'yes
     return { report }
   }
 
-  const client = getClient()
+  const genAI = getClient()
 
   const langInstruction = language === 'nl' ? 'Write in Dutch.' : language === 'fr' ? 'Write in French.' : 'Write in English.'
 
   try {
-    const response = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 4096,
-      system: `You are an expert HR professional. Generate a professional 1-page hiring report for a hiring manager. Include: candidate overview, match score with interpretation, key qualifications, strengths summary, areas of concern, skills assessment, and final recommendation. Keep it concise and actionable. Format in clean markdown. ${langInstruction}`,
-      tool_choice: { type: 'any' as const },
-      tools: [HIRING_REPORT_TOOL],
-      messages: [{
-        role: 'user',
-        content: `Generate a hiring report for this candidate.
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.0-flash',
+      systemInstruction: `You are an expert HR professional. Generate a professional 1-page hiring report for a hiring manager. Include: candidate overview, match score with interpretation, key qualifications, strengths summary, areas of concern, skills assessment, and final recommendation. Keep it concise and actionable. Format in clean markdown. ${langInstruction}`,
+      generationConfig: { temperature: 0.3 },
+      tools: [{ functionDeclarations: [HIRING_REPORT_TOOL] }],
+      toolConfig: { functionCallingConfig: { mode: FunctionCallingMode.ANY } },
+    })
+
+    const result = await model.generateContent(
+      `Generate a hiring report for this candidate.
 
 VACANCY: ${vacancyTitle}
 Description: ${vacancyDescription.slice(0, 1000)}
@@ -746,13 +720,12 @@ Experience: ${candidate.experience}
 Education: ${candidate.education}
 Recommendation: ${candidate.recommendation}
 
-Call submit_hiring_report now.`,
-      }],
-    })
+Call submit_hiring_report now.`
+    )
 
-    const block = response.content?.find((b: any) => b.type === 'tool_use')
-    if (block?.type === 'tool_use') {
-      return (block as any).input as { report: string }
+    const call = result.response.functionCalls()?.[0]
+    if (call) {
+      return call.args as unknown as { report: string }
     }
   } catch (error) {
     console.error('[AI] generateHiringReport error:', error)
