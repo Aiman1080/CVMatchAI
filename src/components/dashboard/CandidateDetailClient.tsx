@@ -159,11 +159,9 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
   }
 
   const openEmailDialog = (type: string) => {
-    const tpl = EMAIL_TEMPLATES[type] || EMAIL_TEMPLATES.rejection
-    const name = `${candidate.firstName} ${candidate.lastName}`
     setEmailType(type)
-    setEmailSubject(tpl.subject)
-    setEmailBody(tpl.body.replace('{name}', candidate.firstName || name))
+    setEmailSubject('')
+    setEmailBody('')
     setTeamsLink('')
     setShowEmail(true)
   }
