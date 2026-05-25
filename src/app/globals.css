@@ -98,3 +98,44 @@ input:-webkit-autofill:focus {
 .dark .gradient-border {
   background: linear-gradient(hsl(222 47% 10%), hsl(222 47% 10%)) padding-box, linear-gradient(135deg, #3b82f6, #6366f1) border-box;
 }
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ═══ Floating particle keyframes ═══ */
+@keyframes float-particle-1 {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  50% { transform: translateY(-20px) translateX(8px); }
+}
+@keyframes float-particle-2 {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  50% { transform: translateY(18px) translateX(-10px); }
+}
+@keyframes float-particle-3 {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  50% { transform: translateY(-15px) translateX(-6px); }
+}
+@keyframes float-particle-4 {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  50% { transform: translateY(20px) translateX(12px); }
+}
+
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.particle-1 { animation: float-particle-1 6s ease-in-out infinite; }
+.particle-2 { animation: float-particle-2 7s ease-in-out infinite; }
+.particle-3 { animation: float-particle-3 5s ease-in-out infinite; }
+.particle-4 { animation: float-particle-4 8s ease-in-out infinite; }
+.particle-5 { animation: float-particle-1 4.5s ease-in-out infinite; }
+.particle-6 { animation: float-particle-2 6.5s ease-in-out infinite; }
+.particle-7 { animation: float-particle-3 7.5s ease-in-out infinite; }
+
+/* Hide particles on mobile to avoid clutter */
+@media (max-width: 768px) {
+  .particle { display: none; }
+}
