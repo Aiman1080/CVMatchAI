@@ -1020,6 +1020,19 @@ export function AdminClient({
                   <span className="text-2xl font-bold text-violet-600">{aiAnalysesCount}</span>
                 </div>
               </div>
+              <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                  { label: 'Provider', value: 'Google AI' },
+                  { label: 'Model', value: 'gemini-2.0-flash' },
+                  { label: 'Rate limit', value: '15 req/min (free tier)' },
+                  { label: 'Cost', value: 'Free tier / ~$0.01/1M tokens' },
+                ].map(item => (
+                  <div key={item.label} className="p-2.5 rounded-lg border border-gray-100 dark:border-gray-700">
+                    <div className="text-xs text-gray-400 dark:text-gray-500">{item.label}</div>
+                    <div className="text-xs font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{item.value}</div>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
 
