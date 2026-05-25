@@ -25,6 +25,32 @@ export const PLAN_LIMITS = {
     csvImport: true,
     export: true,
   },
+  demo: {
+    maxVacancies: 3,
+    maxCandidatesPerMonth: 20,
+    aiAnalysis: true,
+    emailInbox: false,
+    atsIntegrations: false,
+    analytics: false,
+    interviewQuestions: false,
+    hiringReport: false,
+    candidateRanking: false,
+    csvImport: false,
+    export: false,
+  },
+  demo_pro: {
+    maxVacancies: 8,
+    maxCandidatesPerMonth: 50,
+    aiAnalysis: true,
+    emailInbox: true,
+    atsIntegrations: true,
+    analytics: true,
+    interviewQuestions: true,
+    hiringReport: true,
+    candidateRanking: true,
+    csvImport: true,
+    export: true,
+  },
 }
 
 export function getPlanLimits(subscription: string) {
