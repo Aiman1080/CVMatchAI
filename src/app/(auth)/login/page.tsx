@@ -10,10 +10,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/use-toast'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 export default function LoginPage() {
   const showDemo = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
   const router = useRouter()
+  const { t } = useLanguage()
   const [form, setForm] = useState({ email: '', password: '' })
   const [loading, setLoading] = useState(false)
   const [showPass, setShowPass] = useState(false)
@@ -24,7 +26,7 @@ export default function LoginPage() {
     const res = await signIn('credentials', { email: form.email, password: form.password, redirect: false })
     setLoading(false)
     if (res?.ok) { router.push('/dashboard') }
-    else { toast({ title: 'Login failed', description: 'Invalid email or password', variant: 'destructive' }) }
+    else { toast({ title: t.auth.loginFailed, description: t.auth.invalidCredentials, variant: 'destructive' }) }
   }
 
   const fillDemo = (type: 'free' | 'pro' | 'admin') => {
@@ -36,13 +38,13 @@ export default function LoginPage() {
   return (
     <div className="relative z-10 w-full max-w-md">
       <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-white/70 hover:text-white mb-4 transition-colors">
-        <ArrowLeft size={16} /> Back to home
+        <ArrowLeft size={16} /> {t.auth.backToHome}
       </Link>
       <div className="bg-white text-gray-900 rounded-2xl shadow-2xl p-8 [&_input]:bg-white [&_input]:border-gray-300 [&_input]:text-gray-900 [&_label]:text-gray-700">
         <div className="text-center mb-8">
           <div className="mx-auto mb-4 w-fit"><Logo size={48} /></div>
-          <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
-          <p className="text-gray-500 text-sm mt-1">Sign in to CVMatch AI</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t.auth.welcomeBack}</h1>
+          <p className="text-gray-500 text-sm mt-1">{t.auth.signInTo}</p>
         </div>
         {showDemo && (
         <div className="flex gap-2 mb-6">
@@ -51,7 +53,7 @@ export default function LoginPage() {
             title="demo@cvmatch.ai / recruiter123"
             className="flex-1 text-xs bg-blue-50 text-blue-700 px-3 py-2 rounded-lg hover:bg-blue-100 transition-colors font-medium"
           >
-            Demo Free
+            {t.auth.demoFree}
             <span className="block text-blue-400 font-normal" style={{ fontSize: '10px' }}>recruiter123</span>
           </button>
           <button
@@ -59,7 +61,7 @@ export default function LoginPage() {
             title="pro@cvmatch.ai / pro123"
             className="flex-1 text-xs bg-green-50 text-green-700 px-3 py-2 rounded-lg hover:bg-green-100 transition-colors font-medium"
           >
-            Demo Pro
+            {t.auth.demoPro}
             <span className="block text-green-400 font-normal" style={{ fontSize: '10px' }}>pro123</span>
           </button>
           <button
@@ -67,18 +69,18 @@ export default function LoginPage() {
             title="admin@cvmatch.ai / admin123"
             className="flex-1 text-xs bg-purple-50 text-purple-700 px-3 py-2 rounded-lg hover:bg-purple-100 transition-colors font-medium"
           >
-            Demo Admin
+            {t.auth.demoAdmin}
             <span className="block text-purple-400 font-normal" style={{ fontSize: '10px' }}>admin123</span>
           </button>
         </div>
         )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t.auth.email}</Label>
             <Input id="email" type="email" placeholder="you@company.com" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} required autoComplete="email" />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t.auth.password}</Label>
             <div className="relative">
               <Input id="password" type={showPass ? 'text' : 'password'} placeholder="••••••••" value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} required className="pr-10" />
               <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
@@ -86,15 +88,15 @@ export default function LoginPage() {
               </button>
             </div>
             <div className="text-right">
-              <Link href="/forgot-password" className="text-xs text-blue-600 hover:underline">Forgot password?</Link>
+              <Link href="/forgot-password" className="text-xs text-blue-600 hover:underline">{t.auth.forgotPassword}</Link>
             </div>
           </div>
           <Button type="submit" disabled={loading} className="w-full gradient-bg h-11">
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sign In'}
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : t.auth.signIn}
           </Button>
         </form>
         <p className="text-center text-sm text-gray-500 mt-6">
-          No account? <Link href="/register" className="text-blue-600 font-medium hover:underline">Create one free</Link>
+          {t.auth.noAccount} <Link href="/register" className="text-blue-600 font-medium hover:underline">{t.auth.createOneFree}</Link>
         </p>
       </div>
     </div>

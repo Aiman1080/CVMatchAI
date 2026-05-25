@@ -6,11 +6,13 @@ import Link from 'next/link'
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react'
 import { Logo } from '@/components/Logo'
 import { Button } from '@/components/ui/button'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 export default function VerifyEmailPage() {
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
   const email = searchParams.get('email')
+  const { t } = useLanguage()
 
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
   const [errorMessage, setErrorMessage] = useState('')
@@ -18,7 +20,7 @@ export default function VerifyEmailPage() {
   useEffect(() => {
     if (!token || !email) {
       setStatus('error')
-      setErrorMessage('Invalid verification link. Missing token or email.')
+      setErrorMessage(t.auth.invalidVerificationLink)
       return
     }
 
@@ -30,15 +32,16 @@ export default function VerifyEmailPage() {
           body: JSON.stringify({ token, email }),
         })
         const data = await res.json()
-        if (!res.ok) throw new Error(data.error || 'Verification failed')
+        if (!res.ok) throw new Error(data.error || t.auth.verificationFailed)
         setStatus('success')
       } catch (err: any) {
         setStatus('error')
-        setErrorMessage(err.message || 'Something went wrong. Please try again.')
+        setErrorMessage(err.message || t.auth.verificationError)
       }
     }
 
     verifyEmail()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, email])
 
   return (
@@ -46,25 +49,25 @@ export default function VerifyEmailPage() {
       <div className="bg-white text-gray-900 rounded-2xl shadow-2xl p-8">
         <div className="text-center mb-8">
           <div className="mx-auto mb-4 w-fit"><Logo size={48} /></div>
-          <h1 className="text-2xl font-bold text-gray-900">Email Verification</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t.auth.emailVerification}</h1>
         </div>
 
         {status === 'loading' && (
           <div className="text-center py-8">
             <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto mb-4" />
-            <p className="text-gray-600">Verifying your email address...</p>
+            <p className="text-gray-600">{t.auth.verifyingEmail}</p>
           </div>
         )}
 
         {status === 'success' && (
           <div className="text-center py-8">
             <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">Email verified!</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">{t.auth.emailVerified}</h2>
             <p className="text-gray-500 text-sm mb-6">
-              Your email address has been successfully verified. You can now access all features.
+              {t.auth.emailVerifiedDesc}
             </p>
             <Link href="/dashboard">
-              <Button className="gradient-bg h-11 px-8">Go to dashboard</Button>
+              <Button className="gradient-bg h-11 px-8">{t.auth.goToDashboard}</Button>
             </Link>
           </div>
         )}
@@ -72,14 +75,14 @@ export default function VerifyEmailPage() {
         {status === 'error' && (
           <div className="text-center py-8">
             <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">Verification failed</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">{t.auth.verificationFailed}</h2>
             <p className="text-gray-500 text-sm mb-6">{errorMessage}</p>
             <div className="flex gap-3 justify-center">
               <Link href="/login">
-                <Button variant="outline" className="h-11 px-6">Back to login</Button>
+                <Button variant="outline" className="h-11 px-6">{t.auth.backToLogin}</Button>
               </Link>
               <Link href="/dashboard">
-                <Button className="gradient-bg h-11 px-6">Go to dashboard</Button>
+                <Button className="gradient-bg h-11 px-6">{t.auth.goToDashboard}</Button>
               </Link>
             </div>
           </div>

@@ -85,7 +85,7 @@ export function NotificationBell() {
             </button>
           </div>
           {notifications.length === 0 ? (
-            <div className="py-8 text-center text-gray-400 text-sm">{tn.empty}</div>
+            <div className="py-8 text-center text-gray-400 text-sm">{tn.noNotifications}</div>
           ) : (
             <div className="divide-y divide-gray-50 dark:divide-gray-800 max-h-80 overflow-y-auto">
               {notifications.map(n => (

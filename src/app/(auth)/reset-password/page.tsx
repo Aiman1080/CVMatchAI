@@ -9,11 +9,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/use-toast'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 export default function ResetPasswordPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
+  const { t } = useLanguage()
 
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -25,12 +27,12 @@ export default function ResetPasswordPage() {
     e.preventDefault()
 
     if (password !== confirm) {
-      toast({ title: 'Passwords do not match', variant: 'destructive' })
+      toast({ title: t.auth.passwordsDoNotMatch, variant: 'destructive' })
       return
     }
 
     if (password.length < 8) {
-      toast({ title: 'Password must be at least 8 characters', variant: 'destructive' })
+      toast({ title: t.auth.passwordTooShort, variant: 'destructive' })
       return
     }
 
@@ -44,15 +46,15 @@ export default function ResetPasswordPage() {
       const data = await res.json()
 
       if (!res.ok) {
-        toast({ title: 'Reset failed', description: data.error || 'Something went wrong', variant: 'destructive' })
+        toast({ title: t.auth.resetFailed, description: data.error || t.auth.somethingWentWrong, variant: 'destructive' })
         setLoading(false)
         return
       }
 
-      toast({ title: 'Password reset successful', description: 'You can now sign in with your new password.' })
+      toast({ title: t.auth.passwordResetSuccess, description: t.auth.canNowSignIn })
       router.push('/login')
     } catch {
-      toast({ title: 'Something went wrong', description: 'Please try again later.', variant: 'destructive' })
+      toast({ title: t.auth.somethingWentWrong, description: t.auth.tryAgainLater, variant: 'destructive' })
       setLoading(false)
     }
   }
@@ -63,14 +65,14 @@ export default function ResetPasswordPage() {
         <div className="bg-white text-gray-900 rounded-2xl shadow-2xl p-8 [&_input]:bg-white [&_input]:border-gray-300 [&_input]:text-gray-900 [&_label]:text-gray-700">
           <div className="text-center mb-8">
             <div className="mx-auto mb-4 w-fit"><Logo size={48} /></div>
-            <h1 className="text-2xl font-bold text-gray-900">Invalid reset link</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t.auth.invalidResetLink}</h1>
             <p className="text-gray-500 text-sm mt-1">
-              This password reset link is missing or invalid.
+              {t.auth.missingOrInvalid}
             </p>
           </div>
           <div className="text-center">
             <Link href="/forgot-password" className="text-blue-600 text-sm font-medium hover:underline">
-              Request a new reset link
+              {t.auth.requestNewLink}
             </Link>
           </div>
         </div>
@@ -83,15 +85,15 @@ export default function ResetPasswordPage() {
       <div className="bg-white text-gray-900 rounded-2xl shadow-2xl p-8">
         <div className="text-center mb-8">
           <div className="mx-auto mb-4 w-fit"><Logo size={48} /></div>
-          <h1 className="text-2xl font-bold text-gray-900">Set new password</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t.auth.setNewPassword}</h1>
           <p className="text-gray-500 text-sm mt-1">
-            Enter your new password below
+            {t.auth.enterNewPassword}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="password">New password</Label>
+            <Label htmlFor="password">{t.auth.newPassword}</Label>
             <div className="relative">
               <Input
                 id="password"
@@ -109,7 +111,7 @@ export default function ResetPasswordPage() {
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="confirm">Confirm password</Label>
+            <Label htmlFor="confirm">{t.auth.confirmPassword}</Label>
             <div className="relative">
               <Input
                 id="confirm"
@@ -127,13 +129,13 @@ export default function ResetPasswordPage() {
             </div>
           </div>
           <Button type="submit" disabled={loading} className="w-full gradient-bg h-11">
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Reset password'}
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : t.auth.resetPassword}
           </Button>
         </form>
         <p className="text-center text-sm text-gray-500 mt-6">
-          Remember your password?{' '}
+          {t.auth.rememberPassword}{' '}
           <Link href="/login" className="text-blue-600 font-medium hover:underline">
-            Sign in
+            {t.auth.signIn}
           </Link>
         </p>
       </div>
