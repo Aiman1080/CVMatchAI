@@ -31,7 +31,7 @@ export default async function ComparePage({
   if (candidates.length !== ids.length) redirect('/candidates')
 
   // Preserve requested order
-  const ordered = ids.map(id => candidates.find(c => c.id === id)!)
+  const ordered = ids.map(id => candidates.find(c => c.id === id)).filter(Boolean) as typeof candidates
 
   return (
     <div>

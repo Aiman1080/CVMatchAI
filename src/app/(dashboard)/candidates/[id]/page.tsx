@@ -1,14 +1,16 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { Header } from '@/components/layout/Header'
 import { CandidateDetailClient } from '@/components/dashboard/CandidateDetailClient'
 
 export default async function CandidateDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  await getServerSession(authOptions)
+  const session = await getServerSession(authOptions)
+  if (!session?.user) redirect('/login')
+  const userId = (session.user as any).id
   const { id } = await params
-  const candidate = await prisma.candidate.findUnique({ where: { id }, include: { vacancy: true, emailSource: true } })
+  const candidate = await prisma.candidate.findFirst({ where: { id, userId }, include: { vacancy: true, emailSource: true } })
   if (!candidate) notFound()
   return (
     <div>

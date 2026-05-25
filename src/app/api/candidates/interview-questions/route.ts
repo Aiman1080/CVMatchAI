@@ -18,6 +18,7 @@ export async function POST(req: Request) {
   })
   if (!candidate) return NextResponse.json({ error: 'Candidate not found' }, { status: 404 })
   if (!candidate.cvContent) return NextResponse.json({ error: 'No CV content available' }, { status: 400 })
+  if (!candidate.vacancy) return NextResponse.json({ error: 'Vacancy not found' }, { status: 404 })
 
   const result = await generateInterviewQuestions(
     candidate.cvContent,

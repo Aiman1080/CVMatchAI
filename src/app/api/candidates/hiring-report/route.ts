@@ -17,6 +17,7 @@ export async function POST(req: Request) {
     include: { vacancy: true },
   })
   if (!candidate) return NextResponse.json({ error: 'Candidate not found' }, { status: 404 })
+  if (!candidate.vacancy) return NextResponse.json({ error: 'Vacancy not found' }, { status: 404 })
 
   const result = await generateHiringReport(
     {

@@ -99,7 +99,7 @@ export default async function AdminPage() {
         select: { firstName: true, lastName: true, analyzedAt: true, vacancy: { select: { title: true } } },
       }).then(rows => rows.map(r => ({
         type: 'analysis' as const,
-        description: `CV analyzed: ${r.firstName} ${r.lastName} for "${r.vacancy.title}"`,
+        description: `CV analyzed: ${r.firstName} ${r.lastName} for "${r.vacancy?.title || 'Unknown'}"`,
         createdAt: (r.analyzedAt ?? new Date()).toISOString(),
       }))),
     ]).then(([u, v, a]) =>

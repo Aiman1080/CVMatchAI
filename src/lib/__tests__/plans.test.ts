@@ -5,24 +5,30 @@ describe('getPlanLimits', () => {
   describe('free plan', () => {
     it('returns correct limits', () => {
       const limits = getPlanLimits('free')
-      expect(limits.maxVacancies).toBe(5)
-      expect(limits.maxCandidatesPerMonth).toBe(50)
+      expect(limits.maxVacancies).toBe(3)
+      expect(limits.maxCandidatesPerMonth).toBe(25)
       expect(limits.aiAnalysis).toBe(true)
     })
 
     it('has emailInbox disabled', () => {
-      const limits = getPlanLimits('free')
-      expect(limits.emailInbox).toBe(false)
+      expect(getPlanLimits('free').emailInbox).toBe(false)
     })
 
     it('has atsIntegrations disabled', () => {
-      const limits = getPlanLimits('free')
-      expect(limits.atsIntegrations).toBe(false)
+      expect(getPlanLimits('free').atsIntegrations).toBe(false)
     })
 
     it('has analytics disabled', () => {
+      expect(getPlanLimits('free').analytics).toBe(false)
+    })
+
+    it('has pro features disabled', () => {
       const limits = getPlanLimits('free')
-      expect(limits.analytics).toBe(false)
+      expect(limits.interviewQuestions).toBe(false)
+      expect(limits.hiringReport).toBe(false)
+      expect(limits.candidateRanking).toBe(false)
+      expect(limits.csvImport).toBe(false)
+      expect(limits.export).toBe(false)
     })
   })
 
@@ -30,51 +36,30 @@ describe('getPlanLimits', () => {
     it('returns correct limits', () => {
       const limits = getPlanLimits('pro')
       expect(limits.maxVacancies).toBe(Infinity)
-      expect(limits.maxCandidatesPerMonth).toBe(500)
-      expect(limits.aiAnalysis).toBe(true)
-    })
-
-    it('has emailInbox enabled', () => {
-      const limits = getPlanLimits('pro')
-      expect(limits.emailInbox).toBe(true)
-    })
-
-    it('has atsIntegrations enabled', () => {
-      const limits = getPlanLimits('pro')
-      expect(limits.atsIntegrations).toBe(true)
-    })
-
-    it('has analytics enabled', () => {
-      const limits = getPlanLimits('pro')
-      expect(limits.analytics).toBe(true)
-    })
-  })
-
-  describe('enterprise plan', () => {
-    it('returns correct limits', () => {
-      const limits = getPlanLimits('enterprise')
-      expect(limits.maxVacancies).toBe(Infinity)
       expect(limits.maxCandidatesPerMonth).toBe(Infinity)
       expect(limits.aiAnalysis).toBe(true)
     })
 
     it('has all features enabled', () => {
-      const limits = getPlanLimits('enterprise')
+      const limits = getPlanLimits('pro')
       expect(limits.emailInbox).toBe(true)
       expect(limits.atsIntegrations).toBe(true)
       expect(limits.analytics).toBe(true)
+      expect(limits.interviewQuestions).toBe(true)
+      expect(limits.hiringReport).toBe(true)
+      expect(limits.candidateRanking).toBe(true)
+      expect(limits.csvImport).toBe(true)
+      expect(limits.export).toBe(true)
     })
   })
 
   describe('unknown plan', () => {
     it('falls back to free plan limits', () => {
-      const limits = getPlanLimits('unknown')
-      expect(limits).toEqual(PLAN_LIMITS.free)
+      expect(getPlanLimits('unknown')).toEqual(PLAN_LIMITS.free)
     })
 
     it('falls back to free for empty string', () => {
-      const limits = getPlanLimits('')
-      expect(limits).toEqual(PLAN_LIMITS.free)
+      expect(getPlanLimits('')).toEqual(PLAN_LIMITS.free)
     })
   })
 })
