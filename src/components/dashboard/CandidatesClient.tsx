@@ -15,6 +15,7 @@ import { toast } from '@/components/ui/use-toast'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { KanbanView } from './KanbanView'
 import { ImportCSVDialog } from './ImportCSVDialog'
+import { UploadWithVacancyDialog } from './UploadWithVacancyDialog'
 import { getStatusColor, formatRelativeTime, parseJsonSafe } from '@/lib/utils'
 import { exportCandidatesToExcel, exportCandidatesToPDF } from '@/lib/export'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -57,6 +58,7 @@ export function CandidatesClient({ initialCandidates, initialTotal }: { initialC
   const [exportingExcel, setExportingExcel] = useState(false)
   const [exportingPdf, setExportingPdf] = useState(false)
   const [showImportCSV, setShowImportCSV] = useState(false)
+  const [showUploadCV, setShowUploadCV] = useState(false)
 
   // Bulk selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -393,8 +395,11 @@ export function CandidatesClient({ initialCandidates, initialTotal }: { initialC
             <Columns size={16} />
           </button>
         </div>
+        <Button size="sm" onClick={() => setShowUploadCV(true)} className="gap-1.5 h-9 gradient-bg">
+          <Upload size={15} /> Upload CV
+        </Button>
         <Button variant="outline" size="sm" onClick={() => setShowImportCSV(true)} className="gap-1.5 h-9">
-          <Upload size={15} /> Import CSV
+          <FileText size={15} /> Import CSV
         </Button>
         <Button variant="outline" size="sm" onClick={() => setShowExport(true)} className="gap-1.5 h-9">
           <Download size={15} /> {tc.exportCsv}
@@ -700,6 +705,13 @@ export function CandidatesClient({ initialCandidates, initialTotal }: { initialC
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Upload CV dialog */}
+      <UploadWithVacancyDialog
+        open={showUploadCV}
+        onClose={() => setShowUploadCV(false)}
+        onUploaded={() => fetchPage(page)}
+      />
 
       {/* Import CSV dialog */}
       <ImportCSVDialog
