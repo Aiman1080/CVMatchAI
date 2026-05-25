@@ -211,7 +211,7 @@ describe('Auth Flow - Reset Password', () => {
     ;(prisma.verificationToken.findUnique as any).mockResolvedValue({
       token: 'expired-token',
       identifier: 'test@test.com',
-      expires: new Date(Date.now() - 60 * 60 * 1000), // expired 1 hour ago
+      expires: new Date(Date.now() - 60 * 60 * 1000),
     })
     ;(prisma.verificationToken.delete as any).mockResolvedValue({})
 
@@ -273,7 +273,7 @@ describe('Auth Flow - Verify Email', () => {
     ;(prisma.verificationToken.findFirst as any).mockResolvedValue({
       token: 'expired-token',
       identifier: 'test@test.com',
-      expires: new Date(Date.now() - 24 * 60 * 60 * 1000), // expired
+      expires: new Date(Date.now() - 24 * 60 * 60 * 1000),
     })
     ;(prisma.verificationToken.delete as any).mockResolvedValue({})
 
