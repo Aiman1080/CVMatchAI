@@ -46,7 +46,6 @@ function timeAgo(date: string | Date): string {
 const PLAN_COLORS: Record<string, string> = {
   free: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
   pro: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400',
-  enterprise: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400',
 }
 
 const TICKET_STATUS_COLORS: Record<string, string> = {
@@ -156,13 +155,12 @@ export function AdminClient({
   const [broadcastSending, setBroadcastSending] = useState(false)
 
   const mrr = subscriptions.reduce((sum, s) => {
-    const prices: Record<string, number> = { free: 0, pro: 49, enterprise: 299 }
+    const prices: Record<string, number> = { free: 0, pro: 55 }
     return sum + (prices[s.subscription] || 0) * s._count
   }, 0)
 
   const openCount = tickets.filter((t: any) => t.status === 'open').length
   const proCount = subscriptions.find(s => s.subscription === 'pro')?._count || 0
-  const enterpriseCount = subscriptions.find(s => s.subscription === 'enterprise')?._count || 0
 
   // Filtered users by search
   const filteredUsers = useMemo(() => {
@@ -311,9 +309,8 @@ export function AdminClient({
 
   // ── Plan limits (mirrored from plans.ts for display) ───────────────────
   const planLimits = [
-    { plan: 'Free', price: '0', maxVacancies: '5', maxCandidates: '50/mo', aiAnalysis: true, emailInbox: false, atsIntegrations: false, analytics: false },
-    { plan: 'Pro', price: '49', maxVacancies: 'Unlimited', maxCandidates: '500/mo', aiAnalysis: true, emailInbox: true, atsIntegrations: true, analytics: true },
-    { plan: 'Enterprise', price: '299', maxVacancies: 'Unlimited', maxCandidates: 'Unlimited', aiAnalysis: true, emailInbox: true, atsIntegrations: true, analytics: true },
+    { plan: 'Free', price: '0', maxVacancies: '3', maxCandidates: '25/mo', aiAnalysis: true, emailInbox: false, atsIntegrations: false, analytics: false },
+    { plan: 'Pro', price: '55', maxVacancies: 'Unlimited', maxCandidates: 'Unlimited', aiAnalysis: true, emailInbox: true, atsIntegrations: true, analytics: true },
   ]
 
   // ── AI features definition (static) ───────────────────────────────────────
@@ -321,19 +318,19 @@ export function AdminClient({
   const aiFeatures = [
     {
       name: 'CV Analysis & Scoring', icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/30',
-      status: hasAiKey ? 'live' : 'demo', model: 'claude-opus-4-7', thinking: 'Adaptive thinking enabled',
+      status: hasAiKey ? 'live' : 'demo', model: 'gemini-2.0-flash', thinking: 'Function calling mode',
       details: ['Extraction of skills, experience, degrees', 'Match score 0-100 against the job posting', 'Detailed strengths & weaknesses', 'Executive summary of the candidate', 'Automatic language detection from CV'],
       stat: `${aiAnalysesCount} analysis${aiAnalysesCount !== 1 ? 'es' : ''} performed`,
     },
     {
       name: 'AI Email Generator', icon: Mail, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-950/30',
-      status: hasAiKey ? 'live' : 'demo', model: 'claude-opus-4-7', thinking: 'No thinking (speed)',
+      status: hasAiKey ? 'live' : 'demo', model: 'gemini-2.0-flash', thinking: 'Fast inference',
       details: ['Interview invitation', 'Rejection - worded with respect', 'Follow-up - re-engagement after interview', 'Language auto-detected from candidate CV', 'Personalized with name, position and company'],
       stat: '3 email types supported',
     },
     {
       name: 'IMAP Email Scanner', icon: Inbox, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-950/30',
-      status: emailInboxesCount > 0 ? 'live' : 'configured', model: 'Rule-based detection + AI', thinking: 'Heuristics first, Claude as fallback',
+      status: emailInboxesCount > 0 ? 'live' : 'configured', model: 'Rule-based detection + AI', thinking: 'Heuristics first, Gemini as fallback',
       details: ['Secure IMAP/IMAPS connection', 'Automatic CV attachment detection', 'Anti-spam filtering by subject analysis', 'Candidate name extraction from email', 'Automatic candidate profile creation'],
       stat: `${emailInboxesCount} inbox${emailInboxesCount !== 1 ? 'es' : ''} connected`,
     },
@@ -346,7 +343,7 @@ export function AdminClient({
     {
       name: 'Document Parser', icon: GitBranch, color: 'text-teal-600', bg: 'bg-teal-50 dark:bg-teal-950/30',
       status: 'live', model: 'pdf-parse + mammoth', thinking: 'Text extraction pre-AI',
-      details: ['PDF: extraction via pdf-parse (native)', 'DOCX/DOC: extraction via mammoth', 'TXT/paste: direct', 'Automatic formatting artifact cleanup', 'Sends raw text to Claude for analysis'],
+      details: ['PDF: extraction via pdf-parse (native)', 'DOCX/DOC: extraction via mammoth', 'TXT/paste: direct', 'Automatic formatting artifact cleanup', 'Sends raw text to Gemini for analysis'],
       stat: 'PDF, DOCX, TXT supported',
     },
     {
@@ -371,7 +368,6 @@ export function AdminClient({
           { label: 'Accounts', value: counts.users, icon: Building2, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950' },
           { label: 'Active today', value: activeToday, icon: Eye, color: 'text-cyan-600', bg: 'bg-cyan-50 dark:bg-cyan-950' },
           { label: 'Pro', value: proCount, icon: Zap, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-950' },
-          { label: 'Enterprise', value: enterpriseCount, icon: Shield, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-950' },
           { label: 'MRR', value: `EUR ${mrr}`, icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950' },
           { label: 'AI Analyses', value: aiAnalysesCount, icon: Brain, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-950' },
           { label: 'New users 7d', value: newUsersThisWeek, icon: UserPlus, color: 'text-cyan-600', bg: 'bg-cyan-50 dark:bg-cyan-950' },
@@ -398,7 +394,7 @@ export function AdminClient({
             <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">System Status</span>
             {[
               { label: 'Database', ok: true },
-              { label: `AI - ${hasAiKey ? 'Live (claude-opus-4-7)' : 'Demo mode'}`, ok: hasAiKey },
+              { label: `AI - ${hasAiKey ? 'Live (gemini-2.0-flash)' : 'Demo mode'}`, ok: hasAiKey },
               { label: `SMTP - ${hasSmtp ? 'Configured' : 'Not configured'}`, ok: hasSmtp },
               { label: `Email - ${emailInboxesCount} inbox${emailInboxesCount !== 1 ? 'es' : ''}`, ok: true },
               { label: `Support - ${openCount} open`, ok: openCount === 0 },
@@ -439,7 +435,6 @@ export function AdminClient({
               { label: 'Total users', value: users.length, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/30' },
               { label: 'Active today', value: activeToday, icon: Activity, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-950/30' },
               { label: 'Pro users', value: proCount, icon: Zap, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-950/30' },
-              { label: 'Enterprise users', value: enterpriseCount, icon: Shield, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-950/30' },
             ].map(s => (
               <div key={s.label} className={`flex items-center gap-3 p-3 rounded-xl ${s.bg}`}>
                 <s.icon className={`w-5 h-5 shrink-0 ${s.color}`} />
@@ -555,8 +550,7 @@ export function AdminClient({
                                           </SelectTrigger>
                                           <SelectContent>
                                             <SelectItem value="free">Free - EUR 0/mo</SelectItem>
-                                            <SelectItem value="pro">Pro - EUR 49/mo</SelectItem>
-                                            <SelectItem value="enterprise">Enterprise - EUR 299/mo</SelectItem>
+                                            <SelectItem value="pro">Pro - EUR 55/mo</SelectItem>
                                           </SelectContent>
                                         </Select>
                                       </div>
@@ -847,7 +841,7 @@ export function AdminClient({
               </CardHeader>
               <CardContent className="space-y-3">
                 {subscriptions.map(s => {
-                  const prices: Record<string, number> = { free: 0, pro: 49, enterprise: 299 }
+                  const prices: Record<string, number> = { free: 0, pro: 55 }
                   const revenue = (prices[s.subscription] || 0) * s._count
                   return (
                     <div key={s.subscription} className="flex items-center justify-between text-sm">
@@ -927,7 +921,7 @@ export function AdminClient({
                 <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
                   <div className="flex items-center gap-2 text-xs text-gray-500">
                     <div className={`w-2 h-2 rounded-full ${hasAiKey ? 'bg-green-400' : 'bg-amber-400'}`} />
-                    {hasAiKey ? 'AI Engine: Live (claude-opus-4-7)' : 'AI Engine: Demo mode'}
+                    {hasAiKey ? 'AI Engine: Live (gemini-2.0-flash)' : 'AI Engine: Demo mode'}
                   </div>
                 </div>
               </CardContent>
@@ -1006,9 +1000,9 @@ export function AdminClient({
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                  { label: 'Model', value: 'claude-opus-4-7', icon: Brain, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-950/30' },
-                  { label: 'Thinking mode', value: 'Adaptive thinking', icon: Cpu, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/30' },
-                  { label: 'Anthropic API Key', value: hasAiKey ? 'Configured' : 'Missing', icon: hasAiKey ? CheckCircle2 : AlertCircle, color: hasAiKey ? 'text-green-600' : 'text-red-500', bg: hasAiKey ? 'bg-green-50 dark:bg-green-950/30' : 'bg-red-50 dark:bg-red-950/30' },
+                  { label: 'Model', value: 'gemini-2.0-flash', icon: Brain, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-950/30' },
+                  { label: 'Mode', value: 'Function calling', icon: Cpu, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/30' },
+                  { label: 'Gemini API Key', value: hasAiKey ? 'Configured' : 'Missing', icon: hasAiKey ? CheckCircle2 : AlertCircle, color: hasAiKey ? 'text-green-600' : 'text-red-500', bg: hasAiKey ? 'bg-green-50 dark:bg-green-950/30' : 'bg-red-50 dark:bg-red-950/30' },
                   { label: 'Operational mode', value: hasAiKey ? 'Live AI' : 'Simulated demo', icon: hasAiKey ? ToggleRight : ToggleLeft, color: hasAiKey ? 'text-green-600' : 'text-amber-600', bg: hasAiKey ? 'bg-green-50 dark:bg-green-950/30' : 'bg-amber-50 dark:bg-amber-950/30' },
                 ].map(item => (
                   <div key={item.label} className={`flex items-center gap-3 p-3 rounded-xl ${item.bg}`}>
@@ -1089,7 +1083,7 @@ export function AdminClient({
                 {subscriptions.map(s => {
                   const total = subscriptions.reduce((acc, x) => acc + x._count, 0)
                   const pct = total > 0 ? Math.round((s._count / total) * 100) : 0
-                  const prices: Record<string, number> = { free: 0, pro: 49, enterprise: 299 }
+                  const prices: Record<string, number> = { free: 0, pro: 55 }
                   return (
                     <div key={s.subscription} className="space-y-1">
                       <div className="flex items-center justify-between text-xs">
@@ -1097,7 +1091,7 @@ export function AdminClient({
                         <span className="text-gray-500 dark:text-gray-400">{s._count} accounts - {pct}% - EUR {prices[s.subscription] * s._count}/month</span>
                       </div>
                       <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2">
-                        <div className={`h-2 rounded-full ${s.subscription === 'free' ? 'bg-gray-400' : s.subscription === 'pro' ? 'bg-blue-500' : 'bg-purple-500'}`} style={{ width: `${pct}%` }} />
+                        <div className={`h-2 rounded-full ${s.subscription === 'free' ? 'bg-gray-400' : 'bg-blue-500'}`} style={{ width: `${pct}%` }} />
                       </div>
                     </div>
                   )
@@ -1285,7 +1279,7 @@ export function AdminClient({
                     ))}
                     <tr className="bg-gray-50/50 dark:bg-gray-800/30">
                       <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-400 font-semibold">Current users</td>
-                      {['free', 'pro', 'enterprise'].map(plan => {
+                      {['free', 'pro'].map(plan => {
                         const count = subscriptions.find(s => s.subscription === plan)?._count || 0
                         return (
                           <td key={plan} className="px-4 py-3 text-center text-sm font-bold text-gray-700 dark:text-gray-300">{count}</td>
@@ -1367,7 +1361,7 @@ export function AdminClient({
                   { label: 'Database', value: 'PostgreSQL (Neon)' },
                   { label: 'ORM', value: 'Prisma 5.22' },
                   { label: 'Auth', value: 'NextAuth.js v4 JWT' },
-                  { label: 'IA', value: 'Anthropic SDK (claude-opus-4-7)' },
+                  { label: 'IA', value: 'Google Gemini SDK (gemini-2.0-flash)' },
                   { label: 'Email', value: 'ImapFlow (IMAP/IMAPS)' },
                   { label: 'Parser', value: 'pdf-parse + mammoth' },
                   { label: 'UI', value: 'Tailwind CSS + shadcn/ui' },
