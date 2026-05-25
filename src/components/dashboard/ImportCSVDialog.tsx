@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from '@/components/ui/use-toast'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface Vacancy {
   id: string
@@ -35,6 +36,8 @@ export function ImportCSVDialog({
   const [result, setResult] = useState<ImportResult | null>(null)
   const [loadingVacancies, setLoadingVacancies] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { t } = useLanguage()
+  const ti = t.dashboard.import
 
   useEffect(() => {
     if (open) {
@@ -48,7 +51,7 @@ export function ImportCSVDialog({
           const list = Array.isArray(data) ? data : data.vacancies || []
           setVacancies(list)
         })
-        .catch(() => toast({ title: 'Failed to load vacancies', variant: 'destructive' }))
+        .catch(() => toast({ title: ti.failedLoadVacancies, variant: 'destructive' }))
         .finally(() => setLoadingVacancies(false))
     }
   }, [open])
@@ -77,16 +80,16 @@ export function ImportCSVDialog({
       })
       const data = await res.json()
       if (!res.ok) {
-        toast({ title: data.error || 'Import failed', variant: 'destructive' })
+        toast({ title: data.error || ti.importFailed, variant: 'destructive' })
         return
       }
       setResult(data)
       if (data.imported > 0) {
-        toast({ title: `${data.imported} candidate(s) imported successfully` })
+        toast({ title: ti.importSuccess.replace('{count}', String(data.imported)) })
         onImportComplete?.()
       }
     } catch {
-      toast({ title: 'Import failed', variant: 'destructive' })
+      toast({ title: ti.importFailed, variant: 'destructive' })
     } finally {
       setUploading(false)
     }
@@ -97,25 +100,25 @@ export function ImportCSVDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Upload size={18} /> Import Candidates from CSV
+            <Upload size={18} /> {ti.dialogTitle}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 mt-2">
           {/* Vacancy selector */}
           <div>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
-              Select vacancy
+              {ti.selectVacancy}
             </label>
             {loadingVacancies ? (
               <div className="flex items-center gap-2 text-sm text-gray-500">
-                <Loader2 size={14} className="animate-spin" /> Loading vacancies...
+                <Loader2 size={14} className="animate-spin" /> {ti.loadingVacancies}
               </div>
             ) : vacancies.length === 0 ? (
-              <p className="text-sm text-gray-500">No vacancies found. Create a vacancy first.</p>
+              <p className="text-sm text-gray-500">{ti.noVacancies}</p>
             ) : (
               <Select value={selectedVacancy} onValueChange={setSelectedVacancy}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Choose a vacancy..." />
+                  <SelectValue placeholder={ti.choosePlaceholder} />
                 </SelectTrigger>
                 <SelectContent>
                   {vacancies.map(v => (
@@ -131,7 +134,7 @@ export function ImportCSVDialog({
           {/* File input */}
           <div>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
-              CSV file
+              {ti.csvFile}
             </label>
             <div
               onClick={() => fileInputRef.current?.click()}
@@ -156,7 +159,7 @@ export function ImportCSVDialog({
               ) : (
                 <div className="text-sm text-gray-500">
                   <Upload size={20} className="mx-auto mb-1 text-gray-400" />
-                  Click to select a CSV file
+                  {ti.clickToSelect}
                 </div>
               )}
             </div>
@@ -167,7 +170,7 @@ export function ImportCSVDialog({
             onClick={downloadTemplate}
             className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
           >
-            <Download size={14} /> Download CSV template
+            <Download size={14} /> {ti.downloadTemplate}
           </button>
 
           {/* Upload button */}
@@ -178,11 +181,11 @@ export function ImportCSVDialog({
           >
             {uploading ? (
               <>
-                <Loader2 size={16} className="animate-spin" /> Importing...
+                <Loader2 size={16} className="animate-spin" /> {ti.importing}
               </>
             ) : (
               <>
-                <Upload size={16} /> Import candidates
+                <Upload size={16} /> {ti.importCandidates}
               </>
             )}
           </Button>
@@ -192,12 +195,12 @@ export function ImportCSVDialog({
             <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 space-y-2">
               <div className="flex items-center gap-2">
                 <CheckCircle size={16} className="text-green-500" />
-                <span className="text-sm font-medium">{result.imported} imported</span>
+                <span className="text-sm font-medium">{result.imported} {ti.imported}</span>
                 {result.skipped > 0 && (
                   <>
                     <span className="text-gray-300 dark:text-gray-600">|</span>
                     <AlertCircle size={16} className="text-amber-500" />
-                    <span className="text-sm font-medium text-amber-600 dark:text-amber-400">{result.skipped} skipped</span>
+                    <span className="text-sm font-medium text-amber-600 dark:text-amber-400">{result.skipped} {ti.skipped}</span>
                   </>
                 )}
               </div>

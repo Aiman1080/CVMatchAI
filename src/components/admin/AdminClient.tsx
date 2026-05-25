@@ -195,7 +195,7 @@ export function AdminClient({
       })
       if (res.ok) {
         setUsers(prev => prev.map(u => u.id === id ? { ...u, ...data } : u))
-        toast({ title: 'Account updated' })
+        toast({ title: 'Account updated' })  // Admin-only
       } else {
         const err = await res.json().catch(() => ({}))
         toast({ title: err.error || 'Update failed', variant: 'destructive' })

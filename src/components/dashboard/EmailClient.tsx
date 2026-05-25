@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from '@/components/ui/use-toast'
 import { formatRelativeTime } from '@/lib/utils'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 // Preset IMAP settings for common providers
 const PROVIDER_PRESETS = {
@@ -29,6 +30,8 @@ interface Inbox {
 }
 
 export function EmailClient() {
+  const { t } = useLanguage()
+  const te = t.dashboard.email
   const [showConnect, setShowConnect] = useState(false)
   // Step 1: choose provider, Step 2: enter credentials
   const [step, setStep] = useState<1 | 2>(1)
@@ -89,12 +92,12 @@ export function EmailClient() {
       if (!res.ok) throw new Error(data.error)
       setInboxes(prev => [data, ...prev])
       setShowConnect(false)
-      toast({ title: 'Inbox connected!', description: `${form.email} is ready to scan.` })
+      toast({ title: te.inboxConnected, description: te.readyToScan.replace('{email}', form.email) })
       setForm({ email: '', password: '', host: '', port: 993 })
       setStep(1)
       setSelectedProvider(null)
     } catch (err: any) {
-      toast({ title: 'Connection failed', description: err.message, variant: 'destructive' })
+      toast({ title: te.connectionFailed, description: err.message, variant: 'destructive' })
     } finally { setConnecting(false) }
   }
 
@@ -108,10 +111,10 @@ export function EmailClient() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
-      toast({ title: 'Scan complete', description: `Scanned ${data.scanned} emails · ${data.relevant} relevant · ${data.processed} candidates added` })
+      toast({ title: te.scanComplete, description: te.scanDesc.replace('{scanned}', data.scanned).replace('{relevant}', data.relevant).replace('{processed}', data.processed) })
       fetchInboxes()
     } catch (err: any) {
-      toast({ title: 'Scan failed', description: err.message, variant: 'destructive' })
+      toast({ title: te.scanFailed, description: err.message, variant: 'destructive' })
     } finally { setScanning(null) }
   }
 
@@ -123,12 +126,12 @@ export function EmailClient() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       if (data.processed > 0) {
-        toast({ title: 'Demo scan complete', description: `${data.processed} new demo candidates added` })
+        toast({ title: te.demoScanComplete, description: te.demoNewCandidates.replace('{count}', String(data.processed)) })
       } else {
-        toast({ title: 'Demo scan complete', description: 'All demo candidates already exist — no duplicates created.' })
+        toast({ title: te.demoScanComplete, description: te.demoAllExist })
       }
     } catch (err: any) {
-      toast({ title: 'Demo scan failed', description: err.message, variant: 'destructive' })
+      toast({ title: te.demoScanFailed, description: err.message, variant: 'destructive' })
     } finally { setDemoScanning(false) }
   }
 
@@ -139,12 +142,12 @@ export function EmailClient() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       if (data.deleted > 0) {
-        toast({ title: 'Duplicates removed', description: `${data.deleted} duplicate candidate(s) deleted from your database.` })
+        toast({ title: te.duplicatesRemoved, description: te.duplicatesRemovedDesc.replace('{count}', String(data.deleted)) })
       } else {
-        toast({ title: 'No duplicates found', description: 'Your database is already clean.' })
+        toast({ title: te.noDuplicates, description: te.noDuplicatesDesc })
       }
     } catch (err: any) {
-      toast({ title: 'Cleanup failed', description: err.message, variant: 'destructive' })
+      toast({ title: te.cleanupFailed, description: err.message, variant: 'destructive' })
     } finally { setCleaning(false) }
   }
 
@@ -153,12 +156,12 @@ export function EmailClient() {
       const res = await fetch('/api/email/connect', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: inboxId }) })
       if (res.ok) {
         setInboxes(prev => prev.filter(i => i.id !== inboxId))
-        toast({ title: 'Inbox removed' })
+        toast({ title: te.inboxRemoved })
       } else {
-        toast({ title: 'Failed to remove inbox', variant: 'destructive' })
+        toast({ title: te.removeInboxFailed, variant: 'destructive' })
       }
     } catch {
-      toast({ title: 'Failed to remove inbox', variant: 'destructive' })
+      toast({ title: te.removeInboxFailed, variant: 'destructive' })
     }
   }
 
@@ -167,10 +170,9 @@ export function EmailClient() {
       <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950 border border-blue-100 dark:border-blue-900 flex gap-3">
         <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
         <div className="flex-1">
-          <p className="text-sm font-semibold text-blue-800">AI-Powered Email Inbox Scanning</p>
+          <p className="text-sm font-semibold text-blue-800">{te.bannerTitle}</p>
           <p className="text-sm text-blue-600 mt-0.5">
-            Connect your recruitment inbox. The Claude AI agent automatically scans emails, identifies CVs and
-            motivation letters, extracts candidate data, and matches them to your active vacancies.
+            {te.bannerDesc}
           </p>
         </div>
       </div>
@@ -181,9 +183,9 @@ export function EmailClient() {
           <Zap className="w-5 h-5 text-white" />
         </div>
         <div className="flex-1">
-          <p className="text-sm font-semibold text-indigo-800 dark:text-indigo-300">Demo Email Scan</p>
+          <p className="text-sm font-semibold text-indigo-800 dark:text-indigo-300">{te.demoTitle}</p>
           <p className="text-sm text-indigo-600 dark:text-indigo-400">
-            Simulates 4 recruitment emails with attached CVs. Safe to run multiple times — no duplicates will ever be created.
+            {te.demoDesc}
           </p>
         </div>
         <Button
@@ -192,7 +194,7 @@ export function EmailClient() {
           size="sm"
           className="gradient-bg shrink-0 gap-1.5"
         >
-          {demoScanning ? <><Loader2 size={13} className="animate-spin" /> Scanning...</> : <><Scan size={13} /> Run Demo Scan</>}
+          {demoScanning ? <><Loader2 size={13} className="animate-spin" /> {te.scanning}</> : <><Scan size={13} /> {te.runDemoScan}</>}
         </Button>
       </div>
 
@@ -202,9 +204,9 @@ export function EmailClient() {
           <Eraser className="w-5 h-5 text-white" />
         </div>
         <div className="flex-1">
-          <p className="text-sm font-semibold text-amber-800">Clean Duplicate Candidates</p>
+          <p className="text-sm font-semibold text-amber-800">{te.cleanTitle}</p>
           <p className="text-sm text-amber-700">
-            If you see the same candidate multiple times, click here to remove all duplicates in one click.
+            {te.cleanDesc}
           </p>
         </div>
         <Button
@@ -214,15 +216,15 @@ export function EmailClient() {
           variant="outline"
           className="border-amber-300 text-amber-700 hover:bg-amber-100 shrink-0 gap-1.5"
         >
-          {cleaning ? <><Loader2 size={13} className="animate-spin" /> Cleaning...</> : <><Eraser size={13} /> Clean Duplicates</>}
+          {cleaning ? <><Loader2 size={13} className="animate-spin" /> {te.cleaning}</> : <><Eraser size={13} /> {te.cleanDuplicates}</>}
         </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { icon: Mail, title: 'Connect Inbox', desc: 'Link your recruitment email via IMAP. We use read-only access for security.' },
-          { icon: Scan, title: 'AI Agent Scans', desc: 'Claude AI agent reads emails, detects CVs & motivation letters, ignores spam.' },
-          { icon: CheckCircle, title: 'Auto-Match', desc: 'Candidates are created, analyzed, and matched to your active vacancies automatically.' },
+          { icon: Mail, title: te.connectInboxTitle, desc: te.connectInboxDesc },
+          { icon: Scan, title: te.aiScansTitle, desc: te.aiScansDesc },
+          { icon: CheckCircle, title: te.autoMatchTitle, desc: te.autoMatchDesc },
         ].map((item, i) => (
           <Card key={i} className="border border-gray-200 shadow-sm dark:border-gray-800">
             <CardContent className="p-5">
@@ -238,9 +240,9 @@ export function EmailClient() {
 
       <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
         <CardHeader className="flex flex-row items-center justify-between pb-3">
-          <CardTitle className="text-base">Connected Inboxes</CardTitle>
+          <CardTitle className="text-base">{te.connectedInboxes}</CardTitle>
           <Button onClick={openConnectDialog} size="sm" className="gradient-bg gap-1.5">
-            <Plus size={14} /> Connect Inbox
+            <Plus size={14} /> {te.connectInbox}
           </Button>
         </CardHeader>
         <CardContent>
@@ -251,8 +253,8 @@ export function EmailClient() {
           ) : inboxes.length === 0 ? (
             <div className="text-center py-12">
               <Mail className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500 text-sm">No email inboxes connected yet</p>
-              <p className="text-gray-400 text-xs mt-1">Connect a recruitment inbox to start automatic CV scanning</p>
+              <p className="text-gray-500 text-sm">{te.noInboxes}</p>
+              <p className="text-gray-400 text-xs mt-1">{te.noInboxesDesc}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -264,15 +266,15 @@ export function EmailClient() {
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-gray-900 dark:text-white text-sm truncate">{inbox.email}</p>
                     <p className="text-xs text-gray-400">
-                      {inbox.provider} · Last scan: {inbox.lastScan ? formatRelativeTime(new Date(inbox.lastScan)) : 'Never'}
+                      {inbox.provider} · {te.lastScan} {inbox.lastScan ? formatRelativeTime(new Date(inbox.lastScan)) : te.never}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30 px-2 py-1 rounded-full">
-                      <CheckCircle size={11} /> Active
+                      <CheckCircle size={11} /> {te.active}
                     </span>
                     <Button size="sm" variant="outline" onClick={() => handleScan(inbox.id)} disabled={scanning === inbox.id} className="gap-1.5 text-xs h-8">
-                      {scanning === inbox.id ? <><Loader2 size={12} className="animate-spin" /> Scanning...</> : <><RefreshCw size={12} /> Scan Now</>}
+                      {scanning === inbox.id ? <><Loader2 size={12} className="animate-spin" /> {te.scanning}</> : <><RefreshCw size={12} /> {te.scanNow}</>}
                     </Button>
                     <button onClick={() => handleDelete(inbox.id)} className="p-1.5 text-gray-400 hover:text-red-500 rounded transition-colors">
                       <Trash2 size={15} />
@@ -288,13 +290,13 @@ export function EmailClient() {
       <Dialog open={showConnect} onOpenChange={setShowConnect}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Connect Email Inbox</DialogTitle>
+            <DialogTitle>{te.connectEmailInbox}</DialogTitle>
           </DialogHeader>
 
           {/* --- Step 1: Choose provider --- */}
           {step === 1 && (
             <div className="space-y-4 mt-2">
-              <p className="text-sm text-gray-500">Choose your email provider to get started.</p>
+              <p className="text-sm text-gray-500">{te.chooseProvider}</p>
               <div className="grid grid-cols-1 gap-3">
                 {/* Gmail card */}
                 <button
@@ -307,7 +309,7 @@ export function EmailClient() {
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900 dark:text-white">Gmail</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Google Workspace & personal Gmail</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{te.gmailDesc}</p>
                   </div>
                 </button>
 
@@ -322,7 +324,7 @@ export function EmailClient() {
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900 dark:text-white">Outlook / Office 365</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Microsoft Exchange & Outlook.com</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{te.outlookDesc}</p>
                   </div>
                 </button>
 
@@ -336,8 +338,8 @@ export function EmailClient() {
                     <Mail className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900 dark:text-white">Other</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Any email with IMAP access</p>
+                    <p className="font-semibold text-gray-900 dark:text-white">{te.otherLabel}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{te.otherDesc}</p>
                   </div>
                 </button>
               </div>
@@ -353,7 +355,7 @@ export function EmailClient() {
                 onClick={() => { setStep(1); setSelectedProvider(null) }}
                 className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
               >
-                <ChevronLeft size={14} /> Change provider
+                <ChevronLeft size={14} /> {te.changeProvider}
               </button>
 
               {/* Selected provider badge */}
@@ -375,7 +377,7 @@ export function EmailClient() {
 
               {/* Email field */}
               <div className="space-y-1.5">
-                <Label>Email Address</Label>
+                <Label>{te.emailAddress}</Label>
                 <Input
                   type="email"
                   placeholder="recruitment@company.com"
@@ -388,11 +390,11 @@ export function EmailClient() {
               {/* Password field */}
               <div className="space-y-1.5">
                 <Label>
-                  {selectedProvider === 'gmail' ? 'App Password' : selectedProvider === 'outlook' ? 'Password' : 'Password'}
+                  {selectedProvider === 'gmail' ? te.appPassword : te.password}
                 </Label>
                 <Input
                   type="password"
-                  placeholder={selectedProvider === 'gmail' ? '16-character App Password' : 'Your email password'}
+                  placeholder={selectedProvider === 'gmail' ? te.appPasswordPlaceholder : te.passwordPlaceholder}
                   value={form.password}
                   onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
                   required
@@ -402,7 +404,7 @@ export function EmailClient() {
               {/* Provider-specific help boxes */}
               {selectedProvider === 'gmail' && (
                 <HelpGuide
-                  title="How to get a Gmail App Password"
+                  title={te.gmailHelpTitle}
                   steps={[
                     <>Go to <a href="https://myaccount.google.com/security" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">myaccount.google.com &rarr; Security</a></>,
                     'Enable 2-Step Verification if not already on',
@@ -413,7 +415,7 @@ export function EmailClient() {
               )}
               {selectedProvider === 'outlook' && (
                 <HelpGuide
-                  title="Outlook password"
+                  title={te.outlookHelpTitle}
                   steps={[
                     'Use your regular Outlook password',
                     'If you have 2FA enabled, create an App Password in your Microsoft account security settings',
@@ -425,11 +427,11 @@ export function EmailClient() {
               {selectedProvider === 'other' && (
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label>IMAP Host</Label>
+                    <Label>{te.imapHost}</Label>
                     <Input placeholder="imap.example.com" value={form.host} onChange={e => setForm(p => ({ ...p, host: e.target.value }))} required />
                   </div>
                   <div className="space-y-1.5">
-                    <Label>Port</Label>
+                    <Label>{te.port}</Label>
                     <Input type="number" value={form.port} onChange={e => setForm(p => ({ ...p, port: parseInt(e.target.value) }))} required />
                   </div>
                 </div>
@@ -438,14 +440,14 @@ export function EmailClient() {
               {/* Security note */}
               <div className="p-3 bg-amber-50 dark:bg-amber-950 rounded-lg flex gap-2">
                 <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                <p className="text-xs text-amber-700 dark:text-amber-400">Credentials are stored securely. We only read attachments, never send emails or modify your inbox.</p>
+                <p className="text-xs text-amber-700 dark:text-amber-400">{te.securityNote}</p>
               </div>
 
               {/* Action buttons */}
               <div className="flex gap-3">
-                <Button type="button" variant="outline" onClick={() => setShowConnect(false)} className="flex-1">Cancel</Button>
+                <Button type="button" variant="outline" onClick={() => setShowConnect(false)} className="flex-1">{te.cancel}</Button>
                 <Button type="submit" disabled={connecting} className="flex-1 gradient-bg">
-                  {connecting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Connecting...</> : 'Connect & Verify'}
+                  {connecting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {te.connecting}</> : te.connectVerify}
                 </Button>
               </div>
             </form>

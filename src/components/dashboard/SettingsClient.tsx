@@ -44,7 +44,7 @@ export function SettingsClient({ user }: Props) {
       }
       toast({ title: t.dashboard.settingsProfile.saved })
     } catch (err: any) {
-      toast({ title: err.message || 'Error saving settings', variant: 'destructive' })
+      toast({ title: err.message || t.dashboard.settingsPage.errorSaving, variant: 'destructive' })
     } finally { setSaving(false) }
   }
 
@@ -72,7 +72,7 @@ export function SettingsClient({ user }: Props) {
       toast({ title: t.dashboard.settingsPassword.updated })
       setPwForm({ currentPassword: '', newPassword: '', confirm: '' })
     } catch (err: any) {
-      toast({ title: err.message || 'Error changing password', variant: 'destructive' })
+      toast({ title: err.message || t.dashboard.settingsPage.errorChangingPassword, variant: 'destructive' })
     } finally { setPwSaving(false) }
   }
 
@@ -177,7 +177,7 @@ export function SettingsClient({ user }: Props) {
 
       <TabsContent value="subscription">
         <div>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Current plan: <span className="font-semibold text-blue-600 capitalize">{user.subscription || 'free'}</span></p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{t.dashboard.settingsPage.currentPlan} <span className="font-semibold text-blue-600 capitalize">{user.subscription || 'free'}</span></p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {PLANS.map(plan => (
               <Card key={plan.id} className={`border-0 shadow-sm ${(plan as any).popular ? 'ring-2 ring-blue-500' : ''} ${user.subscription === plan.id ? 'bg-blue-50 dark:bg-blue-950/30' : ''}`}>
@@ -185,7 +185,7 @@ export function SettingsClient({ user }: Props) {
                   <h3 className="font-bold text-gray-900 dark:text-white">{plan.name}</h3>
                   <p className="text-2xl font-bold text-blue-600 mt-1">{plan.price}</p>
                   <ul className="space-y-2 my-4">{plan.features.map((f, i) => <li key={i} className="text-sm text-gray-600 dark:text-gray-300 flex items-center gap-2"><span className="text-green-500">✓</span>{f}</li>)}</ul>
-                  {user.subscription === plan.id ? <Button variant="outline" className="w-full dark:border-gray-700" disabled>Current Plan</Button> : <Link href="/upgrade"><Button className="w-full gradient-bg">Upgrade</Button></Link>}
+                  {user.subscription === plan.id ? <Button variant="outline" className="w-full dark:border-gray-700" disabled>{t.dashboard.settingsPage.currentPlanBtn}</Button> : <Link href="/upgrade"><Button className="w-full gradient-bg">{t.dashboard.settingsPage.upgradeBtn}</Button></Link>}
                 </CardContent>
               </Card>
             ))}
@@ -197,26 +197,26 @@ export function SettingsClient({ user }: Props) {
         <div className="max-w-2xl space-y-4">
           <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base text-gray-900 dark:text-white"><Shield className="w-4 h-4" />GDPR & Data Privacy</CardTitle>
-              <CardDescription>Manage how candidate data is stored and processed</CardDescription>
+              <CardTitle className="flex items-center gap-2 text-base text-gray-900 dark:text-white"><Shield className="w-4 h-4" />{t.dashboard.settingsPage.gdprTitle}</CardTitle>
+              <CardDescription>{t.dashboard.settingsPage.gdprDesc}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="p-4 bg-green-50 dark:bg-green-950/30 rounded-lg">
-                <p className="text-sm font-semibold text-green-800 dark:text-green-300 mb-1">GDPR Compliance</p>
-                <p className="text-sm text-green-700 dark:text-green-400">CVMatch AI is fully GDPR compliant. All candidate data is encrypted, stored securely in EU data centers, and automatically deleted after your configured retention period.</p>
+                <p className="text-sm font-semibold text-green-800 dark:text-green-300 mb-1">{t.dashboard.settingsPage.gdprCompliance}</p>
+                <p className="text-sm text-green-700 dark:text-green-400">{t.dashboard.settingsPage.gdprComplianceDesc}</p>
               </div>
               <Separator />
               <div>
-                <h4 className="font-medium text-gray-900 dark:text-white text-sm mb-2">Data Retention Policy</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white text-sm mb-2">{t.dashboard.settingsPage.dataRetention}</h4>
                 <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                  <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800"><span>CV Files</span><span className="font-medium">90 days after rejection</span></div>
-                  <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800"><span>Contact Data</span><span className="font-medium">1 year from last activity</span></div>
-                  <div className="flex justify-between py-2"><span>AI Analysis Results</span><span className="font-medium">2 years</span></div>
+                  <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800"><span>{t.dashboard.settingsPage.cvFiles}</span><span className="font-medium">{t.dashboard.settingsPage.cvFilesRetention}</span></div>
+                  <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800"><span>{t.dashboard.settingsPage.contactData}</span><span className="font-medium">{t.dashboard.settingsPage.contactDataRetention}</span></div>
+                  <div className="flex justify-between py-2"><span>{t.dashboard.settingsPage.aiResults}</span><span className="font-medium">{t.dashboard.settingsPage.aiResultsRetention}</span></div>
                 </div>
               </div>
               <Separator />
               <div>
-                <h4 className="font-medium text-gray-900 dark:text-white text-sm mb-2">Data Processing Rights</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white text-sm mb-2">{t.dashboard.settingsPage.dataRights}</h4>
                 <div className="space-y-2">
                   <Button
                     variant="outline"
@@ -233,13 +233,13 @@ export function SettingsClient({ user }: Props) {
                         a.href = URL.createObjectURL(blob)
                         a.download = `cvmatch-export-${new Date().toISOString().slice(0, 10)}.json`
                         a.click()
-                        toast({ title: 'Data exported successfully' })
+                        toast({ title: t.dashboard.settingsPage.dataExported })
                       } catch {
-                        toast({ title: 'Export failed', variant: 'destructive' })
+                        toast({ title: t.dashboard.settingsPage.exportFailed, variant: 'destructive' })
                       } finally { setExporting(false) }
                     }}
                   >
-                    {exporting ? 'Exporting…' : 'Export All My Data (GDPR Article 20)'}
+                    {exporting ? t.dashboard.settingsPage.exportingData : t.dashboard.settingsPage.exportAllData}
                   </Button>
                   <Button
                     variant="outline"
@@ -247,23 +247,23 @@ export function SettingsClient({ user }: Props) {
                     disabled={deletingAll}
                     className="w-full justify-start text-red-600 hover:text-red-700 hover:border-red-300 dark:border-gray-700"
                     onClick={async () => {
-                      if (!confirm('Delete ALL candidate data? This is permanent and cannot be undone.')) return
+                      if (!confirm(t.dashboard.settingsPage.deleteConfirm)) return
                       setDeletingAll(true)
                       try {
                         const res = await fetch('/api/candidates/delete-all', { method: 'DELETE' })
                         const data = await res.json()
                         if (res.ok) {
-                          toast({ title: `${data.deleted} candidate(s) deleted`, description: 'All candidate data has been removed.' })
+                          toast({ title: t.dashboard.settingsPage.candidatesDeletedDesc.replace('{count}', String(data.deleted)), description: t.dashboard.settingsPage.allDataRemoved })
                         } else {
-                          toast({ title: data.error || 'Delete failed', variant: 'destructive' })
+                          toast({ title: data.error || t.dashboard.settingsPage.deleteFailed, variant: 'destructive' })
                         }
                       } catch {
-                        toast({ title: 'Delete failed', variant: 'destructive' })
+                        toast({ title: t.dashboard.settingsPage.deleteFailed, variant: 'destructive' })
                       } finally { setDeletingAll(false) }
                     }}
                   >
                     <Trash2 size={14} className="mr-2" />
-                    {deletingAll ? 'Deleting…' : 'Delete All Candidate Data'}
+                    {deletingAll ? t.dashboard.settingsPage.deletingData : t.dashboard.settingsPage.deleteAllData}
                   </Button>
                 </div>
               </div>

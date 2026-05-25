@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from '@/components/ui/use-toast'
 import { cn } from '@/lib/utils'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface Ticket {
   id: string
@@ -21,18 +22,22 @@ interface Ticket {
   createdAt: string
 }
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-  open: { label: 'Open', color: 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400', icon: <Clock size={12} /> },
-  in_progress: { label: 'In Progress', color: 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400', icon: <AlertCircle size={12} /> },
-  resolved: { label: 'Resolved', color: 'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400', icon: <CheckCircle2 size={12} /> },
-  closed: { label: 'Closed', color: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400', icon: <CheckCircle2 size={12} /> },
-}
-
-const PRIORITY_LABELS: Record<string, string> = {
-  low: 'Low', normal: 'Normal', high: 'High', urgent: 'Urgent',
+const STATUS_STYLES: Record<string, { color: string; icon: React.ReactNode }> = {
+  open: { color: 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400', icon: <Clock size={12} /> },
+  in_progress: { color: 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400', icon: <AlertCircle size={12} /> },
+  resolved: { color: 'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400', icon: <CheckCircle2 size={12} /> },
+  closed: { color: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400', icon: <CheckCircle2 size={12} /> },
 }
 
 export function SupportClient() {
+  const { t } = useLanguage()
+  const ts = t.dashboard.support
+  const STATUS_LABELS: Record<string, string> = {
+    open: ts.statusOpen, in_progress: ts.statusInProgress, resolved: ts.statusResolved, closed: ts.statusClosed,
+  }
+  const PRIORITY_LABELS: Record<string, string> = {
+    low: ts.priorityLowLabel, normal: ts.priorityNormalLabel, high: ts.priorityHighLabel, urgent: ts.priorityUrgentLabel,
+  }
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -49,7 +54,7 @@ export function SupportClient() {
 
   const submit = async () => {
     if (!form.subject.trim() || !form.message.trim()) {
-      toast({ title: 'Please fill in subject and message', variant: 'destructive' })
+      toast({ title: ts.fillRequired, variant: 'destructive' })
       return
     }
     setSubmitting(true)
@@ -63,9 +68,9 @@ export function SupportClient() {
       setTickets(prev => [ticket, ...prev])
       setForm({ subject: '', message: '', priority: 'normal' })
       setShowForm(false)
-      toast({ title: 'Support ticket submitted', description: 'We\'ll reply within 24 hours.' })
+      toast({ title: ts.ticketSubmitted, description: ts.ticketSubmittedDesc })
     } else {
-      toast({ title: 'Failed to submit ticket', variant: 'destructive' })
+      toast({ title: ts.submitFailed, variant: 'destructive' })
     }
     setSubmitting(false)
   }
@@ -80,15 +85,15 @@ export function SupportClient() {
           <LifeBuoy className="w-5 h-5 text-blue-600 dark:text-blue-400" />
         </div>
         <div>
-          <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">24-hour response guarantee</p>
-          <p className="text-xs text-blue-600 dark:text-blue-400">Our support team replies to every ticket within 24 hours on business days.</p>
+          <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">{ts.slaBanner}</p>
+          <p className="text-xs text-blue-600 dark:text-blue-400">{ts.slaDesc}</p>
         </div>
         <Button
           onClick={() => setShowForm(v => !v)}
           className="ml-auto bg-blue-600 hover:bg-blue-700 text-white gap-2"
           size="sm"
         >
-          <Plus size={14} /> New Ticket
+          <Plus size={14} /> {ts.newTicket}
         </Button>
       </div>
 
@@ -98,22 +103,22 @@ export function SupportClient() {
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <MessageSquare size={16} className="text-blue-600" />
-              New Support Ticket
+              {ts.newSupportTicket}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="text-xs font-medium text-gray-600 dark:text-gray-300 block mb-1.5">Subject</label>
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-300 block mb-1.5">{ts.subject}</label>
               <Input
-                placeholder="Briefly describe your issue…"
+                placeholder={ts.subjectPlaceholder}
                 value={form.subject}
                 onChange={e => setForm(f => ({ ...f, subject: e.target.value }))}
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-600 dark:text-gray-300 block mb-1.5">Message</label>
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-300 block mb-1.5">{ts.message}</label>
               <Textarea
-                placeholder="Describe your issue in detail. Include screenshots or steps to reproduce if applicable."
+                placeholder={ts.messagePlaceholder}
                 value={form.message}
                 onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
                 rows={5}
@@ -122,23 +127,23 @@ export function SupportClient() {
             </div>
             <div className="flex items-center gap-4">
               <div className="flex-1">
-                <label className="text-xs font-medium text-gray-600 dark:text-gray-300 block mb-1.5">Priority</label>
+                <label className="text-xs font-medium text-gray-600 dark:text-gray-300 block mb-1.5">{ts.priority}</label>
                 <Select value={form.priority} onValueChange={v => setForm(f => ({ ...f, priority: v }))}>
                   <SelectTrigger className="h-9">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="low">Low — general question</SelectItem>
-                    <SelectItem value="normal">Normal — something not working</SelectItem>
-                    <SelectItem value="high">High — impacting my workflow</SelectItem>
-                    <SelectItem value="urgent">Urgent — production issue</SelectItem>
+                    <SelectItem value="low">{ts.priorityLow}</SelectItem>
+                    <SelectItem value="normal">{ts.priorityNormal}</SelectItem>
+                    <SelectItem value="high">{ts.priorityHigh}</SelectItem>
+                    <SelectItem value="urgent">{ts.priorityUrgent}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="flex gap-2 mt-5">
-                <Button variant="outline" size="sm" onClick={() => setShowForm(false)}>Cancel</Button>
+                <Button variant="outline" size="sm" onClick={() => setShowForm(false)}>{ts.cancel}</Button>
                 <Button size="sm" onClick={submit} disabled={submitting} className="gap-2">
-                  <Send size={14} /> {submitting ? 'Sending…' : 'Submit Ticket'}
+                  <Send size={14} /> {submitting ? ts.sending : ts.submitTicket}
                 </Button>
               </div>
             </div>
@@ -150,27 +155,28 @@ export function SupportClient() {
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Your Tickets</CardTitle>
+            <CardTitle className="text-base">{ts.yourTickets}</CardTitle>
             {openCount > 0 && (
               <span className="text-xs bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full font-medium">
-                {openCount} open
+                {openCount} {ts.open}
               </span>
             )}
           </div>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8 text-gray-400 text-sm">Loading tickets…</div>
+            <div className="text-center py-8 text-gray-400 text-sm">{ts.loadingTickets}</div>
           ) : tickets.length === 0 ? (
             <div className="text-center py-12">
               <LifeBuoy className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-              <p className="text-sm font-medium text-gray-500">No support tickets yet</p>
-              <p className="text-xs text-gray-400 mt-1">Submit a ticket above if you need help.</p>
+              <p className="text-sm font-medium text-gray-500">{ts.noTickets}</p>
+              <p className="text-xs text-gray-400 mt-1">{ts.noTicketsDesc}</p>
             </div>
           ) : (
             <div className="divide-y divide-gray-50 dark:divide-gray-800">
               {tickets.map(ticket => {
-                const status = STATUS_CONFIG[ticket.status] || STATUS_CONFIG.open
+                const statusStyle = STATUS_STYLES[ticket.status] || STATUS_STYLES.open
+                const statusLabel = STATUS_LABELS[ticket.status] || ticket.status
                 const isExpanded = expanded === ticket.id
                 return (
                   <div key={ticket.id} className="py-3">
@@ -182,14 +188,14 @@ export function SupportClient() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{ticket.subject}</p>
-                            <span className={cn('inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium', status.color)}>
-                              {status.icon}{status.label}
+                            <span className={cn('inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium', statusStyle.color)}>
+                              {statusStyle.icon}{statusLabel}
                             </span>
                             <span className="text-xs text-gray-400">{PRIORITY_LABELS[ticket.priority]}</span>
                           </div>
                           <p className="text-xs text-gray-500 mt-0.5">
-                            Submitted {new Date(ticket.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                            {ticket.repliedAt && ` · Replied ${new Date(ticket.repliedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`}
+                            {ts.submitted} {new Date(ticket.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            {ticket.repliedAt && ` · ${ts.replied} ${new Date(ticket.repliedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`}
                           </p>
                         </div>
                         {isExpanded ? <ChevronUp size={16} className="text-gray-400 mt-0.5 flex-shrink-0" /> : <ChevronDown size={16} className="text-gray-400 mt-0.5 flex-shrink-0" />}
@@ -199,14 +205,14 @@ export function SupportClient() {
                     {isExpanded && (
                       <div className="mt-3 space-y-3">
                         <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
-                          <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">Your message</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">{ts.yourMessage}</p>
                           <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{ticket.message}</p>
                         </div>
                         {ticket.adminReply ? (
                           <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-lg p-3">
                             <div className="flex items-center gap-2 mb-1">
                               <LifeBuoy size={12} className="text-blue-600 dark:text-blue-400" />
-                              <p className="text-xs text-blue-700 dark:text-blue-300 font-medium">Support Team reply</p>
+                              <p className="text-xs text-blue-700 dark:text-blue-300 font-medium">{ts.supportReply}</p>
                               {ticket.repliedAt && (
                                 <span className="text-xs text-blue-400 ml-auto">
                                   {new Date(ticket.repliedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
@@ -218,7 +224,7 @@ export function SupportClient() {
                         ) : (
                           <div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded-lg px-3 py-2">
                             <Clock size={12} />
-                            Awaiting reply — our team will respond within 24 hours
+                            {ts.awaitingReply}
                           </div>
                         )}
                       </div>

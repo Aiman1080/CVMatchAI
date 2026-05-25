@@ -86,11 +86,11 @@ export function KanbanView({ candidates, onCandidatesChange }: Props) {
       } else {
         // Revert optimistic update on failure
         onCandidatesChange([...candidates])
-        toast({ title: 'Update failed', variant: 'destructive' })
+        toast({ title: tk.updateFailed, variant: 'destructive' })
       }
     } catch {
       onCandidatesChange([...candidates])
-      toast({ title: 'Update failed', variant: 'destructive' })
+      toast({ title: tk.updateFailed, variant: 'destructive' })
     } finally {
       setUpdating(null)
     }
@@ -166,7 +166,7 @@ export function KanbanView({ candidates, onCandidatesChange }: Props) {
     const targetLabel = COLUMNS.find(col => col.id === targetColId)?.label ?? targetColId
     toast({
       title: `${candidate.firstName} ${candidate.lastName}`,
-      description: `Moved to ${targetLabel}`,
+      description: tk.movedTo.replace('{status}', targetLabel),
     })
 
     // Then persist to server
