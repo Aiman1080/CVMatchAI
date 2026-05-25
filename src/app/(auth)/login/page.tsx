@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Loader2, Eye, EyeOff } from 'lucide-react'
+import { Loader2, Eye, EyeOff, ArrowLeft } from 'lucide-react'
 import { Logo } from '@/components/Logo'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -35,6 +35,9 @@ export default function LoginPage() {
 
   return (
     <div className="relative z-10 w-full max-w-md">
+      <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-white/70 hover:text-white mb-4 transition-colors">
+        <ArrowLeft size={16} /> Back to home
+      </Link>
       <div className="bg-white text-gray-900 rounded-2xl shadow-2xl p-8 [&_input]:bg-white [&_input]:border-gray-300 [&_input]:text-gray-900 [&_label]:text-gray-700">
         <div className="text-center mb-8">
           <div className="mx-auto mb-4 w-fit"><Logo size={48} /></div>
