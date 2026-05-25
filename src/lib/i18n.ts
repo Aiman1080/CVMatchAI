@@ -50,9 +50,8 @@ export const translations = {
       subtitle: 'Start free, upgrade when you need more',
       mostPopular: 'Most Popular',
       plans: [
-        { name: 'Free', price: '€0', period: 'forever', cta: 'Get started free', features: ['5 active vacancies', '50 candidates/month', 'AI match scoring', 'Basic dashboard'] },
-        { name: 'Pro', price: '€49', period: '/month', cta: 'Start Pro trial', features: ['Unlimited vacancies', '500 candidates/month', 'Advanced AI analysis', 'Email inbox scanning', 'ATS integrations (Teamtailor, Recruitee)', 'Analytics', 'Priority support'] },
-        { name: 'Enterprise', price: 'Custom', period: 'pricing', cta: 'Contact sales', features: ['Unlimited everything', 'All ATS integrations incl. SmartRecruiters', 'Custom AI models', 'API & webhooks', 'SSO & SAML', 'Dedicated manager', 'SLA 99.9%'] },
+        { name: 'Free', price: '€0', period: 'forever', cta: 'Get started free', features: ['3 active vacancies', '25 candidates/month', 'AI match scoring', 'Basic dashboard', 'CV upload & analysis'] },
+        { name: 'Pro', price: '€49', period: '/month', cta: 'Start Pro trial', features: ['Unlimited vacancies', 'Unlimited candidates', 'AI interview questions', 'AI hiring reports', 'AI candidate ranking', 'Email inbox scanning', 'ATS integrations', 'Analytics & export', 'Priority support'] },
       ],
     },
     cta: {
@@ -654,9 +653,8 @@ export const translations = {
       subtitle: 'Start gratis, upgrade wanneer je meer nodig hebt',
       mostPopular: 'Meest Populair',
       plans: [
-        { name: 'Gratis', price: '€0', period: 'voor altijd', cta: 'Gratis starten', features: ['5 actieve vacatures', '50 kandidaten/maand', 'AI match scoring', 'Basis dashboard'] },
-        { name: 'Pro', price: '€49', period: '/maand', cta: 'Pro proberen', features: ['Onbeperkte vacatures', '500 kandidaten/maand', 'Geavanceerde AI-analyse', 'E-mail inbox scanning', 'ATS-integraties (Teamtailor, Recruitee)', 'Analytics', 'Prioriteitsondersteuning'] },
-        { name: 'Enterprise', price: 'Aangepast', period: 'prijs', cta: 'Contacteer sales', features: ['Onbeperkt alles', 'Alle ATS-integraties incl. SmartRecruiters', 'Aangepaste AI-modellen', 'API & webhooks', 'SSO & SAML', 'Toegewijde manager', 'SLA 99.9%'] },
+        { name: 'Gratis', price: '€0', period: 'voor altijd', cta: 'Gratis starten', features: ['3 actieve vacatures', '25 kandidaten/maand', 'AI match scoring', 'Basis dashboard', 'CV upload & analyse'] },
+        { name: 'Pro', price: '€49', period: '/maand', cta: 'Pro proberen', features: ['Onbeperkte vacatures', 'Onbeperkte kandidaten', 'AI interviewvragen', 'AI wervingsrapporten', 'AI kandidaatrangschikking', 'E-mail inbox scanning', 'ATS-integraties', 'Analytics & export', 'Prioriteitsondersteuning'] },
       ],
     },
     cta: {
@@ -1258,9 +1256,8 @@ export const translations = {
       subtitle: 'Commencez gratuitement, passez en Pro quand vous en avez besoin',
       mostPopular: 'Le Plus Populaire',
       plans: [
-        { name: 'Gratuit', price: '€0', period: 'pour toujours', cta: 'Commencer gratuitement', features: ["5 offres actives", '50 candidats/mois', 'Score de correspondance IA', 'Tableau de bord de base'] },
-        { name: 'Pro', price: '€49', period: '/mois', cta: 'Essayer Pro', features: ['Offres illimitées', '500 candidats/mois', 'Analyse IA avancée', 'Scan de la boîte mail', 'Intégrations ATS (Teamtailor, Recruitee)', 'Analytics', 'Support prioritaire'] },
-        { name: 'Enterprise', price: 'Sur devis', period: '', cta: 'Contacter les ventes', features: ['Tout illimité', 'Toutes les intégrations ATS incl. SmartRecruiters', 'Modèles IA personnalisés', 'API & webhooks', 'SSO & SAML', 'Manager dédié', 'SLA 99.9%'] },
+        { name: 'Gratuit', price: '€0', period: 'pour toujours', cta: 'Commencer gratuitement', features: ['3 offres actives', '25 candidats/mois', 'Score de correspondance IA', 'Tableau de bord de base', 'Upload & analyse de CV'] },
+        { name: 'Pro', price: '€49', period: '/mois', cta: 'Essayer Pro', features: ['Offres illimitées', 'Candidats illimités', "Questions d'entretien IA", 'Rapports de recrutement IA', 'Classement IA des candidats', 'Scan de la boîte mail', 'Intégrations ATS', 'Analytics & export', 'Support prioritaire'] },
       ],
     },
     cta: {

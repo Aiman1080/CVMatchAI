@@ -318,7 +318,7 @@ export default function LandingPage() {
             <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">{t.pricing.title}</h2>
             <p className="text-gray-500 dark:text-gray-400 text-lg">{t.pricing.subtitle}</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
             {t.pricing.plans.map((plan, idx) => {
               const highlight = idx === 1
               return (
