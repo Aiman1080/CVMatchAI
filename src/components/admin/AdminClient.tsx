@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, useState, useMemo } from 'react'
+import { Fragment, useState, useMemo, useEffect } from 'react'
 import {
   Users, Briefcase, UserCheck, MessageSquare, Activity,
   Shield, CheckCircle, XCircle, ChevronDown, ChevronUp,
@@ -144,9 +144,32 @@ export function AdminClient({
   activeToday, weeklySignups, recentActivity,
   aiUsageStats, dbStats,
 }: Props) {
-  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
-  const urlTab = searchParams?.get('tab')
-  const initialTab = urlTab || 'accounts'
+  const [activeTab, setActiveTab] = useState('accounts')
+
+  // Sync tab with URL on mount and on URL change
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const tab = params.get('tab')
+    if (tab) setActiveTab(tab)
+    else setActiveTab('accounts')
+  }, [])
+
+  // Listen for popstate (back/forward) and URL changes
+  useEffect(() => {
+    const handleUrlChange = () => {
+      const params = new URLSearchParams(window.location.search)
+      const tab = params.get('tab')
+      if (tab) setActiveTab(tab)
+      else setActiveTab('accounts')
+    }
+    window.addEventListener('popstate', handleUrlChange)
+    const interval = setInterval(() => {
+      const params = new URLSearchParams(window.location.search)
+      const tab = params.get('tab') || 'accounts'
+      if (tab !== activeTab) setActiveTab(tab)
+    }, 300)
+    return () => { window.removeEventListener('popstate', handleUrlChange); clearInterval(interval) }
+  }, [activeTab])
 
   const [users, setUsers] = useState(initialUsers)
   const [tickets, setTickets] = useState(initialTickets)
@@ -464,7 +487,7 @@ export function AdminClient({
       </Card>
 
       {/* ── Main Tabs ── */}
-      <Tabs defaultValue={initialTab}>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="accounts">Accounts ({users.length})</TabsTrigger>
           <TabsTrigger value="support">
