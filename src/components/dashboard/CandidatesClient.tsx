@@ -47,17 +47,24 @@ export function CandidatesClient({ initialCandidates, initialTotal }: { initialC
   const [candidates, setCandidates] = useState(initialCandidates)
   const [search, setSearch] = useState('')
   const [vacancyFilter, setVacancyFilter] = useState('all')
+  const [vacancies, setVacancies] = useState<Array<{ id: string; title: string; company: string }>>([])
   const [statusFilter, setStatusFilter] = useState('all')
   const [scoreFilter, setScoreFilter] = useState('all')
   const [sortBy, setSortBy] = useState('score')
 
-  const vacancyOptions = useMemo(() => {
-    const map = new Map<string, string>()
-    candidates.forEach(c => {
-      if (c.vacancy?.title) map.set(c.vacancy.title, c.vacancy.company || '')
-    })
-    return Array.from(map.entries()).map(([title, company]) => ({ title, company }))
-  }, [candidates])
+  useEffect(() => {
+    fetch('/api/vacancies').then(r => r.json()).then(data => {
+      const list = Array.isArray(data) ? data : data.vacancies || []
+      setVacancies(list)
+    }).catch(() => {})
+  }, [])
+
+  const handleVacancyFilterChange = (vacancyId: string) => {
+    setVacancyFilter(vacancyId)
+    setPage(1)
+    setSelectedIds(new Set())
+    fetchPage(1, vacancyId)
+  }
   const [view, setView] = useState<'grid' | 'kanban'>('grid')
   const [deleting, setDeleting] = useState<string | null>(null)
   const [updating, setUpdating] = useState<string | null>(null)
@@ -89,11 +96,13 @@ export function CandidatesClient({ initialCandidates, initialTotal }: { initialC
   const [loadingPage, setLoadingPage] = useState(false)
   const totalPages = Math.ceil(total / PAGE_SIZE)
 
-  const fetchPage = useCallback(async (targetPage: number) => {
+  const fetchPage = useCallback(async (targetPage: number, filterVacancyId?: string) => {
     setLoadingPage(true)
     setSelectedIds(new Set())
     try {
-      const res = await fetch(`/api/candidates?page=${targetPage}&limit=${PAGE_SIZE}`)
+      let url = `/api/candidates?page=${targetPage}&limit=${PAGE_SIZE}`
+      if (filterVacancyId && filterVacancyId !== 'all') url += `&vacancyId=${filterVacancyId}`
+      const res = await fetch(url)
       if (res.ok) {
         const data = await res.json()
         setCandidates(data.candidates)
@@ -339,8 +348,7 @@ export function CandidatesClient({ initialCandidates, initialTotal }: { initialC
         (scoreFilter === 'high' && score >= 75) ||
         (scoreFilter === 'medium' && score >= 50 && score < 75) ||
         (scoreFilter === 'low' && score >= 0 && score < 50)
-      const matchVacancy = vacancyFilter === 'all' || c.vacancy?.title === vacancyFilter
-      return matchSearch && matchStatus && matchScore && matchVacancy
+      return matchSearch && matchStatus && matchScore
     })
     .sort((a, b) => {
       if (sortBy === 'score') return (b.matchScore || 0) - (a.matchScore || 0)
@@ -359,15 +367,15 @@ export function CandidatesClient({ initialCandidates, initialTotal }: { initialC
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input placeholder={tc.search} value={search} onChange={e => handleSearchChange(e.target.value)} className="pl-9" />
         </div>
-        {vacancyOptions.length > 0 && (
-          <Select value={vacancyFilter} onValueChange={v => { setVacancyFilter(v); setPage(1); setSelectedIds(new Set()) }}>
+        {vacancies.length > 0 && (
+          <Select value={vacancyFilter} onValueChange={handleVacancyFilterChange}>
             <SelectTrigger className="w-48">
               <SelectValue placeholder="All vacancies" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All vacancies</SelectItem>
-              {vacancyOptions.map(v => (
-                <SelectItem key={v.title} value={v.title}>{v.title}{v.company ? ` — ${v.company}` : ''}</SelectItem>
+              {vacancies.map(v => (
+                <SelectItem key={v.id} value={v.id}>{v.title} — {v.company}</SelectItem>
               ))}
             </SelectContent>
           </Select>
