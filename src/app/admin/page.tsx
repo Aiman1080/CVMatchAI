@@ -111,6 +111,9 @@ export default async function AdminPage() {
   const aiUsageStats = await getAiUsageStats().catch(() => null)
 
   // Database size estimation (row counts)
+  let aiLogCount = 0
+  try { aiLogCount = await (prisma as any).aiUsageLog.count() } catch {}
+
   const dbStats = {
     users: counts.users,
     vacancies: counts.vacancies,
@@ -118,7 +121,7 @@ export default async function AdminPage() {
     notifications: await prisma.notification.count().catch(() => 0),
     activities: await prisma.candidateActivity.count().catch(() => 0),
     emailScans: await prisma.emailScan.count().catch(() => 0),
-    aiLogs: await prisma.aiUsageLog.count().catch(() => 0),
+    aiLogs: aiLogCount,
   }
   const totalRows = Object.values(dbStats).reduce((a, b) => a + b, 0)
 
