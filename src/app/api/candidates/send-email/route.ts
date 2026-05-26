@@ -4,11 +4,15 @@ import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { escapeHtml } from '@/lib/utils'
 import { logActivity } from '@/lib/activity'
+import { isDemoAccount } from '@/lib/demo-guard'
 import nodemailer from 'nodemailer'
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (isDemoAccount(session.user?.email)) {
+    return NextResponse.json({ error: 'Demo accounts cannot send emails', demo: true }, { status: 403 })
+  }
 
   let reqBody: any
   try { reqBody = await req.json() } catch { return NextResponse.json({ error: 'Invalid request body' }, { status: 400 }) }

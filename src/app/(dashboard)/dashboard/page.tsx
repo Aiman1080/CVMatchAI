@@ -12,7 +12,13 @@ export default async function DashboardPage() {
   const session = await getServerSession(authOptions)
   const userId = (session?.user as any)?.id
   const isAdmin = (session?.user as any)?.role === 'admin'
-  const where = isAdmin ? {} : { userId }
+
+  // If no userId, the session JWT is stale — update lastSeenAt for valid users
+  if (userId) {
+    await prisma.user.update({ where: { id: userId }, data: { lastSeenAt: new Date() } }).catch(() => {})
+  }
+
+  const where = userId ? (isAdmin ? {} : { userId }) : {}
 
   const [vacancyCount, candidateCount, shortlistedCount, avgScore, inboxCount, vacanciesThisWeek, candidatesThisWeek] = await Promise.all([
     prisma.vacancy.count({ where }),
