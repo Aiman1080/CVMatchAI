@@ -13,6 +13,21 @@ import {
   smartrecruitersFetchJobs, smartrecruitersFetchCandidates,
   smartrecruitersFetchCandidateCV,
 } from './smartrecruiters'
+import {
+  greenhouseFetchJobs, greenhouseFetchCandidates, greenhouseDownloadCV,
+} from './greenhouse'
+import {
+  leverFetchPostings, leverFetchOpportunities,
+} from './lever'
+import {
+  bullhornFetchJobs, bullhornFetchCandidates,
+} from './bullhorn'
+import {
+  workableFetchJobs, workableFetchCandidates,
+} from './workable'
+import {
+  flatchrFetchJobs, flatchrFetchCandidates, flatchrDownloadCV,
+} from './flatchr'
 
 export interface SyncResult {
   imported: number
@@ -369,6 +384,307 @@ export async function syncSmartRecruiters(userId: string, apiKey: string, since?
         else result.skipped++
       } catch (e: any) {
         result.errors.push(`Candidate ${candidate.id}: ${e.message}`)
+      }
+    }
+  } catch (e: any) {
+    result.errors.push(e.message)
+  }
+  return result
+}
+
+// ── Greenhouse ───────────────────────────────────────────────────────────────
+
+export async function syncGreenhouse(apiKey: string, userId: string, since?: Date): Promise<SyncResult> {
+  const result: SyncResult = { imported: 0, updated: 0, skipped: 0, errors: [] }
+  try {
+    const [jobs, candidates] = await Promise.all([
+      greenhouseFetchJobs(apiKey),
+      greenhouseFetchCandidates(apiKey, since),
+    ])
+
+    const jobMap = new Map(jobs.map(j => [j.id, j]))
+
+    for (const candidate of candidates) {
+      try {
+        const applications = candidate.applications || []
+        if (applications.length === 0) continue
+
+        for (const app of applications) {
+          const jobId = app.job?.id
+          if (!jobId) continue
+
+          const job = jobMap.get(jobId)
+          if (!job) continue
+
+          const vacancyId = await upsertVacancy(userId, `${job.id}`, 'greenhouse', {
+            title: job.name,
+            description: job.notes || job.name,
+            requirements: '',
+            company: 'Greenhouse',
+            location: job.offices?.[0]?.location || job.offices?.[0]?.name,
+          })
+
+          const cv = await greenhouseDownloadCV(apiKey, candidate.id)
+
+          const email = candidate.emails?.[0]?.value
+          const phone = candidate.phone_numbers?.[0]?.value
+          const linkedIn = candidate.social_media_addresses?.[0]?.value
+
+          const status = await upsertCandidate(userId, 'greenhouse', {
+            externalId: `${app.id}`,
+            firstName: candidate.first_name || 'Unknown',
+            lastName: candidate.last_name || 'Candidate',
+            email,
+            phone,
+            linkedIn,
+            cvBuffer: cv?.buffer || null,
+            cvFileName: cv?.filename || (cv ? 'cv.pdf' : undefined),
+            vacancyId,
+            atsStatus: app.current_stage?.name || app.status,
+          })
+
+          if (status === 'imported') result.imported++
+          else if (status === 'updated') result.updated++
+          else result.skipped++
+        }
+      } catch (e: any) {
+        result.errors.push(`Candidate ${candidate.id}: ${e.message}`)
+      }
+    }
+  } catch (e: any) {
+    result.errors.push(e.message)
+  }
+  return result
+}
+
+// ── Lever ────────────────────────────────────────────────────────────────────
+
+export async function syncLever(apiKey: string, userId: string, since?: Date): Promise<SyncResult> {
+  const result: SyncResult = { imported: 0, updated: 0, skipped: 0, errors: [] }
+  try {
+    const [postings, opportunities] = await Promise.all([
+      leverFetchPostings(apiKey),
+      leverFetchOpportunities(apiKey, since),
+    ])
+
+    const postingMap = new Map(postings.map(p => [p.id, p]))
+
+    for (const opp of opportunities) {
+      try {
+        const postingIds = opp.postings || []
+        if (postingIds.length === 0) continue
+
+        for (const postingId of postingIds) {
+          const posting = postingMap.get(postingId)
+          if (!posting) continue
+
+          const description = posting.content?.description || posting.text
+          const requirements = posting.content?.lists
+            ?.map(l => `${l.text}: ${l.content}`)
+            .join('\n') || ''
+
+          const vacancyId = await upsertVacancy(userId, posting.id, 'lever', {
+            title: posting.text,
+            description,
+            requirements,
+            company: 'Lever',
+            location: posting.categories?.location,
+          })
+
+          const nameParts = opp.name?.split(' ') || []
+          const firstName = nameParts[0] || 'Unknown'
+          const lastName = nameParts.slice(1).join(' ') || 'Candidate'
+
+          const email = opp.emails?.[0]
+          const phone = opp.phones?.[0]?.value
+          const linkedIn = opp.links?.find(l => l.includes('linkedin'))
+
+          const status = await upsertCandidate(userId, 'lever', {
+            externalId: opp.id,
+            firstName,
+            lastName,
+            email,
+            phone,
+            linkedIn,
+            cvBuffer: null,
+            vacancyId,
+            atsStatus: opp.stage,
+          })
+
+          if (status === 'imported') result.imported++
+          else if (status === 'updated') result.updated++
+          else result.skipped++
+        }
+      } catch (e: any) {
+        result.errors.push(`Opportunity ${opp.id}: ${e.message}`)
+      }
+    }
+  } catch (e: any) {
+    result.errors.push(e.message)
+  }
+  return result
+}
+
+// ── Bullhorn ─────────────────────────────────────────────────────────────────
+
+export async function syncBullhorn(apiKey: string, restUrl: string, userId: string, since?: Date): Promise<SyncResult> {
+  const result: SyncResult = { imported: 0, updated: 0, skipped: 0, errors: [] }
+  try {
+    const [jobs, candidates] = await Promise.all([
+      bullhornFetchJobs(apiKey, restUrl),
+      bullhornFetchCandidates(apiKey, restUrl, since),
+    ])
+
+    // Create vacancies for all open jobs
+    const jobVacancyMap = new Map<number, string>()
+    for (const job of jobs) {
+      const vacancyId = await upsertVacancy(userId, `${job.id}`, 'bullhorn', {
+        title: job.title,
+        description: job.publicDescription || job.title,
+        requirements: job.skillList || '',
+        company: job.clientCorporation?.name || 'Bullhorn',
+        location: job.address?.city,
+      })
+      jobVacancyMap.set(job.id, vacancyId)
+    }
+
+    // Use the first job as fallback vacancy if no specific mapping
+    const fallbackVacancyId = jobVacancyMap.values().next().value
+
+    for (const candidate of candidates) {
+      try {
+        const vacancyId = fallbackVacancyId
+        if (!vacancyId) continue
+
+        const status = await upsertCandidate(userId, 'bullhorn', {
+          externalId: `${candidate.id}`,
+          firstName: candidate.firstName || 'Unknown',
+          lastName: candidate.lastName || 'Candidate',
+          email: candidate.email,
+          phone: candidate.phone,
+          cvBuffer: null,
+          vacancyId,
+          atsStatus: candidate.status,
+        })
+
+        if (status === 'imported') result.imported++
+        else if (status === 'updated') result.updated++
+        else result.skipped++
+      } catch (e: any) {
+        result.errors.push(`Candidate ${candidate.id}: ${e.message}`)
+      }
+    }
+  } catch (e: any) {
+    result.errors.push(e.message)
+  }
+  return result
+}
+
+// ── Workable ─────────────────────────────────────────────────────────────────
+
+export async function syncWorkable(apiKey: string, subdomain: string, userId: string, since?: Date): Promise<SyncResult> {
+  const result: SyncResult = { imported: 0, updated: 0, skipped: 0, errors: [] }
+  try {
+    const jobs = await workableFetchJobs(apiKey, subdomain)
+
+    for (const job of jobs) {
+      try {
+        const vacancyId = await upsertVacancy(userId, job.id, 'workable', {
+          title: job.title,
+          description: job.description || job.title,
+          requirements: job.requirements || '',
+          company: subdomain,
+          location: job.location?.city,
+        })
+
+        const candidates = await workableFetchCandidates(apiKey, subdomain, job.shortcode)
+
+        for (const candidate of candidates) {
+          try {
+            if (since && new Date(candidate.created_at) < since) continue
+
+            const nameParts = candidate.name?.split(' ') || []
+            const firstName = candidate.firstname || nameParts[0] || 'Unknown'
+            const lastName = candidate.lastname || nameParts.slice(1).join(' ') || 'Candidate'
+
+            const status = await upsertCandidate(userId, 'workable', {
+              externalId: candidate.id,
+              firstName,
+              lastName,
+              email: candidate.email,
+              phone: candidate.phone,
+              linkedIn: candidate.profile_url,
+              cvBuffer: null,
+              motivationText: candidate.summary,
+              vacancyId,
+              atsStatus: candidate.disqualified ? 'disqualified' : candidate.stage,
+            })
+
+            if (status === 'imported') result.imported++
+            else if (status === 'updated') result.updated++
+            else result.skipped++
+          } catch (e: any) {
+            result.errors.push(`Candidate ${candidate.id}: ${e.message}`)
+          }
+        }
+      } catch (e: any) {
+        result.errors.push(`Job ${job.id}: ${e.message}`)
+      }
+    }
+  } catch (e: any) {
+    result.errors.push(e.message)
+  }
+  return result
+}
+
+// ── Flatchr ──────────────────────────────────────────────────────────────────
+
+export async function syncFlatchr(apiKey: string, userId: string, since?: Date): Promise<SyncResult> {
+  const result: SyncResult = { imported: 0, updated: 0, skipped: 0, errors: [] }
+  try {
+    const jobs = await flatchrFetchJobs(apiKey)
+
+    for (const job of jobs) {
+      try {
+        const vacancyId = await upsertVacancy(userId, job.id, 'flatchr', {
+          title: job.title,
+          description: job.description || job.title,
+          requirements: job.requirements || '',
+          company: 'Flatchr',
+          location: job.location,
+        })
+
+        const candidates = await flatchrFetchCandidates(apiKey, job.id)
+
+        for (const candidate of candidates) {
+          try {
+            if (since && new Date(candidate.created_at) < since) continue
+
+            const cvBuffer = candidate.cv_url
+              ? await flatchrDownloadCV(candidate.cv_url, apiKey)
+              : null
+
+            const status = await upsertCandidate(userId, 'flatchr', {
+              externalId: candidate.id,
+              firstName: candidate.first_name || 'Unknown',
+              lastName: candidate.last_name || 'Candidate',
+              email: candidate.email,
+              phone: candidate.phone,
+              cvBuffer,
+              cvFileName: cvBuffer ? 'cv.pdf' : undefined,
+              vacancyId,
+              atsStatus: candidate.status,
+            })
+
+            if (status === 'imported') result.imported++
+            else if (status === 'updated') result.updated++
+            else result.skipped++
+          } catch (e: any) {
+            result.errors.push(`Candidate ${candidate.id}: ${e.message}`)
+          }
+        }
+      } catch (e: any) {
+        result.errors.push(`Job ${job.id}: ${e.message}`)
       }
     }
   } catch (e: any) {

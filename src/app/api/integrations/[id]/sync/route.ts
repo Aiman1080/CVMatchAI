@@ -2,7 +2,10 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
-import { syncTeamtailor, syncRecruitee, syncSmartRecruiters } from '@/lib/integrations/sync'
+import {
+  syncTeamtailor, syncRecruitee, syncSmartRecruiters,
+  syncGreenhouse, syncLever, syncBullhorn, syncWorkable, syncFlatchr,
+} from '@/lib/integrations/sync'
 
 export async function POST(_req: Request, context: { params: Promise<{ id: string }> }) {
   const params = await context.params
@@ -29,6 +32,18 @@ export async function POST(_req: Request, context: { params: Promise<{ id: strin
       result = await syncRecruitee(userId, integration.apiKey, integration.companySlug, since)
     } else if (integration.platform === 'smartrecruiters') {
       result = await syncSmartRecruiters(userId, integration.apiKey, since)
+    } else if (integration.platform === 'greenhouse') {
+      result = await syncGreenhouse(integration.apiKey, userId, since)
+    } else if (integration.platform === 'lever') {
+      result = await syncLever(integration.apiKey, userId, since)
+    } else if (integration.platform === 'bullhorn') {
+      if (!integration.companySlug) return NextResponse.json({ error: 'REST URL missing' }, { status: 400 })
+      result = await syncBullhorn(integration.apiKey, integration.companySlug, userId, since)
+    } else if (integration.platform === 'workable') {
+      if (!integration.companySlug) return NextResponse.json({ error: 'Subdomain missing' }, { status: 400 })
+      result = await syncWorkable(integration.apiKey, integration.companySlug, userId, since)
+    } else if (integration.platform === 'flatchr') {
+      result = await syncFlatchr(integration.apiKey, userId, since)
     } else {
       return NextResponse.json({ error: 'Unknown platform' }, { status: 400 })
     }

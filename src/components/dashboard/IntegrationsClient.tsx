@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import { useMemo } from 'react'
 import {
   Loader2, CheckCircle, XCircle, RefreshCw, Trash2, Link2,
   ExternalLink, AlertCircle, Info, Plug, Users, Briefcase,
-  HelpCircle, ChevronDown, ChevronUp,
+  HelpCircle, ChevronDown, ChevronUp, Clock,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -59,9 +60,64 @@ const PLATFORM_STATIC = [
     apiKeyPlaceholder: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
     needsSlug: false,
   },
+  {
+    id: 'greenhouse' as const,
+    name: 'Greenhouse',
+    color: 'from-green-600 to-green-700',
+    textColor: 'text-green-600 dark:text-green-400',
+    bgColor: 'bg-green-50 dark:bg-green-950/30',
+    borderColor: 'border-green-200 dark:border-green-800',
+    docsUrl: 'https://developers.greenhouse.io/harvest.html',
+    apiKeyPlaceholder: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+    needsSlug: false,
+  },
+  {
+    id: 'lever' as const,
+    name: 'Lever',
+    color: 'from-teal-500 to-teal-600',
+    textColor: 'text-teal-600 dark:text-teal-400',
+    bgColor: 'bg-teal-50 dark:bg-teal-950/30',
+    borderColor: 'border-teal-200 dark:border-teal-800',
+    docsUrl: 'https://hire.lever.co/developer/documentation',
+    apiKeyPlaceholder: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+    needsSlug: false,
+  },
+  {
+    id: 'bullhorn' as const,
+    name: 'Bullhorn',
+    color: 'from-red-500 to-orange-500',
+    textColor: 'text-red-600 dark:text-red-400',
+    bgColor: 'bg-red-50 dark:bg-red-950/30',
+    borderColor: 'border-red-200 dark:border-red-800',
+    docsUrl: 'https://bullhorn.github.io/rest-api-docs/',
+    apiKeyPlaceholder: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
+    needsSlug: true,
+  },
+  {
+    id: 'workable' as const,
+    name: 'Workable',
+    color: 'from-blue-600 to-blue-700',
+    textColor: 'text-blue-600 dark:text-blue-400',
+    bgColor: 'bg-blue-50 dark:bg-blue-950/30',
+    borderColor: 'border-blue-200 dark:border-blue-800',
+    docsUrl: 'https://workable.readme.io/reference',
+    apiKeyPlaceholder: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+    needsSlug: true,
+  },
+  {
+    id: 'flatchr' as const,
+    name: 'Flatchr',
+    color: 'from-purple-500 to-purple-700',
+    textColor: 'text-purple-600 dark:text-purple-400',
+    bgColor: 'bg-purple-50 dark:bg-purple-950/30',
+    borderColor: 'border-purple-200 dark:border-purple-800',
+    docsUrl: 'https://developers.flatchr.io/',
+    apiKeyPlaceholder: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+    needsSlug: false,
+  },
 ]
 
-type PlatformId = 'teamtailor' | 'recruitee' | 'smartrecruiters'
+type PlatformId = 'teamtailor' | 'recruitee' | 'smartrecruiters' | 'greenhouse' | 'lever' | 'bullhorn' | 'workable' | 'flatchr'
 
 /** Collapsible guide with numbered steps — shown inline inside the connection form */
 function HowToGuide({ steps, docsUrl, openLabel }: { steps: readonly string[]; docsUrl: string; openLabel: string }) {
@@ -134,7 +190,17 @@ export function IntegrationsClient({ initialIntegrations }: { initialIntegration
   const getIntegration = (platform: string) => integrations.find(i => i.platform === platform)
   const connectedCount = integrations.length
 
-  const getPlatformText = (id: PlatformId) => ti.platforms[id]
+  const getPlatformText = (id: PlatformId) => ti.platforms[id] as { tagline: string; apiKeyLabel: string; howToGet: readonly string[]; whatItDoes: string; slugLabel?: string; slugTooltip?: string }
+
+  // Sort platforms: connected ones first, then alphabetically within each group
+  const sortedPlatforms = useMemo(() => {
+    return [...PLATFORM_STATIC].sort((a, b) => {
+      const aConnected = integrations.some(i => i.platform === a.id) ? 0 : 1
+      const bConnected = integrations.some(i => i.platform === b.id) ? 0 : 1
+      if (aConnected !== bConnected) return aConnected - bConnected
+      return a.name.localeCompare(b.name)
+    })
+  }, [integrations])
 
   const handleConnect = async (platformId: string) => {
     const f = form[platformId] || { apiKey: '', companySlug: '' }
@@ -302,12 +368,14 @@ export function IntegrationsClient({ initialIntegrations }: { initialIntegration
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
-          {PLATFORM_STATIC.map(platform => {
+          {sortedPlatforms.map(platform => {
             const pt = getPlatformText(platform.id)
             const connected = getIntegration(platform.id)
             const isExpanded = expanded === platform.id
             const f = form[platform.id] || { apiKey: '', companySlug: '' }
             const isSyncing = connected && syncing === connected.id
+            const slugLabel = pt.slugLabel || ti.slugLabel
+            const slugTooltip = pt.slugTooltip || ti.slugTooltip
 
             return (
               <div
@@ -370,6 +438,21 @@ export function IntegrationsClient({ initialIntegrations }: { initialIntegration
                   <div className="flex items-center gap-2 shrink-0">
                     {connected ? (
                       <>
+                        {/* Auto-sync indicator */}
+                        <TooltipProvider delayDuration={100}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-xs text-gray-500 dark:text-gray-400 cursor-default">
+                                <Clock size={11} />
+                                {connected.lastSyncAt
+                                  ? formatRelativeTime(new Date(connected.lastSyncAt))
+                                  : ti.neverSynced.split(' — ')[0]}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>{ti.autoSyncTooltip}</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+
                         <TooltipProvider delayDuration={100}>
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -445,11 +528,11 @@ export function IntegrationsClient({ initialIntegrations }: { initialIntegration
                     {platform.needsSlug && (
                       <div>
                         <div className="flex items-center gap-1.5 mb-1.5">
-                          <Label className="text-xs text-gray-500">{ti.slugLabel}</Label>
-                          <InfoTooltip text={ti.slugTooltip} />
+                          <Label className="text-xs text-gray-500">{slugLabel}</Label>
+                          <InfoTooltip text={slugTooltip} />
                         </div>
                         <Input
-                          placeholder="acme-corp"
+                          placeholder={platform.id === 'bullhorn' ? 'https://rest.bullhornstaffing.com/rest-services/...' : platform.id === 'workable' ? 'your-company' : 'acme-corp'}
                           value={f.companySlug}
                           onChange={e => setForm(prev => ({ ...prev, [platform.id]: { ...f, companySlug: e.target.value } }))}
                           className="text-sm h-9"

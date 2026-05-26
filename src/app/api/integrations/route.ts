@@ -7,6 +7,11 @@ import { isDemoAccount } from '@/lib/demo-guard'
 import { teamtailorTestConnection } from '@/lib/integrations/teamtailor'
 import { recruiteeTestConnection } from '@/lib/integrations/recruitee'
 import { smartrecruitersTestConnection } from '@/lib/integrations/smartrecruiters'
+import { greenhouseTestConnection } from '@/lib/integrations/greenhouse'
+import { leverTestConnection } from '@/lib/integrations/lever'
+import { bullhornTestConnection } from '@/lib/integrations/bullhorn'
+import { workableTestConnection } from '@/lib/integrations/workable'
+import { flatchrTestConnection } from '@/lib/integrations/flatchr'
 
 export async function GET() {
   const session = await getServerSession(authOptions)
@@ -41,18 +46,29 @@ export async function POST(req: Request) {
   const { platform, apiKey, companySlug } = body
   if (!platform || !apiKey) return NextResponse.json({ error: 'Missing platform or apiKey' }, { status: 400 })
 
-  const allowed = ['teamtailor', 'recruitee', 'smartrecruiters']
+  const allowed = ['teamtailor', 'recruitee', 'smartrecruiters', 'greenhouse', 'lever', 'bullhorn', 'workable', 'flatchr']
   if (!allowed.includes(platform)) return NextResponse.json({ error: 'Unknown platform' }, { status: 400 })
 
   if (platform === 'recruitee' && !companySlug) {
     return NextResponse.json({ error: 'Company slug required for Recruitee' }, { status: 400 })
+  }
+  if (platform === 'bullhorn' && !companySlug) {
+    return NextResponse.json({ error: 'REST URL required for Bullhorn' }, { status: 400 })
+  }
+  if (platform === 'workable' && !companySlug) {
+    return NextResponse.json({ error: 'Subdomain required for Workable' }, { status: 400 })
   }
 
   // Test the connection before saving
   let testResult: { ok: boolean; company?: string; error?: string }
   if (platform === 'teamtailor') testResult = await teamtailorTestConnection(apiKey)
   else if (platform === 'recruitee') testResult = await recruiteeTestConnection(apiKey, companySlug)
-  else testResult = await smartrecruitersTestConnection(apiKey)
+  else if (platform === 'smartrecruiters') testResult = await smartrecruitersTestConnection(apiKey)
+  else if (platform === 'greenhouse') testResult = await greenhouseTestConnection(apiKey)
+  else if (platform === 'lever') testResult = await leverTestConnection(apiKey)
+  else if (platform === 'bullhorn') testResult = await bullhornTestConnection(apiKey, companySlug)
+  else if (platform === 'workable') testResult = await workableTestConnection(apiKey, companySlug)
+  else testResult = await flatchrTestConnection(apiKey)
 
   if (!testResult.ok) {
     return NextResponse.json({ error: `Connection failed: ${testResult.error}` }, { status: 400 })
