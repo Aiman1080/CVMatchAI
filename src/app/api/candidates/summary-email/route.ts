@@ -114,7 +114,7 @@ Write only the email body (no subject line).`
 }
 
 function generateTemplateSummary(
-  candidates: Array<{ firstName: string; lastName: string; matchScore: number | null; strengths: string | null; weaknesses?: string | null; notes?: string | null; skills?: string | null; recommendation: string | null }>,
+  candidates: Array<{ firstName: string; lastName: string; matchScore: number | null; strengths: string | null; weaknesses?: string | null | undefined; notes?: string | null | undefined; skills?: string | null | undefined; recommendation: string | null }>,
   vacancyTitle: string,
   language: string,
 ): string {
