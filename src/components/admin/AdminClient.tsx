@@ -4,7 +4,7 @@ import { Fragment, useState, useMemo } from 'react'
 import {
   Users, Briefcase, UserCheck, MessageSquare, Activity,
   Shield, CheckCircle, XCircle, ChevronDown, ChevronUp,
-  Trash2, Send, TrendingUp, Database, Mail,
+  Trash2, Send, TrendingUp, Database, Mail, Loader2,
   Brain, Link2, Inbox, BarChart3, KeyRound,
   CalendarDays, UserPlus, Zap, FileText, Bot,
   Building2, Cpu, Network, GitBranch, ToggleLeft, ToggleRight,
@@ -146,8 +146,7 @@ export function AdminClient({
 }: Props) {
   const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
   const urlTab = searchParams?.get('tab')
-  const tabMap: Record<string, string> = { users: 'accounts', support: 'support', actions: 'actions' }
-  const initialTab = urlTab ? tabMap[urlTab] || 'accounts' : 'accounts'
+  const initialTab = urlTab || 'accounts'
 
   const [users, setUsers] = useState(initialUsers)
   const [tickets, setTickets] = useState(initialTickets)
@@ -156,6 +155,45 @@ export function AdminClient({
   const [replyText, setReplyText] = useState<Record<string, string>>({})
   const [subEndEdit, setSubEndEdit] = useState<Record<string, string>>({})
   const [tempPasswords, setTempPasswords] = useState<Record<string, string>>({})
+
+  // Email Users state
+  const [emailFilter, setEmailFilter] = useState<'all' | 'free' | 'pro'>('all')
+  const [emailSubject, setEmailSubject] = useState('')
+  const [emailBody, setEmailBody] = useState('')
+  const [sendingEmail, setSendingEmail] = useState(false)
+  const [emailSent, setEmailSent] = useState(false)
+
+  const filteredEmailUsers = users.filter(u => {
+    if (emailFilter === 'free') return u.subscription === 'free'
+    if (emailFilter === 'pro') return u.subscription === 'pro'
+    return true
+  })
+
+  const handleSendBulkEmail = async () => {
+    if (!emailSubject.trim() || !emailBody.trim()) return
+    setSendingEmail(true)
+    try {
+      const res = await fetch('/api/admin/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userIds: filteredEmailUsers.map(u => u.id),
+          subject: emailSubject,
+          body: emailBody,
+        }),
+      })
+      if (res.ok) {
+        setEmailSent(true)
+        toast({ title: `Email sent to ${filteredEmailUsers.length} user(s)` })
+      } else {
+        toast({ title: 'Failed to send emails', variant: 'destructive' })
+      }
+    } catch {
+      toast({ title: 'Failed to send emails', variant: 'destructive' })
+    } finally {
+      setSendingEmail(false)
+    }
+  }
   const [loading, setLoading] = useState<Record<string, boolean>>({})
 
   // Search & filter state
@@ -438,6 +476,7 @@ export function AdminClient({
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="ai">AI</TabsTrigger>
           <TabsTrigger value="stats">Statistics</TabsTrigger>
+          <TabsTrigger value="email">Email Users</TabsTrigger>
           <TabsTrigger value="actions">Admin Actions</TabsTrigger>
           <TabsTrigger value="system">System</TabsTrigger>
         </TabsList>
@@ -1212,6 +1251,89 @@ export function AdminClient({
         </TabsContent>
 
         {/* ══ Admin Actions tab ══ */}
+        {/* ══ Email Users tab ══ */}
+        <TabsContent value="email" className="mt-4 space-y-4">
+          <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Mail className="w-4 h-4 text-blue-500" /> Send Email to Users
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter recipients</label>
+                <div className="flex gap-2">
+                  {[
+                    { id: 'all' as const, label: `All users (${users.length})`, color: 'border-blue-300 text-blue-700 bg-blue-50 dark:bg-blue-950/30' },
+                    { id: 'free' as const, label: `Free (${users.filter(u => u.subscription === 'free').length})`, color: 'border-gray-300 text-gray-700 bg-gray-50 dark:bg-gray-800' },
+                    { id: 'pro' as const, label: `Pro (${users.filter(u => u.subscription === 'pro').length})`, color: 'border-green-300 text-green-700 bg-green-50 dark:bg-green-950/30' },
+                  ].map(f => (
+                    <button
+                      key={f.id}
+                      onClick={() => { setEmailFilter(f.id); setEmailSent(false) }}
+                      className={cn(
+                        'px-3 py-1.5 rounded-lg text-xs font-medium border transition-all',
+                        emailFilter === f.id ? f.color : 'border-gray-200 dark:border-gray-700 text-gray-400'
+                      )}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Recipients ({filteredEmailUsers.length})</p>
+                <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
+                  {filteredEmailUsers.slice(0, 20).map(u => (
+                    <span key={u.id} className="text-xs bg-white dark:bg-gray-700 px-2 py-0.5 rounded-full text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
+                      {u.email}
+                    </span>
+                  ))}
+                  {filteredEmailUsers.length > 20 && (
+                    <span className="text-xs text-gray-400">+{filteredEmailUsers.length - 20} more</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Subject</label>
+                <input
+                  value={emailSubject}
+                  onChange={e => { setEmailSubject(e.target.value); setEmailSent(false) }}
+                  placeholder="e.g. New feature: AI Interview Questions"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Message</label>
+                <textarea
+                  value={emailBody}
+                  onChange={e => { setEmailBody(e.target.value); setEmailSent(false) }}
+                  rows={6}
+                  placeholder="Write your email message here..."
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+                />
+              </div>
+
+              {emailSent ? (
+                <div className="p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg text-center">
+                  <p className="text-sm text-green-700 dark:text-green-400 font-medium">Email sent to {filteredEmailUsers.length} user(s)</p>
+                </div>
+              ) : (
+                <Button
+                  onClick={handleSendBulkEmail}
+                  disabled={sendingEmail || !emailSubject.trim() || !emailBody.trim() || filteredEmailUsers.length === 0}
+                  className="w-full gradient-bg gap-2"
+                >
+                  {sendingEmail ? <><Loader2 className="w-4 h-4 animate-spin" /> Sending...</> : <><Mail className="w-4 h-4" /> Send to {filteredEmailUsers.length} user(s)</>}
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="actions" className="mt-4 space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Broadcast notification */}
