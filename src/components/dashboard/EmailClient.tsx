@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from '@/components/ui/use-toast'
+import { useDemoMode } from '@/hooks/useDemoGuard'
 import { formatRelativeTime } from '@/lib/utils'
 import { useLanguage } from '@/contexts/LanguageContext'
 
@@ -32,6 +33,7 @@ interface Inbox {
 export function EmailClient() {
   const { t } = useLanguage()
   const te = t.dashboard.email
+  const isDemo = useDemoMode()
   const [showConnect, setShowConnect] = useState(false)
   // Step 1: choose provider, Step 2: enter credentials
   const [step, setStep] = useState<1 | 2>(1)
@@ -177,8 +179,8 @@ export function EmailClient() {
         </div>
       </div>
 
-      {/* Demo scan — manual only, global email dedup prevents any duplicates */}
-      <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border border-indigo-100 dark:border-indigo-900 flex items-center gap-4">
+      {/* Demo scan — only visible for demo accounts */}
+      {isDemo && <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border border-indigo-100 dark:border-indigo-900 flex items-center gap-4">
         <div className="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center shrink-0">
           <Zap className="w-5 h-5 text-white" />
         </div>
@@ -196,7 +198,7 @@ export function EmailClient() {
         >
           {demoScanning ? <><Loader2 size={13} className="animate-spin" /> {te.scanning}</> : <><Scan size={13} /> {te.runDemoScan}</>}
         </Button>
-      </div>
+      </div>}
 
       {/* One-click duplicate cleanup — fixes databases that accumulated duplicates before the dedup fix */}
       <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950 border border-amber-100 dark:border-amber-900 flex items-center gap-4">
