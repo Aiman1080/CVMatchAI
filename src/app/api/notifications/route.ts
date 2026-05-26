@@ -35,7 +35,14 @@ export async function PATCH(req: Request) {
   const userId = (session.user as any).id
 
   try {
-    const { ids } = await req.json()
+    const { ids, action } = await req.json()
+
+    if (action === 'delete' && Array.isArray(ids)) {
+      await prisma.notification.deleteMany({
+        where: { id: { in: ids }, userId },
+      })
+      return NextResponse.json({ success: true })
+    }
 
     if (ids === 'all') {
       // Mark all unread notifications as read

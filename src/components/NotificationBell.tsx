@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Bell, FileText, MessageSquare, UserPlus, Scan, Check } from 'lucide-react'
+import { Bell, FileText, MessageSquare, UserPlus, Scan, Check, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface Notification {
@@ -93,6 +93,17 @@ export function NotificationBell() {
     }
   }
 
+  const deleteOne = async (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id))
+    try {
+      await fetch('/api/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: [id], action: 'delete' }),
+      })
+    } catch {}
+  }
+
   const markOneRead = async (id: string) => {
     try {
       await fetch('/api/notifications', {
@@ -125,7 +136,7 @@ export function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg z-[100] overflow-hidden">
+        <div className="fixed left-64 top-16 md:absolute md:left-0 md:top-full md:mt-2 w-80 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg z-[100] overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Notifications</h3>
@@ -153,39 +164,45 @@ export function NotificationBell() {
                 const iconColor = typeColors[notification.type] || 'text-gray-400'
 
                 return (
-                  <button
+                  <div
                     key={notification.id}
-                    onClick={() => {
-                      if (!notification.read) markOneRead(notification.id)
-                    }}
                     className={cn(
-                      'w-full flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50',
+                      'flex items-start gap-3 px-4 py-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50',
                       !notification.read && 'bg-blue-50/50 dark:bg-blue-950/20'
                     )}
                   >
-                    <div className={cn('mt-0.5 shrink-0', iconColor)}>
-                      <Icon size={16} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className={cn(
-                        'text-sm truncate',
-                        notification.read
-                          ? 'text-gray-600 dark:text-gray-400'
-                          : 'text-gray-900 dark:text-white font-medium'
-                      )}>
-                        {notification.title}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-500 truncate mt-0.5">
-                        {notification.message}
-                      </p>
-                      <p className="text-xs text-gray-400 dark:text-gray-600 mt-1">
-                        {timeAgo(notification.createdAt)}
-                      </p>
-                    </div>
-                    {!notification.read && (
-                      <div className="mt-2 shrink-0 w-2 h-2 rounded-full bg-blue-500" />
-                    )}
-                  </button>
+                    <button
+                      onClick={() => { if (!notification.read) markOneRead(notification.id) }}
+                      className="flex items-start gap-3 flex-1 min-w-0 text-left"
+                    >
+                      <div className={cn('mt-0.5 shrink-0', iconColor)}>
+                        <Icon size={16} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={cn(
+                          'text-sm',
+                          notification.read
+                            ? 'text-gray-600 dark:text-gray-400'
+                            : 'text-gray-900 dark:text-white font-medium'
+                        )}>
+                          {notification.title}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">
+                          {notification.message}
+                        </p>
+                        <p className="text-xs text-gray-400 dark:text-gray-600 mt-1">
+                          {timeAgo(notification.createdAt)}
+                        </p>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => deleteOne(notification.id)}
+                      className="mt-1 shrink-0 p-1 text-gray-300 hover:text-red-500 dark:text-gray-600 dark:hover:text-red-400 rounded transition-colors"
+                      title="Delete"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
                 )
               })
             )}
