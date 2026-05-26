@@ -46,9 +46,18 @@ export function CandidatesClient({ initialCandidates, initialTotal }: { initialC
   const tc = t.dashboard.candidates
   const [candidates, setCandidates] = useState(initialCandidates)
   const [search, setSearch] = useState('')
+  const [vacancyFilter, setVacancyFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
   const [scoreFilter, setScoreFilter] = useState('all')
   const [sortBy, setSortBy] = useState('score')
+
+  const vacancyOptions = useMemo(() => {
+    const map = new Map<string, string>()
+    candidates.forEach(c => {
+      if (c.vacancy?.title) map.set(c.vacancy.title, c.vacancy.company || '')
+    })
+    return Array.from(map.entries()).map(([title, company]) => ({ title, company }))
+  }, [candidates])
   const [view, setView] = useState<'grid' | 'kanban'>('grid')
   const [deleting, setDeleting] = useState<string | null>(null)
   const [updating, setUpdating] = useState<string | null>(null)
@@ -330,7 +339,8 @@ export function CandidatesClient({ initialCandidates, initialTotal }: { initialC
         (scoreFilter === 'high' && score >= 75) ||
         (scoreFilter === 'medium' && score >= 50 && score < 75) ||
         (scoreFilter === 'low' && score >= 0 && score < 50)
-      return matchSearch && matchStatus && matchScore
+      const matchVacancy = vacancyFilter === 'all' || c.vacancy?.title === vacancyFilter
+      return matchSearch && matchStatus && matchScore && matchVacancy
     })
     .sort((a, b) => {
       if (sortBy === 'score') return (b.matchScore || 0) - (a.matchScore || 0)
@@ -349,6 +359,19 @@ export function CandidatesClient({ initialCandidates, initialTotal }: { initialC
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input placeholder={tc.search} value={search} onChange={e => handleSearchChange(e.target.value)} className="pl-9" />
         </div>
+        {vacancyOptions.length > 0 && (
+          <Select value={vacancyFilter} onValueChange={v => { setVacancyFilter(v); setPage(1); setSelectedIds(new Set()) }}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="All vacancies" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All vacancies</SelectItem>
+              {vacancyOptions.map(v => (
+                <SelectItem key={v.title} value={v.title}>{v.title}{v.company ? ` — ${v.company}` : ''}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
           <SelectTrigger className="w-36">
             <SelectValue placeholder={tc.status} />
