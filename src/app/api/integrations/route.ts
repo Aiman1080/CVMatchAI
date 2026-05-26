@@ -15,6 +15,7 @@ import { flatchrTestConnection } from '@/lib/integrations/flatchr'
 import { ashbyTestConnection } from '@/lib/integrations/ashby'
 import { breezyTestConnection } from '@/lib/integrations/breezyhr'
 import { homerunTestConnection } from '@/lib/integrations/homerun'
+import { personioTestConnection } from '@/lib/integrations/personio'
 
 export async function GET() {
   const session = await getServerSession(authOptions)
@@ -49,7 +50,7 @@ export async function POST(req: Request) {
   const { platform, apiKey, companySlug } = body
   if (!platform || !apiKey) return NextResponse.json({ error: 'Missing platform or apiKey' }, { status: 400 })
 
-  const allowed = ['teamtailor', 'recruitee', 'smartrecruiters', 'greenhouse', 'lever', 'bullhorn', 'workable', 'flatchr', 'ashby', 'breezyhr', 'homerun']
+  const allowed = ['teamtailor', 'recruitee', 'smartrecruiters', 'greenhouse', 'lever', 'bullhorn', 'workable', 'flatchr', 'ashby', 'breezyhr', 'homerun', 'personio']
   if (!allowed.includes(platform)) return NextResponse.json({ error: 'Unknown platform' }, { status: 400 })
 
   if (platform === 'recruitee' && !companySlug) {
@@ -78,6 +79,7 @@ export async function POST(req: Request) {
   else if (platform === 'ashby') testResult = await ashbyTestConnection(apiKey)
   else if (platform === 'breezyhr') testResult = await breezyTestConnection(apiKey)
   else if (platform === 'homerun') testResult = await homerunTestConnection(apiKey)
+  else if (platform === 'personio') testResult = await personioTestConnection(apiKey)
   else testResult = { ok: false, error: 'Unknown platform' }
 
   if (!testResult.ok) {

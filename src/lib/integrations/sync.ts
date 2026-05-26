@@ -37,6 +37,9 @@ import {
 import {
   homerunFetchJobs, homerunFetchApplications, homerunDownloadCV,
 } from './homerun'
+import {
+  personioFetchJobs, personioFetchApplications, personioDownloadCV,
+} from './personio'
 
 export interface SyncResult {
   imported: number
@@ -861,6 +864,60 @@ export async function syncHomerun(apiKey: string, userId: string, since?: Date):
               motivationText: app.cover_letter,
               vacancyId,
               atsStatus: app.stage,
+            })
+
+            if (status === 'imported') result.imported++
+            else if (status === 'updated') result.updated++
+            else result.skipped++
+          } catch (e: any) {
+            result.errors.push(`Application ${app.id}: ${e.message}`)
+          }
+        }
+      } catch (e: any) {
+        result.errors.push(`Job ${job.id}: ${e.message}`)
+      }
+    }
+  } catch (e: any) {
+    result.errors.push(e.message)
+  }
+  return result
+}
+
+// ── Personio ───────────────────────────────────────────────────────────────
+
+export async function syncPersonio(apiKey: string, userId: string, since?: Date): Promise<SyncResult> {
+  const result: SyncResult = { imported: 0, updated: 0, skipped: 0, errors: [] }
+  try {
+    const jobs = await personioFetchJobs(apiKey)
+
+    for (const job of jobs) {
+      try {
+        const vacancyId = await upsertVacancy(userId, `${job.id}`, 'personio', {
+          title: job.name,
+          description: job.description || job.name,
+          requirements: '',
+          company: 'Personio',
+          location: job.office,
+        })
+
+        const applications = await personioFetchApplications(apiKey, job.id)
+
+        for (const app of applications) {
+          try {
+            if (since && new Date(app.created_at) < since) continue
+
+            const cv = await personioDownloadCV(apiKey, app.id)
+
+            const status = await upsertCandidate(userId, 'personio', {
+              externalId: `${app.id}`,
+              firstName: app.first_name || 'Unknown',
+              lastName: app.last_name || 'Candidate',
+              email: app.email,
+              phone: app.phone,
+              cvBuffer: cv?.buffer || null,
+              cvFileName: cv?.filename || (cv ? 'cv.pdf' : undefined),
+              vacancyId,
+              atsStatus: app.status,
             })
 
             if (status === 'imported') result.imported++

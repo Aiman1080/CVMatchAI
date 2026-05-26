@@ -5,7 +5,7 @@ import prisma from '@/lib/prisma'
 import {
   syncTeamtailor, syncRecruitee, syncSmartRecruiters,
   syncGreenhouse, syncLever, syncBullhorn, syncWorkable, syncFlatchr,
-  syncAshby, syncBreezy, syncHomerun,
+  syncAshby, syncBreezy, syncHomerun, syncPersonio,
 } from '@/lib/integrations/sync'
 
 export async function POST(_req: Request, context: { params: Promise<{ id: string }> }) {
@@ -52,6 +52,8 @@ export async function POST(_req: Request, context: { params: Promise<{ id: strin
       result = await syncBreezy(integration.apiKey, integration.companySlug, userId, since)
     } else if (integration.platform === 'homerun') {
       result = await syncHomerun(integration.apiKey, userId, since)
+    } else if (integration.platform === 'personio') {
+      result = await syncPersonio(integration.apiKey, userId, since)
     } else {
       return NextResponse.json({ error: 'Unknown platform' }, { status: 400 })
     }

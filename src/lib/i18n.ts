@@ -332,6 +332,12 @@ export const translations = {
             howToGet: ['Log in to Homerun', 'Go to Settings → Integrations → API', 'Click "Generate Token"', 'Copy the token and paste it here'],
             whatItDoes: 'Imports your published jobs and applications from Homerun. CVs and cover letters are analyzed by AI automatically.',
           },
+          personio: {
+            tagline: 'Leading HR platform in DACH region',
+            apiKeyLabel: 'Personio API Key',
+            howToGet: ['Log in to Personio', 'Go to Settings → Integrations → API credentials', 'Click "Generate new credentials"', 'Copy the API key and paste it here'],
+            whatItDoes: 'Import candidates and job postings from Personio. CVs are downloaded and analyzed by AI automatically.',
+          },
         },
       },
       settings: {

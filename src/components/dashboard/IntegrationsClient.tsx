@@ -148,9 +148,20 @@ const PLATFORM_STATIC = [
     apiKeyPlaceholder: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
     needsSlug: false,
   },
+  {
+    id: 'personio' as const,
+    name: 'Personio',
+    color: 'from-rose-400 to-pink-600',
+    textColor: 'text-rose-600 dark:text-rose-400',
+    bgColor: 'bg-rose-50 dark:bg-rose-950/30',
+    borderColor: 'border-rose-200 dark:border-rose-800',
+    docsUrl: 'https://developer.personio.de/reference',
+    apiKeyPlaceholder: 'papi-xxxxxxxxxxxxxxxx',
+    needsSlug: false,
+  },
 ]
 
-type PlatformId = 'teamtailor' | 'recruitee' | 'smartrecruiters' | 'greenhouse' | 'lever' | 'bullhorn' | 'workable' | 'flatchr' | 'ashby' | 'breezyhr' | 'homerun'
+type PlatformId = 'teamtailor' | 'recruitee' | 'smartrecruiters' | 'greenhouse' | 'lever' | 'bullhorn' | 'workable' | 'flatchr' | 'ashby' | 'breezyhr' | 'homerun' | 'personio'
 
 /** Collapsible guide with numbered steps — shown inline inside the connection form */
 function HowToGuide({ steps, docsUrl, openLabel }: { steps: readonly string[]; docsUrl: string; openLabel: string }) {
