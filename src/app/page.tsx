@@ -6,7 +6,7 @@ import { useTheme } from 'next-themes'
 import {
   Sun, Moon, ArrowRight, CheckCircle, Sparkles,
   Brain, FileText, MessageSquareText, Trophy, ClipboardList, Mail,
-  Upload, Plug, Shield, Users, BarChart3, Kanban
+  Upload, Plug, Shield, Users, BarChart3, Kanban, Send, Bot
 } from 'lucide-react'
 import { Logo } from '@/components/Logo'
 import { Button } from '@/components/ui/button'
@@ -176,6 +176,20 @@ export default function LandingPage() {
       desc: t.landing.aiFeatures.emailGenerator.desc,
       tag: t.landing.aiFeatures.emailGenerator.tag,
       color: 'from-sky-500 to-blue-500',
+    },
+    {
+      icon: Send,
+      title: t.landing.aiFeatures.summaryEmail?.title || 'AI Summary Email',
+      desc: t.landing.aiFeatures.summaryEmail?.desc || 'Send a professional summary of all shortlisted candidates to the hiring manager. Includes scores, strengths, weaknesses, and interview notes.',
+      tag: t.landing.aiFeatures.summaryEmail?.tag || '1-click hiring report',
+      color: 'from-emerald-500 to-teal-500',
+    },
+    {
+      icon: Bot,
+      title: t.landing.aiFeatures.supportChat?.title || 'AI Support Chat',
+      desc: t.landing.aiFeatures.supportChat?.desc || 'Built-in AI assistant answers user questions instantly. If it can\'t help, it creates a support ticket with full context.',
+      tag: t.landing.aiFeatures.supportChat?.tag || '24/7 AI support',
+      color: 'from-indigo-500 to-violet-500',
     },
   ]
 

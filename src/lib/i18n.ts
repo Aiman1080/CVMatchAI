@@ -69,7 +69,7 @@ export const translations = {
       navAiFeatures: 'AI Features',
       navPlatform: 'Platform',
       aiSection: {
-        badge: '6 AI-Powered Features',
+        badge: '8 AI-Powered Features',
         title: 'AI That Does the Work For You',
         subtitle: 'Every repetitive HR task — automated. Every decision — backed by AI analysis. Save hours every week and hire with confidence.',
       },
@@ -104,6 +104,16 @@ export const translations = {
           title: 'AI Email Generator',
           desc: 'Generate personalized interview invitations or rejection emails. One click, professional tone, in the candidate\'s language (EN/NL/FR).',
           tag: 'Multilingual AI emails',
+        },
+        summaryEmail: {
+          title: 'AI Summary Email',
+          desc: 'Send a professional summary of all shortlisted candidates to the hiring manager. Includes scores, strengths, weaknesses, and interview feedback notes.',
+          tag: '1-click hiring report by email',
+        },
+        supportChat: {
+          title: 'AI Support Assistant',
+          desc: 'Built-in AI chatbot answers user questions instantly about features, billing, and setup. Creates a support ticket with full context if it can\'t help.',
+          tag: '24/7 AI support',
         },
       },
       platformSection: {
@@ -1150,7 +1160,7 @@ export const translations = {
       navAiFeatures: 'AI-functies',
       navPlatform: 'Platform',
       aiSection: {
-        badge: '6 AI-functies',
+        badge: '8 AI-functies',
         title: 'AI die het werk voor u doet',
         subtitle: 'Elke repetitieve HR-taak — geautomatiseerd. Elke beslissing — onderbouwd door AI-analyse. Bespaar uren per week en werf met vertrouwen.',
       },
@@ -1185,6 +1195,16 @@ export const translations = {
           title: 'AI-e-mailgenerator',
           desc: 'Genereer gepersonaliseerde uitnodigingen voor gesprekken of afwijzingsmails. Eén klik, professionele toon, in de taal van de kandidaat (EN/NL/FR).',
           tag: 'Meertalige AI-e-mails',
+        },
+        summaryEmail: {
+          title: 'AI Samenvattingsmail',
+          desc: 'Stuur een professionele samenvatting van alle geselecteerde kandidaten naar de hiring manager. Inclusief scores, sterktes, zwaktes en interviewfeedback.',
+          tag: 'Wervingsrapport per mail in 1 klik',
+        },
+        supportChat: {
+          title: 'AI Ondersteuningsassistent',
+          desc: 'Ingebouwde AI-chatbot beantwoordt gebruikersvragen direct over functies, facturering en configuratie. Maakt een ticket met volledige context als het niet kan helpen.',
+          tag: '24/7 AI-ondersteuning',
         },
       },
       platformSection: {
@@ -2231,7 +2251,7 @@ export const translations = {
       navAiFeatures: 'Fonctionnalités IA',
       navPlatform: 'Plateforme',
       aiSection: {
-        badge: '6 Fonctionnalités IA',
+        badge: '8 Fonctionnalités IA',
         title: "L'IA qui travaille pour vous",
         subtitle: "Chaque tâche RH répétitive — automatisée. Chaque décision — appuyée par l'analyse IA. Gagnez des heures chaque semaine et recrutez en toute confiance.",
       },
@@ -2266,6 +2286,16 @@ export const translations = {
           title: "Générateur d'e-mails IA",
           desc: "Générez des invitations à des entretiens ou des e-mails de refus personnalisés. Un clic, ton professionnel, dans la langue du candidat (EN/NL/FR).",
           tag: 'E-mails IA multilingues',
+        },
+        summaryEmail: {
+          title: 'E-mail de synthèse IA',
+          desc: "Envoyez un résumé professionnel de tous les candidats présélectionnés au responsable du recrutement. Scores, points forts, points faibles et notes d'entretien inclus.",
+          tag: 'Rapport de recrutement par e-mail en 1 clic',
+        },
+        supportChat: {
+          title: 'Assistant support IA',
+          desc: "Chatbot IA intégré qui répond instantanément aux questions des utilisateurs sur les fonctionnalités, la facturation et la configuration. Crée un ticket avec contexte complet si nécessaire.",
+          tag: 'Support IA 24/7',
         },
       },
       platformSection: {
