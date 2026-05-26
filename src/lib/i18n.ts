@@ -1383,6 +1383,12 @@ export const translations = {
             howToGet: ['Log in op Homerun', 'Ga naar Settings → Integrations → API', 'Klik op "Generate Token"', 'Kopieer het token en plak het hier'],
             whatItDoes: 'Importeert uw gepubliceerde vacatures en sollicitaties van Homerun. Cv\'s en motivatiebrieven worden automatisch door AI geanalyseerd.',
           },
+          personio: {
+            tagline: 'Toonaangevend HR-platform in de DACH-regio',
+            apiKeyLabel: 'Personio API Key',
+            howToGet: ['Log in op Personio', 'Ga naar Settings → Integrations → API credentials', 'Klik op "Generate new credentials"', 'Kopieer de API key en plak die hier'],
+            whatItDoes: 'Importeer kandidaten en vacatures vanuit Personio. Cv\'s worden gedownload en automatisch door AI geanalyseerd.',
+          },
         },
       },
       settings: {
@@ -2427,6 +2433,12 @@ export const translations = {
             apiKeyLabel: 'Token API Homerun',
             howToGet: ['Connectez-vous à Homerun', 'Allez dans Settings → Integrations → API', 'Cliquez "Generate Token"', 'Copiez le token et collez-le ici'],
             whatItDoes: "Importe vos offres publiées et candidatures depuis Homerun. Les CVs et lettres de motivation sont analysés par l'IA automatiquement.",
+          },
+          personio: {
+            tagline: 'Plateforme RH leader dans la region DACH',
+            apiKeyLabel: 'Clé API Personio',
+            howToGet: ['Connectez-vous à Personio', 'Allez dans Settings → Integrations → API credentials', 'Cliquez "Generate new credentials"', 'Copiez la clé API et collez-la ici'],
+            whatItDoes: "Importe les candidats et offres d'emploi depuis Personio. Les CVs sont téléchargés et analysés par l'IA automatiquement.",
           },
         },
       },
