@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   MapPin, Briefcase, DollarSign, Users, Upload, Star, ChevronRight, ChevronLeft,
-  Pencil, Trash2, CheckCircle, XCircle, Clock, Loader2, Save, X, Sparkles, Trophy, Download, Copy
+  Pencil, Trash2, CheckCircle, XCircle, Clock, Loader2, Save, X, Sparkles, Trophy, Download, Copy, Mail
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -160,6 +160,46 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
   const [exportingExcel, setExportingExcel] = useState(false)
   const [exportingPdf, setExportingPdf] = useState(false)
 
+  // Summary email state
+  const [showSummaryDialog, setShowSummaryDialog] = useState(false)
+  const [summaryEmail, setSummaryEmail] = useState('')
+  const [sendingSummary, setSendingSummary] = useState(false)
+  const [summarySent, setSummarySent] = useState(false)
+
+  const shortlistedCount = vacancy.candidates.filter(c => c.status === 'shortlisted').length
+
+  const handleSendSummary = async () => {
+    if (!summaryEmail.trim()) return
+    if (shortlistedCount === 0) {
+      toast({ title: vd.noShortlisted, variant: 'destructive' })
+      return
+    }
+    setSendingSummary(true)
+    setSummarySent(false)
+    try {
+      const res = await fetch('/api/candidates/summary-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          vacancyId: vacancy.id,
+          recipientEmail: summaryEmail.trim(),
+          locale: vacancy.language,
+        }),
+      })
+      if (res.ok) {
+        setSummarySent(true)
+        toast({ title: vd.summarySent, description: vd.summarySentDesc })
+      } else {
+        const data = await res.json()
+        toast({ title: data.error || vd.summaryFailed, variant: 'destructive' })
+      }
+    } catch {
+      toast({ title: vd.summaryFailed, variant: 'destructive' })
+    } finally {
+      setSendingSummary(false)
+    }
+  }
+
   const handleAIRanking = async () => {
     setRankingLoading(true)
     try {
@@ -303,6 +343,17 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
             {vd.candidateRankings}
           </CardTitle>
           <div className="flex gap-2">
+            {shortlistedCount > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => { setSummarySent(false); setShowSummaryDialog(true) }}
+                className="gap-1.5 border-green-200 text-green-700 hover:bg-green-50 dark:border-green-800 dark:text-green-400"
+              >
+                <Mail size={13} />
+                {vd.sendSummaryBtn}
+              </Button>
+            )}
             {sortedCandidates.length >= 2 && (
               <Button size="sm" variant="outline" onClick={handleAIRanking} disabled={rankingLoading} className="gap-1.5 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-400">
                 {rankingLoading ? <Loader2 size={13} className="animate-spin" /> : <Trophy size={13} />}
@@ -506,6 +557,51 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
           )}
         </CardContent>
       </Card>
+
+      {/* Send Summary to Hiring Manager Dialog */}
+      <Dialog open={showSummaryDialog} onOpenChange={setShowSummaryDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail size={18} className="text-green-600" />
+              {vd.sendSummaryTitle}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <p className="text-sm text-gray-600 dark:text-gray-400">{vd.sendSummaryDesc}</p>
+            <div className="text-sm font-medium text-gray-700 dark:text-gray-300 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg px-3 py-2">
+              {vd.shortlistedCount.replace('{count}', String(shortlistedCount))}
+            </div>
+            <div className="space-y-1.5">
+              <Label>{vd.recipientEmail}</Label>
+              <Input
+                type="email"
+                value={summaryEmail}
+                onChange={e => setSummaryEmail(e.target.value)}
+                placeholder="hiring.manager@company.com"
+              />
+            </div>
+            {summarySent && (
+              <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30 rounded-lg px-3 py-2">
+                <CheckCircle size={14} />
+                {vd.summarySent}
+              </div>
+            )}
+            <div className="flex gap-3 pt-1">
+              <Button variant="outline" onClick={() => setShowSummaryDialog(false)} className="flex-1">
+                <X size={14} className="mr-1.5" /> {vd.editCancel}
+              </Button>
+              <Button
+                onClick={handleSendSummary}
+                disabled={sendingSummary || !summaryEmail.trim() || shortlistedCount === 0}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white gap-1.5"
+              >
+                {sendingSummary ? <><Loader2 size={14} className="animate-spin" /> {vd.sendingSummary}</> : <><Mail size={14} /> {vd.sendSummary}</>}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Vacancy Dialog */}
       <Dialog open={showEdit} onOpenChange={setShowEdit}>

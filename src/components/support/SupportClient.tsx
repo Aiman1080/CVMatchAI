@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from '@/components/ui/use-toast'
 import { cn } from '@/lib/utils'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { AISupportChat } from './AISupportChat'
 
 interface Ticket {
   id: string
@@ -75,10 +76,22 @@ export function SupportClient() {
     setSubmitting(false)
   }
 
+  const handleChatCreateTicket = (context: string) => {
+    setForm(f => ({
+      ...f,
+      subject: f.subject || 'Support request from AI chat',
+      message: context ? `--- Chat history ---\n${context}\n--- End chat history ---\n\n${f.message}` : f.message,
+    }))
+    setShowForm(true)
+  }
+
   const openCount = tickets.filter(t => t.status === 'open' || t.status === 'in_progress').length
 
   return (
     <div className="max-w-3xl space-y-6">
+      {/* AI Support Chat */}
+      <AISupportChat onCreateTicket={handleChatCreateTicket} />
+
       {/* SLA banner */}
       <div className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl">
         <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-xl flex items-center justify-center flex-shrink-0">
