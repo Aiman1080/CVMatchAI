@@ -39,8 +39,11 @@ export async function POST(req: Request) {
       email: true,
       matchScore: true,
       strengths: true,
+      weaknesses: true,
       summary: true,
       recommendation: true,
+      notes: true,
+      skills: true,
     },
     orderBy: { matchScore: 'desc' },
   })
@@ -59,16 +62,34 @@ export async function POST(req: Request) {
         generationConfig: { temperature: 0.3 },
       })
 
-      const candidateList = shortlisted.map((c, i) =>
-        `${i + 1}. ${c.firstName} ${c.lastName} — Match score: ${c.matchScore?.toFixed(0) || 'N/A'}%\n   Summary: ${c.summary?.slice(0, 200) || 'N/A'}\n   Strengths: ${c.strengths?.slice(0, 200) || 'N/A'}\n   Recommendation: ${c.recommendation || 'N/A'}`
-      ).join('\n\n')
+      const candidateList = shortlisted.map((c, i) => {
+        let info = `${i + 1}. ${c.firstName} ${c.lastName} — Match score: ${c.matchScore?.toFixed(0) || 'N/A'}%`
+        info += `\n   Summary: ${c.summary?.slice(0, 200) || 'N/A'}`
+        info += `\n   Strengths: ${c.strengths?.slice(0, 200) || 'N/A'}`
+        info += `\n   Weaknesses: ${c.weaknesses?.slice(0, 200) || 'N/A'}`
+        info += `\n   Skills: ${c.skills?.slice(0, 150) || 'N/A'}`
+        info += `\n   Recommendation: ${c.recommendation || 'N/A'}`
+        if (c.notes) info += `\n   Recruiter notes: ${c.notes.slice(0, 300)}`
+        return info
+      }).join('\n\n')
 
-      const prompt = `Generate a professional email summarizing ${shortlisted.length} shortlisted candidates for the ${vacancy.title} position. For each candidate include: name, match score, key strengths, recommendation. End with a clear recommendation on who to interview first. Write in ${language}.
+      const prompt = `Generate a professional email summarizing ${shortlisted.length} shortlisted candidates for the ${vacancy.title} position.
+
+For each candidate include:
+- Name and match score
+- Key strengths and weaknesses
+- Skills overview
+- Recruiter's notes (if available) — these may contain interview feedback like "answered well on X" or "struggled with Y"
+- Final recommendation
+
+At the end, provide a clear overall recommendation on who to interview first and why.
+
+Write in ${language}. Use a professional, concise tone suitable for a hiring manager.
 
 CANDIDATES:
 ${candidateList}
 
-Write only the email body (no subject line). Use a professional, concise tone suitable for a hiring manager.`
+Write only the email body (no subject line).`
 
       const result = await model.generateContent(prompt)
       const usage = result.response.usageMetadata
@@ -93,7 +114,7 @@ Write only the email body (no subject line). Use a professional, concise tone su
 }
 
 function generateTemplateSummary(
-  candidates: Array<{ firstName: string; lastName: string; matchScore: number | null; strengths: string | null; recommendation: string | null }>,
+  candidates: Array<{ firstName: string; lastName: string; matchScore: number | null; strengths: string | null; weaknesses?: string | null; notes?: string | null; skills?: string | null; recommendation: string | null }>,
   vacancyTitle: string,
   language: string,
 ): string {
@@ -104,13 +125,20 @@ function generateTemplateSummary(
     return 'Not Recommended'
   }
 
+  const parseJson = (s: string | null) => {
+    if (!s) return []
+    try { return JSON.parse(s) } catch { return [] }
+  }
+
   const header = `Dear Hiring Manager,\n\nPlease find below a summary of the ${candidates.length} shortlisted candidate(s) for the ${vacancyTitle} position.\n`
 
   const lines = candidates.map((c, i) => {
-    const strengths = c.strengths
-      ? JSON.parse(c.strengths).slice(0, 3).map((s: string) => `  - ${s}`).join('\n')
-      : '  - See full profile for details'
-    return `${i + 1}. ${c.firstName} ${c.lastName}\n   Match Score: ${c.matchScore?.toFixed(0) || 'N/A'}%\n   Recommendation: ${recLabel(c.recommendation)}\n   Key Strengths:\n${strengths}`
+    const strengths = parseJson(c.strengths).slice(0, 3).map((s: string) => `  + ${s}`).join('\n') || '  See full profile'
+    const weaknesses = parseJson(c.weaknesses).slice(0, 2).map((s: string) => `  - ${s}`).join('\n')
+    let entry = `${i + 1}. ${c.firstName} ${c.lastName}\n   Match Score: ${c.matchScore?.toFixed(0) || 'N/A'}%\n   Recommendation: ${recLabel(c.recommendation)}\n   Strengths:\n${strengths}`
+    if (weaknesses) entry += `\n   Areas of concern:\n${weaknesses}`
+    if (c.notes) entry += `\n   Recruiter notes: ${c.notes.slice(0, 200)}`
+    return entry
   })
 
   const topCandidate = candidates[0]
