@@ -30,7 +30,7 @@ export default async function AnalyticsPage() {
     )
   }
 
-  const where = isAdmin ? {} : { userId }
+  const where = userId ? (isAdmin ? {} : { userId }) : {}
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
   const [candidates, vacancies, recentCandidates] = await Promise.all([
     prisma.candidate.findMany({ where, select: { matchScore: true, status: true, source: true, createdAt: true, language: true }, orderBy: { createdAt: 'asc' } }),
