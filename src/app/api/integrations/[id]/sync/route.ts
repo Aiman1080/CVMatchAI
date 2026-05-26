@@ -5,6 +5,7 @@ import prisma from '@/lib/prisma'
 import {
   syncTeamtailor, syncRecruitee, syncSmartRecruiters,
   syncGreenhouse, syncLever, syncBullhorn, syncWorkable, syncFlatchr,
+  syncAshby, syncBreezy, syncHomerun,
 } from '@/lib/integrations/sync'
 
 export async function POST(_req: Request, context: { params: Promise<{ id: string }> }) {
@@ -44,6 +45,13 @@ export async function POST(_req: Request, context: { params: Promise<{ id: strin
       result = await syncWorkable(integration.apiKey, integration.companySlug, userId, since)
     } else if (integration.platform === 'flatchr') {
       result = await syncFlatchr(integration.apiKey, userId, since)
+    } else if (integration.platform === 'ashby') {
+      result = await syncAshby(integration.apiKey, userId, since)
+    } else if (integration.platform === 'breezyhr') {
+      if (!integration.companySlug) return NextResponse.json({ error: 'Company ID missing' }, { status: 400 })
+      result = await syncBreezy(integration.apiKey, integration.companySlug, userId, since)
+    } else if (integration.platform === 'homerun') {
+      result = await syncHomerun(integration.apiKey, userId, since)
     } else {
       return NextResponse.json({ error: 'Unknown platform' }, { status: 400 })
     }

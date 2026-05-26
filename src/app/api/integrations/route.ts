@@ -61,6 +61,9 @@ export async function POST(req: Request) {
   if (platform === 'workable' && !companySlug) {
     return NextResponse.json({ error: 'Subdomain required for Workable' }, { status: 400 })
   }
+  if (platform === 'breezyhr' && !companySlug) {
+    return NextResponse.json({ error: 'Company ID required for Breezy HR' }, { status: 400 })
+  }
 
   // Test the connection before saving
   let testResult: { ok: boolean; company?: string; error?: string }
@@ -71,7 +74,11 @@ export async function POST(req: Request) {
   else if (platform === 'lever') testResult = await leverTestConnection(apiKey)
   else if (platform === 'bullhorn') testResult = await bullhornTestConnection(apiKey, companySlug)
   else if (platform === 'workable') testResult = await workableTestConnection(apiKey, companySlug)
-  else testResult = await flatchrTestConnection(apiKey)
+  else if (platform === 'flatchr') testResult = await flatchrTestConnection(apiKey)
+  else if (platform === 'ashby') testResult = await ashbyTestConnection(apiKey)
+  else if (platform === 'breezyhr') testResult = await breezyTestConnection(apiKey)
+  else if (platform === 'homerun') testResult = await homerunTestConnection(apiKey)
+  else testResult = { ok: false, error: 'Unknown platform' }
 
   if (!testResult.ok) {
     return NextResponse.json({ error: `Connection failed: ${testResult.error}` }, { status: 400 })

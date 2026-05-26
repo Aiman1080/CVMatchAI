@@ -115,9 +115,42 @@ const PLATFORM_STATIC = [
     apiKeyPlaceholder: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
     needsSlug: false,
   },
+  {
+    id: 'ashby' as const,
+    name: 'Ashby',
+    color: 'from-emerald-500 to-green-600',
+    textColor: 'text-emerald-600 dark:text-emerald-400',
+    bgColor: 'bg-emerald-50 dark:bg-emerald-950/30',
+    borderColor: 'border-emerald-200 dark:border-emerald-800',
+    docsUrl: 'https://developers.ashbyhq.com',
+    apiKeyPlaceholder: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+    needsSlug: false,
+  },
+  {
+    id: 'breezyhr' as const,
+    name: 'Breezy HR',
+    color: 'from-sky-400 to-sky-600',
+    textColor: 'text-sky-600 dark:text-sky-400',
+    bgColor: 'bg-sky-50 dark:bg-sky-950/30',
+    borderColor: 'border-sky-200 dark:border-sky-800',
+    docsUrl: 'https://developer.breezy.hr',
+    apiKeyPlaceholder: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+    needsSlug: true,
+  },
+  {
+    id: 'homerun' as const,
+    name: 'Homerun',
+    color: 'from-orange-400 to-orange-600',
+    textColor: 'text-orange-600 dark:text-orange-400',
+    bgColor: 'bg-orange-50 dark:bg-orange-950/30',
+    borderColor: 'border-orange-200 dark:border-orange-800',
+    docsUrl: 'https://developers.homerun.co',
+    apiKeyPlaceholder: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+    needsSlug: false,
+  },
 ]
 
-type PlatformId = 'teamtailor' | 'recruitee' | 'smartrecruiters' | 'greenhouse' | 'lever' | 'bullhorn' | 'workable' | 'flatchr'
+type PlatformId = 'teamtailor' | 'recruitee' | 'smartrecruiters' | 'greenhouse' | 'lever' | 'bullhorn' | 'workable' | 'flatchr' | 'ashby' | 'breezyhr' | 'homerun'
 
 /** Collapsible guide with numbered steps — shown inline inside the connection form */
 function HowToGuide({ steps, docsUrl, openLabel }: { steps: readonly string[]; docsUrl: string; openLabel: string }) {
@@ -532,7 +565,7 @@ export function IntegrationsClient({ initialIntegrations }: { initialIntegration
                           <InfoTooltip text={slugTooltip} />
                         </div>
                         <Input
-                          placeholder={platform.id === 'bullhorn' ? 'https://rest.bullhornstaffing.com/rest-services/...' : platform.id === 'workable' ? 'your-company' : 'acme-corp'}
+                          placeholder={platform.id === 'bullhorn' ? 'https://rest.bullhornstaffing.com/rest-services/...' : platform.id === 'workable' ? 'your-company' : platform.id === 'breezyhr' ? 'your-company-id' : 'acme-corp'}
                           value={f.companySlug}
                           onChange={e => setForm(prev => ({ ...prev, [platform.id]: { ...f, companySlug: e.target.value } }))}
                           className="text-sm h-9"
