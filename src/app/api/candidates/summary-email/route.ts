@@ -134,7 +134,7 @@ function generateTemplateSummary(
 
   const lines = candidates.map((c, i) => {
     const strengths = parseJson(c.strengths).slice(0, 3).map((s: string) => `  + ${s}`).join('\n') || '  See full profile'
-    const weaknesses = parseJson(c.weaknesses).slice(0, 2).map((s: string) => `  - ${s}`).join('\n')
+    const weaknesses = parseJson(c.weaknesses || null).slice(0, 2).map((s: string) => `  - ${s}`).join('\n')
     let entry = `${i + 1}. ${c.firstName} ${c.lastName}\n   Match Score: ${c.matchScore?.toFixed(0) || 'N/A'}%\n   Recommendation: ${recLabel(c.recommendation)}\n   Strengths:\n${strengths}`
     if (weaknesses) entry += `\n   Areas of concern:\n${weaknesses}`
     if (c.notes) entry += `\n   Recruiter notes: ${c.notes.slice(0, 200)}`
