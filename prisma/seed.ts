@@ -15,15 +15,16 @@ async function main() {
   const adminPassword = await bcrypt.hash('admin123', 12)
   const recruiterPassword = await bcrypt.hash('recruiter123', 12)
   const proPassword = await bcrypt.hash('pro123', 12)
-  const freePassword = await bcrypt.hash('free123', 12)
+
+  // ── 3 accounts only ───────────────────────────────────────────────────────
 
   await prisma.user.upsert({
     where: { email: 'admin@cvmatch.ai' },
-    update: { password: adminPassword, role: 'admin', subscription: 'enterprise' },
+    update: { password: adminPassword, role: 'admin', subscription: 'pro' },
     create: {
       email: 'admin@cvmatch.ai', name: 'Admin User',
       password: adminPassword, role: 'admin',
-      company: 'CVMatch AI', subscription: 'enterprise',
+      company: 'CVMatch AI', subscription: 'pro',
     },
   })
 
@@ -47,63 +48,22 @@ async function main() {
     },
   })
 
-  await prisma.user.upsert({
-    where: { email: 'free@cvmatch.ai' },
-    update: { password: freePassword, subscription: 'free' },
-    create: {
-      email: 'free@cvmatch.ai', name: 'Demo Gratuit',
-      password: freePassword, role: 'recruiter',
-      company: 'Startup Demo', subscription: 'free',
-    },
-  })
+  // ── Demo Recruiter: 3 vacancies, 15 candidates ───────────────────────────
 
-  // Create extra demo companies for the admin panel to look populated
-  await prisma.user.upsert({
-    where: { email: 'hr@techwave.be' },
-    update: {},
-    create: {
-      email: 'hr@techwave.be', name: 'Marie Dubois',
-      password: await bcrypt.hash('demo123', 12), role: 'recruiter',
-      company: 'TechWave Belgium', subscription: 'pro',
-    },
-  })
-
-  await prisma.user.upsert({
-    where: { email: 'recruiter@valoris.be' },
-    update: {},
-    create: {
-      email: 'recruiter@valoris.be', name: 'Peter Van Acker',
-      password: await bcrypt.hash('demo123', 12), role: 'recruiter',
-      company: 'Valoris Consulting', subscription: 'enterprise',
-    },
-  })
-
-  await prisma.user.upsert({
-    where: { email: 'talent@startupgent.be' },
-    update: {},
-    create: {
-      email: 'talent@startupgent.be', name: 'Sarah De Backer',
-      password: await bcrypt.hash('demo123', 12), role: 'recruiter',
-      company: 'StartupGent', subscription: 'free',
-    },
-  })
-
-  // ── Vacancies ──────────────────────────────────────────────────────────────
-
-  const vacancyIds: string[] = []
-  for (const v of VACANCIES) {
+  const demoVacancies = VACANCIES.slice(0, 3)
+  const demoVacancyIds: string[] = []
+  for (const v of demoVacancies) {
     const vacancy = await prisma.vacancy.create({
       data: { ...v, userId: recruiter.id },
     })
-    vacancyIds.push(vacancy.id)
+    demoVacancyIds.push(vacancy.id)
   }
 
-  // ── Candidates ─────────────────────────────────────────────────────────────
-
-  for (const c of ALL_CANDIDATES) {
+  const demoCandidates = ALL_CANDIDATES.filter(c => c.vacancyIndex < 3).slice(0, 15)
+  for (const c of demoCandidates) {
     const { vacancyIndex, strengths, weaknesses, skills, ...rest } = c
-    const vacancyId = vacancyIds[vacancyIndex]
-    const vacancyTitle = VACANCIES[vacancyIndex].title
+    const vacancyId = demoVacancyIds[vacancyIndex]
+    const vacancyTitle = demoVacancies[vacancyIndex].title
     await prisma.candidate.create({
       data: {
         ...rest,
@@ -120,22 +80,22 @@ async function main() {
     })
   }
 
-  // ── Pro user vacancies & candidates (sample data for demo) ─────────────────
+  // ── Demo Pro: 3 vacancies, 10 candidates ─────────────────────────────────
 
-  const proVacancyData = VACANCIES.slice(0, 4)
+  const proVacancies = VACANCIES.slice(0, 3)
   const proVacancyIds: string[] = []
-  for (const v of proVacancyData) {
+  for (const v of proVacancies) {
     const vacancy = await prisma.vacancy.create({
       data: { ...v, userId: proUser.id },
     })
     proVacancyIds.push(vacancy.id)
   }
 
-  const proCandidates = ALL_CANDIDATES.filter(c => c.vacancyIndex < 4).slice(0, 12)
+  const proCandidates = ALL_CANDIDATES.filter(c => c.vacancyIndex < 3).slice(0, 10)
   for (const c of proCandidates) {
     const { vacancyIndex, strengths, weaknesses, skills, ...rest } = c
     const vacancyId = proVacancyIds[vacancyIndex]
-    const vacancyTitle = proVacancyData[vacancyIndex].title
+    const vacancyTitle = proVacancies[vacancyIndex].title
     await prisma.candidate.create({
       data: {
         ...rest,
@@ -153,12 +113,11 @@ async function main() {
   }
 
   console.log('✅ Database seeded successfully')
-  console.log('👤 Admin:         admin@cvmatch.ai / admin123')
-  console.log('👤 Demo (free):   demo@cvmatch.ai / recruiter123')
-  console.log('👤 Demo Pro:      pro@cvmatch.ai / pro123')
-  console.log('👤 Demo Gratuit:  free@cvmatch.ai / free123')
-  console.log(`📋 ${VACANCIES.length} vacancies, ${ALL_CANDIDATES.length} candidates (demo user)`)
-  console.log(`📋 ${proVacancyIds.length} vacancies, ${proCandidates.length} candidates (pro user)`)
+  console.log('👤 Admin:       admin@cvmatch.ai / admin123 (pro)')
+  console.log('👤 Demo Free:   demo@cvmatch.ai / recruiter123')
+  console.log('👤 Demo Pro:    pro@cvmatch.ai / pro123')
+  console.log(`📋 Demo: 3 vacancies, ${demoCandidates.length} candidates`)
+  console.log(`📋 Pro:  3 vacancies, ${proCandidates.length} candidates`)
 }
 
 main().catch(console.error).finally(() => prisma.$disconnect())
