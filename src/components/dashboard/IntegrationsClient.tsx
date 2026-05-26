@@ -159,9 +159,31 @@ const PLATFORM_STATIC = [
     apiKeyPlaceholder: 'papi-xxxxxxxxxxxxxxxx',
     needsSlug: false,
   },
+  {
+    id: 'icims' as const,
+    name: 'iCIMS',
+    color: 'from-blue-700 to-blue-900',
+    textColor: 'text-blue-700 dark:text-blue-400',
+    bgColor: 'bg-blue-50 dark:bg-blue-950/30',
+    borderColor: 'border-blue-200 dark:border-blue-800',
+    docsUrl: 'https://developer.icims.com',
+    apiKeyPlaceholder: 'xxxx-xxxx-xxxx',
+    needsSlug: true,
+  },
+  {
+    id: 'softgarden' as const,
+    name: 'Softgarden',
+    color: 'from-lime-500 to-green-600',
+    textColor: 'text-lime-600 dark:text-lime-400',
+    bgColor: 'bg-lime-50 dark:bg-lime-950/30',
+    borderColor: 'border-lime-200 dark:border-lime-800',
+    docsUrl: 'https://dev.softgarden.de',
+    apiKeyPlaceholder: 'sg-xxxxxxxx',
+    needsSlug: false,
+  },
 ]
 
-type PlatformId = 'teamtailor' | 'recruitee' | 'smartrecruiters' | 'greenhouse' | 'lever' | 'bullhorn' | 'workable' | 'flatchr' | 'ashby' | 'breezyhr' | 'homerun' | 'personio'
+type PlatformId = 'teamtailor' | 'recruitee' | 'smartrecruiters' | 'greenhouse' | 'lever' | 'bullhorn' | 'workable' | 'flatchr' | 'ashby' | 'breezyhr' | 'homerun' | 'personio' | 'icims' | 'softgarden'
 
 /** Collapsible guide with numbered steps — shown inline inside the connection form */
 function HowToGuide({ steps, docsUrl, openLabel }: { steps: readonly string[]; docsUrl: string; openLabel: string }) {
@@ -576,7 +598,7 @@ export function IntegrationsClient({ initialIntegrations }: { initialIntegration
                           <InfoTooltip text={slugTooltip} />
                         </div>
                         <Input
-                          placeholder={platform.id === 'bullhorn' ? 'https://rest.bullhornstaffing.com/rest-services/...' : platform.id === 'workable' ? 'your-company' : platform.id === 'breezyhr' ? 'your-company-id' : 'acme-corp'}
+                          placeholder={platform.id === 'bullhorn' ? 'https://rest.bullhornstaffing.com/rest-services/...' : platform.id === 'workable' ? 'your-company' : platform.id === 'breezyhr' ? 'your-company-id' : platform.id === 'icims' ? '12345' : 'acme-corp'}
                           value={f.companySlug}
                           onChange={e => setForm(prev => ({ ...prev, [platform.id]: { ...f, companySlug: e.target.value } }))}
                           className="text-sm h-9"
