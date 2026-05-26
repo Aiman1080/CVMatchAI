@@ -373,8 +373,10 @@ export default function LandingPage() {
               <div className="flex gap-2">
                 {[
                   { name: 'Teamtailor', dot: 'bg-green-400' },
-                  { name: 'Recruitee', dot: 'bg-blue-400' },
-                  { name: 'SmartRecruiters', dot: 'bg-purple-400' },
+                  { name: 'Greenhouse', dot: 'bg-emerald-400' },
+                  { name: 'Bullhorn', dot: 'bg-orange-400' },
+                  { name: 'Personio', dot: 'bg-pink-400' },
+                  { name: '+10 more', dot: 'bg-gray-400' },
                 ].map(ats => (
                   <div key={ats.name} className="flex items-center gap-1.5 bg-white/10 rounded-full px-3 py-1">
                     <div className={`w-1.5 h-1.5 rounded-full ${ats.dot}`} />

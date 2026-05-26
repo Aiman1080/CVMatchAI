@@ -18,7 +18,7 @@ interface Props {
 
 const PLANS = [
   { id: 'free', name: 'Free', price: '€0', features: ['3 vacancies', '25 candidates/mo', 'AI analysis'] },
-  { id: 'pro', name: 'Pro', price: '€55/mo', features: ['Unlimited vacancies', 'Unlimited candidates', 'AI interview questions', 'AI hiring reports', 'Email scanning', 'ATS integrations', 'Analytics & export'], popular: true },
+  { id: 'pro', name: 'Pro', price: '€55/mo', features: ['Unlimited vacancies', 'Unlimited candidates', 'AI interview questions', 'AI hiring reports', 'Email scanning', '14 ATS integrations', 'Analytics & export'], popular: true },
 ]
 
 export function SettingsClient({ user }: Props) {

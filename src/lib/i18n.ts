@@ -51,7 +51,7 @@ export const translations = {
       mostPopular: 'Most Popular',
       plans: [
         { name: 'Free', price: '€0', period: 'forever', cta: 'Get started free', features: ['3 active vacancies', '25 candidates/month', 'AI match scoring', 'Basic dashboard', 'CV upload & analysis'] },
-        { name: 'Pro', price: '€55', period: '/month', cta: 'Start Pro trial', features: ['Unlimited vacancies', 'Unlimited candidates', 'AI interview questions', 'AI hiring reports', 'AI candidate ranking', 'Email inbox scanning', 'ATS integrations', 'Analytics & export', 'Priority support'] },
+        { name: 'Pro', price: '€55', period: '/month', cta: 'Start Pro trial', features: ['Unlimited vacancies', 'Unlimited candidates', 'AI interview questions', 'AI hiring reports', 'AI candidate ranking', 'Email inbox scanning', '14 ATS integrations (Greenhouse, Bullhorn, Personio...)', 'Analytics & export', 'Priority support'] },
       ],
     },
     cta: {
@@ -113,7 +113,7 @@ export const translations = {
       platformFeatures: {
         bulkUpload: { title: 'Bulk CV Upload', desc: 'Upload PDF, DOCX, or text files. Parser extracts text and triggers AI analysis automatically.' },
         emailScanning: { title: 'Email Inbox Scanning', desc: 'Connect your recruitment inbox. AI auto-detects CVs in emails, ignores spam, creates candidate profiles.' },
-        atsIntegrations: { title: 'ATS Integrations', desc: 'Connect Teamtailor, Recruitee, SmartRecruiters. Import candidates and vacancies with one click.' },
+        atsIntegrations: { title: 'ATS Integrations', desc: 'Connect 14 ATS platforms including Teamtailor, Greenhouse, Bullhorn, Personio and more. Import candidates and vacancies automatically.' },
         pipeline: { title: 'Pipeline Management', desc: 'Move candidates through stages: New, Reviewing, Shortlisted, Hired. Full recruitment workflow.' },
         analytics: { title: 'Analytics Dashboard', desc: 'Track hiring metrics, pipeline conversion rates, time-to-hire, and candidate source performance.' },
         gdpr: { title: 'GDPR Compliant', desc: 'Encrypted storage, consent tracking, data export, automatic deletion. Full GDPR compliance built-in.' },
@@ -1095,7 +1095,7 @@ export const translations = {
         { title: 'Slimme Rangschikking', desc: 'Kandidaten worden gerangschikt op matchscore. Zie sterke punten, zwaktes en AI-aanbevelingen.' },
         { title: 'Pipeline Beheer', desc: 'Verplaats kandidaten door stadia: Nieuw → Beoordeling → Shortlist → Aangenomen.' },
         { title: 'GDPR-conform', desc: 'Versleutelde opslag, toestemmingsregistratie, gegevensexport, automatische verwijdering, DPA-overeenkomst.' },
-        { title: 'ATS-integraties', desc: 'Verbind Teamtailor, Recruitee en SmartRecruiters. Importeer kandidaten en vacatures met één klik, AI analyseert elk cv automatisch.' },
+        { title: '14 ATS-integraties (Greenhouse, Bullhorn, Personio...)', desc: 'Verbind 14 ATS-platforms waaronder Teamtailor, Greenhouse, Bullhorn, Personio en meer. Importeer kandidaten en vacatures automatisch. AI analyseert elk cv automatisch.' },
         { title: 'AI E-mailgenerator', desc: 'Genereer gepersonaliseerde uitnodigingen voor gesprekken of afwijzingsmails met AI. Één klik, professionele toon, in de taal van de kandidaat.' },
         { title: 'Kanban & Talentpool', desc: 'Visualiseer je pipeline in Kanban-weergave. Sleep kandidaten tussen stadia. Bewaar je beste profielen in een talentpool voor toekomstige functies.' },
       ],
@@ -1116,7 +1116,7 @@ export const translations = {
       mostPopular: 'Meest Populair',
       plans: [
         { name: 'Gratis', price: '€0', period: 'voor altijd', cta: 'Gratis starten', features: ['3 actieve vacatures', '25 kandidaten/maand', 'AI match scoring', 'Basis dashboard', 'CV upload & analyse'] },
-        { name: 'Pro', price: '€55', period: '/maand', cta: 'Pro proberen', features: ['Onbeperkte vacatures', 'Onbeperkte kandidaten', 'AI interviewvragen', 'AI wervingsrapporten', 'AI kandidaatrangschikking', 'E-mail inbox scanning', 'ATS-integraties', 'Analytics & export', 'Prioriteitsondersteuning'] },
+        { name: 'Pro', price: '€55', period: '/maand', cta: 'Pro proberen', features: ['Onbeperkte vacatures', 'Onbeperkte kandidaten', 'AI interviewvragen', 'AI wervingsrapporten', 'AI kandidaatrangschikking', 'E-mail inbox scanning', '14 ATS-integraties (Greenhouse, Bullhorn, Personio...)', 'Analytics & export', 'Prioriteitsondersteuning'] },
       ],
     },
     cta: {
@@ -1178,7 +1178,7 @@ export const translations = {
       platformFeatures: {
         bulkUpload: { title: 'Bulk CV-upload', desc: 'Upload PDF-, DOCX- of tekstbestanden. De parser extraheert tekst en start de AI-analyse automatisch.' },
         emailScanning: { title: 'E-mailinbox scannen', desc: 'Verbind uw recruitmentinbox. AI detecteert automatisch cv\'s in e-mails, negeert spam en maakt kandidaatprofielen aan.' },
-        atsIntegrations: { title: 'ATS-integraties', desc: 'Verbind Teamtailor, Recruitee en SmartRecruiters. Importeer kandidaten en vacatures met één klik.' },
+        atsIntegrations: { title: '14 ATS-integraties (Greenhouse, Bullhorn, Personio...)', desc: 'Verbind 14 ATS-platforms waaronder Teamtailor, Greenhouse, Bullhorn, Personio en meer. Importeer kandidaten en vacatures automatisch.' },
         pipeline: { title: 'Pipeline-beheer', desc: 'Verplaats kandidaten door stadia: Nieuw, In beoordeling, Shortlist, Aangenomen. Complete wervingsworkflow.' },
         analytics: { title: 'Analysedashboard', desc: 'Volg wervingsstatistieken, pipelineconversie, doorlooptijd en prestaties per kandidaatbron.' },
         gdpr: { title: 'AVG-conform', desc: 'Versleutelde opslag, toestemmingsregistratie, gegevensexport, automatische verwijdering. Volledige AVG-compliance ingebouwd.' },
@@ -1198,7 +1198,7 @@ export const translations = {
         vacancies: 'Vacatures',
         candidates: 'Kandidaten',
         email: 'E-mailinbox',
-        integrations: 'ATS-integraties',
+        integrations: '14 ATS-integraties (Greenhouse, Bullhorn, Personio...)',
         analytics: 'Analyses',
         settings: 'Instellingen',
         support: 'Ondersteuning',
@@ -2160,7 +2160,7 @@ export const translations = {
         { title: 'Classement intelligent', desc: 'Les candidats sont classés par score de correspondance. Visualisez forces, faiblesses et recommandations IA.' },
         { title: 'Gestion du pipeline', desc: 'Faites avancer les candidats : Nouveau → En cours → Shortlisté → Embauché.' },
         { title: 'Conforme RGPD', desc: 'Stockage chiffré, suivi des consentements, export de données, suppression automatique, accord DPA.' },
-        { title: 'Intégrations ATS', desc: 'Connectez Teamtailor, Recruitee et SmartRecruiters. Importez candidats et offres en un clic, l\'IA analyse chaque CV automatiquement.' },
+        { title: '14 intégrations ATS (Greenhouse, Bullhorn, Personio...)', desc: 'Connectez 14 plateformes ATS dont Teamtailor, Greenhouse, Bullhorn, Personio et plus. Importez candidats et offres automatiquement. l\'IA analyse chaque CV automatiquement.' },
         { title: 'Générateur d\'e-mails IA', desc: 'Générez des invitations à des entretiens ou des e-mails de refus personnalisés avec l\'IA. Un clic, ton professionnel, dans la langue du candidat.' },
         { title: 'Kanban & Vivier de talents', desc: 'Visualisez votre pipeline en vue Kanban. Glissez les candidats entre les étapes. Sauvegardez vos meilleurs profils dans un vivier de talents pour de futurs postes.' },
       ],
@@ -2181,7 +2181,7 @@ export const translations = {
       mostPopular: 'Le Plus Populaire',
       plans: [
         { name: 'Gratuit', price: '€0', period: 'pour toujours', cta: 'Commencer gratuitement', features: ['3 offres actives', '25 candidats/mois', 'Score de correspondance IA', 'Tableau de bord de base', 'Upload & analyse de CV'] },
-        { name: 'Pro', price: '€55', period: '/mois', cta: 'Essayer Pro', features: ['Offres illimitées', 'Candidats illimités', "Questions d'entretien IA", 'Rapports de recrutement IA', 'Classement IA des candidats', 'Scan de la boîte mail', 'Intégrations ATS', 'Analytics & export', 'Support prioritaire'] },
+        { name: 'Pro', price: '€55', period: '/mois', cta: 'Essayer Pro', features: ['Offres illimitées', 'Candidats illimités', "Questions d'entretien IA", 'Rapports de recrutement IA', 'Classement IA des candidats', 'Scan de la boîte mail', '14 intégrations ATS (Greenhouse, Bullhorn, Personio...)', 'Analytics & export', 'Support prioritaire'] },
       ],
     },
     cta: {
@@ -2243,7 +2243,7 @@ export const translations = {
       platformFeatures: {
         bulkUpload: { title: 'Upload de CV en masse', desc: "Uploadez des fichiers PDF, DOCX ou texte. Le parseur extrait le texte et lance l'analyse IA automatiquement." },
         emailScanning: { title: 'Scan de la boîte mail', desc: "Connectez votre boîte de recrutement. L'IA détecte automatiquement les CV dans les e-mails, ignore le spam et crée des profils candidats." },
-        atsIntegrations: { title: 'Intégrations ATS', desc: 'Connectez Teamtailor, Recruitee et SmartRecruiters. Importez candidats et offres en un clic.' },
+        atsIntegrations: { title: '14 intégrations ATS (Greenhouse, Bullhorn, Personio...)', desc: 'Connectez 14 plateformes ATS dont Teamtailor, Greenhouse, Bullhorn, Personio et plus. Importez candidats et offres automatiquement.' },
         pipeline: { title: 'Gestion du pipeline', desc: 'Faites avancer les candidats par étapes : Nouveau, En cours, Shortlisté, Embauché. Workflow de recrutement complet.' },
         analytics: { title: 'Tableau de bord analytique', desc: "Suivez vos indicateurs de recrutement, taux de conversion du pipeline, délai d'embauche et performance par source." },
         gdpr: { title: 'Conforme RGPD', desc: 'Stockage chiffré, suivi des consentements, export de données, suppression automatique. Conformité RGPD complète intégrée.' },
@@ -2263,7 +2263,7 @@ export const translations = {
         vacancies: 'Offres',
         candidates: 'Candidats',
         email: 'Boîte mail',
-        integrations: 'Intégrations ATS',
+        integrations: '14 intégrations ATS (Greenhouse, Bullhorn, Personio...)',
         analytics: 'Analytique',
         settings: 'Paramètres',
         support: 'Support',
