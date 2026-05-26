@@ -44,6 +44,7 @@ export function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [open, setOpen] = useState(false)
+  const [showAll, setShowAll] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   const fetchNotifications = useCallback(async () => {
@@ -140,7 +141,7 @@ export function NotificationBell() {
           </div>
 
           {/* Notification list */}
-          <div className="max-h-80 overflow-y-auto">
+          <div className={cn('overflow-y-auto', showAll ? 'max-h-[500px]' : 'max-h-80')}>
             {notifications.length === 0 ? (
               <div className="px-4 py-8 text-center">
                 <Bell size={24} className="mx-auto mb-2 text-gray-300 dark:text-gray-600" />
@@ -188,6 +189,16 @@ export function NotificationBell() {
                 )
               })
             )}
+          </div>
+
+          {/* View history */}
+          <div className="px-4 py-2 border-t border-gray-100 dark:border-gray-800">
+            <button
+              onClick={() => { setShowAll(!showAll); }}
+              className="w-full text-xs text-center text-blue-600 dark:text-blue-400 hover:text-blue-700 font-medium py-1"
+            >
+              {showAll ? 'Show recent' : 'View all history'}
+            </button>
           </div>
         </div>
       )}
