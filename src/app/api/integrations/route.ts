@@ -12,6 +12,9 @@ import { leverTestConnection } from '@/lib/integrations/lever'
 import { bullhornTestConnection } from '@/lib/integrations/bullhorn'
 import { workableTestConnection } from '@/lib/integrations/workable'
 import { flatchrTestConnection } from '@/lib/integrations/flatchr'
+import { ashbyTestConnection } from '@/lib/integrations/ashby'
+import { breezyTestConnection } from '@/lib/integrations/breezyhr'
+import { homerunTestConnection } from '@/lib/integrations/homerun'
 
 export async function GET() {
   const session = await getServerSession(authOptions)
@@ -46,7 +49,7 @@ export async function POST(req: Request) {
   const { platform, apiKey, companySlug } = body
   if (!platform || !apiKey) return NextResponse.json({ error: 'Missing platform or apiKey' }, { status: 400 })
 
-  const allowed = ['teamtailor', 'recruitee', 'smartrecruiters', 'greenhouse', 'lever', 'bullhorn', 'workable', 'flatchr']
+  const allowed = ['teamtailor', 'recruitee', 'smartrecruiters', 'greenhouse', 'lever', 'bullhorn', 'workable', 'flatchr', 'ashby', 'breezyhr', 'homerun']
   if (!allowed.includes(platform)) return NextResponse.json({ error: 'Unknown platform' }, { status: 400 })
 
   if (platform === 'recruitee' && !companySlug) {

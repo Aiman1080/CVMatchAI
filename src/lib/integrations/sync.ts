@@ -28,6 +28,15 @@ import {
 import {
   flatchrFetchJobs, flatchrFetchCandidates, flatchrDownloadCV,
 } from './flatchr'
+import {
+  ashbyFetchJobs, ashbyFetchCandidates,
+} from './ashby'
+import {
+  breezyFetchPositions, breezyFetchCandidates, breezyDownloadCV,
+} from './breezyhr'
+import {
+  homerunFetchJobs, homerunFetchApplications, homerunDownloadCV,
+} from './homerun'
 
 export interface SyncResult {
   imported: number
@@ -681,6 +690,184 @@ export async function syncFlatchr(apiKey: string, userId: string, since?: Date):
             else result.skipped++
           } catch (e: any) {
             result.errors.push(`Candidate ${candidate.id}: ${e.message}`)
+          }
+        }
+      } catch (e: any) {
+        result.errors.push(`Job ${job.id}: ${e.message}`)
+      }
+    }
+  } catch (e: any) {
+    result.errors.push(e.message)
+  }
+  return result
+}
+
+// ── Ashby ───────────────────────────────────────────────────────────────────
+
+export async function syncAshby(apiKey: string, userId: string, since?: Date): Promise<SyncResult> {
+  const result: SyncResult = { imported: 0, updated: 0, skipped: 0, errors: [] }
+  try {
+    const [jobs, candidates] = await Promise.all([
+      ashbyFetchJobs(apiKey),
+      ashbyFetchCandidates(apiKey, since),
+    ])
+
+    const jobMap = new Map(jobs.map(j => [j.jobId || j.id, j]))
+
+    for (const candidate of candidates) {
+      try {
+        // Use the first job as fallback if candidate has no specific job link
+        const firstJob = jobs[0]
+        if (!firstJob) continue
+
+        const job = firstJob
+        const vacancyId = await upsertVacancy(userId, job.id, 'ashby', {
+          title: job.title,
+          description: job.content || job.title,
+          requirements: '',
+          company: 'Ashby',
+          location: job.locationName,
+        })
+
+        const nameParts = candidate.name?.split(' ') || []
+        const firstName = nameParts[0] || 'Unknown'
+        const lastName = nameParts.slice(1).join(' ') || 'Candidate'
+        const email = candidate.primaryEmailAddress?.value
+        const phone = candidate.primaryPhoneNumber?.value
+        const linkedIn = candidate.socialLinks?.find(l => l.type === 'LinkedIn')?.url
+
+        const status = await upsertCandidate(userId, 'ashby', {
+          externalId: candidate.id,
+          firstName,
+          lastName,
+          email,
+          phone,
+          linkedIn,
+          cvBuffer: null,
+          vacancyId,
+        })
+
+        if (status === 'imported') result.imported++
+        else if (status === 'updated') result.updated++
+        else result.skipped++
+      } catch (e: any) {
+        result.errors.push(`Candidate ${candidate.id}: ${e.message}`)
+      }
+    }
+  } catch (e: any) {
+    result.errors.push(e.message)
+  }
+  return result
+}
+
+// ── Breezy HR ───────────────────────────────────────────────────────────────
+
+export async function syncBreezy(apiKey: string, companyId: string, userId: string, since?: Date): Promise<SyncResult> {
+  const result: SyncResult = { imported: 0, updated: 0, skipped: 0, errors: [] }
+  try {
+    const positions = await breezyFetchPositions(apiKey, companyId)
+
+    for (const position of positions) {
+      try {
+        const vacancyId = await upsertVacancy(userId, position._id, 'breezyhr', {
+          title: position.name,
+          description: position.description || position.name,
+          requirements: '',
+          company: companyId,
+          location: position.location?.city,
+        })
+
+        const candidates = await breezyFetchCandidates(apiKey, companyId, position._id)
+
+        for (const candidate of candidates) {
+          try {
+            if (since && candidate.creation_date && new Date(candidate.creation_date) < since) continue
+
+            const nameParts = candidate.name?.split(' ') || []
+            const firstName = nameParts[0] || 'Unknown'
+            const lastName = nameParts.slice(1).join(' ') || 'Candidate'
+
+            const cvBuffer = candidate.resume?.url
+              ? await breezyDownloadCV(candidate.resume.url, apiKey)
+              : null
+
+            const status = await upsertCandidate(userId, 'breezyhr', {
+              externalId: candidate._id,
+              firstName,
+              lastName,
+              email: candidate.email_address,
+              phone: candidate.phone_number,
+              linkedIn: candidate.profile_url,
+              cvBuffer,
+              cvFileName: candidate.resume?.file_name || (cvBuffer ? 'cv.pdf' : undefined),
+              motivationText: candidate.summary,
+              vacancyId,
+              atsStatus: candidate.stage?.name,
+            })
+
+            if (status === 'imported') result.imported++
+            else if (status === 'updated') result.updated++
+            else result.skipped++
+          } catch (e: any) {
+            result.errors.push(`Candidate ${candidate._id}: ${e.message}`)
+          }
+        }
+      } catch (e: any) {
+        result.errors.push(`Position ${position._id}: ${e.message}`)
+      }
+    }
+  } catch (e: any) {
+    result.errors.push(e.message)
+  }
+  return result
+}
+
+// ── Homerun ─────────────────────────────────────────────────────────────────
+
+export async function syncHomerun(apiKey: string, userId: string, since?: Date): Promise<SyncResult> {
+  const result: SyncResult = { imported: 0, updated: 0, skipped: 0, errors: [] }
+  try {
+    const jobs = await homerunFetchJobs(apiKey)
+
+    for (const job of jobs) {
+      try {
+        const vacancyId = await upsertVacancy(userId, job.id, 'homerun', {
+          title: job.title,
+          description: job.description || job.title,
+          requirements: '',
+          company: 'Homerun',
+          location: job.location,
+        })
+
+        const applications = await homerunFetchApplications(apiKey, job.id)
+
+        for (const app of applications) {
+          try {
+            if (since && new Date(app.created_at) < since) continue
+
+            const cvBuffer = app.resume_url
+              ? await homerunDownloadCV(app.resume_url, apiKey)
+              : null
+
+            const status = await upsertCandidate(userId, 'homerun', {
+              externalId: app.id,
+              firstName: app.first_name || 'Unknown',
+              lastName: app.last_name || 'Candidate',
+              email: app.email,
+              phone: app.phone,
+              linkedIn: app.linkedin_url,
+              cvBuffer,
+              cvFileName: app.resume_filename || (cvBuffer ? 'cv.pdf' : undefined),
+              motivationText: app.cover_letter,
+              vacancyId,
+              atsStatus: app.stage,
+            })
+
+            if (status === 'imported') result.imported++
+            else if (status === 'updated') result.updated++
+            else result.skipped++
+          } catch (e: any) {
+            result.errors.push(`Application ${app.id}: ${e.message}`)
           }
         }
       } catch (e: any) {
