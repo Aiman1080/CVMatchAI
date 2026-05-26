@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { useTheme } from 'next-themes'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { LayoutDashboard, LogOut, Sun, Moon, ArrowLeft, ShieldCheck, Menu, X, Users, LifeBuoy, Settings } from 'lucide-react'
 import { LogoAdmin } from '@/components/Logo'
 import { cn } from '@/lib/utils'
@@ -16,9 +16,11 @@ export function AdminSidebar() {
   const { data: session } = useSession()
   const { theme, setTheme } = useTheme()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const user = session?.user as any
   const initials = user?.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || 'A'
-  const isDark = theme === 'dark'
+  useEffect(() => setMounted(true), [])
+  const isDark = mounted ? theme === 'dark' : false
   const currentTab = searchParams.get('tab')
   const isAdmin = pathname === '/admin'
 

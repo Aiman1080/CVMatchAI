@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { useTheme } from 'next-themes'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { LayoutDashboard, Briefcase, Users, BarChart3, Settings, Mail, LogOut, ShieldCheck, ChevronRight, LifeBuoy, Sun, Moon, Plug, Lock, Menu, X } from 'lucide-react'
 import { Logo } from '@/components/Logo'
 import { NotificationBell } from '@/components/NotificationBell'
@@ -31,10 +31,12 @@ export function Sidebar() {
   const { theme, setTheme } = useTheme()
   const { t, locale, setLocale } = useLanguage()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const user = session?.user as any
   const initials = user?.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || 'U'
 
-  const isDark = theme === 'dark'
+  useEffect(() => setMounted(true), [])
+  const isDark = mounted ? theme === 'dark' : false
   const subscription = user?.subscription || 'free'
   const isFree = subscription === 'free'
 
