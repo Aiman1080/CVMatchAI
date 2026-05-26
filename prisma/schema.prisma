@@ -241,3 +241,19 @@ model Subscription {
   priority      Boolean  @default(false)
   createdAt     DateTime @default(now())
 }
+
+model AiUsageLog {
+  id            String   @id @default(cuid())
+  userId        String
+  operation     String   // cv_analysis, interview_questions, job_description, ranking, hiring_report, email_generation, email_classification, doc_detection
+  model         String   @default("gemini-2.5-flash")
+  inputTokens   Int      @default(0)
+  outputTokens  Int      @default(0)
+  totalTokens   Int      @default(0)
+  costUsd       Float    @default(0)
+  success       Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}

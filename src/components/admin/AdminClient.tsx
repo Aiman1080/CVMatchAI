@@ -118,6 +118,20 @@ interface Props {
   activeToday: number
   weeklySignups: WeeklySignup[]
   recentActivity: RecentActivityItem[]
+  aiUsageStats?: {
+    totalCalls: number
+    totalTokens: number
+    totalInputTokens: number
+    totalOutputTokens: number
+    totalCostUsd: number
+    last30d: { calls: number; tokens: number; costUsd: number }
+    byOperation: Array<{ operation: string; calls: number; tokens: number; costUsd: number }>
+  } | null
+  dbStats?: {
+    users: number; vacancies: number; candidates: number
+    notifications: number; activities: number; emailScans: number; aiLogs: number
+    totalRows: number
+  }
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -128,6 +142,7 @@ export function AdminClient({
   latestVacancies, newUsersThisWeek, candidatesThisWeek, candidatesToday,
   integrationsByPlatform, candidatesBySource, activeVacanciesCount,
   activeToday, weeklySignups, recentActivity,
+  aiUsageStats, dbStats,
 }: Props) {
   const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
   const urlTab = searchParams?.get('tab')
@@ -1387,6 +1402,94 @@ export function AdminClient({
               </CardContent>
             </Card>
           </div>
+
+          {/* AI Usage Stats */}
+          {aiUsageStats && (
+            <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Brain className="w-4 h-4 text-violet-500" /> Gemini AI Usage & Cost
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                  <div className="p-3 bg-violet-50 dark:bg-violet-950/30 rounded-xl text-center">
+                    <div className="text-2xl font-bold text-violet-600">{aiUsageStats.totalCalls}</div>
+                    <div className="text-xs text-gray-500">Total API Calls</div>
+                  </div>
+                  <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-xl text-center">
+                    <div className="text-2xl font-bold text-blue-600">{(aiUsageStats.totalTokens / 1000).toFixed(1)}k</div>
+                    <div className="text-xs text-gray-500">Total Tokens</div>
+                  </div>
+                  <div className="p-3 bg-green-50 dark:bg-green-950/30 rounded-xl text-center">
+                    <div className="text-2xl font-bold text-green-600">${aiUsageStats.totalCostUsd.toFixed(4)}</div>
+                    <div className="text-xs text-gray-500">Total Cost (USD)</div>
+                  </div>
+                  <div className="p-3 bg-amber-50 dark:bg-amber-950/30 rounded-xl text-center">
+                    <div className="text-2xl font-bold text-amber-600">${aiUsageStats.last30d.costUsd.toFixed(4)}</div>
+                    <div className="text-xs text-gray-500">Last 30 Days</div>
+                  </div>
+                </div>
+                {aiUsageStats.byOperation.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold text-gray-500 uppercase">By Operation</p>
+                    {aiUsageStats.byOperation.map(op => (
+                      <div key={op.operation} className="flex items-center justify-between text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">{op.operation.replace(/_/g, ' ')}</span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-gray-400">{op.calls} calls</span>
+                          <span className="text-gray-400">{(op.tokens / 1000).toFixed(1)}k tokens</span>
+                          <span className="font-semibold text-gray-700 dark:text-gray-300">${op.costUsd.toFixed(4)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Database Stats */}
+          {dbStats && (
+            <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Database className="w-4 h-4 text-emerald-500" /> Database Usage (Supabase)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                  <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl text-center">
+                    <div className="text-2xl font-bold text-emerald-600">{dbStats.totalRows.toLocaleString()}</div>
+                    <div className="text-xs text-gray-500">Total Rows</div>
+                  </div>
+                  <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-xl text-center">
+                    <div className="text-2xl font-bold text-blue-600">{dbStats.candidates}</div>
+                    <div className="text-xs text-gray-500">Candidates</div>
+                  </div>
+                  <div className="p-3 bg-indigo-50 dark:bg-indigo-950/30 rounded-xl text-center">
+                    <div className="text-2xl font-bold text-indigo-600">{dbStats.activities}</div>
+                    <div className="text-xs text-gray-500">Activity Logs</div>
+                  </div>
+                  <div className="p-3 bg-violet-50 dark:bg-violet-950/30 rounded-xl text-center">
+                    <div className="text-2xl font-bold text-violet-600">{dbStats.aiLogs}</div>
+                    <div className="text-xs text-gray-500">AI Logs</div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {Object.entries(dbStats).filter(([k]) => k !== 'totalRows').map(([key, value]) => (
+                    <div key={key} className="flex items-center justify-between text-xs">
+                      <span className="text-gray-500 capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
+                      <span className="font-medium text-gray-700 dark:text-gray-300">{(value as number).toLocaleString()} rows</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg text-xs text-gray-500">
+                  Supabase Free: 500MB storage / 2GB bandwidth. Upgrade si necessaire.
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <CardHeader className="pb-2">

@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import prisma from '@/lib/prisma'
 import { Header } from '@/components/layout/Header'
 import { AdminClient } from '@/components/admin/AdminClient'
+import { getAiUsageStats } from '@/lib/ai-usage'
 
 export default async function AdminPage() {
   const session = await getServerSession(authOptions)
@@ -107,6 +108,20 @@ export default async function AdminPage() {
     ),
   ])
 
+  const aiUsageStats = await getAiUsageStats().catch(() => null)
+
+  // Database size estimation (row counts)
+  const dbStats = {
+    users: counts.users,
+    vacancies: counts.vacancies,
+    candidates: counts.candidates,
+    notifications: await prisma.notification.count().catch(() => 0),
+    activities: await prisma.candidateActivity.count().catch(() => 0),
+    emailScans: await prisma.emailScan.count().catch(() => 0),
+    aiLogs: await prisma.aiUsageLog.count().catch(() => 0),
+  }
+  const totalRows = Object.values(dbStats).reduce((a, b) => a + b, 0)
+
   return (
     <div>
       <Header title="Admin Panel" description="Platform management & monitoring" />
@@ -132,6 +147,8 @@ export default async function AdminPage() {
           activeToday={activeToday}
           weeklySignups={weeklySignups}
           recentActivity={recentActivity}
+          aiUsageStats={aiUsageStats}
+          dbStats={{ ...dbStats, totalRows }}
         />
       </div>
     </div>

@@ -2,6 +2,7 @@
 // for structured CV and email analysis. Falls back to generateDemoAnalysis() when no
 // API key is configured so the app works out-of-the-box without a paid account.
 import { GoogleGenerativeAI, FunctionCallingMode, type FunctionDeclaration, SchemaType } from '@google/generative-ai'
+import { logAiUsage } from './ai-usage'
 
 const isDemoMode = () =>
   !process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY.trim() === ''
@@ -105,8 +106,10 @@ ${cvText.slice(0, 6000)}` +
     })
 
     const result = await model.generateContent(userContent)
+    const usage = result.response.usageMetadata
     const call = result.response.functionCalls()?.[0]
     if (call) {
+      logAiUsage('system', 'cv_analysis', usage?.promptTokenCount || 0, usage?.candidatesTokenCount || 0).catch(() => {})
       return call.args as unknown as CVAnalysisResult
     }
   } catch (error: any) {
