@@ -40,6 +40,12 @@ import {
 import {
   personioFetchJobs, personioFetchApplications, personioDownloadCV,
 } from './personio'
+import {
+  icimsFetchJobs, icimsFetchCandidates, icimsDownloadCV,
+} from './icims'
+import {
+  softgardenFetchJobs, softgardenFetchApplications, softgardenDownloadCV,
+} from './softgarden'
 
 export interface SyncResult {
   imported: number
@@ -912,6 +918,112 @@ export async function syncPersonio(apiKey: string, userId: string, since?: Date)
               externalId: `${app.id}`,
               firstName: app.first_name || 'Unknown',
               lastName: app.last_name || 'Candidate',
+              email: app.email,
+              phone: app.phone,
+              cvBuffer: cv?.buffer || null,
+              cvFileName: cv?.filename || (cv ? 'cv.pdf' : undefined),
+              vacancyId,
+              atsStatus: app.status,
+            })
+
+            if (status === 'imported') result.imported++
+            else if (status === 'updated') result.updated++
+            else result.skipped++
+          } catch (e: any) {
+            result.errors.push(`Application ${app.id}: ${e.message}`)
+          }
+        }
+      } catch (e: any) {
+        result.errors.push(`Job ${job.id}: ${e.message}`)
+      }
+    }
+  } catch (e: any) {
+    result.errors.push(e.message)
+  }
+  return result
+}
+
+// ── iCIMS ─────────────────────────────────────────────────────────────────
+
+export async function syncIcims(apiKey: string, customerId: string, userId: string, since?: Date): Promise<SyncResult> {
+  const result: SyncResult = { imported: 0, updated: 0, skipped: 0, errors: [] }
+  try {
+    const jobs = await icimsFetchJobs(apiKey, customerId)
+
+    for (const job of jobs) {
+      try {
+        const vacancyId = await upsertVacancy(userId, `${job.id}`, 'icims', {
+          title: job.title,
+          description: job.description || job.title,
+          requirements: '',
+          company: 'iCIMS',
+          location: job.jobLocation,
+        })
+
+        const workflows = await icimsFetchCandidates(apiKey, customerId, job.id)
+
+        for (const wf of workflows) {
+          try {
+            if (since && new Date(wf.createdDate) < since) continue
+
+            const cv = await icimsDownloadCV(apiKey, customerId, wf.person.id)
+
+            const status = await upsertCandidate(userId, 'icims', {
+              externalId: `${wf.id}`,
+              firstName: 'Unknown',
+              lastName: 'Candidate',
+              cvBuffer: cv?.buffer || null,
+              cvFileName: cv?.filename || (cv ? 'cv.pdf' : undefined),
+              vacancyId,
+              atsStatus: wf.status,
+            })
+
+            if (status === 'imported') result.imported++
+            else if (status === 'updated') result.updated++
+            else result.skipped++
+          } catch (e: any) {
+            result.errors.push(`Workflow ${wf.id}: ${e.message}`)
+          }
+        }
+      } catch (e: any) {
+        result.errors.push(`Job ${job.id}: ${e.message}`)
+      }
+    }
+  } catch (e: any) {
+    result.errors.push(e.message)
+  }
+  return result
+}
+
+// ── Softgarden ────────────────────────────────────────────────────────────
+
+export async function syncSoftgarden(apiKey: string, userId: string, since?: Date): Promise<SyncResult> {
+  const result: SyncResult = { imported: 0, updated: 0, skipped: 0, errors: [] }
+  try {
+    const jobs = await softgardenFetchJobs(apiKey)
+
+    for (const job of jobs) {
+      try {
+        const vacancyId = await upsertVacancy(userId, `${job.id}`, 'softgarden', {
+          title: job.jobName,
+          description: job.jobDescription || job.jobName,
+          requirements: '',
+          company: 'Softgarden',
+          location: job.jobLocation,
+        })
+
+        const applications = await softgardenFetchApplications(apiKey, job.id)
+
+        for (const app of applications) {
+          try {
+            if (since && new Date(app.createdOn) < since) continue
+
+            const cv = await softgardenDownloadCV(apiKey, app.id)
+
+            const status = await upsertCandidate(userId, 'softgarden', {
+              externalId: `${app.id}`,
+              firstName: app.firstname || 'Unknown',
+              lastName: app.lastname || 'Candidate',
               email: app.email,
               phone: app.phone,
               cvBuffer: cv?.buffer || null,

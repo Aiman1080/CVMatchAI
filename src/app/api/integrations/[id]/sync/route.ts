@@ -5,7 +5,7 @@ import prisma from '@/lib/prisma'
 import {
   syncTeamtailor, syncRecruitee, syncSmartRecruiters,
   syncGreenhouse, syncLever, syncBullhorn, syncWorkable, syncFlatchr,
-  syncAshby, syncBreezy, syncHomerun, syncPersonio,
+  syncAshby, syncBreezy, syncHomerun, syncPersonio, syncIcims, syncSoftgarden,
 } from '@/lib/integrations/sync'
 
 export async function POST(_req: Request, context: { params: Promise<{ id: string }> }) {
@@ -54,6 +54,11 @@ export async function POST(_req: Request, context: { params: Promise<{ id: strin
       result = await syncHomerun(integration.apiKey, userId, since)
     } else if (integration.platform === 'personio') {
       result = await syncPersonio(integration.apiKey, userId, since)
+    } else if (integration.platform === 'icims') {
+      if (!integration.companySlug) return NextResponse.json({ error: 'Customer ID missing' }, { status: 400 })
+      result = await syncIcims(integration.apiKey, integration.companySlug, userId, since)
+    } else if (integration.platform === 'softgarden') {
+      result = await syncSoftgarden(integration.apiKey, userId, since)
     } else {
       return NextResponse.json({ error: 'Unknown platform' }, { status: 400 })
     }

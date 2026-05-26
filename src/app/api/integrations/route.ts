@@ -16,6 +16,8 @@ import { ashbyTestConnection } from '@/lib/integrations/ashby'
 import { breezyTestConnection } from '@/lib/integrations/breezyhr'
 import { homerunTestConnection } from '@/lib/integrations/homerun'
 import { personioTestConnection } from '@/lib/integrations/personio'
+import { icimsTestConnection } from '@/lib/integrations/icims'
+import { softgardenTestConnection } from '@/lib/integrations/softgarden'
 
 export async function GET() {
   const session = await getServerSession(authOptions)
@@ -50,7 +52,7 @@ export async function POST(req: Request) {
   const { platform, apiKey, companySlug } = body
   if (!platform || !apiKey) return NextResponse.json({ error: 'Missing platform or apiKey' }, { status: 400 })
 
-  const allowed = ['teamtailor', 'recruitee', 'smartrecruiters', 'greenhouse', 'lever', 'bullhorn', 'workable', 'flatchr', 'ashby', 'breezyhr', 'homerun', 'personio']
+  const allowed = ['teamtailor', 'recruitee', 'smartrecruiters', 'greenhouse', 'lever', 'bullhorn', 'workable', 'flatchr', 'ashby', 'breezyhr', 'homerun', 'personio', 'icims', 'softgarden']
   if (!allowed.includes(platform)) return NextResponse.json({ error: 'Unknown platform' }, { status: 400 })
 
   if (platform === 'recruitee' && !companySlug) {
@@ -64,6 +66,9 @@ export async function POST(req: Request) {
   }
   if (platform === 'breezyhr' && !companySlug) {
     return NextResponse.json({ error: 'Company ID required for Breezy HR' }, { status: 400 })
+  }
+  if (platform === 'icims' && !companySlug) {
+    return NextResponse.json({ error: 'Customer ID required for iCIMS' }, { status: 400 })
   }
 
   // Test the connection before saving
@@ -80,6 +85,8 @@ export async function POST(req: Request) {
   else if (platform === 'breezyhr') testResult = await breezyTestConnection(apiKey)
   else if (platform === 'homerun') testResult = await homerunTestConnection(apiKey)
   else if (platform === 'personio') testResult = await personioTestConnection(apiKey)
+  else if (platform === 'icims') testResult = await icimsTestConnection(apiKey, companySlug)
+  else if (platform === 'softgarden') testResult = await softgardenTestConnection(apiKey)
   else testResult = { ok: false, error: 'Unknown platform' }
 
   if (!testResult.ok) {
