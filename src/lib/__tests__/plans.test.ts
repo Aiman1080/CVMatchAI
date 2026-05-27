@@ -6,7 +6,7 @@ describe('getPlanLimits', () => {
     it('returns correct limits', () => {
       const limits = getPlanLimits('free')
       expect(limits.maxVacancies).toBe(3)
-      expect(limits.maxCandidatesPerMonth).toBe(25)
+      expect(limits.maxCandidatesPerMonth).toBe(20)
       expect(limits.aiAnalysis).toBe(true)
     })
 

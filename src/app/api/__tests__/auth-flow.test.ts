@@ -76,7 +76,7 @@ describe('Auth Flow - Register', () => {
 
     const req = new Request('http://localhost/api/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ name: 'John', email: 'john@test.com', password: 'password123', company: 'Acme' }),
+      body: JSON.stringify({ name: 'John', email: 'john@test.com', password: 'Password123!', company: 'Acme' }),
     })
 
     const response = await POST(req)
@@ -92,7 +92,7 @@ describe('Auth Flow - Register', () => {
 
     const req = new Request('http://localhost/api/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ name: 'John', email: 'john@test.com', password: 'password123' }),
+      body: JSON.stringify({ name: 'John', email: 'john@test.com', password: 'Password123!' }),
     })
 
     const response = await POST(req)
@@ -198,7 +198,7 @@ describe('Auth Flow - Reset Password', () => {
 
     const req = new Request('http://localhost/api/auth/reset-password', {
       method: 'POST',
-      body: JSON.stringify({ token: 'valid-token', password: 'newpassword123' }),
+      body: JSON.stringify({ token: 'valid-token', password: 'newPassword123!' }),
     })
 
     const response = await POST(req)
@@ -217,7 +217,7 @@ describe('Auth Flow - Reset Password', () => {
 
     const req = new Request('http://localhost/api/auth/reset-password', {
       method: 'POST',
-      body: JSON.stringify({ token: 'expired-token', password: 'newpassword123' }),
+      body: JSON.stringify({ token: 'expired-token', password: 'newPassword123!' }),
     })
 
     const response = await POST(req)
@@ -231,7 +231,7 @@ describe('Auth Flow - Reset Password', () => {
 
     const req = new Request('http://localhost/api/auth/reset-password', {
       method: 'POST',
-      body: JSON.stringify({ token: 'invalid-token', password: 'newpassword123' }),
+      body: JSON.stringify({ token: 'invalid-token', password: 'newPassword123!' }),
     })
 
     const response = await POST(req)
