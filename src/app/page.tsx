@@ -108,7 +108,7 @@ function AnimatedStat({ label, rawValue, color }: { label: string; rawValue: str
     : count + suffix
 
   return (
-    <div ref={ref} className="bg-white/5 rounded-xl p-4">
+    <div ref={ref} className="bg-white/80 dark:bg-white/5 rounded-xl p-4">
       <div className={`text-2xl font-bold ${color}`}>{displayValue}</div>
       <div className="text-xs text-gray-400 mt-1">{label}</div>
     </div>
@@ -251,7 +251,7 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-slate-950 to-blue-950 text-white py-28 px-6">
+      <section className="relative overflow-hidden bg-gradient-to-b from-blue-50 via-blue-100 to-blue-200 dark:from-slate-950 dark:via-blue-950 dark:to-blue-950 text-gray-900 dark:text-white py-28 px-6">
         {/* Background blurs */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-1/3 left-1/4 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-3xl" />
@@ -308,7 +308,7 @@ export default function LandingPage() {
 
           {/* Subtitle – 400ms delay */}
           <p
-            className="text-xl text-gray-300 max-w-2xl mx-auto mb-10 leading-relaxed"
+            className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-10 leading-relaxed"
             style={{
               opacity: heroReady ? 1 : 0,
               transform: heroReady ? 'translateY(0)' : 'translateY(15px)',
@@ -333,13 +333,13 @@ export default function LandingPage() {
               </Button>
             </Link>
             <Link href="/login">
-              <Button size="lg" variant="outline" className="border-white/30 text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm">
+              <Button size="lg" variant="outline" className="border-blue-300 dark:border-white/30 text-blue-700 dark:text-white bg-blue-50 dark:bg-white/10 hover:bg-blue-100 dark:hover:bg-white/20 backdrop-blur-sm">
                 {t.hero.viewDemo}
               </Button>
             </Link>
           </div>
           <p
-            className="text-sm text-gray-400 mt-4"
+            className="text-sm text-gray-500 dark:text-gray-400 mt-4"
             style={{
               opacity: heroReady ? 1 : 0,
               transition: 'opacity 0.7s ease-out 0.7s',
@@ -351,7 +351,7 @@ export default function LandingPage() {
 
         {/* Mock UI */}
         <div className="relative max-w-4xl mx-auto mt-20">
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 shadow-2xl">
+          <div className="bg-white/80 dark:bg-white/5 backdrop-blur-sm border border-blue-200 dark:border-white/10 rounded-2xl p-6 shadow-2xl">
             <div className="flex gap-2 mb-4">
               <div className="w-3 h-3 rounded-full bg-red-400/60" />
               <div className="w-3 h-3 rounded-full bg-yellow-400/60" />
@@ -372,17 +372,17 @@ export default function LandingPage() {
                 { name: 'Lena Braun', role: 'UX Designer', score: 88 },
                 { name: 'Thomas Vermeersch', role: 'Full-Stack Dev', score: 74 },
               ].map((c, i) => (
-                <div key={i} className="flex items-center gap-3 p-3 bg-white/5 rounded-lg">
+                <div key={i} className="flex items-center gap-3 p-3 bg-white/60 dark:bg-white/5 rounded-lg">
                   <div className="w-7 h-7 rounded-full gradient-bg flex items-center justify-center text-xs font-bold text-white">{i + 1}</div>
                   <div className="flex-1">
-                    <div className="text-sm font-medium text-white">{c.name}</div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-white">{c.name}</div>
                     <div className="text-xs text-gray-400">{c.role}</div>
                   </div>
-                  <div className="text-sm font-bold text-white">{c.score}%</div>
+                  <div className="text-sm font-bold text-gray-900 dark:text-white">{c.score}%</div>
                 </div>
               ))}
             </div>
-            <div className="mt-4 pt-4 border-t border-white/10">
+            <div className="mt-4 pt-4 border-t border-blue-200 dark:border-white/10">
               <div className="text-xs text-gray-500 mb-2">{t.landing.mockUi.connectedAts}</div>
               <div className="flex gap-2">
                 {[
@@ -392,9 +392,9 @@ export default function LandingPage() {
                   { name: 'Personio', dot: 'bg-pink-400' },
                   { name: '+10 more', dot: 'bg-gray-400' },
                 ].map(ats => (
-                  <div key={ats.name} className="flex items-center gap-1.5 bg-white/10 rounded-full px-3 py-1">
+                  <div key={ats.name} className="flex items-center gap-1.5 bg-blue-100 dark:bg-white/10 rounded-full px-3 py-1">
                     <div className={`w-1.5 h-1.5 rounded-full ${ats.dot}`} />
-                    <span className="text-xs text-gray-300">{ats.name}</span>
+                    <span className="text-xs text-gray-600 dark:text-gray-300">{ats.name}</span>
                   </div>
                 ))}
               </div>
@@ -404,7 +404,7 @@ export default function LandingPage() {
       </section>
 
       {/* ═══ AI FEATURES ═══ */}
-      <section id="ai-features" className="py-24 px-6 bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 text-white">
+      <section id="ai-features" className="py-24 px-6 bg-gradient-to-br from-blue-200 via-blue-100 to-indigo-100 dark:from-slate-950 dark:via-blue-950 dark:to-indigo-950 text-gray-900 dark:text-white">
         <div className="max-w-6xl mx-auto">
           <ScrollReveal>
             <div className="text-center mb-16">
@@ -412,7 +412,7 @@ export default function LandingPage() {
                 <Sparkles size={14} /> {t.landing.aiSection.badge}
               </div>
               <h2 className="text-4xl font-bold mb-4">{t.landing.aiSection.title}</h2>
-              <p className="text-lg text-gray-400 max-w-2xl mx-auto">{t.landing.aiSection.subtitle}</p>
+              <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">{t.landing.aiSection.subtitle}</p>
             </div>
           </ScrollReveal>
 
@@ -430,15 +430,15 @@ export default function LandingPage() {
                       <span className="text-xs bg-blue-500/30 text-blue-200 px-2 py-0.5 rounded-full">{t.landing.aiFeatures.cvAnalysis.tag}</span>
                     </div>
                   </div>
-                  <p className="text-gray-300 leading-relaxed mb-4">{t.landing.aiFeatures.cvAnalysis.desc}</p>
+                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-4">{t.landing.aiFeatures.cvAnalysis.desc}</p>
                   <div className="flex flex-wrap gap-3">
                     {t.landing.aiFeatures.cvAnalysis.tags.map(tag => (
-                      <span key={tag} className="text-xs bg-white/10 text-gray-300 px-3 py-1 rounded-full">{tag}</span>
+                      <span key={tag} className="text-xs bg-blue-100 dark:bg-white/10 text-blue-700 dark:text-gray-300 px-3 py-1 rounded-full">{tag}</span>
                     ))}
                   </div>
                 </div>
                 <div className="w-full md:w-72 shrink-0">
-                  <div className="bg-white/10 rounded-xl p-5 backdrop-blur-sm border border-white/10">
+                  <div className="bg-white/80 dark:bg-white/10 rounded-xl p-5 backdrop-blur-sm border border-blue-200 dark:border-white/10">
                     <div className="text-center mb-3">
                       <div className="text-4xl font-extrabold text-green-400">87%</div>
                       <div className="text-xs text-gray-400 mt-1">{t.landing.mockUi.matchScore}</div>
@@ -448,7 +448,7 @@ export default function LandingPage() {
                       <div className="flex items-center gap-2"><CheckCircle size={12} className="text-green-400 shrink-0" /><span className="text-gray-300">TypeScript & Node.js</span></div>
                       <div className="flex items-center gap-2"><CheckCircle size={12} className="text-amber-400 shrink-0" /><span className="text-gray-300">No Kubernetes experience</span></div>
                     </div>
-                    <div className="mt-3 pt-3 border-t border-white/10 text-center">
+                    <div className="mt-3 pt-3 border-t border-blue-200 dark:border-white/10 text-center">
                       <span className="text-xs bg-green-500/20 text-green-300 px-3 py-1 rounded-full font-medium">{t.landing.mockUi.recommended}</span>
                     </div>
                   </div>
@@ -463,13 +463,13 @@ export default function LandingPage() {
               const Icon = feature.icon
               return (
                 <ScrollReveal key={i} delay={i * 100}>
-                  <div className="group p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 transition-all duration-300">
+                  <div className="group p-6 rounded-2xl bg-white/60 dark:bg-white/5 border border-blue-200 dark:border-white/10 hover:border-blue-300 dark:hover:border-white/20 transition-all duration-300">
                     <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4 shadow-lg transition-transform duration-300 group-hover:scale-110`}>
                       <Icon className="w-5 h-5 text-white" />
                     </div>
                     <h3 className="text-lg font-bold mb-2">{feature.title}</h3>
-                    <p className="text-gray-400 text-sm leading-relaxed mb-3">{feature.desc}</p>
-                    <span className="inline-block text-xs bg-white/10 text-blue-300 px-3 py-1 rounded-full font-medium">{feature.tag}</span>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed mb-3">{feature.desc}</p>
+                    <span className="inline-block text-xs bg-blue-100 dark:bg-white/10 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full font-medium">{feature.tag}</span>
                   </div>
                 </ScrollReveal>
               )
