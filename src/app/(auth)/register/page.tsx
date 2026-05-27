@@ -143,7 +143,7 @@ export default function RegisterPage() {
 
           <p className="text-xs text-gray-400">{t.auth.gdprDisclaimer}</p>
           <Button type="submit" disabled={loading} className="w-full gradient-bg h-11">
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : t.auth.createFreeAccount}
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : form.plan === 'pro' ? 'Start Pro — 30 days free' : t.auth.createFreeAccount}
           </Button>
         </form>
         <p className="text-center text-sm text-gray-500 mt-6">
