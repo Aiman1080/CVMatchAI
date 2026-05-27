@@ -64,6 +64,7 @@ function calculateSimilarity(a: string, b: string): number {
 }
 
 // Ensure a CVMatch AI vacancy exists for an external job, returns its id
+// and whether a similar manual vacancy was found and linked (duplicate detection)
 async function upsertVacancy(userId: string, externalId: string, platform: string, job: {
   title: string; description: string; requirements: string; company: string; location?: string
 }): Promise<{ id: string; similarMatch: boolean }> {
@@ -252,13 +253,12 @@ export async function syncTeamtailor(userId: string, apiKey: string, since?: Dat
         const job = jobMap.get(jobId)
         if (!job) continue
 
-        const _vr = await upsertVacancy(userId, jobId, 'teamtailor', {
+        const vacancyId = await upsertVacancy(userId, jobId, 'teamtailor', {
           title: job.attributes.title,
           description: job.attributes.body || job.attributes.title,
           requirements: job.attributes['human-requirements'] || '',
           company,
         })
-        const vacancyId = _vr.id; if (_vr.similarMatch) result.duplicatesDetected++
 
         const candidate = await teamtailorFetchCandidate(apiKey, candidateId)
         if (!candidate) continue
@@ -326,14 +326,13 @@ export async function syncRecruitee(userId: string, apiKey: string, companySlug:
           const offer = offerMap.get(placement.offer_id)
           if (!offer) continue
 
-          const _vr = await upsertVacancy(userId, `${offer.id}`, 'recruitee', {
+          const vacancyId = await upsertVacancy(userId, `${offer.id}`, 'recruitee', {
             title: offer.title,
             description: offer.description || offer.title,
             requirements: offer.requirements || '',
             company: companySlug,
             location: offer.location,
           })
-          const vacancyId = _vr.id; if (_vr.similarMatch) result.duplicatesDetected++
 
           const cvBuffer = placement.cv?.url
             ? await recruiteeDownloadCV(placement.cv.url, apiKey)
@@ -398,14 +397,13 @@ export async function syncSmartRecruiters(userId: string, apiKey: string, since?
         const job = jobMap.get(jobId)
         if (!job) continue
 
-        const _vr = await upsertVacancy(userId, jobId, 'smartrecruiters', {
+        const vacancyId = await upsertVacancy(userId, jobId, 'smartrecruiters', {
           title: job.title,
           description: job.jobDescription?.text || job.title,
           requirements: job.qualifications?.text || '',
           company: 'Company',
           location: job.location?.city,
         })
-        const vacancyId = _vr.id; if (_vr.similarMatch) result.duplicatesDetected++
 
         const cvBuffer = await smartrecruitersFetchCandidateCV(apiKey, candidate.id)
 
@@ -464,7 +462,7 @@ export async function syncGreenhouse(apiKey: string, userId: string, since?: Dat
           const job = jobMap.get(jobId)
           if (!job) continue
 
-          const _vr = await upsertVacancy(userId, `${job.id}`, 'greenhouse', {
+          const vacancyId = await upsertVacancy(userId, `${job.id}`, 'greenhouse', {
             title: job.name,
             description: job.notes || job.name,
             requirements: '',
@@ -531,7 +529,7 @@ export async function syncLever(apiKey: string, userId: string, since?: Date): P
             ?.map(l => `${l.text}: ${l.content}`)
             .join('\n') || ''
 
-          const _vr = await upsertVacancy(userId, posting.id, 'lever', {
+          const vacancyId = await upsertVacancy(userId, posting.id, 'lever', {
             title: posting.text,
             description,
             requirements,
@@ -586,7 +584,7 @@ export async function syncBullhorn(apiKey: string, restUrl: string, userId: stri
     // Create vacancies for all open jobs
     const jobVacancyMap = new Map<number, string>()
     for (const job of jobs) {
-      const _vr = await upsertVacancy(userId, `${job.id}`, 'bullhorn', {
+      const vacancyId = await upsertVacancy(userId, `${job.id}`, 'bullhorn', {
         title: job.title,
         description: job.publicDescription || job.title,
         requirements: job.skillList || '',
@@ -637,7 +635,7 @@ export async function syncWorkable(apiKey: string, subdomain: string, userId: st
 
     for (const job of jobs) {
       try {
-        const _vr = await upsertVacancy(userId, job.id, 'workable', {
+        const vacancyId = await upsertVacancy(userId, job.id, 'workable', {
           title: job.title,
           description: job.description || job.title,
           requirements: job.requirements || '',
@@ -694,7 +692,7 @@ export async function syncFlatchr(apiKey: string, userId: string, since?: Date):
 
     for (const job of jobs) {
       try {
-        const _vr = await upsertVacancy(userId, job.id, 'flatchr', {
+        const vacancyId = await upsertVacancy(userId, job.id, 'flatchr', {
           title: job.title,
           description: job.description || job.title,
           requirements: job.requirements || '',
@@ -760,7 +758,7 @@ export async function syncAshby(apiKey: string, userId: string, since?: Date): P
         if (!firstJob) continue
 
         const job = firstJob
-        const _vr = await upsertVacancy(userId, job.id, 'ashby', {
+        const vacancyId = await upsertVacancy(userId, job.id, 'ashby', {
           title: job.title,
           description: job.content || job.title,
           requirements: '',
@@ -808,7 +806,7 @@ export async function syncBreezy(apiKey: string, companyId: string, userId: stri
 
     for (const position of positions) {
       try {
-        const _vr = await upsertVacancy(userId, position._id, 'breezyhr', {
+        const vacancyId = await upsertVacancy(userId, position._id, 'breezyhr', {
           title: position.name,
           description: position.description || position.name,
           requirements: '',
@@ -870,7 +868,7 @@ export async function syncHomerun(apiKey: string, userId: string, since?: Date):
 
     for (const job of jobs) {
       try {
-        const _vr = await upsertVacancy(userId, job.id, 'homerun', {
+        const vacancyId = await upsertVacancy(userId, job.id, 'homerun', {
           title: job.title,
           description: job.description || job.title,
           requirements: '',
@@ -928,7 +926,7 @@ export async function syncPersonio(apiKey: string, userId: string, since?: Date)
 
     for (const job of jobs) {
       try {
-        const _vr = await upsertVacancy(userId, `${job.id}`, 'personio', {
+        const vacancyId = await upsertVacancy(userId, `${job.id}`, 'personio', {
           title: job.name,
           description: job.description || job.name,
           requirements: '',
@@ -982,7 +980,7 @@ export async function syncIcims(apiKey: string, customerId: string, userId: stri
 
     for (const job of jobs) {
       try {
-        const _vr = await upsertVacancy(userId, `${job.id}`, 'icims', {
+        const vacancyId = await upsertVacancy(userId, `${job.id}`, 'icims', {
           title: job.title,
           description: job.description || job.title,
           requirements: '',
@@ -1034,7 +1032,7 @@ export async function syncSoftgarden(apiKey: string, userId: string, since?: Dat
 
     for (const job of jobs) {
       try {
-        const _vr = await upsertVacancy(userId, `${job.id}`, 'softgarden', {
+        const vacancyId = await upsertVacancy(userId, `${job.id}`, 'softgarden', {
           title: job.jobName,
           description: job.jobDescription || job.jobName,
           requirements: '',
