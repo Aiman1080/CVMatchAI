@@ -15,20 +15,32 @@ const schema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
   company: z.string().optional(),
+  plan: z.enum(['free', 'pro']).optional().default('free'),
 })
 
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    const { name, email, password, company } = schema.parse(body)
+    const { name, email, password, company, plan } = schema.parse(body)
 
     // Prevent duplicate accounts before hashing — hashing is expensive (bcrypt cost 12)
     const existing = await prisma.user.findUnique({ where: { email } })
     if (existing) return NextResponse.json({ error: 'Email already registered' }, { status: 400 })
 
     const hashed = await bcrypt.hash(password, 12)
+    const subscription = plan === 'pro' ? 'pro' : 'free'
+    // Pro plan starts with a 30-day free trial
+    const subscriptionEnd = plan === 'pro' ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : undefined
     const user = await prisma.user.create({
-      data: { name, email, password: hashed, company, role: 'recruiter', subscription: 'free' },
+      data: {
+        name,
+        email,
+        password: hashed,
+        company,
+        role: 'recruiter',
+        subscription,
+        ...(subscriptionEnd ? { subscriptionEnd } : {}),
+      },
     })
 
     // Send verification email — non-blocking so registration succeeds even if email fails
