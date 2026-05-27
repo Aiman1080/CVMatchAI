@@ -58,20 +58,28 @@ export default function RegisterPage() {
           <div className="space-y-1.5">
             <Label>{t.auth.password} <span className="text-red-500">*</span></Label>
             <Input type="password" placeholder={t.auth.minCharacters} value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} required minLength={8} />
-            {form.password.length > 0 && (
-              <p className={`text-xs mt-1 ${
-                form.password.length < 8
-                  ? 'text-red-500'
-                  : /[A-Z]/.test(form.password) && /[0-9]/.test(form.password)
-                    ? 'text-green-600'
-                    : 'text-amber-500'
-              }`}>
-                {form.password.length < 8
-                  ? t.auth.tooShort
-                  : /[A-Z]/.test(form.password) && /[0-9]/.test(form.password)
-                    ? t.auth.strong
-                    : t.auth.weak}
-              </p>
+            {form.password.length > 0 && (() => {
+              const hasLength = form.password.length >= 8
+              const hasUpper = /[A-Z]/.test(form.password)
+              const hasNumber = /[0-9]/.test(form.password)
+              const hasSymbol = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(form.password)
+              const isStrong = hasLength && hasUpper && hasNumber && hasSymbol
+              const isMedium = hasLength && ((hasUpper && hasNumber) || (hasUpper && hasSymbol) || (hasNumber && hasSymbol))
+              return (
+                <div className="space-y-1 mt-1">
+                  <p className={`text-xs ${isStrong ? 'text-green-600' : isMedium ? 'text-amber-500' : 'text-red-500'}`}>
+                    {!hasLength ? t.auth.tooShort : isStrong ? t.auth.strong : t.auth.weak}
+                  </p>
+                  <div className="flex gap-1 text-xs text-gray-400">
+                    <span className={hasUpper ? 'text-green-500' : ''}>ABC</span>
+                    <span>·</span>
+                    <span className={hasNumber ? 'text-green-500' : ''}>123</span>
+                    <span>·</span>
+                    <span className={hasSymbol ? 'text-green-500' : ''}>!@#</span>
+                  </div>
+                </div>
+              )
+            })()
             )}
           </div>
           {/* Plan selector */}

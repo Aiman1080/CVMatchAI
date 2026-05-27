@@ -112,26 +112,6 @@ export function Sidebar() {
         )}
       </nav>
 
-      {/* Language switcher */}
-      <div className="px-4 pb-2">
-        <div className="flex gap-1 p-1 bg-gray-100 dark:bg-gray-900 rounded-lg">
-          {LOCALES.map(l => (
-            <button
-              key={l.id}
-              onClick={() => setLocale(l.id)}
-              className={cn(
-                'flex-1 text-xs font-semibold py-1 rounded-md transition-all',
-                locale === l.id
-                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-              )}
-            >
-              {l.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* Theme toggle — manual light/dark, ignores OS setting */}
       <div className="px-4 pb-2">
         <button

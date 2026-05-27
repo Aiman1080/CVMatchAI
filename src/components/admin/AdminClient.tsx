@@ -486,16 +486,11 @@ export function AdminClient({
         </CardContent>
       </Card>
 
-      {/* ── Main Tabs ── */}
+      {/* ── Main Tabs (controlled by sidebar) ── */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="accounts">Accounts ({users.length})</TabsTrigger>
-          <TabsTrigger value="support">
-            Support
-            {openCount > 0 && (
-              <span className="ml-1.5 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">{openCount}</span>
-            )}
-          </TabsTrigger>
+        <TabsList className="hidden">
+          <TabsTrigger value="accounts">Accounts</TabsTrigger>
+          <TabsTrigger value="support">Support</TabsTrigger>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="ai">AI</TabsTrigger>
           <TabsTrigger value="stats">Statistics</TabsTrigger>

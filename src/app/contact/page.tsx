@@ -101,7 +101,7 @@ export default function ContactPage() {
             <span className="font-bold text-gray-900 dark:text-white">CVMatch AI</span>
           </Link>
           <div className="flex items-center gap-4">
-            <LanguageSwitcher />
+            
             <Link href="/" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
               <ArrowLeft size={15} />
               {locale === 'nl' ? 'Terug' : locale === 'en' ? 'Back' : 'Retour'}

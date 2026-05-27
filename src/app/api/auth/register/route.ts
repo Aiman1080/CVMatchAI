@@ -13,7 +13,7 @@ import { sendEmail, isEmailConfigured } from '@/lib/email'
 const schema = z.object({
   name: z.string().min(2),
   email: z.string().email(),
-  password: z.string().min(8),
+  password: z.string().min(8).regex(/[A-Z]/, 'Password must contain at least one uppercase letter').regex(/[0-9]/, 'Password must contain at least one number').regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, 'Password must contain at least one special character'),
   company: z.string().optional(),
   plan: z.enum(['free', 'pro']).optional().default('free'),
 })
