@@ -43,7 +43,12 @@ export default function PrivacyPage() {
         {
           icon: Globe,
           title: 'Third-party services',
-          text: 'We use Anthropic (Claude AI) to analyse CVs — CV text is sent to their API for processing and is not retained by Anthropic beyond the request. We use Neon for database hosting and Vercel for deployment. No data is transferred outside the EU without appropriate safeguards.',
+          text: 'We use Google Gemini AI to analyse CVs — CV text is sent to the Gemini API for processing and is not retained beyond the request. We use Supabase (PostgreSQL) for database hosting and Vercel for deployment. No data is transferred outside the EU without appropriate safeguards.',
+        },
+        {
+          icon: Shield,
+          title: 'AI as a decision-support tool',
+          text: 'CVMatch AI uses artificial intelligence exclusively as a decision-support tool. AI-generated scores, recommendations, and analyses are designed to assist recruiters — they never replace human judgment. Every hiring decision remains entirely in the hands of the recruiter. AI outputs may contain errors or biases; recruiters are responsible for reviewing and validating all AI-generated information before acting on it. No candidate is automatically rejected or accepted based solely on an AI score. When candidates are imported via ATS integrations, we assume the recruiter has obtained proper consent for AI-assisted processing as part of their recruitment workflow.',
         },
         {
           icon: UserX,
@@ -90,7 +95,12 @@ export default function PrivacyPage() {
         {
           icon: Globe,
           title: 'Diensten van derden',
-          text: 'We gebruiken Anthropic (Claude AI) om cv\'s te analyseren — cv-tekst wordt naar hun API gestuurd en wordt niet door Anthropic bewaard na het verzoek. We gebruiken Neon voor databasehosting en Vercel voor implementatie. Er worden geen gegevens buiten de EU overgedragen zonder passende waarborgen.',
+          text: 'We gebruiken Google Gemini AI om cv\'s te analyseren — cv-tekst wordt naar de Gemini API gestuurd en wordt niet bewaard na het verzoek. We gebruiken Supabase (PostgreSQL) voor databasehosting en Vercel voor implementatie. Er worden geen gegevens buiten de EU overgedragen zonder passende waarborgen.',
+        },
+        {
+          icon: Shield,
+          title: 'AI als beslissingsondersteunend hulpmiddel',
+          text: 'CVMatch AI gebruikt kunstmatige intelligentie uitsluitend als beslissingsondersteunend hulpmiddel. AI-gegenereerde scores, aanbevelingen en analyses zijn bedoeld om recruiters te ondersteunen — ze vervangen nooit menselijk oordeel. Elke wervingsbeslissing blijft volledig in handen van de recruiter. AI-resultaten kunnen fouten of vooroordelen bevatten; recruiters zijn verantwoordelijk voor het beoordelen en valideren van alle door AI gegenereerde informatie. Geen enkele kandidaat wordt automatisch afgewezen of aangenomen op basis van een AI-score. Bij import via ATS-integraties gaan wij ervan uit dat de recruiter gepaste toestemming heeft verkregen voor AI-ondersteunde verwerking.',
         },
         {
           icon: UserX,
@@ -137,7 +147,12 @@ export default function PrivacyPage() {
         {
           icon: Globe,
           title: 'Services tiers',
-          text: 'Nous utilisons Anthropic (Claude AI) pour analyser les CV — le texte des CV est envoyé à leur API et n\'est pas conservé par Anthropic au-delà de la requête. Nous utilisons Neon pour l\'hébergement de la base de données et Vercel pour le déploiement. Aucune donnée n\'est transférée hors de l\'UE sans garanties appropriées.',
+          text: 'Nous utilisons Google Gemini AI pour analyser les CV — le texte des CV est envoyé à l\'API Gemini et n\'est pas conservé au-delà de la requête. Nous utilisons Supabase (PostgreSQL) pour l\'hébergement de la base de données et Vercel pour le déploiement. Aucune donnée n\'est transférée hors de l\'UE sans garanties appropriées.',
+        },
+        {
+          icon: Shield,
+          title: 'L\'IA comme outil d\'aide à la décision',
+          text: 'CVMatch AI utilise l\'intelligence artificielle exclusivement comme outil d\'aide à la décision. Les scores, recommandations et analyses générés par l\'IA sont conçus pour assister les recruteurs — ils ne remplacent jamais le jugement humain. Chaque décision de recrutement reste entièrement entre les mains du recruteur. Les résultats de l\'IA peuvent contenir des erreurs ou des biais ; les recruteurs sont responsables de vérifier et valider toutes les informations générées par l\'IA avant d\'agir. Aucun candidat n\'est automatiquement rejeté ou accepté sur la base d\'un score IA. Lors de l\'importation via des intégrations ATS, nous présumons que le recruteur a obtenu le consentement approprié pour le traitement assisté par IA.',
         },
         {
           icon: UserX,
