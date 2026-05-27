@@ -15,7 +15,7 @@ import { useLanguage } from '@/contexts/LanguageContext'
 export default function RegisterPage() {
   const router = useRouter()
   const { t } = useLanguage()
-  const [form, setForm] = useState({ name: '', email: '', password: '', company: '', plan: 'free' as 'free' | 'pro' })
+  const [form, setForm] = useState({ name: '', email: '', password: '', company: '', plan: 'pro' as 'free' | 'pro' })
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -186,7 +186,9 @@ export function AdminClient({
   const [sendingEmail, setSendingEmail] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
 
-  const filteredEmailUsers = users.filter(u => {
+  const [senderEmail, setSenderEmail] = useState('contactcvmatchia@gmail.com')
+
+  const filteredEmailUsers = realUsers.filter(u => {
     if (emailFilter === 'free') return u.subscription === 'free'
     if (emailFilter === 'pro') return u.subscription === 'pro'
     return true
@@ -203,6 +205,7 @@ export function AdminClient({
           userIds: filteredEmailUsers.map(u => u.id),
           subject: emailSubject,
           body: emailBody,
+          fromName: senderEmail.includes('@') ? senderEmail.split('@')[0] : 'CVMatch AI',
         }),
       })
       if (res.ok) {
@@ -1311,7 +1314,17 @@ export function AdminClient({
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter recipients</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Send from</label>
+                <input
+                  value={senderEmail}
+                  onChange={e => setSenderEmail(e.target.value)}
+                  placeholder="contactcvmatchia@gmail.com"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="text-xs text-gray-400">This must match your configured SMTP email address</p>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter recipients (demo accounts excluded)</label>
                 <div className="flex gap-2">
                   {[
                     { id: 'all' as const, label: `All users (${users.length})`, color: 'border-blue-300 text-blue-700 bg-blue-50 dark:bg-blue-950/30' },
