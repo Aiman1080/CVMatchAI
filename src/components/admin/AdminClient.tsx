@@ -230,13 +230,19 @@ export function AdminClient({
   const [broadcastMessage, setBroadcastMessage] = useState('')
   const [broadcastSending, setBroadcastSending] = useState(false)
 
-  const mrr = subscriptions.reduce((sum, s) => {
-    const prices: Record<string, number> = { free: 0, pro: 55 }
-    return sum + (prices[s.subscription] || 0) * s._count
-  }, 0)
+  const DEMO_EMAILS = ['demo@cvmatch.ai', 'pro@cvmatch.ai', 'admin@cvmatch.ai', 'free@cvmatch.ai']
+  const realUsers = users.filter(u => !DEMO_EMAILS.includes(u.email || ''))
+  const realProUsers = realUsers.filter(u => u.subscription === 'pro')
+  const demoCount = users.length - realUsers.length
+
+  const mrr = realProUsers.length * 55
+  const arr = mrr * 12
+  const nextPaymentDate = realProUsers.length > 0
+    ? new Date(Math.min(...realProUsers.filter(u => u.subscriptionEnd).map(u => new Date(u.subscriptionEnd!).getTime()))).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+    : 'No active subscriptions'
 
   const openCount = tickets.filter((t: any) => t.status === 'open').length
-  const proCount = subscriptions.find(s => s.subscription === 'pro')?._count || 0
+  const proCount = realProUsers.length
 
   // Filtered users by search
   const filteredUsers = useMemo(() => {
@@ -441,10 +447,10 @@ export function AdminClient({
       {/* ── KPI Row ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-3">
         {[
-          { label: 'Accounts', value: counts.users, icon: Building2, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950' },
+          { label: 'Real users', value: realUsers.length, icon: Building2, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950' },
           { label: 'Active today', value: activeToday, icon: Eye, color: 'text-cyan-600', bg: 'bg-cyan-50 dark:bg-cyan-950' },
-          { label: 'Pro', value: proCount, icon: Zap, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-950' },
-          { label: 'MRR', value: `EUR ${mrr}`, icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950' },
+          { label: 'Paying Pro', value: proCount, icon: Zap, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-950' },
+          { label: 'MRR', value: `€${mrr}`, icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950' },
           { label: 'AI Analyses', value: aiAnalysesCount, icon: Brain, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-950' },
           { label: 'New users 7d', value: newUsersThisWeek, icon: UserPlus, color: 'text-cyan-600', bg: 'bg-cyan-50 dark:bg-cyan-950' },
           { label: 'Open tickets', value: counts.openTickets, icon: MessageSquare, color: counts.openTickets > 0 ? 'text-red-600' : 'text-gray-400', bg: counts.openTickets > 0 ? 'bg-red-50 dark:bg-red-950' : 'bg-gray-50 dark:bg-gray-800' },
@@ -904,36 +910,62 @@ export function AdminClient({
         {/* ══ Overview / Dashboard tab ══ */}
         <TabsContent value="overview" className="mt-4 space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Revenue estimation */}
+            {/* Revenue & Payments */}
             <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-emerald-500" /> Revenue Estimation
+                  <TrendingUp className="w-4 h-4 text-emerald-500" /> Revenue & Payments
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {subscriptions.map(s => {
-                  const prices: Record<string, number> = { free: 0, pro: 55 }
-                  const revenue = (prices[s.subscription] || 0) * s._count
-                  return (
-                    <div key={s.subscription} className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${PLAN_COLORS[s.subscription]}`}>{s.subscription}</span>
-                        <span className="text-gray-500 dark:text-gray-400 text-xs">{s._count} users x EUR {prices[s.subscription]}</span>
-                      </div>
-                      <span className="font-semibold text-gray-700 dark:text-gray-300">EUR {revenue}/mo</span>
-                    </div>
-                  )
-                })}
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500 dark:text-gray-400">Paying Pro users</span>
+                  <span className="font-semibold text-gray-700 dark:text-gray-300">{proCount} x €55/mo</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500 dark:text-gray-400">Free users (real)</span>
+                  <span className="font-semibold text-gray-700 dark:text-gray-300">{realUsers.length - realProUsers.length}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500 dark:text-gray-400">Demo accounts (excluded)</span>
+                  <span className="text-gray-400">{demoCount} (not counted)</span>
+                </div>
+
                 <div className="pt-3 border-t border-gray-100 dark:border-gray-800">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Monthly Recurring Revenue</span>
-                    <span className="text-2xl font-bold text-emerald-600">EUR {mrr}/mo</span>
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">MRR (Monthly)</span>
+                    <span className="text-2xl font-bold text-emerald-600">€{mrr}/mo</span>
                   </div>
                   <div className="flex items-center justify-between mt-1">
-                    <span className="text-xs text-gray-400">Annual Run Rate</span>
-                    <span className="text-sm font-semibold text-emerald-500">EUR {mrr * 12}/yr</span>
+                    <span className="text-xs text-gray-400">ARR (Annual)</span>
+                    <span className="text-sm font-semibold text-emerald-500">€{arr}/yr</span>
                   </div>
+                </div>
+
+                <div className="pt-3 border-t border-gray-100 dark:border-gray-800 space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-500 dark:text-gray-400">Next payment expected</span>
+                    <span className="font-medium text-gray-700 dark:text-gray-300">{nextPaymentDate}</span>
+                  </div>
+                  {realProUsers.length > 0 && (
+                    <div className="space-y-1.5">
+                      <p className="text-xs font-semibold text-gray-500 uppercase">Active Pro subscriptions</p>
+                      {realProUsers.map(u => (
+                        <div key={u.id} className="flex items-center justify-between text-xs bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">
+                          <div>
+                            <span className="font-medium text-gray-700 dark:text-gray-300">{u.name || u.email}</span>
+                            <span className="text-gray-400 ml-2">{u.email}</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-emerald-600 font-medium">€55/mo</span>
+                            {u.subscriptionEnd && (
+                              <span className="text-gray-400 ml-2">until {new Date(u.subscriptionEnd).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
