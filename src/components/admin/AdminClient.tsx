@@ -188,12 +188,6 @@ export function AdminClient({
 
   const [senderEmail, setSenderEmail] = useState('contactcvmatchia@gmail.com')
 
-  const filteredEmailUsers = realUsers.filter(u => {
-    if (emailFilter === 'free') return u.subscription === 'free'
-    if (emailFilter === 'pro') return u.subscription === 'pro'
-    return true
-  })
-
   const handleSendBulkEmail = async () => {
     if (!emailSubject.trim() || !emailBody.trim()) return
     setSendingEmail(true)
@@ -246,6 +240,12 @@ export function AdminClient({
 
   const openCount = tickets.filter((t: any) => t.status === 'open').length
   const proCount = realProUsers.length
+
+  const filteredEmailUsers = realUsers.filter(u => {
+    if (emailFilter === 'free') return u.subscription === 'free'
+    if (emailFilter === 'pro') return u.subscription === 'pro'
+    return true
+  })
 
   // Filtered users by search
   const filteredUsers = useMemo(() => {
