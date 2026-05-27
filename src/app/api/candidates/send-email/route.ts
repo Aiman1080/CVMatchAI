@@ -16,7 +16,7 @@ export async function POST(req: Request) {
 
   let reqBody: any
   try { reqBody = await req.json() } catch { return NextResponse.json({ error: 'Invalid request body' }, { status: 400 }) }
-  const { candidateId, type, subject, body, teamsLink } = reqBody
+  const { candidateId, type, subject, body, teamsLink, fromEmail } = reqBody
   if (!candidateId || !type || !subject || !body) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
   }
@@ -49,10 +49,11 @@ export async function POST(req: Request) {
       secure: process.env.SMTP_SECURE === 'true',
       auth: { user: smtpUser, pass: smtpPass },
     })
+    const senderAddress = fromEmail || smtpUser
     await transporter.sendMail({
       from: `${session.user.name || 'CVMatch AI'} <${smtpUser}>`,
       to: candidate.email,
-      replyTo: smtpUser,
+      replyTo: senderAddress,
       subject,
       text: finalBody,
       html: escapeHtml(finalBody).replace(/\n/g, '<br>').replace(/(https?:\/\/[^\s]+)/g, '<a href="$1">$1</a>'),

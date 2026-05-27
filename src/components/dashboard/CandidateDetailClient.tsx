@@ -63,6 +63,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
   const [notes, setNotes] = useState(initial.notes || '')
   const [notesSaved, setNotesSaved] = useState(true)
   const [showEmail, setShowEmail] = useState(false)
+  const [emailFrom, setEmailFrom] = useState('')
   const [emailType, setEmailType] = useState('rejection')
   const [emailSubject, setEmailSubject] = useState('')
   const [emailBody, setEmailBody] = useState('')
@@ -199,6 +200,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
           subject: emailSubject,
           body: emailBody,
           teamsLink: teamsLink || undefined,
+          fromEmail: emailFrom || undefined,
         }),
       })
       const data = await res.json()
@@ -929,9 +931,20 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
             <DialogTitle>{cd.sendEmail} — {candidate.firstName}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 mt-2">
-            <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm">
-              <Mail size={14} className="text-gray-400" />
-              <span className="text-gray-600 dark:text-gray-300">To: <strong>{candidate.email}</strong></span>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm">
+                <Mail size={14} className="text-gray-400" />
+                <span className="text-gray-600 dark:text-gray-300">To: <strong>{candidate.email}</strong></span>
+              </div>
+              <div>
+                <Label className="text-xs text-gray-500 mb-1">From (your email)</Label>
+                <Input
+                  value={emailFrom}
+                  onChange={e => setEmailFrom(e.target.value)}
+                  placeholder={t.dashboard?.settingsProfile?.email || 'your-email@company.com'}
+                  className="text-sm"
+                />
+              </div>
             </div>
 
             <div className="flex gap-2">
