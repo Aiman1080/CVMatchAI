@@ -947,19 +947,24 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
               </div>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               {[
                 { type: 'interview', label: `📅 ${cd.interview}`, color: 'border-blue-300 text-blue-700 bg-blue-50' },
                 { type: 'rejection', label: `❌ ${cd.rejection}`, color: 'border-red-300 text-red-700 bg-red-50' },
                 { type: 'followup', label: `📩 ${cd.followup}`, color: 'border-gray-300 text-gray-700 bg-gray-50' },
+                { type: 'custom', label: `✉️ Email libre`, color: 'border-purple-300 text-purple-700 bg-purple-50' },
               ].map(opt => (
                 <button
                   key={opt.type}
                   onClick={() => {
                     setEmailType(opt.type)
-                    const tpl = EMAIL_TEMPLATES[opt.type]
-                    setEmailSubject(tpl.subject)
-                    setEmailBody(tpl.body.replace('{name}', candidate.firstName))
+                    if (opt.type === 'custom') {
+                      setEmailSubject('')
+                      setEmailBody('')
+                    } else {
+                      setEmailSubject('')
+                      setEmailBody('')
+                    }
                   }}
                   className={`flex-1 text-xs py-1.5 px-2 rounded-lg border font-medium transition-all ${emailType === opt.type ? opt.color : 'border-gray-200 text-gray-400'}`}
                 >
@@ -968,7 +973,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
               ))}
             </div>
 
-            <Button
+            {emailType !== 'custom' && <Button
               onClick={handleGenerateEmail}
               disabled={generatingEmail}
               variant="outline"
@@ -976,7 +981,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
             >
               {generatingEmail ? <Loader2 size={14} className="animate-spin" /> : <span>✨</span>}
               {generatingEmail ? '...' : cd.generateWithAI}
-            </Button>
+            </Button>}
 
             <div>
               <Label className="text-xs text-gray-500 mb-1.5">{cd.emailSubject}</Label>
