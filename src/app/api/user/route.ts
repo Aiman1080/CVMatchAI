@@ -36,6 +36,7 @@ export async function PATCH(req: Request) {
     const data: any = {}
     if (body.name !== undefined) data.name = body.name
     if (body.company !== undefined) data.company = body.company
+    if (body.image !== undefined) data.image = body.image || null
 
     if (body.newPassword) {
       if (!body.currentPassword) return NextResponse.json({ error: 'Current password required' }, { status: 400 })

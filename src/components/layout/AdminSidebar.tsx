@@ -9,6 +9,8 @@ import { LayoutDashboard, LogOut, Sun, Moon, ArrowLeft, ShieldCheck, Menu, X, Us
 import { LogoAdmin } from '@/components/Logo'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 
 export function AdminSidebar() {
   const pathname = usePathname()
@@ -17,6 +19,7 @@ export function AdminSidebar() {
   const { data: session } = useSession()
   const { theme, setTheme } = useTheme()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [mounted, setMounted] = useState(false)
   const user = session?.user as any
   const initials = user?.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || 'A'
@@ -108,7 +111,7 @@ export function AdminSidebar() {
             <p className="text-sm font-medium text-gray-200 truncate">{user?.name || 'Admin'}</p>
             <span className="text-xs px-1.5 py-0.5 rounded-full font-medium bg-purple-900/60 text-purple-300">Administrator</span>
           </div>
-          <button onClick={() => signOut({ callbackUrl: '/' })} className="p-1 text-gray-500 hover:text-gray-200 rounded transition-colors" title="Sign out">
+          <button onClick={() => setShowLogoutConfirm(true)} className="p-1 text-gray-500 hover:text-gray-200 rounded transition-colors" title="Sign out">
             <LogOut size={15} />
           </button>
         </div>
@@ -118,6 +121,20 @@ export function AdminSidebar() {
 
   return (
     <>
+      {/* Logout confirmation dialog */}
+      <Dialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Sign out?</DialogTitle>
+            <DialogDescription>Are you sure you want to sign out?</DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 sm:justify-end">
+            <Button variant="outline" onClick={() => setShowLogoutConfirm(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={() => signOut({ callbackUrl: '/' })}>Sign out</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <button onClick={() => setMobileOpen(true)} className="md:hidden fixed top-4 left-4 z-50 p-2 bg-gray-900 border border-gray-700 rounded-lg shadow-sm text-gray-300 hover:bg-gray-800 transition-colors" aria-label="Open menu">
         <Menu size={20} />
       </button>

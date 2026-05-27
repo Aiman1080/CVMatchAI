@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { User, Shield, Save, Trash2, Lock, Eye, EyeOff } from 'lucide-react'
+import { User, Shield, Save, Trash2, Lock, Eye, EyeOff, Camera } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -8,12 +8,13 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from '@/components/ui/use-toast'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import Link from 'next/link'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
 interface Props {
-  user: { name?: string; email?: string; company?: string; subscription?: string }
+  user: { name?: string; email?: string; company?: string; subscription?: string; image?: string }
 }
 
 const PLANS = [
@@ -23,7 +24,8 @@ const PLANS = [
 
 export function SettingsClient({ user }: Props) {
   const { t } = useLanguage()
-  const [form, setForm] = useState({ name: user.name || '', company: user.company || '' })
+  const [form, setForm] = useState({ name: user.name || '', company: user.company || '', image: user.image || '' })
+  const initials = user.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'
   const [saving, setSaving] = useState(false)
   const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirm: '' })
   const [pwSaving, setPwSaving] = useState(false)
@@ -89,6 +91,16 @@ export function SettingsClient({ user }: Props) {
           <CardHeader><CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white"><User className="w-4 h-4" />{t.dashboard.settingsProfile.title}</CardTitle></CardHeader>
           <CardContent>
             <form onSubmit={handleSave} className="space-y-4">
+              <div className="flex items-center gap-4">
+                <Avatar className="w-16 h-16">
+                  {form.image && <AvatarImage src={form.image} alt={form.name || 'Avatar'} />}
+                  <AvatarFallback className="text-lg gradient-bg text-white font-semibold">{initials}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 space-y-1.5">
+                  <Label className="text-gray-700 dark:text-gray-300 flex items-center gap-1.5"><Camera size={14} /> Profile Photo URL</Label>
+                  <Input value={form.image} onChange={e => setForm(p => ({ ...p, image: e.target.value }))} placeholder="https://example.com/photo.jpg" />
+                </div>
+              </div>
               <div className="space-y-1.5">
                 <Label className="text-gray-700 dark:text-gray-300">{t.dashboard.settingsProfile.fullName}</Label>
                 <Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />

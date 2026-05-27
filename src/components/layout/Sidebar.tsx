@@ -10,6 +10,8 @@ import { Logo } from '@/components/Logo'
 import { NotificationBell } from '@/components/NotificationBell'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 import { useLanguage } from '@/contexts/LanguageContext'
 import type { Locale } from '@/lib/i18n'
 
@@ -31,6 +33,7 @@ export function Sidebar() {
   const { theme, setTheme } = useTheme()
   const { t, locale, setLocale } = useLanguage()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [mounted, setMounted] = useState(false)
   const user = session?.user as any
   const initials = user?.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || 'U'
@@ -154,7 +157,7 @@ export function Sidebar() {
             </span>
           </div>
           <button
-            onClick={() => signOut({ callbackUrl: '/' })}
+            onClick={() => setShowLogoutConfirm(true)}
             className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded transition-colors"
             title={t.dashboard.nav.signOut}
           >
@@ -167,6 +170,20 @@ export function Sidebar() {
 
   return (
     <>
+      {/* Logout confirmation dialog */}
+      <Dialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Sign out?</DialogTitle>
+            <DialogDescription>Are you sure you want to sign out?</DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 sm:justify-end">
+            <Button variant="outline" onClick={() => setShowLogoutConfirm(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={() => signOut({ callbackUrl: '/' })}>Sign out</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Mobile hamburger button */}
       <button
         onClick={() => setMobileOpen(true)}
