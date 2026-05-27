@@ -43,6 +43,7 @@ model User {
   password        String?
   role            String          @default("recruiter")
   company         String?
+  emailSignature  String?
   subscription    String          @default("free")
   subscriptionEnd DateTime?
   suspended       Boolean         @default(false)

@@ -38,9 +38,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Email not configured. Add SMTP_HOST, SMTP_USER, SMTP_PASS to your environment.' }, { status: 400 })
   }
 
-  const finalBody = teamsLink
+  // Load user's email signature
+  const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { emailSignature: true } })
+  const signature = dbUser?.emailSignature ? `\n\n---\n${dbUser.emailSignature}` : ''
+
+  const finalBody = (teamsLink
     ? `${body}\n\n📅 Join the interview via Teams:\n${teamsLink}`
-    : body
+    : body) + signature
 
   try {
     const transporter = nodemailer.createTransport({

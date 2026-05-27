@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { User, Shield, Save, Trash2, Lock, Eye, EyeOff, Camera } from 'lucide-react'
+import { User, Shield, Save, Trash2, Lock, Eye, EyeOff, Camera, Mail } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,7 +14,7 @@ import { useLanguage } from '@/contexts/LanguageContext'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
 interface Props {
-  user: { name?: string; email?: string; company?: string; subscription?: string; image?: string }
+  user: { name?: string; email?: string; company?: string; subscription?: string; image?: string; emailSignature?: string }
 }
 
 const PLANS = [
@@ -24,7 +24,7 @@ const PLANS = [
 
 export function SettingsClient({ user }: Props) {
   const { t } = useLanguage()
-  const [form, setForm] = useState({ name: user.name || '', company: user.company || '', image: user.image || '' })
+  const [form, setForm] = useState({ name: user.name || '', company: user.company || '', image: user.image || '', emailSignature: user.emailSignature || '' })
   const initials = user.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'
   const [saving, setSaving] = useState(false)
   const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirm: '' })
@@ -113,6 +113,17 @@ export function SettingsClient({ user }: Props) {
               <div className="space-y-1.5">
                 <Label className="text-gray-700 dark:text-gray-300">{t.dashboard.settingsProfile.company}</Label>
                 <Input value={form.company} onChange={e => setForm(p => ({ ...p, company: e.target.value }))} placeholder={t.dashboard.settingsProfile.companyPlaceholder} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-gray-700 dark:text-gray-300 flex items-center gap-1.5"><Mail size={14} /> Email Signature</Label>
+                <textarea
+                  value={form.emailSignature}
+                  onChange={e => setForm(p => ({ ...p, emailSignature: e.target.value }))}
+                  placeholder={"Best regards,\nJohn Doe\nAcme Corp\n+32 471 000 000\nwww.acme.com"}
+                  rows={5}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+                />
+                <p className="text-xs text-gray-400">This signature will be added to all emails sent to candidates.</p>
               </div>
               <Button type="submit" disabled={saving} className="gradient-bg gap-2"><Save size={14} />{saving ? t.dashboard.settingsProfile.saving : t.dashboard.settingsProfile.saveChanges}</Button>
             </form>

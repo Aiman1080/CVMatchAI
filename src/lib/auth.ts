@@ -34,7 +34,7 @@ export const authOptions: NextAuthOptions = {
         return {
           id: user.id, email: user.email, name: user.name,
           role: user.role, subscription: user.subscription, company: user.company,
-          emailVerified: user.emailVerified,
+          emailVerified: user.emailVerified, emailSignature: (user as any).emailSignature,
         }
       },
     }),
