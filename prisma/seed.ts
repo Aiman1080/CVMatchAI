@@ -59,7 +59,7 @@ async function main() {
     demoVacancyIds.push(vacancy.id)
   }
 
-  const demoCandidates = ALL_CANDIDATES.filter(c => c.vacancyIndex < 3).slice(0, 15)
+  const demoCandidates = ALL_CANDIDATES.filter(c => c.vacancyIndex < 3).slice(0, 12)
   for (const c of demoCandidates) {
     const { vacancyIndex, strengths, weaknesses, skills, ...rest } = c
     const vacancyId = demoVacancyIds[vacancyIndex]

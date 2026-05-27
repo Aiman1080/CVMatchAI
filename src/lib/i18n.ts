@@ -12,7 +12,7 @@ export const translations = {
       startFree: 'Start free',
     },
     hero: {
-      badge: 'Powered by Claude AI',
+      badge: 'Powered by Gemini AI',
       title1: 'Hire smarter with',
       title2: 'AI-powered recruitment',
       subtitle: 'Upload CVs, connect your ATS or inbox, and let AI rank candidates, generate match scores, and surface the best talent — in seconds.',
@@ -50,7 +50,7 @@ export const translations = {
       subtitle: 'Start free, upgrade when you need more',
       mostPopular: 'Most Popular',
       plans: [
-        { name: 'Free', price: '€0', period: 'forever', cta: 'Get started free', features: ['3 active vacancies', '25 candidates/month', 'AI match scoring', 'Basic dashboard', 'CV upload & analysis'] },
+        { name: 'Free', price: '€0', period: 'forever', cta: 'Get started free', features: ['3 active vacancies', '20 candidates/month', 'AI match scoring', 'Basic dashboard', 'CV upload & analysis'] },
         { name: 'Pro', price: '€55', period: '/month', cta: 'Start Pro trial', features: ['Unlimited vacancies', 'Unlimited candidates', 'AI interview questions', 'AI hiring reports', 'AI candidate ranking', 'Email inbox scanning', '14 ATS integrations (Greenhouse, Bullhorn, Personio...)', 'Analytics & export', 'Priority support'] },
       ],
     },
@@ -1058,7 +1058,7 @@ export const translations = {
       freePeriod: 'forever',
       proPrice: '€55',
       proPeriod: '/month',
-      freeFeatures: ['3 active vacancies', '25 candidates/month', 'AI match scoring', 'CV upload & analysis', 'Basic dashboard'],
+      freeFeatures: ['3 active vacancies', '20 candidates/month', 'AI match scoring', 'CV upload & analysis', 'Basic dashboard'],
       proFeatures: [
         'Unlimited vacancies', 'Unlimited candidates',
         'AI interview questions', 'AI hiring reports', 'AI candidate ranking',
@@ -1103,7 +1103,7 @@ export const translations = {
       startFree: 'Gratis starten',
     },
     hero: {
-      badge: 'Aangedreven door Claude AI',
+      badge: 'Aangedreven door Gemini AI',
       title1: 'Slimmer aanwerven met',
       title2: 'AI-gestuurde rekrutering',
       subtitle: "Upload cv's, verbind je ATS of inbox en laat AI kandidaten rangschikken, match scores genereren en het beste talent ontdekken — in seconden.",
@@ -1141,7 +1141,7 @@ export const translations = {
       subtitle: 'Start gratis, upgrade wanneer je meer nodig hebt',
       mostPopular: 'Meest Populair',
       plans: [
-        { name: 'Gratis', price: '€0', period: 'voor altijd', cta: 'Gratis starten', features: ['3 actieve vacatures', '25 kandidaten/maand', 'AI match scoring', 'Basis dashboard', 'CV upload & analyse'] },
+        { name: 'Gratis', price: '€0', period: 'voor altijd', cta: 'Gratis starten', features: ['3 actieve vacatures', '20 kandidaten/maand', 'AI match scoring', 'Basis dashboard', 'CV upload & analyse'] },
         { name: 'Pro', price: '€55', period: '/maand', cta: 'Pro proberen', features: ['Onbeperkte vacatures', 'Onbeperkte kandidaten', 'AI interviewvragen', 'AI wervingsrapporten', 'AI kandidaatrangschikking', 'E-mail inbox scanning', '14 ATS-integraties (Greenhouse, Bullhorn, Personio...)', 'Analytics & export', 'Prioriteitsondersteuning'] },
       ],
     },
@@ -2149,7 +2149,7 @@ export const translations = {
       freePeriod: 'voor altijd',
       proPrice: '€55',
       proPeriod: '/maand',
-      freeFeatures: ['3 actieve vacatures', '25 kandidaten/maand', 'AI match scoring', 'CV upload & analyse', 'Basis dashboard'],
+      freeFeatures: ['3 actieve vacatures', '20 kandidaten/maand', 'AI match scoring', 'CV upload & analyse', 'Basis dashboard'],
       proFeatures: [
         'Onbeperkte vacatures', 'Onbeperkte kandidaten',
         'AI interviewvragen', 'AI wervingsrapporten', 'AI kandidaatrangschikking',
@@ -2194,7 +2194,7 @@ export const translations = {
       startFree: 'Commencer gratuitement',
     },
     hero: {
-      badge: 'Propulsé par Claude AI',
+      badge: 'Propulsé par Gemini AI',
       title1: 'Recrutez mieux avec',
       title2: "le recrutement piloté par IA",
       subtitle: "Uploadez des CV, connectez votre ATS ou boîte mail et laissez l'IA classer les candidats, générer des scores de correspondance et identifier les meilleurs talents — en quelques secondes.",
@@ -2232,7 +2232,7 @@ export const translations = {
       subtitle: 'Commencez gratuitement, passez en Pro quand vous en avez besoin',
       mostPopular: 'Le Plus Populaire',
       plans: [
-        { name: 'Gratuit', price: '€0', period: 'pour toujours', cta: 'Commencer gratuitement', features: ['3 offres actives', '25 candidats/mois', 'Score de correspondance IA', 'Tableau de bord de base', 'Upload & analyse de CV'] },
+        { name: 'Gratuit', price: '€0', period: 'pour toujours', cta: 'Commencer gratuitement', features: ['3 offres actives', '20 candidats/mois', 'Score de correspondance IA', 'Tableau de bord de base', 'Upload & analyse de CV'] },
         { name: 'Pro', price: '€55', period: '/mois', cta: 'Essayer Pro', features: ['Offres illimitées', 'Candidats illimités', "Questions d'entretien IA", 'Rapports de recrutement IA', 'Classement IA des candidats', 'Scan de la boîte mail', '14 intégrations ATS (Greenhouse, Bullhorn, Personio...)', 'Analytics & export', 'Support prioritaire'] },
       ],
     },
@@ -3240,7 +3240,7 @@ export const translations = {
       freePeriod: 'pour toujours',
       proPrice: '€55',
       proPeriod: '/mois',
-      freeFeatures: ['3 offres actives', '25 candidats/mois', 'Score de correspondance IA', 'Upload & analyse de CV', 'Tableau de bord de base'],
+      freeFeatures: ['3 offres actives', '20 candidats/mois', 'Score de correspondance IA', 'Upload & analyse de CV', 'Tableau de bord de base'],
       proFeatures: [
         'Offres illimitées', 'Candidats illimités',
         "Questions d'entretien IA", 'Rapports de recrutement IA', 'Classement IA des candidats',

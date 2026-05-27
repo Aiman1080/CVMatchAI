@@ -104,7 +104,7 @@ export default function RegisterPage() {
                 <p className="text-lg font-bold text-gray-900 mt-1">&euro;0</p>
                 <ul className="mt-2 space-y-1 text-xs text-gray-500">
                   <li>3 vacancies</li>
-                  <li>25 candidates/month</li>
+                  <li>20 candidates/month</li>
                   <li>AI scoring</li>
                 </ul>
               </button>
