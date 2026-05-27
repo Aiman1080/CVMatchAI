@@ -655,6 +655,42 @@ export async function generateHiringReport(
     const scoreInterpretation = candidate.matchScore >= 80 ? 'Excellent match' : candidate.matchScore >= 65 ? 'Good match' : candidate.matchScore >= 50 ? 'Moderate match' : 'Below expectations'
     const recLabel = candidate.recommendation === 'strong_yes' ? 'Strongly Recommended' : candidate.recommendation === 'yes' ? 'Recommended' : candidate.recommendation === 'maybe' ? 'Consider with Reservations' : 'Not Recommended'
 
+    let parsedStrengths: string
+    try {
+      const arr = JSON.parse(candidate.strengths)
+      parsedStrengths = Array.isArray(arr) ? arr.map((s: string) => `- ${s}`).join('\n') : candidate.strengths
+    } catch {
+      parsedStrengths = candidate.strengths || '- Relevant professional background\n- Skills aligned with role requirements'
+    }
+
+    let parsedWeaknesses: string
+    try {
+      const arr = JSON.parse(candidate.weaknesses)
+      parsedWeaknesses = Array.isArray(arr) ? arr.map((s: string) => `- ${s}`).join('\n') : candidate.weaknesses
+    } catch {
+      parsedWeaknesses = candidate.weaknesses || '- Detailed assessment requires full AI analysis\n- Some requirements need interview verification'
+    }
+
+    const interviewReadiness = candidate.recommendation === 'strong_yes'
+      ? 'This candidate is highly interview-ready. Their profile demonstrates strong alignment with all core requirements, and they are likely to perform well in both technical and behavioral interview rounds. We recommend scheduling a comprehensive interview covering both technical competencies and cultural fit.'
+      : candidate.recommendation === 'yes'
+      ? 'This candidate is interview-ready with minor areas to probe. Their overall profile is strong, but the interview should specifically address the areas of concern noted above. Prepare targeted questions around the identified gaps to determine if they can be mitigated.'
+      : candidate.recommendation === 'maybe'
+      ? 'This candidate may benefit from a preliminary screening call before a full interview. There are notable gaps in their profile relative to the role requirements. A 20-30 minute phone screen focusing on the areas of concern would help determine whether a full interview is warranted.'
+      : 'This candidate is not recommended for interview at this time. The gaps between their profile and the role requirements are significant. If the candidate pool is limited, consider a brief screening call, but prioritize other candidates first.'
+
+    const salaryConsiderations = candidate.matchScore >= 80
+      ? `Given the candidate's strong match score (${candidate.matchScore}%) and ${scoreInterpretation.toLowerCase()} rating, they are likely to command compensation at or above the midpoint of the salary band for this role. Their qualifications suggest they would bring immediate value, which may justify a competitive offer. Consider the full compensation package including benefits, growth opportunities, and flexibility when preparing an offer.`
+      : candidate.matchScore >= 65
+      ? `With a ${candidate.matchScore}% match score (${scoreInterpretation.toLowerCase()}), this candidate's compensation expectations are likely to be in the mid-range for this role. Their experience level and skill set suggest standard market-rate compensation would be appropriate. The interview stage should include a discussion about salary expectations to ensure alignment.`
+      : `At ${candidate.matchScore}% match (${scoreInterpretation.toLowerCase()}), compensation should be carefully calibrated. If this candidate is selected despite gaps, consider whether a slightly lower offer with a clear growth plan and performance milestones would be appropriate. Salary discussions should factor in the training and ramp-up time that may be needed.`
+
+    const nextSteps = candidate.recommendation === 'strong_yes' || candidate.recommendation === 'yes'
+      ? `1. **Schedule Interview** — Arrange a comprehensive interview within the next 5-7 business days to maintain candidate engagement.\n2. **Prepare Interview Panel** — Assemble a panel covering technical assessment, team fit, and managerial evaluation.\n3. **Reference Check Preparation** — Begin preparing reference check questions based on the areas of concern identified above.\n4. **Offer Timeline** — If the interview is successful, aim to extend an offer within 48 hours to remain competitive.\n5. **Onboarding Planning** — Start preliminary onboarding planning to ensure a smooth transition if the candidate accepts.`
+      : candidate.recommendation === 'maybe'
+      ? `1. **Phone Screening** — Schedule a 20-30 minute screening call to address the key concerns before committing to a full interview.\n2. **Skills Assessment** — Consider a brief technical assessment or case study to evaluate the specific gaps identified.\n3. **Compare with Pool** — Review this candidate alongside other applicants to determine relative ranking.\n4. **Decision Point** — After screening, make a go/no-go decision on proceeding to a full interview within 3 business days.`
+      : `1. **Communicate Decision** — Send a professional rejection email thanking the candidate for their time and effort.\n2. **Pipeline Review** — Review the remaining candidate pipeline for stronger matches.\n3. **Role Assessment** — If no strong candidates remain, consider whether the role requirements should be adjusted.\n4. **Future Consideration** — File the candidate's profile for potential future openings where their skills may be a better fit.`
+
     const report = `# Hiring Report
 
 ## Candidate Overview
@@ -665,25 +701,35 @@ export async function generateHiringReport(
 ## Match Score: ${candidate.matchScore}% — ${scoreInterpretation}
 
 ## Key Qualifications
-${candidate.skills ? candidate.skills.split(',').slice(0, 6).map(s => `- ${s.trim()}`).join('\n') : '- See CV for detailed qualifications'}
+${candidate.skills ? candidate.skills.split(',').slice(0, 8).map(s => `- ${s.trim()}`).join('\n') : '- See CV for detailed qualifications'}
 
 ## Professional Summary
 ${candidate.summary || 'Summary not available — review CV for details.'}
 
 ## Strengths
-${candidate.strengths || '- Relevant professional background\n- Skills aligned with role requirements'}
+${parsedStrengths}
 
 ## Areas of Concern
-${candidate.weaknesses || '- Detailed assessment requires full AI analysis\n- Some requirements need interview verification'}
+${parsedWeaknesses}
 
-## Experience & Education
-**Experience:** ${candidate.experience || 'See CV for details'}
+## Experience
+${candidate.experience || 'See CV for details.'}
 
-**Education:** ${candidate.education || 'See CV for details'}
+## Education
+${candidate.education || 'See CV for details.'}
+
+## Interview Readiness
+${interviewReadiness}
+
+## Salary Considerations
+${salaryConsiderations}
 
 ## Final Recommendation: ${recLabel}
 
-${candidate.recommendation === 'strong_yes' || candidate.recommendation === 'yes' ? 'This candidate demonstrates strong alignment with the role requirements. Recommend proceeding to interview stage.' : candidate.recommendation === 'maybe' ? 'This candidate shows potential but has gaps that should be explored in an interview. Consider alongside stronger candidates.' : 'This candidate does not meet the core requirements for this role. Recommend focusing on other applicants.'}
+${candidate.recommendation === 'strong_yes' || candidate.recommendation === 'yes' ? 'This candidate demonstrates strong alignment with the role requirements. Their strengths clearly outweigh the identified concerns, and they are well-positioned to contribute to the team from day one. We recommend proceeding to the interview stage promptly to maintain their engagement in the hiring process.' : candidate.recommendation === 'maybe' ? 'This candidate shows potential but has notable gaps that should be explored further. They could grow into the role with the right support, but the concerns identified above need to be addressed before making a commitment. Consider a screening call to assess whether a full interview is warranted.' : 'This candidate does not meet the core requirements for this role at this time. The gaps between their profile and the vacancy requirements are too significant to overlook. We recommend focusing interview resources on stronger candidates and communicating this decision to the applicant promptly and professionally.'}
+
+## Next Steps
+${nextSteps}
 
 ---
 *Generated by CVMatchAI — Demo Mode*`
@@ -698,7 +744,22 @@ ${candidate.recommendation === 'strong_yes' || candidate.recommendation === 'yes
   try {
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-flash',
-      systemInstruction: `You are an expert HR professional. Generate a professional 1-page hiring report for a hiring manager. Include: candidate overview, match score with interpretation, key qualifications, strengths summary, areas of concern, skills assessment, and final recommendation. Keep it concise and actionable. Format in clean markdown. ${langInstruction}`,
+      systemInstruction: `You are an expert HR professional. Generate a comprehensive, detailed hiring report for a hiring manager (at least 500 words). The report must include ALL of the following sections in clean markdown:
+
+1. **Candidate Overview** — Full name, position, email, phone, report date
+2. **Match Score** — Score with interpretation (Excellent/Good/Moderate/Below expectations)
+3. **Key Qualifications** — All relevant skills listed
+4. **Professional Summary** — Thorough summary of the candidate's profile
+5. **Strengths** — All strengths with explanations of relevance to the role
+6. **Areas of Concern** — All weaknesses with specific details
+7. **Experience** — Full work experience summary
+8. **Education** — Complete educational background
+9. **Interview Readiness** — Assessment of how ready the candidate is for interview, what format suits them, and what areas the interview should focus on
+10. **Salary Considerations** — Based on the candidate's experience level and match score, provide guidance on expected compensation range and negotiation points
+11. **Final Recommendation** — Clear hiring recommendation with detailed justification
+12. **Next Steps** — Concrete, actionable next steps (3-5 items) tailored to the recommendation
+
+Be thorough, professional, and actionable. Use all candidate data available. ${langInstruction}`,
       generationConfig: { temperature: 0.3 },
       tools: [{ functionDeclarations: [HIRING_REPORT_TOOL] }],
       toolConfig: { functionCallingConfig: { mode: FunctionCallingMode.ANY } },
@@ -734,7 +795,8 @@ Call submit_hiring_report now.`
     console.error('[AI] generateHiringReport error:', error)
   }
 
-  // Fallback to demo report
-  const recLabel = candidate.recommendation === 'strong_yes' ? 'Strongly Recommended' : candidate.recommendation === 'yes' ? 'Recommended' : candidate.recommendation === 'maybe' ? 'Consider' : 'Not Recommended'
-  return { report: `# Hiring Report\n\n**Candidate:** ${candidate.firstName} ${candidate.lastName}\n**Position:** ${vacancyTitle}\n**Score:** ${candidate.matchScore}%\n**Recommendation:** ${recLabel}\n\n## Summary\n${candidate.summary || 'See CV for details.'}\n\n---\n*Generated by CVMatchAI*` }
+  // Fallback to structured report
+  const recLabel = candidate.recommendation === 'strong_yes' ? 'Strongly Recommended' : candidate.recommendation === 'yes' ? 'Recommended' : candidate.recommendation === 'maybe' ? 'Consider with Reservations' : 'Not Recommended'
+  const scoreLabel = candidate.matchScore >= 80 ? 'Excellent match' : candidate.matchScore >= 65 ? 'Good match' : candidate.matchScore >= 50 ? 'Moderate match' : 'Below expectations'
+  return { report: `# Hiring Report\n\n## Candidate Overview\n- **Name:** ${candidate.firstName} ${candidate.lastName}\n- **Position:** ${vacancyTitle}${candidate.email ? `\n- **Email:** ${candidate.email}` : ''}${candidate.phone ? `\n- **Phone:** ${candidate.phone}` : ''}\n- **Report Date:** ${new Date().toLocaleDateString()}\n\n## Match Score: ${candidate.matchScore}% — ${scoreLabel}\n\n## Professional Summary\n${candidate.summary || 'See CV for details.'}\n\n## Strengths\n${candidate.strengths || '- See CV for details'}\n\n## Areas of Concern\n${candidate.weaknesses || '- See CV for details'}\n\n## Experience\n${candidate.experience || 'See CV for details.'}\n\n## Education\n${candidate.education || 'See CV for details.'}\n\n## Interview Readiness\n${candidate.recommendation === 'strong_yes' || candidate.recommendation === 'yes' ? 'Candidate is ready for a comprehensive interview. Focus on verifying key qualifications and cultural fit.' : 'Consider a preliminary screening call before committing to a full interview.'}\n\n## Salary Considerations\nBased on the ${scoreLabel.toLowerCase()} rating, compensation should be calibrated to the candidate\'s experience level and market benchmarks for this role.\n\n## Final Recommendation: ${recLabel}\n\n## Next Steps\n1. ${candidate.recommendation === 'strong_yes' || candidate.recommendation === 'yes' ? 'Schedule interview within 5-7 business days' : 'Conduct preliminary screening call'}\n2. Prepare targeted interview questions based on areas of concern\n3. Review alongside other candidates in the pipeline\n\n---\n*Generated by CVMatchAI*` }
 }

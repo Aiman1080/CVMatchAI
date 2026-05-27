@@ -73,18 +73,24 @@ export async function POST(req: Request) {
         return info
       }).join('\n\n')
 
-      const prompt = `Generate a professional email summarizing ${shortlisted.length} shortlisted candidates for the ${vacancy.title} position.
+      const prompt = `Generate a comprehensive, professional email summarizing ${shortlisted.length} shortlisted candidates for the ${vacancy.title} position. This email will be sent to the hiring manager, so make it thorough and actionable.
 
-For each candidate include:
-- Name and match score
-- Key strengths and weaknesses
-- Skills overview
-- Recruiter's notes (if available) — these may contain interview feedback like "answered well on X" or "struggled with Y"
-- Final recommendation
+For EACH candidate include all of the following:
+- Full name, email address, and phone number (if available)
+- Match score with interpretation (use: 80%+ = Excellent, 65-79% = Good, 50-64% = Moderate, below 50% = Low)
+- Top 3 strengths (as bullet points with brief explanation)
+- Top 2 areas of concern (as bullet points with brief explanation)
+- Key skills relevant to the role
+- Recruiter notes / interview feedback (if available) — these may contain interview observations like "answered well on X" or "struggled with Y"
+- Individual recommendation for this candidate
 
-At the end, provide a clear overall recommendation on who to interview first and why.
+At the END of the email, include:
+1. **Overall Comparison Summary** — a brief comparison table-style summary showing all candidates side by side (name, score, recommendation)
+2. **Clear Recommendation** — who should be interviewed first and a clear explanation of why
+3. **Suggested Interview Order** — rank all candidates in the order they should be interviewed, with brief justification
+4. **Red Flags to Discuss** — any concerns or gaps across candidates that the hiring team should discuss before proceeding
 
-Write in ${language}. Use a professional, concise tone suitable for a hiring manager.
+Write in ${language}. Use a professional, thorough tone suitable for a hiring manager making final interview decisions. Aim for a complete, detailed report — do not cut corners.
 
 CANDIDATES:
 ${candidateList}
@@ -114,7 +120,7 @@ Write only the email body (no subject line).`
 }
 
 function generateTemplateSummary(
-  candidates: Array<{ firstName: string; lastName: string; matchScore: number | null; strengths: string | null; weaknesses?: string | null | undefined; notes?: string | null | undefined; skills?: string | null | undefined; recommendation: string | null }>,
+  candidates: Array<{ firstName: string; lastName: string; email: string | null; matchScore: number | null; strengths: string | null; weaknesses?: string | null | undefined; notes?: string | null | undefined; skills?: string | null | undefined; recommendation: string | null }>,
   vacancyTitle: string,
   language: string,
 ): string {
@@ -125,24 +131,55 @@ function generateTemplateSummary(
     return 'Not Recommended'
   }
 
+  const scoreInterpretation = (score: number | null) => {
+    if (!score) return 'N/A'
+    if (score >= 80) return 'Excellent'
+    if (score >= 65) return 'Good'
+    if (score >= 50) return 'Moderate'
+    return 'Low'
+  }
+
   const parseJson = (s: string | null) => {
     if (!s) return []
     try { return JSON.parse(s) } catch { return [] }
   }
 
-  const header = `Dear Hiring Manager,\n\nPlease find below a summary of the ${candidates.length} shortlisted candidate(s) for the ${vacancyTitle} position.\n`
+  const header = `Dear Hiring Manager,\n\nPlease find below a comprehensive summary of the ${candidates.length} shortlisted candidate(s) for the ${vacancyTitle} position. This report includes individual assessments and an overall recommendation to assist you in making interview decisions.\n`
 
   const lines = candidates.map((c, i) => {
     const strengths = parseJson(c.strengths).slice(0, 3).map((s: string) => `  + ${s}`).join('\n') || '  See full profile'
     const weaknesses = parseJson(c.weaknesses || null).slice(0, 2).map((s: string) => `  - ${s}`).join('\n')
-    let entry = `${i + 1}. ${c.firstName} ${c.lastName}\n   Match Score: ${c.matchScore?.toFixed(0) || 'N/A'}%\n   Recommendation: ${recLabel(c.recommendation)}\n   Strengths:\n${strengths}`
-    if (weaknesses) entry += `\n   Areas of concern:\n${weaknesses}`
-    if (c.notes) entry += `\n   Recruiter notes: ${c.notes.slice(0, 200)}`
+    const skillsList = c.skills ? `\n   Key Skills: ${c.skills.slice(0, 200)}` : ''
+    const contactInfo = c.email ? `\n   Email: ${c.email}` : ''
+    let entry = `${i + 1}. ${c.firstName} ${c.lastName}${contactInfo}\n   Match Score: ${c.matchScore?.toFixed(0) || 'N/A'}% (${scoreInterpretation(c.matchScore)})\n   Recommendation: ${recLabel(c.recommendation)}${skillsList}\n\n   Top Strengths:\n${strengths}`
+    if (weaknesses) entry += `\n\n   Areas of Concern:\n${weaknesses}`
+    if (c.notes) entry += `\n\n   Recruiter Notes / Interview Feedback:\n   ${c.notes.slice(0, 300)}`
+    entry += `\n\n   Individual Recommendation: ${recLabel(c.recommendation)} — ${c.matchScore && c.matchScore >= 70 ? 'Strong candidate for interview round.' : c.matchScore && c.matchScore >= 50 ? 'Worth considering; explore gaps during interview.' : 'Review carefully before proceeding.'}`
     return entry
   })
 
-  const topCandidate = candidates[0]
-  const footer = `\nBased on the analysis, we recommend prioritizing ${topCandidate.firstName} ${topCandidate.lastName} (${topCandidate.matchScore?.toFixed(0) || 'N/A'}% match) for the first interview round.\n\nBest regards,\nCVMatch AI`
+  // Overall comparison summary
+  const comparisonHeader = `\n${'='.repeat(60)}\nOVERALL COMPARISON SUMMARY\n${'='.repeat(60)}\n`
+  const comparisonLines = candidates.map((c, i) =>
+    `  ${i + 1}. ${c.firstName} ${c.lastName} — ${c.matchScore?.toFixed(0) || 'N/A'}% (${scoreInterpretation(c.matchScore)}) — ${recLabel(c.recommendation)}`
+  ).join('\n')
 
-  return `${header}\n${lines.join('\n\n')}\n${footer}`
+  // Interview order
+  const sorted = [...candidates].sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0))
+  const interviewOrder = `\nSUGGESTED INTERVIEW ORDER:\n` + sorted.map((c, i) =>
+    `  ${i + 1}. ${c.firstName} ${c.lastName} (${c.matchScore?.toFixed(0) || 'N/A'}%) — ${i === 0 ? 'Highest match; prioritize first.' : `Strong profile; schedule after top candidate${i > 1 ? 's' : ''}.`}`
+  ).join('\n')
+
+  // Red flags
+  const lowScoreCandidates = candidates.filter(c => c.matchScore && c.matchScore < 50)
+  const redFlags = lowScoreCandidates.length > 0
+    ? `\nRED FLAGS TO DISCUSS:\n${lowScoreCandidates.map(c => `  ! ${c.firstName} ${c.lastName} scored below 50% — review whether their profile warrants an interview given the gap.`).join('\n')}`
+    : `\nRED FLAGS TO DISCUSS:\n  No major red flags identified among shortlisted candidates.`
+
+  const topCandidate = sorted[0]
+  const recommendation = `\nCLEAR RECOMMENDATION:\nWe recommend prioritizing ${topCandidate.firstName} ${topCandidate.lastName} (${topCandidate.matchScore?.toFixed(0) || 'N/A'}% match — ${scoreInterpretation(topCandidate.matchScore)}) for the first interview. ${sorted.length > 1 ? `${sorted[1].firstName} ${sorted[1].lastName} should be scheduled as the second interview.` : ''} This ordering is based on overall match score, strengths alignment, and fewer areas of concern.`
+
+  const footer = `\n\nBest regards,\nCVMatch AI`
+
+  return `${header}\n${lines.join('\n\n---\n\n')}\n${comparisonHeader}${comparisonLines}\n${recommendation}\n${interviewOrder}\n${redFlags}\n${footer}`
 }
