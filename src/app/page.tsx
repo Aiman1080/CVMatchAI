@@ -591,18 +591,18 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-6 bg-gray-900 text-gray-400">
+      <footer className="py-12 px-6 bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-400">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Logo size={28} />
-            <span className="text-white font-semibold">CVMatch AI</span>
+            <span className="text-gray-900 dark:text-white font-semibold">CVMatch AI</span>
           </div>
-          <p className="text-sm">{t.footer.copyright}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t.footer.copyright}</p>
           <div className="flex items-center gap-6 text-sm">
-            <Link href="/privacy" className="hover:text-white">{t.footer.privacy}</Link>
-            <Link href="/terms" className="hover:text-white">{t.footer.terms}</Link>
-            <Link href="/contact" className="hover:text-white">{t.footer.contact}</Link>
-            <LanguageSwitcher dark />
+            <Link href="/privacy" className="hover:text-gray-900 dark:hover:text-white">{t.footer.privacy}</Link>
+            <Link href="/terms" className="hover:text-gray-900 dark:hover:text-white">{t.footer.terms}</Link>
+            <Link href="/contact" className="hover:text-gray-900 dark:hover:text-white">{t.footer.contact}</Link>
+            <LanguageSwitcher />
           </div>
         </div>
       </footer>

@@ -153,6 +153,7 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
               rows={4}
               required
             />
+            <p className="text-xs text-gray-400 text-right">{form.description.length} characters</p>
           </div>
           <div className="space-y-1.5">
             <Label>{cv.requirements} <span className="text-red-500">*</span></Label>
@@ -163,6 +164,7 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
               rows={3}
               required
             />
+            <p className="text-xs text-gray-400 text-right">{form.requirements.length} characters</p>
           </div>
           <div className="space-y-1.5">
             <Label>{cv.niceToHave}</Label>

@@ -137,6 +137,7 @@ export function SupportClient() {
                 rows={5}
                 className="resize-none"
               />
+              <p className="text-xs text-gray-400 text-right mt-1">{form.message.length} characters</p>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex-1">

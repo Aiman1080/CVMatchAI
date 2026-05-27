@@ -6,13 +6,24 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-// Uses Belgian locale for date formatting (DD Mon YYYY)
-export function formatDate(date: Date | string): string {
-  return new Date(date).toLocaleDateString('en-BE', { year: 'numeric', month: 'short', day: 'numeric' })
+// Resolves a BCP-47 locale from the cvmatch-locale cookie (client-side) or falls back to 'en-GB'
+function detectLocale(): string {
+  const LOCALE_MAP: Record<string, string> = { fr: 'fr-FR', nl: 'nl-NL', en: 'en-GB' }
+  if (typeof document !== 'undefined') {
+    const match = document.cookie.match(/(?:^|;\s*)cvmatch-locale=(\w+)/)
+    if (match) return LOCALE_MAP[match[1]] || 'en-GB'
+  }
+  return 'en-GB'
+}
+
+// Formats a date using the user's locale (from cookie) or the explicit locale param
+export function formatDate(date: Date | string, locale?: string): string {
+  const resolvedLocale = locale || detectLocale()
+  return new Date(date).toLocaleDateString(resolvedLocale, { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
 // Shows human-readable relative time for recent events, falls back to formatDate after 7 days
-export function formatRelativeTime(date: Date | string): string {
+export function formatRelativeTime(date: Date | string, locale?: string): string {
   const now = new Date()
   const d = new Date(date)
   const diff = now.getTime() - d.getTime()
@@ -21,7 +32,7 @@ export function formatRelativeTime(date: Date | string): string {
   if (hours < 1) return 'Just now'
   if (hours < 24) return `${hours}h ago`
   if (days < 7) return `${days}d ago`
-  return formatDate(date)
+  return formatDate(date, locale)
 }
 
 // Returns Tailwind color classes for status badges — unknown statuses get neutral grey
