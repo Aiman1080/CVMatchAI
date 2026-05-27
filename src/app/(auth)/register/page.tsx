@@ -79,8 +79,7 @@ export default function RegisterPage() {
                   </div>
                 </div>
               )
-            })()
-            )}
+            })()}
           </div>
           {/* Plan selector */}
           <div className="space-y-2">
