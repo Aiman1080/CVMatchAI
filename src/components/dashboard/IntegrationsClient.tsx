@@ -329,7 +329,16 @@ export function IntegrationsClient({ initialIntegrations }: { initialIntegration
           }, 500)
         }
       } else {
-        toast({ title: ti.syncError, description: data.error, variant: 'destructive' })
+        if (data.apiKeyExpired) {
+          toast({
+            title: '🔑 API Key Expired',
+            description: `Your ${PLATFORM_STATIC.find(p => p.id === platformId)?.name} API key has expired or is invalid. Please disconnect and reconnect with a new key.`,
+            variant: 'destructive',
+          })
+          setIntegrations(prev => prev.map(i => i.id === integrationId ? { ...i, status: 'error' } : i))
+        } else {
+          toast({ title: ti.syncError, description: data.error, variant: 'destructive' })
+        }
       }
     } finally { setSyncing(null) }
   }

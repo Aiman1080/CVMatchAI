@@ -74,10 +74,21 @@ export async function POST(_req: Request, context: { params: Promise<{ id: strin
 
     return NextResponse.json({ success: true, ...result })
   } catch (e: any) {
+    const errorMessage = e.message || 'Sync failed'
+    const isAuthError = errorMessage.includes('401') || errorMessage.includes('403') || errorMessage.includes('Unauthorized') || errorMessage.includes('Forbidden') || errorMessage.includes('invalid') || errorMessage.includes('expired')
+
     await prisma.integration.update({
       where: { id: integration.id },
       data: { status: 'error' },
     })
-    return NextResponse.json({ error: e.message }, { status: 500 })
+
+    if (isAuthError) {
+      return NextResponse.json({
+        error: `API key expired or invalid for ${integration.platform}. Please disconnect and reconnect with a new API key.`,
+        apiKeyExpired: true,
+      }, { status: 401 })
+    }
+
+    return NextResponse.json({ error: errorMessage }, { status: 500 })
   }
 }

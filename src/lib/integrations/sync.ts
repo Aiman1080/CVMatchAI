@@ -174,6 +174,8 @@ async function upsertCandidate(userId: string, platform: string, data: {
       gdprConsentDate: new Date(),
       vacancyId: data.vacancyId,
       userId,
+      summary: !cvContent ? `Imported from ${platform} without CV. AI analysis not available — please upload the CV manually for full scoring.` : undefined,
+      notes: !cvContent ? `⚠️ No CV available from ${platform}. Upload the CV manually to get AI analysis.${!data.motivationText ? ' No motivation letter available either.' : ''}` : undefined,
     },
   })
 
@@ -222,10 +224,16 @@ async function upsertCandidate(userId: string, platform: string, data: {
 function mapAtsStatus(atsStatus?: string): string {
   if (!atsStatus) return 'new'
   const s = atsStatus.toLowerCase()
-  if (s.includes('hired') || s.includes('offer') || s.includes('accepted')) return 'hired'
-  if (s.includes('reject') || s.includes('declined') || s.includes('disqualified')) return 'rejected'
-  if (s.includes('interview') || s.includes('shortlist') || s.includes('assessment')) return 'shortlisted'
-  if (s.includes('review') || s.includes('screen') || s.includes('phone')) return 'reviewing'
+  // Hired / Offer
+  if (s.includes('hired') || s.includes('offer') || s.includes('accepted') || s.includes('onboarding') || s.includes('placed') || s.includes('aangenomen') || s.includes('embauché') || s.includes('eingestellt')) return 'hired'
+  // Rejected
+  if (s.includes('reject') || s.includes('declined') || s.includes('disqualified') || s.includes('withdrawn') || s.includes('not selected') || s.includes('afgewezen') || s.includes('refusé') || s.includes('abgelehnt') || s.includes('closed') || s.includes('archived')) return 'rejected'
+  // Shortlisted / Interview
+  if (s.includes('interview') || s.includes('shortlist') || s.includes('assessment') || s.includes('final') || s.includes('second') || s.includes('on-site') || s.includes('onsite') || s.includes('entretien') || s.includes('gesprek') || s.includes('vorstellungsgespräch') || s.includes('selected') || s.includes('qualified')) return 'shortlisted'
+  // Reviewing / Screening
+  if (s.includes('review') || s.includes('screen') || s.includes('phone') || s.includes('applied') || s.includes('received') || s.includes('submitted') || s.includes('in progress') || s.includes('in behandeling') || s.includes('en cours') || s.includes('consideration') || s.includes('pre-screen') || s.includes('initial')) return 'reviewing'
+  // New / Default
+  if (s.includes('new') || s.includes('lead') || s.includes('prospect') || s.includes('sourced') || s.includes('open') || s.includes('active') || s.includes('nieuw') || s.includes('nouveau')) return 'new'
   return 'new'
 }
 
