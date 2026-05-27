@@ -116,7 +116,7 @@ export function CandidatesClient({ initialCandidates, initialTotal }: { initialC
 
   const goToPage = (targetPage: number) => {
     if (targetPage < 1 || targetPage > totalPages || targetPage === page || loadingPage) return
-    fetchPage(targetPage)
+    fetchPage(targetPage, vacancyFilter)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 

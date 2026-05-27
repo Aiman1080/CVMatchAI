@@ -173,8 +173,19 @@ export async function POST(req: Request) {
             continue
           }
 
-          // Match against the first active vacancy — multi-vacancy matching is a future improvement
-          const vacancy = vacancies[0]
+          // Smart vacancy matching: score each vacancy and pick the best match
+          const cvLower = cvText.toLowerCase()
+          let bestVacancy = vacancies[0]
+          let bestScore = 0
+          for (const v of vacancies) {
+            const vacText = `${v.title} ${v.description} ${v.requirements}`.toLowerCase()
+            const words = [...new Set(vacText.match(/\b[a-z]{4,}\b/g) || [])]
+            const hits = words.filter(w => cvLower.includes(w)).length
+            const score = words.length > 0 ? hits / words.length : 0
+            if (score > bestScore) { bestScore = score; bestVacancy = v }
+          }
+          const vacancy = bestVacancy
+
           const analysis = await analyzeCVAgainstVacancy(
             cvText, vacancy.title, vacancy.description, vacancy.requirements, motivationText || undefined, (vacancy as any).language,
           )

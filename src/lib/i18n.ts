@@ -122,7 +122,7 @@ export const translations = {
       },
       platformFeatures: {
         bulkUpload: { title: 'Bulk CV Upload', desc: 'Upload PDF, DOCX, or text files. Parser extracts text and triggers AI analysis automatically.' },
-        emailScanning: { title: 'Email Inbox Scanning', desc: 'Connect your recruitment inbox. AI auto-detects CVs in emails, ignores spam, creates candidate profiles.' },
+        emailScanning: { title: 'Email Inbox Scanning', desc: 'Connect your recruitment inbox. AI scans incoming emails, detects CVs and motivation letters, and automatically places each candidate in the best matching vacancy based on skills and experience.' },
         atsIntegrations: { title: 'ATS Integrations', desc: 'Connect 14 ATS platforms including Teamtailor, Greenhouse, Bullhorn, Personio and more. Import candidates and vacancies automatically.' },
         pipeline: { title: 'Pipeline Management', desc: 'Move candidates through stages: New, Reviewing, Shortlisted, Hired. Full recruitment workflow.' },
         analytics: { title: 'Analytics Dashboard', desc: 'Track hiring metrics, pipeline conversion rates, time-to-hire, and candidate source performance.' },
@@ -2304,7 +2304,7 @@ export const translations = {
       },
       platformFeatures: {
         bulkUpload: { title: 'Upload de CV en masse', desc: "Uploadez des fichiers PDF, DOCX ou texte. Le parseur extrait le texte et lance l'analyse IA automatiquement." },
-        emailScanning: { title: 'Scan de la boîte mail', desc: "Connectez votre boîte de recrutement. L'IA détecte automatiquement les CV dans les e-mails, ignore le spam et crée des profils candidats." },
+        emailScanning: { title: 'Scan de la boîte mail', desc: "Connectez votre boîte de recrutement. L'IA scanne les e-mails entrants, détecte les CV et lettres de motivation, et place automatiquement chaque candidat dans l'offre la plus adaptée selon ses compétences." },
         atsIntegrations: { title: '14 intégrations ATS (Greenhouse, Bullhorn, Personio...)', desc: 'Connectez 14 plateformes ATS dont Teamtailor, Greenhouse, Bullhorn, Personio et plus. Importez candidats et offres automatiquement.' },
         pipeline: { title: 'Gestion du pipeline', desc: 'Faites avancer les candidats par étapes : Nouveau, En cours, Shortlisté, Embauché. Workflow de recrutement complet.' },
         analytics: { title: 'Tableau de bord analytique', desc: "Suivez vos indicateurs de recrutement, taux de conversion du pipeline, délai d'embauche et performance par source." },
