@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { getPlanLimits } from '@/lib/plans'
 import { isDemoAccount } from '@/lib/demo-guard'
+import { encrypt } from '@/lib/crypto'
 
 // Returns connected inboxes without exposing stored passwords
 export async function GET() {
@@ -64,7 +65,7 @@ export async function POST(req: Request) {
 
   try {
     const inbox = await prisma.emailInbox.create({
-      data: { email, provider, host, port: Number(port) || 993, username, password, userId },
+      data: { email, provider, host, port: Number(port) || 993, username, password: encrypt(password), userId },
     })
 
     // Return only safe fields — never echo the password back to the client

@@ -14,7 +14,10 @@ function getTransporter() {
   })
 }
 
-function wrapInEmailTemplate(bodyHtml: string): string {
+function wrapInEmailTemplate(bodyHtml: string, signature?: string): string {
+  const signatureBlock = signature
+    ? `<hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0;">${signature}`
+    : ''
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -39,6 +42,7 @@ function wrapInEmailTemplate(bodyHtml: string): string {
           <td style="background-color:#ffffff;padding:32px;border-left:1px solid #e5e7eb;border-right:1px solid #e5e7eb;">
             <div style="font-size:15px;line-height:1.6;color:#374151;">
               ${bodyHtml}
+              ${signatureBlock}
             </div>
           </td>
         </tr>

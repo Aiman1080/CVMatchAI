@@ -115,15 +115,15 @@ export function SettingsClient({ user }: Props) {
                 <Input value={form.company} onChange={e => setForm(p => ({ ...p, company: e.target.value }))} placeholder={t.dashboard.settingsProfile.companyPlaceholder} />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-gray-700 dark:text-gray-300 flex items-center gap-1.5"><Mail size={14} /> Email Signature</Label>
+                <Label className="text-gray-700 dark:text-gray-300 flex items-center gap-1.5"><Mail size={14} /> Email Signature (supports HTML for logos)</Label>
                 <textarea
                   value={form.emailSignature}
                   onChange={e => setForm(p => ({ ...p, emailSignature: e.target.value }))}
-                  placeholder={"Best regards,\nJohn Doe\nAcme Corp\n+32 471 000 000\nwww.acme.com"}
+                  placeholder={"Best regards,\nJohn Doe | Acme Corp\n+32 471 000 000\n<img src=\"https://your-company.com/logo.png\" width=\"150\" alt=\"Company Logo\">"}
                   rows={5}
                   className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
                 />
-                <p className="text-xs text-gray-400">This signature will be added to all emails sent to candidates.</p>
+                <p className="text-xs text-gray-400">{"You can paste HTML with images. Use <img src='...'> for your company logo."}</p>
               </div>
               <Button type="submit" disabled={saving} className="gradient-bg gap-2"><Save size={14} />{saving ? t.dashboard.settingsProfile.saving : t.dashboard.settingsProfile.saveChanges}</Button>
             </form>

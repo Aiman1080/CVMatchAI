@@ -10,6 +10,7 @@ import prisma from '@/lib/prisma'
 import { parseDocument } from '@/lib/pdf-parser'
 import { analyzeCVAgainstVacancy, classifyRecruitmentEmail, detectDocumentType } from '@/lib/ai'
 import { getPlanLimits } from '@/lib/plans'
+import { decrypt } from '@/lib/crypto'
 
 // Allow up to 5 minutes — IMAP + multiple AI calls can easily take 2–3 min
 export const maxDuration = 300
@@ -56,7 +57,7 @@ export async function POST(req: Request) {
       host: inbox.host,
       port: inbox.port,
       secure: true,
-      auth: { user: inbox.username, pass: inbox.password },
+      auth: { user: inbox.username, pass: decrypt(inbox.password) },
       logger: false,
     })
 

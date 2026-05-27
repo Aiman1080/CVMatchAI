@@ -142,6 +142,15 @@ export default function RegisterPage() {
           </div>
 
           <p className="text-xs text-gray-400">{t.auth.gdprDisclaimer}</p>
+          <div className="flex items-start gap-2">
+            <input type="checkbox" id="terms" required className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+            <label htmlFor="terms" className="text-xs text-gray-500">
+              I agree to the{' '}
+              <Link href="/terms" className="text-blue-600 underline hover:text-blue-700">Terms of Service</Link>
+              {' '}and{' '}
+              <Link href="/privacy" className="text-blue-600 underline hover:text-blue-700">Privacy Policy</Link>
+            </label>
+          </div>
           <Button type="submit" disabled={loading} className="w-full gradient-bg h-11">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : form.plan === 'pro' ? 'Start Pro — 30 days free' : t.auth.createFreeAccount}
           </Button>

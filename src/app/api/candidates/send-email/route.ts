@@ -40,11 +40,16 @@ export async function POST(req: Request) {
 
   // Load user's email signature
   const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { emailSignature: true } })
-  const signature = dbUser?.emailSignature ? `\n\n---\n${dbUser.emailSignature}` : ''
+  const signatureHtml = dbUser?.emailSignature || ''
 
-  const finalBody = (teamsLink
+  const bodyText = teamsLink
     ? `${body}\n\n📅 Join the interview via Teams:\n${teamsLink}`
-    : body) + signature
+    : body
+
+  const bodyHtml = escapeHtml(bodyText).replace(/\n/g, '<br>').replace(/(https?:\/\/[^\s]+)/g, '<a href="$1">$1</a>')
+  const finalHtml = signatureHtml
+    ? `${bodyHtml}<br><hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0;">${signatureHtml}`
+    : bodyHtml
 
   try {
     const transporter = nodemailer.createTransport({
@@ -59,8 +64,8 @@ export async function POST(req: Request) {
       to: candidate.email,
       replyTo: senderAddress,
       subject,
-      text: finalBody,
-      html: escapeHtml(finalBody).replace(/\n/g, '<br>').replace(/(https?:\/\/[^\s]+)/g, '<a href="$1">$1</a>'),
+      text: bodyText + (signatureHtml ? `\n\n---\n${signatureHtml.replace(/<[^>]*>/g, '')}` : ''),
+      html: finalHtml,
     })
 
     // Update candidate status based on email type

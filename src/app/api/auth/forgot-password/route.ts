@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     if (!user) return successResponse
 
     const token = crypto.randomBytes(32).toString('hex')
-    const expires = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
+    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
 
     // Remove any existing reset tokens for this user before creating a new one
     await prisma.verificationToken.deleteMany({ where: { identifier: email } })
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     await sendEmail(
       email,
       'Reset your CVMatch AI password',
-      `Hi ${user.name || 'there'},\n\nYou requested a password reset for your CVMatch AI account.\n\nClick the link below to set a new password (valid for 1 hour):\n${resetLink}\n\nIf you didn't request this, you can safely ignore this email.\n\n— CVMatch AI`,
+      `Hi ${user.name || 'there'},\n\nYou requested a password reset for your CVMatch AI account.\n\nClick the link below to set a new password (valid for 24 hours):\n${resetLink}\n\nIf you didn't request this, you can safely ignore this email.\n\n— CVMatch AI`,
     )
 
     return successResponse
