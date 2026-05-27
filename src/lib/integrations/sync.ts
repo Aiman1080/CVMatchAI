@@ -253,12 +253,13 @@ export async function syncTeamtailor(userId: string, apiKey: string, since?: Dat
         const job = jobMap.get(jobId)
         if (!job) continue
 
-        const vacancyId = await upsertVacancy(userId, jobId, 'teamtailor', {
+        const vacancyResult = await upsertVacancy(userId, jobId, 'teamtailor', {
           title: job.attributes.title,
           description: job.attributes.body || job.attributes.title,
           requirements: job.attributes['human-requirements'] || '',
           company,
         })
+        const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
 
         const candidate = await teamtailorFetchCandidate(apiKey, candidateId)
         if (!candidate) continue
@@ -326,13 +327,14 @@ export async function syncRecruitee(userId: string, apiKey: string, companySlug:
           const offer = offerMap.get(placement.offer_id)
           if (!offer) continue
 
-          const vacancyId = await upsertVacancy(userId, `${offer.id}`, 'recruitee', {
+          const vacancyResult = await upsertVacancy(userId, `${offer.id}`, 'recruitee', {
             title: offer.title,
             description: offer.description || offer.title,
             requirements: offer.requirements || '',
             company: companySlug,
             location: offer.location,
           })
+          const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
 
           const cvBuffer = placement.cv?.url
             ? await recruiteeDownloadCV(placement.cv.url, apiKey)
@@ -397,13 +399,14 @@ export async function syncSmartRecruiters(userId: string, apiKey: string, since?
         const job = jobMap.get(jobId)
         if (!job) continue
 
-        const vacancyId = await upsertVacancy(userId, jobId, 'smartrecruiters', {
+        const vacancyResult = await upsertVacancy(userId, jobId, 'smartrecruiters', {
           title: job.title,
           description: job.jobDescription?.text || job.title,
           requirements: job.qualifications?.text || '',
           company: 'Company',
           location: job.location?.city,
         })
+        const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
 
         const cvBuffer = await smartrecruitersFetchCandidateCV(apiKey, candidate.id)
 
@@ -462,13 +465,14 @@ export async function syncGreenhouse(apiKey: string, userId: string, since?: Dat
           const job = jobMap.get(jobId)
           if (!job) continue
 
-          const vacancyId = await upsertVacancy(userId, `${job.id}`, 'greenhouse', {
+          const vacancyResult = await upsertVacancy(userId, `${job.id}`, 'greenhouse', {
             title: job.name,
             description: job.notes || job.name,
             requirements: '',
             company: 'Greenhouse',
             location: job.offices?.[0]?.location || job.offices?.[0]?.name,
           })
+          const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
 
           const cv = await greenhouseDownloadCV(apiKey, candidate.id)
 
@@ -529,13 +533,14 @@ export async function syncLever(apiKey: string, userId: string, since?: Date): P
             ?.map(l => `${l.text}: ${l.content}`)
             .join('\n') || ''
 
-          const vacancyId = await upsertVacancy(userId, posting.id, 'lever', {
+          const vacancyResult = await upsertVacancy(userId, posting.id, 'lever', {
             title: posting.text,
             description,
             requirements,
             company: 'Lever',
             location: posting.categories?.location,
           })
+          const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
 
           const nameParts = opp.name?.split(' ') || []
           const firstName = nameParts[0] || 'Unknown'
@@ -584,13 +589,14 @@ export async function syncBullhorn(apiKey: string, restUrl: string, userId: stri
     // Create vacancies for all open jobs
     const jobVacancyMap = new Map<number, string>()
     for (const job of jobs) {
-      const vacancyId = await upsertVacancy(userId, `${job.id}`, 'bullhorn', {
+      const vacancyResult = await upsertVacancy(userId, `${job.id}`, 'bullhorn', {
         title: job.title,
         description: job.publicDescription || job.title,
         requirements: job.skillList || '',
         company: job.clientCorporation?.name || 'Bullhorn',
         location: job.address?.city,
       })
+      const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
       jobVacancyMap.set(job.id, vacancyId)
     }
 
@@ -635,13 +641,14 @@ export async function syncWorkable(apiKey: string, subdomain: string, userId: st
 
     for (const job of jobs) {
       try {
-        const vacancyId = await upsertVacancy(userId, job.id, 'workable', {
+        const vacancyResult = await upsertVacancy(userId, job.id, 'workable', {
           title: job.title,
           description: job.description || job.title,
           requirements: job.requirements || '',
           company: subdomain,
           location: job.location?.city,
         })
+        const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
 
         const candidates = await workableFetchCandidates(apiKey, subdomain, job.shortcode)
 
@@ -692,13 +699,14 @@ export async function syncFlatchr(apiKey: string, userId: string, since?: Date):
 
     for (const job of jobs) {
       try {
-        const vacancyId = await upsertVacancy(userId, job.id, 'flatchr', {
+        const vacancyResult = await upsertVacancy(userId, job.id, 'flatchr', {
           title: job.title,
           description: job.description || job.title,
           requirements: job.requirements || '',
           company: 'Flatchr',
           location: job.location,
         })
+        const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
 
         const candidates = await flatchrFetchCandidates(apiKey, job.id)
 
@@ -758,13 +766,14 @@ export async function syncAshby(apiKey: string, userId: string, since?: Date): P
         if (!firstJob) continue
 
         const job = firstJob
-        const vacancyId = await upsertVacancy(userId, job.id, 'ashby', {
+        const vacancyResult = await upsertVacancy(userId, job.id, 'ashby', {
           title: job.title,
           description: job.content || job.title,
           requirements: '',
           company: 'Ashby',
           location: job.locationName,
         })
+        const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
 
         const nameParts = candidate.name?.split(' ') || []
         const firstName = nameParts[0] || 'Unknown'
@@ -806,13 +815,14 @@ export async function syncBreezy(apiKey: string, companyId: string, userId: stri
 
     for (const position of positions) {
       try {
-        const vacancyId = await upsertVacancy(userId, position._id, 'breezyhr', {
+        const vacancyResult = await upsertVacancy(userId, position._id, 'breezyhr', {
           title: position.name,
           description: position.description || position.name,
           requirements: '',
           company: companyId,
           location: position.location?.city,
         })
+        const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
 
         const candidates = await breezyFetchCandidates(apiKey, companyId, position._id)
 
@@ -868,13 +878,14 @@ export async function syncHomerun(apiKey: string, userId: string, since?: Date):
 
     for (const job of jobs) {
       try {
-        const vacancyId = await upsertVacancy(userId, job.id, 'homerun', {
+        const vacancyResult = await upsertVacancy(userId, job.id, 'homerun', {
           title: job.title,
           description: job.description || job.title,
           requirements: '',
           company: 'Homerun',
           location: job.location,
         })
+        const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
 
         const applications = await homerunFetchApplications(apiKey, job.id)
 
@@ -926,13 +937,14 @@ export async function syncPersonio(apiKey: string, userId: string, since?: Date)
 
     for (const job of jobs) {
       try {
-        const vacancyId = await upsertVacancy(userId, `${job.id}`, 'personio', {
+        const vacancyResult = await upsertVacancy(userId, `${job.id}`, 'personio', {
           title: job.name,
           description: job.description || job.name,
           requirements: '',
           company: 'Personio',
           location: job.office,
         })
+        const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
 
         const applications = await personioFetchApplications(apiKey, job.id)
 
@@ -980,13 +992,14 @@ export async function syncIcims(apiKey: string, customerId: string, userId: stri
 
     for (const job of jobs) {
       try {
-        const vacancyId = await upsertVacancy(userId, `${job.id}`, 'icims', {
+        const vacancyResult = await upsertVacancy(userId, `${job.id}`, 'icims', {
           title: job.title,
           description: job.description || job.title,
           requirements: '',
           company: 'iCIMS',
           location: job.jobLocation,
         })
+        const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
 
         const workflows = await icimsFetchCandidates(apiKey, customerId, job.id)
 
@@ -1032,13 +1045,14 @@ export async function syncSoftgarden(apiKey: string, userId: string, since?: Dat
 
     for (const job of jobs) {
       try {
-        const vacancyId = await upsertVacancy(userId, `${job.id}`, 'softgarden', {
+        const vacancyResult = await upsertVacancy(userId, `${job.id}`, 'softgarden', {
           title: job.jobName,
           description: job.jobDescription || job.jobName,
           requirements: '',
           company: 'Softgarden',
           location: job.jobLocation,
         })
+        const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
 
         const applications = await softgardenFetchApplications(apiKey, job.id)
 

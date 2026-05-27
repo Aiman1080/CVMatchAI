@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useMemo } from 'react'
 import {
   Loader2, CheckCircle, XCircle, RefreshCw, Trash2, Link2,
   ExternalLink, AlertCircle, Info, Plug, Users, Briefcase,
-  HelpCircle, ChevronDown, ChevronUp, Clock,
+  HelpCircle, ChevronDown, ChevronUp, Clock, X,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -249,6 +249,16 @@ export function IntegrationsClient({ initialIntegrations }: { initialIntegration
   const [expanded, setExpanded] = useState<string | null>(null)
   const [form, setForm] = useState<Record<string, { apiKey: string; companySlug: string }>>({})
   const [syncAll, setSyncAll] = useState(false)
+  const [atsTipDismissed, setAtsTipDismissed] = useState(true) // default true to avoid flash
+
+  useEffect(() => {
+    setAtsTipDismissed(localStorage.getItem('cvmatch-ats-tip-dismissed') === 'true')
+  }, [])
+
+  const dismissAtsTip = () => {
+    localStorage.setItem('cvmatch-ats-tip-dismissed', 'true')
+    setAtsTipDismissed(true)
+  }
 
   const { t } = useLanguage()
   const ti = t.dashboard.integrations
@@ -313,6 +323,11 @@ export function IntegrationsClient({ initialIntegrations }: { initialIntegration
             data.errors?.length ? `${data.errors.length} ${ti.errorsCount}` : null,
           ].filter(Boolean).join(' · ') || ti.noNewCandidates,
         })
+        if (data.duplicatesDetected > 0) {
+          setTimeout(() => {
+            toast({ title: ti.duplicatesWarning, variant: 'destructive' })
+          }, 500)
+        }
       } else {
         toast({ title: ti.syncError, description: data.error, variant: 'destructive' })
       }
@@ -322,12 +337,14 @@ export function IntegrationsClient({ initialIntegrations }: { initialIntegration
   const handleSyncAll = async () => {
     setSyncAll(true)
     let totalImported = 0
+    let totalDuplicates = 0
     for (const integration of integrations) {
       try {
         const res = await fetch(`/api/integrations/${integration.id}/sync`, { method: 'POST' })
         const data = await res.json()
         if (res.ok) {
           totalImported += data.imported || 0
+          totalDuplicates += data.duplicatesDetected || 0
           setIntegrations(prev => prev.map(i => i.id === integration.id
             ? { ...i, lastSyncAt: new Date().toISOString(), syncCount: i.syncCount + (data.imported || 0), status: 'active' }
             : i))
@@ -341,6 +358,11 @@ export function IntegrationsClient({ initialIntegrations }: { initialIntegration
         ? `${totalImported} ${ti.syncAllImported}`
         : ti.upToDate,
     })
+    if (totalDuplicates > 0) {
+      setTimeout(() => {
+        toast({ title: ti.duplicatesWarning, variant: 'destructive' })
+      }, 500)
+    }
   }
 
   const handleDisconnect = async (integrationId: string, platformId: string) => {
@@ -362,6 +384,20 @@ export function IntegrationsClient({ initialIntegrations }: { initialIntegration
 
   return (
     <div className="space-y-6">
+
+      {/* ATS duplicate tip banner — dismissible */}
+      {!atsTipDismissed && (
+        <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 flex gap-3 items-start">
+          <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+          <p className="text-sm text-blue-700 dark:text-blue-300 flex-1">{ti.atsTip}</p>
+          <button
+            onClick={dismissAtsTip}
+            className="p-1 text-blue-400 hover:text-blue-600 rounded transition-colors shrink-0"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
 
       {/* Explainer banner */}
       <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 flex gap-3">

@@ -6,9 +6,10 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useEffect } from 'react'
 import {
   MapPin, Briefcase, DollarSign, Users, Upload, Star, ChevronRight, ChevronLeft,
-  Pencil, Trash2, CheckCircle, XCircle, Clock, Loader2, Save, X, Sparkles, Trophy, Download, Copy, Mail
+  Pencil, Trash2, CheckCircle, XCircle, Clock, Loader2, Save, X, Sparkles, Trophy, Download, Copy, Mail, Link2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -51,8 +52,17 @@ interface Vacancy {
   salary: string | null
   status: string
   language: string
+  externalId: string | null
+  externalSource: string | null
   createdAt: Date
   candidates: Candidate[]
+}
+
+interface AtsVacancy {
+  id: string
+  title: string
+  company: string
+  externalSource: string | null
 }
 
 export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) {
@@ -166,6 +176,54 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
   const [sendingSummary, setSendingSummary] = useState(false)
   const [summarySent, setSummarySent] = useState(false)
 
+  // Link to ATS state
+  const [showLinkAts, setShowLinkAts] = useState(false)
+  const [atsVacancies, setAtsVacancies] = useState<AtsVacancy[]>([])
+  const [selectedAtsVacancy, setSelectedAtsVacancy] = useState('')
+  const [merging, setMerging] = useState(false)
+
+  useEffect(() => {
+    if (!showLinkAts) return
+    fetch('/api/vacancies')
+      .then(res => res.json())
+      .then((data: AtsVacancy[]) => {
+        const atsOnly = (Array.isArray(data) ? data : []).filter(
+          (v: any) => v.externalId && v.id !== vacancy.id
+        )
+        setAtsVacancies(atsOnly)
+      })
+      .catch(() => setAtsVacancies([]))
+  }, [showLinkAts, vacancy.id])
+
+  const handleMerge = async () => {
+    if (!selectedAtsVacancy) return
+    setMerging(true)
+    try {
+      const res = await fetch(`/api/vacancies/${vacancy.id}/merge`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetVacancyId: selectedAtsVacancy }),
+      })
+      if (res.ok) {
+        const updated = await res.json()
+        setVacancy(prev => ({
+          ...prev,
+          ...updated,
+          candidates: updated.candidates || prev.candidates,
+        }))
+        setShowLinkAts(false)
+        setSelectedAtsVacancy('')
+        toast({ title: vd.merged, description: vd.mergedDesc })
+      } else {
+        toast({ title: vd.mergeFailed, variant: 'destructive' })
+      }
+    } catch {
+      toast({ title: vd.mergeFailed, variant: 'destructive' })
+    } finally {
+      setMerging(false)
+    }
+  }
+
   const shortlistedCount = vacancy.candidates.filter(c => c.status === 'shortlisted').length
 
   const handleSendSummary = async () => {
@@ -248,6 +306,15 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
               </div>
               <div className="flex gap-2 items-center">
                 <span className={`text-sm px-3 py-1 rounded-full font-medium ${getStatusColor(vacancy.status)}`}>{vacancy.status}</span>
+                {!vacancy.externalId && (
+                  <button
+                    onClick={() => setShowLinkAts(true)}
+                    className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    title={vd.linkToAts}
+                  >
+                    <Link2 size={16} />
+                  </button>
+                )}
                 <button
                   onClick={handleDuplicate}
                   disabled={duplicating}
@@ -698,6 +765,46 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
                 className="flex-1 gradient-bg gap-1.5"
               >
                 {saving ? <><Loader2 size={14} className="animate-spin" /> {vd.editSaving}</> : <><Save size={14} /> {vd.editSave}</>}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Link to ATS Dialog */}
+      <Dialog open={showLinkAts} onOpenChange={setShowLinkAts}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Link2 size={18} className="text-blue-600" />
+              {vd.linkToAts}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <p className="text-sm text-gray-600 dark:text-gray-400">{vd.linkToAtsDesc}</p>
+            <div className="space-y-1.5">
+              <Label>{vd.selectAtsVacancy}</Label>
+              <Select value={selectedAtsVacancy} onValueChange={setSelectedAtsVacancy}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {atsVacancies.map(v => (
+                    <SelectItem key={v.id} value={v.id}>
+                      {v.title} ({v.company}) — {v.externalSource}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-3 pt-1">
+              <Button variant="outline" onClick={() => setShowLinkAts(false)} className="flex-1">
+                <X size={14} className="mr-1.5" /> {vd.editCancel}
+              </Button>
+              <Button
+                onClick={handleMerge}
+                disabled={merging || !selectedAtsVacancy}
+                className="flex-1 gradient-bg gap-1.5"
+              >
+                {merging ? <><Loader2 size={14} className="animate-spin" /> {vd.merging}</> : <><Link2 size={14} /> {vd.mergeButton}</>}
               </Button>
             </div>
           </div>
