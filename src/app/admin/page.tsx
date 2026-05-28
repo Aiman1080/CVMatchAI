@@ -7,8 +7,12 @@ import { AdminClient } from '@/components/admin/AdminClient'
 import { getAiUsageStats } from '@/lib/ai-usage'
 
 const safe = async <T,>(p: Promise<T>, fallback: T, label: string): Promise<T> => {
+  // 5-second timeout per query so a slow/dead DB doesn't hang the whole page
+  const timeout = new Promise<T>((_, reject) =>
+    setTimeout(() => reject(new Error('timeout')), 5000)
+  )
   try {
-    return await p
+    return await Promise.race([p, timeout])
   } catch (e: any) {
     console.error(`[AdminPage] ${label} failed:`, e?.message || e)
     return fallback
