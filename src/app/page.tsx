@@ -245,8 +245,8 @@ export default function LandingPage() {
               </button>
             ) : null}
             <LanguageSwitcher />
-            <Link href="/login" className="hidden sm:block">
-              <Button variant="ghost" size="sm" className="h-auto py-2 whitespace-normal text-center leading-tight">{t.nav.signIn}</Button>
+            <Link href="/login">
+              <Button variant="ghost" size="sm" className="h-auto py-2 px-2 sm:px-3 whitespace-normal text-center leading-tight text-xs sm:text-sm">{t.nav.signIn}</Button>
             </Link>
             <Link href="/register">
               <Button size="sm" className="gradient-bg h-auto py-2 whitespace-normal text-center leading-tight">{t.nav.startFree}</Button>
