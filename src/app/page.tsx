@@ -332,7 +332,7 @@ export default function LandingPage() {
                 {t.hero.startFree} <ArrowRight size={18} />
               </Button>
             </Link>
-            <Link href="/login">
+            <Link href="/login?demo=true">
               <Button size="lg" variant="outline" className="border-blue-300 dark:border-white/30 text-blue-700 dark:text-white bg-blue-50 dark:bg-white/10 hover:bg-blue-100 dark:hover:bg-white/20 backdrop-blur-sm">
                 {t.hero.viewDemo}
               </Button>
