@@ -2,7 +2,8 @@
 import { useSession } from 'next-auth/react'
 import { toast } from '@/components/ui/use-toast'
 
-const DEMO_EMAILS = ['demo@cvmatch.ai', 'pro@cvmatch.ai', 'admin@cvmatch.ai', 'free@cvmatch.ai']
+// Admin is a REAL admin with full rights, not a demo account
+const DEMO_EMAILS = ['demo@cvmatch.ai', 'pro@cvmatch.ai', 'free@cvmatch.ai']
 
 export function useDemoMode() {
   const { data: session } = useSession()

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { isDemoAccount } from '@/lib/demo-guard'
+import { getEffectiveSubscription } from '@/lib/plans'
 
 const isDemoMode = () => !process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY.trim() === ''
 
@@ -11,6 +12,20 @@ export async function POST(req: Request) {
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (isDemoAccount(session.user?.email)) {
     return NextResponse.json({ error: 'Demo accounts cannot perform this action', demo: true }, { status: 403 })
+  }
+
+  // Generate email is a Pro feature — Free users can analyze CVs but not generate AI emails
+  const userIdForPlan = (session.user as any)?.id
+  if (userIdForPlan) {
+    const dbUser = await prisma.user.findUnique({
+      where: { id: userIdForPlan },
+      select: { subscription: true, subscriptionEnd: true, role: true },
+    }).catch(() => null)
+    const effectiveSubscription = getEffectiveSubscription(dbUser?.subscription || 'free', dbUser?.subscriptionEnd || null)
+    const isPro = effectiveSubscription === 'pro' || effectiveSubscription === 'demo_pro' || dbUser?.role === 'admin'
+    if (!isPro) {
+      return NextResponse.json({ error: 'AI email generation is a Pro feature. Upgrade to Pro to use it.', upgrade: true }, { status: 403 })
+    }
   }
 
   let body: any
