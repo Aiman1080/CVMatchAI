@@ -11,10 +11,17 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const session = await getServerSession(authOptions)
   if (!session) redirect('/login')
   const userId = (session.user as any)?.id
-  // Verify the user actually still exists in the database (handles stale JWT after DB reset)
+  // Verify the user actually still exists — but be lenient: only log out if the
+  // DB explicitly returns null (not on errors, which could be transient). This
+  // prevents users being kicked out on every DB hiccup.
   if (userId) {
-    const userExists = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } }).catch(() => null)
-    if (!userExists) redirect('/api/auth/signout?callbackUrl=/login')
+    let userCheck: { id: string } | null | undefined
+    try {
+      userCheck = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } })
+    } catch {
+      userCheck = undefined // treat DB error as "unknown" — don't log out
+    }
+    if (userCheck === null) redirect('/api/auth/signout?callbackUrl=/login')
   }
   if ((session.user as any)?.role === 'admin') redirect('/admin')
   const emailVerified = (session.user as any)?.emailVerified
