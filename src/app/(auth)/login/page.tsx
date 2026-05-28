@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2, Eye, EyeOff, ArrowLeft } from 'lucide-react'
 import { Logo } from '@/components/Logo'
@@ -13,7 +13,8 @@ import { toast } from '@/components/ui/use-toast'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 export default function LoginPage() {
-  const showDemo = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
+  const searchParams = useSearchParams()
+  const showDemo = searchParams.get('demo') === 'true'
   const router = useRouter()
   const { t } = useLanguage()
   const [form, setForm] = useState({ email: '', password: '' })
