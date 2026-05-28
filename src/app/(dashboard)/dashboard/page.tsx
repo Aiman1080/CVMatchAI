@@ -1,4 +1,5 @@
 import { getServerSession } from 'next-auth'
+import { redirect } from 'next/navigation'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { DashboardGreeting } from '@/components/dashboard/DashboardGreeting'
@@ -14,49 +15,55 @@ export default async function DashboardPage() {
   const userId = (session?.user as any)?.id
   const isAdmin = (session?.user as any)?.role === 'admin'
 
-  // If no userId, the session JWT is stale — update lastSeenAt for valid users
-  if (userId) {
-    await prisma.user.update({ where: { id: userId }, data: { lastSeenAt: new Date() } }).catch(() => {})
-  }
+  if (!userId) redirect('/login')
 
-  if (!userId) {
-    const { redirect } = await import('next/navigation')
-    redirect('/login')
-  }
+  // Update lastSeenAt — non-blocking, never throws
+  prisma.user.update({ where: { id: userId }, data: { lastSeenAt: new Date() } }).catch(() => {})
 
   const where = isAdmin ? {} : { userId }
 
-  // Resolve the user's effective plan (so expired trials are treated as free).
-  const dbUser = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { subscription: true, subscriptionEnd: true },
-  })
-  const effectiveSubscription = getEffectiveSubscription(dbUser?.subscription || 'free', dbUser?.subscriptionEnd || null)
+  // Wrap every query so a single failure doesn't crash the dashboard
+  const safe = <T,>(p: Promise<T>, fallback: T): Promise<T> => p.catch(() => fallback)
 
-  const [vacancyCount, candidateCount, shortlistedCount, avgScore, inboxCount, vacanciesThisWeek, candidatesThisWeek] = await Promise.all([
-    prisma.vacancy.count({ where }),
-    prisma.candidate.count({ where }),
-    prisma.candidate.count({ where: { ...where, status: 'shortlisted' } }),
-    prisma.candidate.aggregate({ where, _avg: { matchScore: true } }),
-    prisma.emailInbox.count({ where: isAdmin ? {} : { userId } }),
-    prisma.vacancy.count({ where: { ...where, createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } } }),
-    prisma.candidate.count({ where: { ...where, createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } } }),
+  const [
+    dbUser,
+    vacancyCount,
+    candidateCount,
+    shortlistedCount,
+    avgScore,
+    inboxCount,
+    vacanciesThisWeek,
+    candidatesThisWeek,
+    recentCandidates,
+    recentVacancies,
+  ] = await Promise.all([
+    safe(prisma.user.findUnique({ where: { id: userId }, select: { subscription: true, subscriptionEnd: true } }), null),
+    safe(prisma.vacancy.count({ where }), 0),
+    safe(prisma.candidate.count({ where }), 0),
+    safe(prisma.candidate.count({ where: { ...where, status: 'shortlisted' } }), 0),
+    safe(prisma.candidate.aggregate({ where, _avg: { matchScore: true } }), { _avg: { matchScore: null } } as any),
+    safe(prisma.emailInbox.count({ where: isAdmin ? {} : { userId } }), 0),
+    safe(prisma.vacancy.count({ where: { ...where, createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } } }), 0),
+    safe(prisma.candidate.count({ where: { ...where, createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } } }), 0),
+    safe(
+      prisma.candidate.findMany({ where, include: { vacancy: { select: { title: true } } }, orderBy: { createdAt: 'desc' }, take: 5 }),
+      [] as any[],
+    ),
+    safe(
+      prisma.vacancy.findMany({ where, include: { _count: { select: { candidates: true } } }, orderBy: { createdAt: 'desc' }, take: 4 }),
+      [] as any[],
+    ),
   ])
 
-  const recentCandidates = await prisma.candidate.findMany({
-    where, include: { vacancy: { select: { title: true } } },
-    orderBy: { createdAt: 'desc' }, take: 5,
-  })
-
-  const recentVacancies = await prisma.vacancy.findMany({
-    where, include: { _count: { select: { candidates: true } } },
-    orderBy: { createdAt: 'desc' }, take: 4,
-  })
+  const effectiveSubscription = getEffectiveSubscription(dbUser?.subscription || 'free', dbUser?.subscriptionEnd || null)
 
   const stats = {
-    vacancies: vacancyCount, candidates: candidateCount,
-    shortlisted: shortlistedCount, avgScore: Math.round(avgScore._avg.matchScore || 0),
-    vacanciesThisWeek, candidatesThisWeek,
+    vacancies: vacancyCount,
+    candidates: candidateCount,
+    shortlisted: shortlistedCount,
+    avgScore: Math.round((avgScore as any)?._avg?.matchScore || 0),
+    vacanciesThisWeek,
+    candidatesThisWeek,
   }
 
   const onboarding = {
@@ -73,7 +80,7 @@ export default async function DashboardPage() {
         <DashboardStats stats={stats} />
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
           <div className="xl:col-span-2"><RecentCandidates candidates={recentCandidates} /></div>
-          <div><AIInsightsPanel candidates={recentCandidates.map(c => ({ name: `${c.firstName} ${c.lastName}`, matchScore: c.matchScore || 0, vacancyTitle: c.vacancy?.title || '' }))} totalCandidates={candidateCount} avgScore={stats.avgScore} /></div>
+          <div><AIInsightsPanel candidates={recentCandidates.map((c: any) => ({ name: `${c.firstName || ''} ${c.lastName || ''}`.trim(), matchScore: c.matchScore || 0, vacancyTitle: c.vacancy?.title || '' }))} totalCandidates={candidateCount} avgScore={stats.avgScore} /></div>
         </div>
         <RecentVacancies vacancies={recentVacancies} />
       </div>
