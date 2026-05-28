@@ -1,5 +1,5 @@
-import path from 'path'
-import fs from 'fs'
+// Note: filesystem writes removed for Vercel compatibility (read-only FS).
+// Parsed text content is stored in the database instead.
 
 // Dynamic imports keep pdf-parse and mammoth out of the browser bundle;
 // they are Node-only and must also be listed in serverExternalPackages in next.config.js
@@ -33,11 +33,12 @@ export async function parseDocument(buffer: Buffer, mimeType: string): Promise<s
   return buffer.toString('utf-8')
 }
 
-// Stores uploads with a timestamp prefix to avoid name collisions; sanitizes the original filename
+// Generates a safe filename for the upload. On Vercel/serverless the filesystem
+// is read-only outside of /tmp, so we no longer persist the raw file — we only
+// store the parsed text content in the DB (which is what the AI analyzes anyway).
+// The returned name is stored in the candidate record for reference only.
 export function saveUploadedFile(buffer: Buffer, filename: string): string {
-  const uploadDir = process.env.UPLOAD_DIR || './uploads'
-  if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true })
-  const safeName = `${Date.now()}-${filename.replace(/[^a-zA-Z0-9.-]/g, '_')}`
-  fs.writeFileSync(path.join(uploadDir, safeName), buffer)
-  return safeName
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  void buffer
+  return `${Date.now()}-${filename.replace(/[^a-zA-Z0-9.-]/g, '_')}`
 }
