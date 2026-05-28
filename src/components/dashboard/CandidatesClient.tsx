@@ -473,14 +473,14 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
           </button>
         </div>
         <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2 sm:contents">
-          <Button size="sm" onClick={() => setShowUploadCV(true)} className="gap-1.5 h-9 gradient-bg">
-            <Upload size={15} /> Upload CV
+          <Button size="sm" onClick={() => setShowUploadCV(true)} className="gap-1.5 h-auto py-2 gradient-bg whitespace-normal text-center leading-tight">
+            <Upload size={15} className="shrink-0" /> Upload CV
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setShowImportCSV(true)} className="gap-1.5 h-9">
-            <FileText size={15} /> Import CSV
+          <Button variant="outline" size="sm" onClick={() => setShowImportCSV(true)} className="gap-1.5 h-auto py-2 whitespace-normal text-center leading-tight">
+            <FileText size={15} className="shrink-0" /> Import CSV
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setShowExport(true)} className="gap-1.5 h-9">
-            <Download size={15} /> {tc.exportCsv}
+          <Button variant="outline" size="sm" onClick={() => setShowExport(true)} className="gap-1.5 h-auto py-2 whitespace-normal text-center leading-tight">
+            <Download size={15} className="shrink-0" /> {tc.exportCsv}
           </Button>
           <Button
             variant="outline"
@@ -495,9 +495,9 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
               } catch { toast({ title: (tc as any).exportFailed || 'Export failed', description: 'Could not generate the Excel file. Please try again.', variant: 'destructive' }) }
               finally { setExportingExcel(false) }
             }}
-            className="gap-1.5 h-9"
+            className="gap-1.5 h-auto py-2 whitespace-normal text-center leading-tight"
           >
-            <Download size={15} /> {exportingExcel ? 'Exporting...' : 'Export Excel'}
+            <Download size={15} className="shrink-0" /> {exportingExcel ? 'Exporting...' : 'Export Excel'}
           </Button>
           <Button
             variant="outline"
@@ -512,9 +512,9 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
               } catch { toast({ title: (tc as any).exportFailed || 'Export failed', description: 'Could not generate the PDF file. Please try again.', variant: 'destructive' }) }
               finally { setExportingPdf(false) }
             }}
-            className="gap-1.5 h-9"
+            className="gap-1.5 h-auto py-2 whitespace-normal text-center leading-tight"
           >
-            <Download size={15} /> {exportingPdf ? 'Exporting...' : 'Export PDF'}
+            <Download size={15} className="shrink-0" /> {exportingPdf ? 'Exporting...' : 'Export PDF'}
           </Button>
         </div>
       </div>
@@ -583,10 +583,10 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/40 dark:to-purple-950/40 flex items-center justify-center mx-auto mb-4">
                 <Users className="w-8 h-8 text-blue-500 dark:text-blue-400" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 break-words">
                 {hasActiveFilters ? (tc as any).noCandidatesFiltered : tc.noCandidates}
               </h3>
-              <p className="text-gray-500 dark:text-gray-400 text-sm max-w-md mx-auto mb-5">
+              <p className="text-gray-500 dark:text-gray-400 text-sm max-w-md mx-auto mb-5 break-words">
                 {hasActiveFilters ? (tc as any).noCandidatesFilteredDesc : (tc as any).noCandidatesDesc}
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mb-4">
@@ -621,7 +621,7 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
                 )}
               </div>
               {!hasActiveFilters && (
-                <p className="text-gray-400 dark:text-gray-500 text-xs max-w-md mx-auto">
+                <p className="text-gray-400 dark:text-gray-500 text-xs max-w-md mx-auto break-words">
                   {tc.atsHint}
                 </p>
               )}

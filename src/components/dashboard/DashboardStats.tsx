@@ -34,7 +34,7 @@ export function DashboardStats({ stats }: { stats: Stats }) {
                 <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1">
                   <AnimatedCounter target={item.value} suffix={item.suffix} />
                 </p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 truncate">{item.change}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 break-words">{item.change}</p>
               </div>
               <div className={`p-2 sm:p-3 rounded-xl ${item.bg} shrink-0`}>
                 <item.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${item.color.replace('bg-', 'text-')}`} />
