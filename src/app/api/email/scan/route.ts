@@ -95,22 +95,33 @@ export async function POST(req: Request) {
           const sender = msg.envelope?.from?.[0]?.address || ''
           const receivedAt = msg.envelope?.date || new Date()
 
-          // Walk the MIME tree to find PDF/DOCX attachment names for classification
-          const attachmentBuffers: Array<{ name: string; buffer: Buffer; mimeType: string }> = []
+          // Walk the MIME tree to find PDF/DOCX attachments AND their actual IMAP part paths.
+          // The previous version just stored attachment names without paths — meaning we had to
+          // GUESS the path (1, 2, 3... 10) when downloading, which fails for most real emails
+          // because real MIME structures use hierarchical paths like '1.2', '2.1', '3.1.1'.
+          const attachments: Array<{ name: string; mimeType: string; path: string }> = []
           const bodyStructure = msg.bodyStructure
 
-          const collectParts = (part: any) => {
+          const collectParts = (part: any, path: string = '1') => {
             if (!part) return
-            if (['pdf', 'msword', 'vnd.openxmlformats-officedocument.wordprocessingml.document',
-              'octet-stream'].some(t => part.subtype?.includes(t))) {
-              attachmentBuffers.push({
-                name: part.parameters?.name || part.dispositionParameters?.filename || `attachment.${part.subtype}`,
-                buffer: Buffer.alloc(0),
-                mimeType: `${part.type}/${part.subtype}`,
+            const subtype = (part.subtype || '').toLowerCase()
+            const type = (part.type || '').toLowerCase()
+            const isPdf = subtype.includes('pdf')
+            const isDocx = subtype.includes('wordprocessingml.document') || subtype === 'msword'
+            const isOctet = subtype.includes('octet-stream')
+            const filename = part.parameters?.name || part.dispositionParameters?.filename || ''
+            const filenameLower = filename.toLowerCase()
+            const looksLikeDoc = filenameLower.endsWith('.pdf') || filenameLower.endsWith('.docx') || filenameLower.endsWith('.doc')
+
+            if (isPdf || isDocx || (isOctet && looksLikeDoc)) {
+              attachments.push({
+                name: filename || `attachment.${subtype}`,
+                mimeType: `${type}/${subtype}`,
+                path: part.part || path,
               })
             }
             if (part.childNodes) {
-              part.childNodes.forEach((child: any) => collectParts(child))
+              part.childNodes.forEach((child: any, idx: number) => collectParts(child, `${path}.${idx + 1}`))
             }
           }
           collectParts(bodyStructure)
@@ -122,22 +133,17 @@ export async function POST(req: Request) {
             if (textPart?.content) {
               const chunks: Buffer[] = []
               for await (const chunk of textPart.content) chunks.push(chunk)
-              bodyText = Buffer.concat(chunks).toString('utf-8').slice(0, 1000)
+              bodyText = Buffer.concat(chunks).toString('utf-8').slice(0, 2000)
             }
           } catch { /* no text part — attachment-only emails are still classified via filename */ }
 
           const classification = await classifyRecruitmentEmail(
             subject,
             bodyText,
-            attachmentBuffers.map(a => a.name),
+            attachments.map(a => a.name),
           )
 
-          // Skip emails already recorded to prevent duplicate candidates on re-scan.
-          // Include receivedAt in the dedup key so the same person can send multiple
-          // distinct applications without being silently swallowed — only literally
-          // identical messages (the same email re-fetched) are treated as duplicates.
-          // The IMAP message uid is also encoded into the subject of the lookup so
-          // re-applications with the same subject/timestamp don't collide either.
+          // Skip emails already recorded to prevent duplicate candidates on re-scan
           const uidTag = msg.uid ? `::uid=${msg.uid}` : ''
           const alreadyScanned = await prisma.emailScan.findFirst({
             where: {
@@ -149,10 +155,7 @@ export async function POST(req: Request) {
           })
           if (alreadyScanned) continue
 
-          // Always record the scan attempt for audit purposes.
-          // The IMAP uid is appended to the subject as a hidden tag so future scans
-          // can deduplicate against this specific message rather than every message
-          // with the same subject/sender pair (which fails for repeat applicants).
+          // Always record the scan attempt for audit purposes
           const scan = await prisma.emailScan.create({
             data: {
               subject: subject + uidTag,
@@ -160,39 +163,56 @@ export async function POST(req: Request) {
               receivedAt: new Date(receivedAt),
               processed: false,
               relevant: classification.isRelevant,
-              attachments: JSON.stringify(attachmentBuffers.map(a => a.name)),
+              attachments: JSON.stringify(attachments.map(a => a.name)),
               inboxId: inbox.id,
             },
           })
 
-          // Skip low-confidence or irrelevant emails
-          if (!classification.isRelevant || classification.confidence < 50) continue
+          // Be permissive: even low-confidence classifications get processed if there's a
+          // CV-like attachment. Recruiters lose candidates when AI is too strict.
+          const hasDocAttachment = attachments.length > 0
+          const skip = !classification.isRelevant && !hasDocAttachment
+          if (skip) {
+            console.log(`[email/scan] msg ${msg.uid} from ${sender}: skipped (not relevant, no attachments)`)
+            continue
+          }
           results.relevant++
 
           let cvText = ''
           let motivationText = ''
 
-          // Try downloading MIME parts 1–10 to find actual document content
-          for (let partIndex = 1; partIndex <= 10; partIndex++) {
+          // Download each attachment using its ACTUAL MIME part path
+          for (const att of attachments) {
             try {
-              const dl = await client.download(msg.uid.toString(), String(partIndex), { uid: true }) as any
-              if (!dl?.content) break
+              const dl = await client.download(msg.uid.toString(), att.path, { uid: true }) as any
+              if (!dl?.content) continue
               const chunks: Buffer[] = []
               for await (const chunk of dl.content) chunks.push(chunk)
               const buffer = Buffer.concat(chunks)
               if (buffer.length < 100) continue
-              const mimeType = dl.response?.headers?.get?.('content-type') || 'application/octet-stream'
-              const text = await parseDocument(buffer, mimeType)
-              if (text.length < 100) continue
+
+              const text = await parseDocument(buffer, att.mimeType)
+              if (text.length < 100) {
+                console.log(`[email/scan] msg ${msg.uid}: attachment ${att.name} parsed too short (${text.length} chars)`)
+                continue
+              }
               const docType = await detectDocumentType(text)
-              if (docType === 'cv') cvText = text
-              else if (docType === 'motivation') motivationText = text
-            } catch { break }
+              console.log(`[email/scan] msg ${msg.uid}: attachment ${att.name} parsed ${text.length} chars, detected as ${docType}`)
+              if (docType === 'cv' && !cvText) cvText = text
+              else if (docType === 'motivation' && !motivationText) motivationText = text
+              else if (!cvText) cvText = text  // fallback: treat unclassified as CV
+            } catch (e: any) {
+              console.error(`[email/scan] msg ${msg.uid}: failed to download attachment ${att.name} at path ${att.path}:`, e?.message)
+            }
           }
 
           // Fallback: treat the email body itself as a CV if no attachments were parsed
-          if (!cvText && bodyText.length > 200) cvText = bodyText
+          if (!cvText && bodyText.length > 200) {
+            console.log(`[email/scan] msg ${msg.uid}: using email body as CV (${bodyText.length} chars)`)
+            cvText = bodyText
+          }
           if (cvText.length < 50) {
+            console.log(`[email/scan] msg ${msg.uid}: no usable CV content found`)
             await prisma.emailScan.update({ where: { id: scan.id }, data: { processed: true } })
             continue
           }
