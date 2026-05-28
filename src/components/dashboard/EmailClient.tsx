@@ -421,10 +421,10 @@ export function EmailClient() {
                 <HelpGuide
                   title={te.gmailHelpTitle}
                   steps={[
-                    <>Go to <a href="https://myaccount.google.com/security" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">myaccount.google.com &rarr; Security</a></>,
-                    'Enable 2-Step Verification if not already on',
-                    <>Go to <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">App Passwords</a> &rarr; Create one for &quot;Mail&quot;</>,
-                    'Copy the 16-character password and paste it above',
+                    <>{te.gmailStep1Prefix}<a href="https://myaccount.google.com/security" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">{te.gmailStep1Link}</a></>,
+                    te.gmailStep2,
+                    <>{te.gmailStep3Prefix}<a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">{te.gmailStep3Link}</a>{te.gmailStep3Suffix}</>,
+                    te.gmailStep4,
                   ]}
                 />
               )}
@@ -432,8 +432,8 @@ export function EmailClient() {
                 <HelpGuide
                   title={te.outlookHelpTitle}
                   steps={[
-                    'Use your regular Outlook password',
-                    'If you have 2FA enabled, create an App Password in your Microsoft account security settings',
+                    te.outlookStep1,
+                    te.outlookStep2,
                   ]}
                 />
               )}

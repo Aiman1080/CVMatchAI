@@ -15,6 +15,7 @@ import { useLanguage } from '@/contexts/LanguageContext'
 export default function LoginPage() {
   const searchParams = useSearchParams()
   const showDemo = searchParams.get('demo') === 'true'
+  const isSuspended = searchParams.get('suspended') === '1'
   const router = useRouter()
   const { t } = useLanguage()
   const [form, setForm] = useState({ email: '', password: '' })
@@ -47,6 +48,11 @@ export default function LoginPage() {
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{t.auth.welcomeBack}</h1>
           <p className="text-gray-500 text-sm mt-1">{t.auth.signInTo}</p>
         </div>
+        {isSuspended && (
+          <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm">
+            🚫 Your account has been suspended. Please contact <a href="mailto:contactcvmatchia@gmail.com" className="underline font-medium">support</a> if you think this is an error.
+          </div>
+        )}
         {/* SSO buttons — only show when env vars are configured AND not demo flow */}
         {!showDemo && (process.env.NEXT_PUBLIC_HAS_GOOGLE_SSO === 'true' || process.env.NEXT_PUBLIC_HAS_MICROSOFT_SSO === 'true') && (
           <>
