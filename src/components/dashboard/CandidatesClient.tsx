@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Search, Users, Mail, Trash2, LayoutGrid, Columns, Star, Flag, Download, Send, FileText, Eye, EyeOff, ChevronLeft, ChevronRight, Loader2, CheckSquare, Square, CheckCheck, X, GitCompareArrows, Upload } from 'lucide-react'
@@ -63,7 +63,7 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
     setVacancyFilter(vacancyId)
     setPage(1)
     setSelectedIds(new Set())
-    fetchPage(1, vacancyId)
+    fetchPage(1, { vacancyId })
   }
   const [view, setView] = useState<'grid' | 'kanban'>('grid')
   const [deleting, setDeleting] = useState<string | null>(null)
@@ -96,13 +96,33 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
   const [loadingPage, setLoadingPage] = useState(false)
   const totalPages = Math.ceil(total / PAGE_SIZE)
 
-  const fetchPage = useCallback(async (targetPage: number, filterVacancyId?: string) => {
+  type FetchOverrides = {
+    vacancyId?: string
+    search?: string
+    status?: string
+    scoreFilter?: string
+    sortBy?: string
+  }
+
+  const fetchPage = useCallback(async (targetPage: number, overrides: FetchOverrides = {}) => {
     setLoadingPage(true)
     setSelectedIds(new Set())
     try {
-      let url = `/api/candidates?page=${targetPage}&limit=${PAGE_SIZE}`
-      if (filterVacancyId && filterVacancyId !== 'all') url += `&vacancyId=${filterVacancyId}`
-      const res = await fetch(url)
+      const params = new URLSearchParams()
+      params.set('page', String(targetPage))
+      params.set('limit', String(PAGE_SIZE))
+      const v = overrides.vacancyId ?? vacancyFilter
+      if (v && v !== 'all') params.set('vacancyId', v)
+      const s = overrides.search ?? search
+      if (s.trim()) params.set('search', s.trim())
+      const st = overrides.status ?? statusFilter
+      if (st && st !== 'all') params.set('status', st)
+      const sc = overrides.scoreFilter ?? scoreFilter
+      if (sc && sc !== 'all') params.set('scoreFilter', sc)
+      const so = overrides.sortBy ?? sortBy
+      if (so) params.set('sortBy', so)
+
+      const res = await fetch(`/api/candidates?${params.toString()}`)
       if (res.ok) {
         const data = await res.json()
         setCandidates(data.candidates)
@@ -112,23 +132,51 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
     } finally {
       setLoadingPage(false)
     }
-  }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vacancyFilter, search, statusFilter, scoreFilter, sortBy])
 
   const goToPage = (targetPage: number) => {
     if (targetPage < 1 || targetPage > totalPages || targetPage === page || loadingPage) return
-    fetchPage(targetPage, vacancyFilter)
+    fetchPage(targetPage)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   // Reset to page 1 and clear selection when any filter changes
-  const resetFilters = () => {
-    if (page !== 1) { setPage(1); fetchPage(1) }
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value)
+    setPage(1)
+    setSelectedIds(new Set())
+    fetchPage(1, { status: value })
+  }
+  const handleScoreFilterChange = (value: string) => {
+    setScoreFilter(value)
+    setPage(1)
+    setSelectedIds(new Set())
+    fetchPage(1, { scoreFilter: value })
+  }
+  const handleSortChange = (value: string) => {
+    setSortBy(value)
+    setPage(1)
+    setSelectedIds(new Set())
+    fetchPage(1, { sortBy: value })
+  }
+
+  // Debounced search — avoid hitting the API on every keystroke
+  const handleSearchChange = (value: string) => {
+    setSearch(value)
     setSelectedIds(new Set())
   }
-  const handleSearchChange = (value: string) => { setSearch(value); resetFilters() }
-  const handleStatusFilterChange = (value: string) => { setStatusFilter(value); resetFilters() }
-  const handleScoreFilterChange = (value: string) => { setScoreFilter(value); resetFilters() }
-  const handleSortChange = (value: string) => { setSortBy(value); resetFilters() }
+  const isFirstSearchRender = useRef(true)
+  useEffect(() => {
+    // Skip the initial render — initial data already came from the server
+    if (isFirstSearchRender.current) { isFirstSearchRender.current = false; return }
+    const handle = setTimeout(() => {
+      setPage(1)
+      fetchPage(1, { search })
+    }, 300)
+    return () => clearTimeout(handle)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search])
 
   const openConfirm = (opts: Omit<typeof confirmDialog, 'open'>) => {
     setConfirmDialog({ ...opts, open: true })
@@ -333,29 +381,9 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
     } finally { setExporting(false) }
   }
 
-  const filtered = useMemo(() => candidates
-    .filter(c => {
-      const name = `${c.firstName} ${c.lastName}`.toLowerCase()
-      const matchSearch = name.includes(search.toLowerCase()) ||
-        c.email?.toLowerCase().includes(search.toLowerCase()) ||
-        c.vacancy?.title.toLowerCase().includes(search.toLowerCase())
-      const matchStatus = statusFilter === 'all' || c.status === statusFilter ||
-        (statusFilter === 'liked' && c.liked) ||
-        (statusFilter === 'priority' && c.priority) ||
-        (statusFilter === 'pool' && c.savedToPool)
-      const score = c.matchScore || 0
-      const matchScore = scoreFilter === 'all' ||
-        (scoreFilter === 'high' && score >= 75) ||
-        (scoreFilter === 'medium' && score >= 50 && score < 75) ||
-        (scoreFilter === 'low' && score >= 0 && score < 50)
-      return matchSearch && matchStatus && matchScore
-    })
-    .sort((a, b) => {
-      if (sortBy === 'score') return (b.matchScore || 0) - (a.matchScore || 0)
-      if (sortBy === 'date') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      if (sortBy === 'date_oldest') return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`)
-    }), [candidates, search, statusFilter, scoreFilter, sortBy])
+  // Filtering and sorting now happen server-side via fetchPage — the candidates
+  // array already reflects the current search/filter/sort state for this page.
+  const filtered = candidates
 
   const allFilteredSelected = filtered.length > 0 && filtered.every(c => selectedIds.has(c.id))
 
@@ -559,7 +587,9 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             {filtered.map((c, i) => {
-              const initials = `${c.firstName?.[0] ?? '?'}${c.lastName?.[0] ?? ''}`.toUpperCase()
+              const firstInitial = c.firstName?.trim()?.[0] ?? '?'
+              const lastInitial = c.lastName?.trim()?.[0] ?? ''
+              const initials = `${firstInitial}${lastInitial}`.toUpperCase()
               const score = c.matchScore || 0
               const skills = parseJsonSafe<string[]>(c.skills, [])
               const isUpdating = updating === c.id

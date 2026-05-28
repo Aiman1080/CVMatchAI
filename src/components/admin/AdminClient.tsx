@@ -1,6 +1,7 @@
 'use client'
 
 import { Fragment, useState, useMemo, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import {
   Users, Briefcase, UserCheck, MessageSquare, Activity,
   Shield, CheckCircle, XCircle, ChevronDown, ChevronUp,
@@ -144,32 +145,12 @@ export function AdminClient({
   activeToday, weeklySignups, recentActivity,
   aiUsageStats, dbStats,
 }: Props) {
-  const [activeTab, setActiveTab] = useState('accounts')
-
-  // Sync tab with URL on mount and on URL change
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const tab = params.get('tab')
-    if (tab) setActiveTab(tab)
-    else setActiveTab('accounts')
-  }, [])
-
-  // Listen for popstate (back/forward) and URL changes
-  useEffect(() => {
-    const handleUrlChange = () => {
-      const params = new URLSearchParams(window.location.search)
-      const tab = params.get('tab')
-      if (tab) setActiveTab(tab)
-      else setActiveTab('accounts')
-    }
-    window.addEventListener('popstate', handleUrlChange)
-    const interval = setInterval(() => {
-      const params = new URLSearchParams(window.location.search)
-      const tab = params.get('tab') || 'accounts'
-      if (tab !== activeTab) setActiveTab(tab)
-    }, 2000)
-    return () => { window.removeEventListener('popstate', handleUrlChange); clearInterval(interval) }
-  }, [activeTab])
+  // Sync tab with URL — useSearchParams reacts to client-side navigation,
+  // so no polling is needed to detect tab changes from the sidebar links.
+  const searchParams = useSearchParams()
+  const tabParam = searchParams?.get('tab') || 'accounts'
+  const [activeTab, setActiveTab] = useState(tabParam)
+  useEffect(() => { setActiveTab(tabParam) }, [tabParam])
 
   const [users, setUsers] = useState(initialUsers)
   const [tickets, setTickets] = useState(initialTickets)

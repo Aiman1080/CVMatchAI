@@ -35,6 +35,7 @@ export async function POST(req: Request) {
     const gdprConsent = formData.get('gdprConsent') === 'true'
 
     if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
+    if (file.size === 0) return NextResponse.json({ error: 'Empty file uploaded' }, { status: 400 })
     if (!vacancyId) return NextResponse.json({ error: 'Vacancy ID required' }, { status: 400 })
 
     // Validate file type — only allow PDF, DOCX, and TXT
