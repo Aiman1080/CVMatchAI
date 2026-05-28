@@ -224,28 +224,33 @@ export default function LandingPage() {
     <div className="min-h-screen bg-white dark:bg-gray-950">
       {/* Nav */}
       <nav className="sticky top-0 z-50 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <Logo size={32} />
-            <span className="font-bold text-gray-900 dark:text-white text-lg">DeltaMatch</span>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
+          <Link href="/" className="flex items-center gap-2 shrink-0">
+            <Logo size={28} />
+            <span className="font-bold text-gray-900 dark:text-white text-base sm:text-lg">DeltaMatch</span>
           </Link>
           <div className="hidden md:flex items-center gap-8 text-sm text-gray-500 dark:text-gray-400">
             <a href="#ai-features" onClick={handleNavClick} className="hover:text-gray-900 dark:hover:text-white transition-colors">{t.landing.navAiFeatures}</a>
             <a href="#platform" onClick={handleNavClick} className="hover:text-gray-900 dark:hover:text-white transition-colors">{t.landing.navPlatform}</a>
             <a href="#pricing" onClick={handleNavClick} className="hover:text-gray-900 dark:hover:text-white transition-colors">{t.nav.pricing}</a>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 sm:gap-3">
             {mounted ? (
               <button
                 onClick={() => setTheme(isDark ? 'light' : 'dark')}
                 className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                aria-label="Toggle theme"
               >
                 {isDark ? <Sun size={18} /> : <Moon size={18} />}
               </button>
             ) : null}
             <LanguageSwitcher />
-            <Link href="/login"><Button variant="ghost" size="sm">{t.nav.signIn}</Button></Link>
-            <Link href="/register"><Button size="sm" className="gradient-bg">{t.nav.startFree}</Button></Link>
+            <Link href="/login" className="hidden sm:block">
+              <Button variant="ghost" size="sm">{t.nav.signIn}</Button>
+            </Link>
+            <Link href="/register">
+              <Button size="sm" className="gradient-bg whitespace-nowrap">{t.nav.startFree}</Button>
+            </Link>
           </div>
         </div>
       </nav>
@@ -591,19 +596,18 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-6 bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-400">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+      <footer className="py-10 sm:py-12 px-4 sm:px-6 bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-400">
+        <div className="max-w-6xl mx-auto flex flex-col items-center text-center gap-6 md:flex-row md:text-left md:justify-between">
           <div className="flex items-center gap-2">
             <Logo size={28} />
             <span className="text-gray-900 dark:text-white font-semibold">DeltaMatch</span>
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t.footer.copyright}</p>
-          <div className="flex items-center gap-6 text-sm">
+          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-sm">
             <Link href="/privacy" className="hover:text-gray-900 dark:hover:text-white">{t.footer.privacy}</Link>
             <Link href="/terms" className="hover:text-gray-900 dark:hover:text-white">{t.footer.terms}</Link>
             <Link href="/contact" className="hover:text-gray-900 dark:hover:text-white">{t.footer.contact}</Link>
-            <LanguageSwitcher />
           </div>
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{t.footer.copyright}</p>
         </div>
       </footer>
     </div>
