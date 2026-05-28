@@ -114,7 +114,7 @@ async function main() {
   }
 
   console.log('✅ Database seeded successfully')
-  console.log('👤 Admin:       admin@cvmatch.ai / admin123 (pro)')
+  console.log('👤 Admin:       admin@cvmatch.ai / Wachtwoord_2201 (pro)')
   console.log('👤 Demo Free:   demo@cvmatch.ai / recruiter123')
   console.log('👤 Demo Pro:    pro@cvmatch.ai / pro123')
   console.log(`📋 Demo: 3 vacancies, ${demoCandidates.length} candidates`)
