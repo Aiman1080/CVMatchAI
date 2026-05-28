@@ -31,38 +31,6 @@ export async function POST() {
   const appUrl = process.env.APP_URL || process.env.NEXTAUTH_URL || 'http://localhost:3000'
 
   try {
-    // Re-use or create a Stripe customer so the portal session and webhooks can
-    // identify the user by customer ID (more reliable than email lookups).
-    let customerId: string | undefined
-    if (userId) {
-      const dbUser = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { stripeCustomerId: true },
-      })
-      customerId = dbUser?.stripeCustomerId || undefined
-
-      if (!customerId) {
-        // Try to find an existing Stripe customer by email before creating one
-        if (email) {
-          const existing = await stripe.customers.list({ email, limit: 1 })
-          if (existing.data.length > 0) {
-            customerId = existing.data[0].id
-          }
-        }
-        if (!customerId) {
-          const customer = await stripe.customers.create({
-            email: email || undefined,
-            metadata: { userId },
-          })
-          customerId = customer.id
-        }
-        await prisma.user.update({
-          where: { id: userId },
-          data: { stripeCustomerId: customerId },
-        })
-      }
-    }
-
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],
@@ -71,9 +39,7 @@ export async function POST() {
         trial_period_days: 30,
         metadata: { userId },
       },
-      ...(customerId
-        ? { customer: customerId }
-        : { customer_email: email || undefined }),
+      customer_email: email || undefined,
       success_url: `${appUrl}/settings?upgraded=true`,
       cancel_url: `${appUrl}/upgrade`,
       metadata: { userId },

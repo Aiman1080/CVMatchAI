@@ -46,7 +46,6 @@ model User {
   emailSignature   String?
   subscription     String          @default("free")
   subscriptionEnd  DateTime?
-  stripeCustomerId String?         @unique
   suspended        Boolean         @default(false)
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt

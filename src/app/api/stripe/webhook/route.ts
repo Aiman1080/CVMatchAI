@@ -107,18 +107,8 @@ export async function POST(req: Request) {
               data: updateData,
             })
             console.log(`[Stripe webhook ${event.id}] User ${userId} subscription updated (status=${status})`)
-          } else if (customerId) {
-            // Fall back to lookup by stored Stripe customer ID
-            const user = await prisma.user.findUnique({ where: { stripeCustomerId: customerId } })
-            if (user) {
-              await prisma.user.update({
-                where: { id: user.id },
-                data: updateData,
-              })
-              console.log(`[Stripe webhook ${event.id}] User ${user.id} subscription updated by customer ID (status=${status})`)
-            } else {
-              console.warn(`[Stripe webhook ${event.id}] No user matched customer ${customerId}`)
-            }
+          } else {
+            console.warn(`[Stripe webhook ${event.id}] No userId in metadata, customer=${customerId}`)
           }
         } catch (err: any) {
           console.error(`[Stripe webhook ${event.id}] customer.subscription.updated handler error:`, err?.message || err)
