@@ -81,7 +81,7 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
     const allErrors = validate(form)
     if (Object.keys(allErrors).length > 0) {
       setErrors(allErrors)
-      toast({ title: 'Please fix the highlighted fields', description: 'Some required fields are missing or invalid.', variant: 'destructive' })
+      toast({ title: (cv as any).fixErrors || 'Please fix the highlighted fields', description: (cv as any).fixErrorsDesc || 'Some required fields are missing or invalid.', variant: 'destructive' })
       return
     }
     setLoading(true)
@@ -95,14 +95,14 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
         const data = await res.json().catch(() => ({}))
         if (res.status === 403 && data.upgrade) {
           toast({
-            title: cv.limitReached || 'Limit reached',
+            title: cv.limitReached || (cv as any).limitReachedFallback || 'Limit reached',
             description: t.dashboard.upgrade.vacancyLimitDesc,
             variant: 'destructive',
           })
         } else {
           toast({
             title: cv.createError,
-            description: data.error || 'Could not create the vacancy. Please check the fields and try again.',
+            description: data.error || (cv as any).createErrorDesc || 'Could not create the vacancy. Please check the fields and try again.',
             variant: 'destructive',
           })
         }
@@ -115,7 +115,7 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
       setErrors({})
       setTouched({})
     } catch {
-      toast({ title: cv.createError, description: 'Network error. Please check your connection and try again.', variant: 'destructive' })
+      toast({ title: cv.createError, description: (cv as any).networkErrorDesc || 'Network error. Please check your connection and try again.', variant: 'destructive' })
     } finally {
       setLoading(false)
     }
@@ -236,7 +236,7 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
               ) : (
                 <span />
               )}
-              <p className="text-xs text-gray-400 text-right">{form.description.length} characters</p>
+              <p className="text-xs text-gray-400 text-right">{form.description.length} {(cv as any).characters || 'characters'}</p>
             </div>
           </div>
           <div className="space-y-1.5">
@@ -256,7 +256,7 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
               ) : (
                 <span />
               )}
-              <p className="text-xs text-gray-400 text-right">{form.requirements.length} characters</p>
+              <p className="text-xs text-gray-400 text-right">{form.requirements.length} {(cv as any).characters || 'characters'}</p>
             </div>
           </div>
           <div className="space-y-1.5">

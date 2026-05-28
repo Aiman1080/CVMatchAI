@@ -187,7 +187,7 @@ const PLATFORM_STATIC = [
 type PlatformId = 'teamtailor' | 'recruitee' | 'smartrecruiters' | 'greenhouse' | 'lever' | 'bullhorn' | 'workable' | 'flatchr' | 'ashby' | 'breezyhr' | 'homerun' | 'personio' | 'icims' | 'softgarden'
 
 /** Collapsible guide with numbered steps — shown inline inside the connection form */
-function HowToGuide({ steps, docsUrl, openLabel }: { steps: readonly string[]; docsUrl: string; openLabel: string }) {
+function HowToGuide({ steps, docsUrl, openLabel, title }: { steps: readonly string[]; docsUrl: string; openLabel: string; title: string }) {
   const [open, setOpen] = useState(false)
   return (
     <div className="rounded-lg border border-blue-100 dark:border-blue-900 bg-blue-50/60 dark:bg-blue-950/30 overflow-hidden">
@@ -198,7 +198,7 @@ function HowToGuide({ steps, docsUrl, openLabel }: { steps: readonly string[]; d
       >
         <span className="flex items-center gap-1.5 text-xs font-medium text-blue-700 dark:text-blue-300">
           <HelpCircle size={13} className="shrink-0" />
-          How to get your API key
+          {title}
         </span>
         {open ? <ChevronUp size={13} className="text-blue-500 shrink-0" /> : <ChevronDown size={13} className="text-blue-500 shrink-0" />}
       </button>
@@ -287,7 +287,7 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
 
   const handleConnect = async (platformId: string) => {
     const f = form[platformId] || { apiKey: '', companySlug: '' }
-    if (!f.apiKey.trim()) { toast({ title: ti.apiKeyRequired, description: 'Paste an API key from your ATS settings to continue.', variant: 'destructive' }); return }
+    if (!f.apiKey.trim()) { toast({ title: ti.apiKeyRequired, description: (ti as any).apiKeyRequiredDesc || 'Paste an API key from your ATS settings to continue.', variant: 'destructive' }); return }
     setConnecting(platformId)
     try {
       const res = await fetch('/api/integrations', {
@@ -313,12 +313,12 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
       } else {
         // Provide actionable error description
         const errorDesc = data.error
-          ? `${data.error} — Double-check the API key in your ATS settings and try again.`
-          : 'Could not reach the ATS. Please verify your API key has the right permissions and try again.'
+          ? ((ti as any).connectionFailedDescWithError || '{error} — Double-check the API key in your ATS settings and try again.').replace('{error}', data.error)
+          : ((ti as any).connectionFailedDesc || 'Could not reach the ATS. Please verify your API key has the right permissions and try again.')
         toast({ title: ti.connectionFailed, description: errorDesc, variant: 'destructive' })
       }
     } catch {
-      toast({ title: ti.connectionFailed, description: 'Network error. Please check your connection and try again.', variant: 'destructive' })
+      toast({ title: ti.connectionFailed, description: (ti as any).networkErrorDesc || 'Network error. Please check your connection and try again.', variant: 'destructive' })
     } finally { setConnecting(null) }
   }
 
@@ -349,8 +349,8 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
       } else {
         if (data.apiKeyExpired) {
           toast({
-            title: 'API Key Expired',
-            description: `Your ${PLATFORM_STATIC.find(p => p.id === platformId)?.name} API key is expired or invalid. Disconnect and reconnect with a new key from your ATS settings.`,
+            title: (ti as any).apiKeyExpiredTitle || 'API Key Expired',
+            description: ((ti as any).apiKeyExpiredDesc || 'Your {name} API key is expired or invalid. Disconnect and reconnect with a new key from your ATS settings.').replace('{name}', PLATFORM_STATIC.find(p => p.id === platformId)?.name ?? ''),
             variant: 'destructive',
           })
           setIntegrations(prev => prev.map(i => i.id === integrationId ? { ...i, status: 'error' } : i))
@@ -358,14 +358,14 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
           toast({
             title: ti.syncError,
             description: data.error
-              ? `${data.error} — Verify your ATS connection and try again.`
-              : 'Could not sync. Check your network and the ATS status, then retry.',
+              ? ((ti as any).syncErrorDescWithError || '{error} — Verify your ATS connection and try again.').replace('{error}', data.error)
+              : ((ti as any).syncErrorDesc || 'Could not sync. Check your network and the ATS status, then retry.'),
             variant: 'destructive',
           })
         }
       }
     } catch {
-      toast({ title: ti.syncError, description: 'Network error. Please check your connection and try again.', variant: 'destructive' })
+      toast({ title: ti.syncError, description: (ti as any).networkErrorDesc || 'Network error. Please check your connection and try again.', variant: 'destructive' })
     } finally { setSyncing(null) }
   }
 
@@ -416,10 +416,10 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
         setIntegrations(prev => prev.filter(i => i.id !== integrationId))
         toast({ title: `${platformName} ${ti.disconnected}`, description: ti.candidatesKept })
       } else {
-        toast({ title: 'Disconnect failed', description: (ti as any).disconnectFailed || 'Please refresh the page and try again.', variant: 'destructive' })
+        toast({ title: (ti as any).disconnectFailedTitle || 'Disconnect failed', description: (ti as any).disconnectFailed || (ti as any).disconnectFailedRefresh || 'Please refresh the page and try again.', variant: 'destructive' })
       }
     } catch {
-      toast({ title: 'Disconnect failed', description: (ti as any).disconnectFailed || 'Please check your connection and try again.', variant: 'destructive' })
+      toast({ title: (ti as any).disconnectFailedTitle || 'Disconnect failed', description: (ti as any).disconnectFailed || (ti as any).disconnectFailedConnection || 'Please check your connection and try again.', variant: 'destructive' })
     } finally { setDeleting(null) }
   }
 
@@ -593,11 +593,16 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
                           : ti.neverSynced}
                       </p>
                     )}
-                    {isJustConnected && (
-                      <p className="mt-1.5 inline-flex items-center gap-1 text-xs text-green-700 dark:text-green-400 font-medium break-words">
-                        <CheckCircle size={11} className="shrink-0" /> Connected! Click <span className="font-semibold">Sync</span> to import your candidates.
-                      </p>
-                    )}
+                    {isJustConnected && (() => {
+                      const syncWord = (ti as any).justConnectedSyncWord || 'Sync'
+                      const template = (ti as any).justConnectedHint || 'Connected! Click {syncWord} to import your candidates.'
+                      const parts = template.split('{syncWord}')
+                      return (
+                        <p className="mt-1.5 inline-flex items-center gap-1 text-xs text-green-700 dark:text-green-400 font-medium break-words">
+                          <CheckCircle size={11} className="shrink-0" /> {parts[0]}<span className="font-semibold">{syncWord}</span>{parts[1] ?? ''}
+                        </p>
+                      )
+                    })()}
                   </div>
 
                   {/* Actions */}
@@ -667,7 +672,7 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
                         className="gap-1.5 h-auto py-1.5 text-xs gradient-bg whitespace-normal text-center leading-tight"
                       >
                         <Link2 size={12} className="shrink-0" />
-                        {isDemo ? 'View only' : ti.connectBtn}
+                        {isDemo ? ((ti as any).viewOnly || 'View only') : ti.connectBtn}
                         {!isDemo && (isExpanded ? <ChevronUp size={11} className="shrink-0" /> : <ChevronDown size={11} className="shrink-0" />)}
                       </Button>
                     )}
@@ -707,7 +712,7 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
                       </div>
                     )}
 
-                    <HowToGuide steps={pt.howToGet} docsUrl={platform.docsUrl} openLabel={ti.openInAts} />
+                    <HowToGuide steps={pt.howToGet} docsUrl={platform.docsUrl} openLabel={ti.openInAts} title={(ti as any).howToGetKey || 'How to get your API key'} />
 
                     <div className="flex items-start gap-2 p-2.5 bg-amber-50 dark:bg-amber-950/30 rounded-lg">
                       <AlertCircle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />

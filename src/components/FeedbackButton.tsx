@@ -31,6 +31,7 @@ export function FeedbackButton() {
     error: 'Could not send feedback',
     errorDesc: 'Please try again or email us directly at',
     cancel: 'Cancel',
+    close: 'Close',
   }
 
   const handleSend = async () => {
@@ -90,7 +91,7 @@ export function FeedbackButton() {
               <button
                 onClick={() => !sending && setOpen(false)}
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-                aria-label="Close"
+                aria-label={tf.close || 'Close'}
               >
                 <X size={20} />
               </button>
