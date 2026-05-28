@@ -35,8 +35,8 @@ export function AIInsightsPanel({ candidates, totalCandidates, avgScore }: Props
           <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
             <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{ai.topMatches}</p>
             <div className="space-y-2">
-              {/* Sort inline to show best-scoring candidates first */}
-              {candidates.sort((a, b) => b.matchScore - a.matchScore).slice(0, 3).map((c, i) => (
+              {/* Sort a copy (not the prop array) to show best-scoring candidates first */}
+              {[...candidates].sort((a, b) => b.matchScore - a.matchScore).slice(0, 3).map((c, i) => (
                 <div key={i} className="flex items-center justify-between">
                   <span className="text-xs text-gray-600 dark:text-gray-400 truncate max-w-[140px]">{c.name}</span>
                   <span className={`text-xs font-bold ${c.matchScore >= 75 ? 'text-green-600' : c.matchScore >= 50 ? 'text-amber-600' : 'text-red-500'}`}>{c.matchScore.toFixed(0)}%</span>

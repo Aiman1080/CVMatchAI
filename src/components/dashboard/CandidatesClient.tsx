@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Search, Users, Mail, Trash2, LayoutGrid, Columns, Star, Flag, Download, Send, FileText, Eye, EyeOff, ChevronLeft, ChevronRight, Loader2, CheckSquare, Square, CheckCheck, X, GitCompareArrows, Upload } from 'lucide-react'
@@ -63,7 +63,7 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
     setVacancyFilter(vacancyId)
     setPage(1)
     setSelectedIds(new Set())
-    fetchPage(1, vacancyId)
+    fetchPage(1, { vacancyId })
   }
   const [view, setView] = useState<'grid' | 'kanban'>('grid')
   const [deleting, setDeleting] = useState<string | null>(null)
@@ -96,13 +96,33 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
   const [loadingPage, setLoadingPage] = useState(false)
   const totalPages = Math.ceil(total / PAGE_SIZE)
 
-  const fetchPage = useCallback(async (targetPage: number, filterVacancyId?: string) => {
+  type FetchOverrides = {
+    vacancyId?: string
+    search?: string
+    status?: string
+    scoreFilter?: string
+    sortBy?: string
+  }
+
+  const fetchPage = useCallback(async (targetPage: number, overrides: FetchOverrides = {}) => {
     setLoadingPage(true)
     setSelectedIds(new Set())
     try {
-      let url = `/api/candidates?page=${targetPage}&limit=${PAGE_SIZE}`
-      if (filterVacancyId && filterVacancyId !== 'all') url += `&vacancyId=${filterVacancyId}`
-      const res = await fetch(url)
+      const params = new URLSearchParams()
+      params.set('page', String(targetPage))
+      params.set('limit', String(PAGE_SIZE))
+      const v = overrides.vacancyId ?? vacancyFilter
+      if (v && v !== 'all') params.set('vacancyId', v)
+      const s = overrides.search ?? search
+      if (s.trim()) params.set('search', s.trim())
+      const st = overrides.status ?? statusFilter
+      if (st && st !== 'all') params.set('status', st)
+      const sc = overrides.scoreFilter ?? scoreFilter
+      if (sc && sc !== 'all') params.set('scoreFilter', sc)
+      const so = overrides.sortBy ?? sortBy
+      if (so) params.set('sortBy', so)
+
+      const res = await fetch(`/api/candidates?${params.toString()}`)
       if (res.ok) {
         const data = await res.json()
         setCandidates(data.candidates)
@@ -112,23 +132,51 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
     } finally {
       setLoadingPage(false)
     }
-  }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vacancyFilter, search, statusFilter, scoreFilter, sortBy])
 
   const goToPage = (targetPage: number) => {
     if (targetPage < 1 || targetPage > totalPages || targetPage === page || loadingPage) return
-    fetchPage(targetPage, vacancyFilter)
+    fetchPage(targetPage)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   // Reset to page 1 and clear selection when any filter changes
-  const resetFilters = () => {
-    if (page !== 1) { setPage(1); fetchPage(1) }
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value)
+    setPage(1)
+    setSelectedIds(new Set())
+    fetchPage(1, { status: value })
+  }
+  const handleScoreFilterChange = (value: string) => {
+    setScoreFilter(value)
+    setPage(1)
+    setSelectedIds(new Set())
+    fetchPage(1, { scoreFilter: value })
+  }
+  const handleSortChange = (value: string) => {
+    setSortBy(value)
+    setPage(1)
+    setSelectedIds(new Set())
+    fetchPage(1, { sortBy: value })
+  }
+
+  // Debounced search — avoid hitting the API on every keystroke
+  const handleSearchChange = (value: string) => {
+    setSearch(value)
     setSelectedIds(new Set())
   }
-  const handleSearchChange = (value: string) => { setSearch(value); resetFilters() }
-  const handleStatusFilterChange = (value: string) => { setStatusFilter(value); resetFilters() }
-  const handleScoreFilterChange = (value: string) => { setScoreFilter(value); resetFilters() }
-  const handleSortChange = (value: string) => { setSortBy(value); resetFilters() }
+  const isFirstSearchRender = useRef(true)
+  useEffect(() => {
+    // Skip the initial render — initial data already came from the server
+    if (isFirstSearchRender.current) { isFirstSearchRender.current = false; return }
+    const handle = setTimeout(() => {
+      setPage(1)
+      fetchPage(1, { search })
+    }, 300)
+    return () => clearTimeout(handle)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search])
 
   const openConfirm = (opts: Omit<typeof confirmDialog, 'open'>) => {
     setConfirmDialog({ ...opts, open: true })
@@ -182,13 +230,18 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
         )
       )
       const successCount = results.filter(r => r.status === 'fulfilled').length
+      const failureCount = results.length - successCount
       setCandidates(prev =>
         prev.map(c => selectedIds.has(c.id) ? { ...c, status: newStatus } : c)
       )
       setSelectedIds(new Set())
-      toast({ title: `${successCount} candidate(s) updated to "${newStatus}"` })
+      if (failureCount > 0) {
+        toast({ title: `${successCount} of ${results.length} candidates updated`, description: `${failureCount} could not be updated. Please retry those candidates individually.`, variant: 'destructive' })
+      } else {
+        toast({ title: `${successCount} candidate(s) updated to "${newStatus}"` })
+      }
     } catch {
-      toast({ title: tc.updateError, variant: 'destructive' })
+      toast({ title: (tc as any).bulkUpdateError || tc.updateError, variant: 'destructive' })
     } finally {
       setBulkUpdating(false)
     }
@@ -221,12 +274,17 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
           setCandidates(prev => prev.filter(c => !deletedIds.has(c.id)))
           setTotal(prev => prev - deletedIds.size)
           setSelectedIds(new Set())
-          toast({ title: `${deletedIds.size} candidate(s) deleted` })
+          const failed = ids.length - deletedIds.size
+          if (failed > 0) {
+            toast({ title: `${deletedIds.size} of ${ids.length} deleted`, description: `${failed} could not be deleted. Please retry those candidates individually.`, variant: 'destructive' })
+          } else {
+            toast({ title: `${deletedIds.size} candidate(s) deleted` })
+          }
           if (candidates.length === deletedIds.size && page > 1) {
             fetchPage(page - 1)
           }
         } catch {
-          toast({ title: tc.deleteError, variant: 'destructive' })
+          toast({ title: (tc as any).bulkDeleteError || tc.deleteError, variant: 'destructive' })
         } finally {
           setBulkUpdating(false)
         }
@@ -242,7 +300,7 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
       await exportCandidatesToExcel(selected)
       toast({ title: `Excel export of ${selected.length} candidate(s) downloaded!` })
     } catch {
-      toast({ title: 'Export failed', variant: 'destructive' })
+      toast({ title: (tc as any).exportFailed || 'Export failed', description: 'Could not generate the Excel file. Please try again.', variant: 'destructive' })
     } finally {
       setExportingExcel(false)
     }
@@ -256,7 +314,7 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
       await exportCandidatesToPDF(selected)
       toast({ title: `PDF export of ${selected.length} candidate(s) downloaded!` })
     } catch {
-      toast({ title: 'Export failed', variant: 'destructive' })
+      toast({ title: (tc as any).exportFailed || 'Export failed', description: 'Could not generate the PDF file. Please try again.', variant: 'destructive' })
     } finally {
       setExportingPdf(false)
     }
@@ -312,11 +370,15 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
           toast({ title: 'Email sent!', description: `Export sent to ${exportEmail}` })
           setShowExport(false)
         } else {
-          toast({ title: data.error || 'Error', variant: 'destructive' })
+          toast({ title: 'Email could not be sent', description: data.error || 'Please check the email address and try again.', variant: 'destructive' })
         }
       } else if (sendEmail === false) {
         // CSV download
         const res = await fetch('/api/candidates/export')
+        if (!res.ok) {
+          toast({ title: (tc as any).exportFailed || 'Export failed', description: 'Could not generate the CSV. Please try again.', variant: 'destructive' })
+          return
+        }
         const blob = await res.blob()
         const a = document.createElement('a')
         a.href = URL.createObjectURL(blob)
@@ -330,32 +392,14 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
         toast({ title: 'PDF report opened', description: 'Use Ctrl+P to save as PDF.' })
         setShowExport(false)
       }
+    } catch {
+      toast({ title: (tc as any).exportFailed || 'Export failed', description: 'Please check your connection and try again.', variant: 'destructive' })
     } finally { setExporting(false) }
   }
 
-  const filtered = useMemo(() => candidates
-    .filter(c => {
-      const name = `${c.firstName} ${c.lastName}`.toLowerCase()
-      const matchSearch = name.includes(search.toLowerCase()) ||
-        c.email?.toLowerCase().includes(search.toLowerCase()) ||
-        c.vacancy?.title.toLowerCase().includes(search.toLowerCase())
-      const matchStatus = statusFilter === 'all' || c.status === statusFilter ||
-        (statusFilter === 'liked' && c.liked) ||
-        (statusFilter === 'priority' && c.priority) ||
-        (statusFilter === 'pool' && c.savedToPool)
-      const score = c.matchScore || 0
-      const matchScore = scoreFilter === 'all' ||
-        (scoreFilter === 'high' && score >= 75) ||
-        (scoreFilter === 'medium' && score >= 50 && score < 75) ||
-        (scoreFilter === 'low' && score >= 0 && score < 50)
-      return matchSearch && matchStatus && matchScore
-    })
-    .sort((a, b) => {
-      if (sortBy === 'score') return (b.matchScore || 0) - (a.matchScore || 0)
-      if (sortBy === 'date') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      if (sortBy === 'date_oldest') return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`)
-    }), [candidates, search, statusFilter, scoreFilter, sortBy])
+  // Filtering and sorting now happen server-side via fetchPage — the candidates
+  // array already reflects the current search/filter/sort state for this page.
+  const filtered = candidates
 
   const allFilteredSelected = filtered.length > 0 && filtered.every(c => selectedIds.has(c.id))
 
@@ -445,7 +489,7 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
             try {
               await exportCandidatesToExcel(filtered)
               toast({ title: 'Excel export downloaded!' })
-            } catch { toast({ title: 'Export failed', variant: 'destructive' }) }
+            } catch { toast({ title: (tc as any).exportFailed || 'Export failed', description: 'Could not generate the Excel file. Please try again.', variant: 'destructive' }) }
             finally { setExportingExcel(false) }
           }}
           className="gap-1.5 h-9"
@@ -462,7 +506,7 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
             try {
               await exportCandidatesToPDF(filtered)
               toast({ title: 'PDF export downloaded!' })
-            } catch { toast({ title: 'Export failed', variant: 'destructive' }) }
+            } catch { toast({ title: (tc as any).exportFailed || 'Export failed', description: 'Could not generate the PDF file. Please try again.', variant: 'destructive' }) }
             finally { setExportingPdf(false) }
           }}
           className="gap-1.5 h-9"
@@ -528,17 +572,58 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
 
       {/* Grid view */}
       {view === 'grid' && (
-        filtered.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
-              <Users className="w-8 h-8 text-gray-400" />
+        filtered.length === 0 ? (() => {
+          const hasActiveFilters = !!search.trim() || vacancyFilter !== 'all' || statusFilter !== 'all' || scoreFilter !== 'all'
+          return (
+            <div className="text-center py-20">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/40 dark:to-purple-950/40 flex items-center justify-center mx-auto mb-4">
+                <Users className="w-8 h-8 text-blue-500 dark:text-blue-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                {hasActiveFilters ? (tc as any).noCandidatesFiltered : tc.noCandidates}
+              </h3>
+              <p className="text-gray-500 dark:text-gray-400 text-sm max-w-md mx-auto mb-5">
+                {hasActiveFilters ? (tc as any).noCandidatesFilteredDesc : (tc as any).noCandidatesDesc}
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mb-4">
+                {hasActiveFilters ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSearch('')
+                      setVacancyFilter('all')
+                      setStatusFilter('all')
+                      setScoreFilter('all')
+                      setPage(1)
+                      setSelectedIds(new Set())
+                      fetchPage(1, { vacancyId: 'all', search: '', status: 'all', scoreFilter: 'all' })
+                    }}
+                    className="gap-1.5"
+                  >
+                    <X size={14} /> {(tc as any).clearFilters}
+                  </Button>
+                ) : (
+                  <>
+                    <Button size="sm" onClick={() => setShowUploadCV(true)} className="gap-1.5 gradient-bg">
+                      <Upload size={14} /> {(tc as any).uploadFirstCv}
+                    </Button>
+                    <Link href="/integrations">
+                      <Button variant="outline" size="sm" className="gap-1.5">
+                        <FileText size={14} /> {t.dashboard.nav.integrations}
+                      </Button>
+                    </Link>
+                  </>
+                )}
+              </div>
+              {!hasActiveFilters && (
+                <p className="text-gray-400 dark:text-gray-500 text-xs max-w-md mx-auto">
+                  {tc.atsHint}
+                </p>
+              )}
             </div>
-            <p className="text-gray-500 mb-4">{tc.noCandidates}</p>
-            <p className="text-gray-400 dark:text-gray-500 text-xs max-w-md mx-auto">
-              {tc.atsHint}
-            </p>
-          </div>
-        ) : (
+          )
+        })() : (
           <>
           {/* Select all header */}
           <div className="flex items-center gap-2 mb-2 px-1">
@@ -557,9 +642,11 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
               {allFilteredSelected ? 'Deselect all' : 'Select all'} ({filtered.length})
             </span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+          <div className={`grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 transition-opacity ${loadingPage ? 'opacity-50 pointer-events-none' : ''}`}>
             {filtered.map((c, i) => {
-              const initials = `${c.firstName?.[0] ?? '?'}${c.lastName?.[0] ?? ''}`.toUpperCase()
+              const firstInitial = c.firstName?.trim()?.[0] ?? '?'
+              const lastInitial = c.lastName?.trim()?.[0] ?? ''
+              const initials = `${firstInitial}${lastInitial}`.toUpperCase()
               const score = c.matchScore || 0
               const skills = parseJsonSafe<string[]>(c.skills, [])
               const isUpdating = updating === c.id

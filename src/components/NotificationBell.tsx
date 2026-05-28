@@ -159,9 +159,12 @@ export function NotificationBell() {
           {/* Notification list */}
           <div className={cn('overflow-y-auto', showAll ? 'max-h-[500px]' : 'max-h-80')}>
             {notifications.length === 0 ? (
-              <div className="px-4 py-8 text-center">
-                <Bell size={24} className="mx-auto mb-2 text-gray-300 dark:text-gray-600" />
-                <p className="text-sm text-gray-500 dark:text-gray-400">{n.noNotifications}</p>
+              <div className="px-4 py-10 text-center">
+                <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
+                  <Bell size={20} className="text-gray-300 dark:text-gray-600" />
+                </div>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{n.noNotifications}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-500 max-w-[260px] mx-auto leading-relaxed">{(n as any).noNotificationsDesc}</p>
               </div>
             ) : (
               notifications.map(notification => {

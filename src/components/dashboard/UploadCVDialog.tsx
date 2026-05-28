@@ -68,10 +68,12 @@ export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploa
           uploaded.push({ file: file.name, success: true, candidate: data.candidate, score: data.candidate.matchScore })
           onUploaded(data.candidate)
         } else {
-          uploaded.push({ file: file.name, success: false, error: data.error || u.uploadFailed })
+          // Use server-provided detailed error if available, else a clear instruction
+          const fallback = `Could not upload ${file.name}. Make sure it is a valid PDF/DOCX under 10MB.`
+          uploaded.push({ file: file.name, success: false, error: data.error || fallback })
         }
       } catch {
-        uploaded.push({ file: file.name, success: false, error: u.uploadFailed })
+        uploaded.push({ file: file.name, success: false, error: `Network error uploading ${file.name}. Please check your connection and try again.` })
       }
     }
 
@@ -103,24 +105,54 @@ export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploa
           <DialogDescription>{u.forVacancy} <strong>{vacancyTitle}</strong></DialogDescription>
         </DialogHeader>
 
-        {results.length > 0 ? (
-          <div className="space-y-3">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{u.analysisComplete}</p>
-            {results.map((r, i) => (
-              <div key={i} className={`flex items-center gap-3 p-3 rounded-lg ${r.success ? 'bg-green-50 dark:bg-green-950/30' : 'bg-red-50 dark:bg-red-950/30'}`}>
-                {r.success ? <CheckCircle className="w-4 h-4 text-green-600 shrink-0" /> : <X className="w-4 h-4 text-red-500 shrink-0" />}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{r.file}</p>
-                  {r.success && r.score && (
-                    <p className="text-xs text-gray-500">{u.matchScore} <strong>{r.score.toFixed(0)}%</strong></p>
-                  )}
-                  {!r.success && <p className="text-xs text-red-600">{r.error}</p>}
+        {results.length > 0 ? (() => {
+          const successCount = results.filter(r => r.success).length
+          const failedCount = results.length - successCount
+          return (
+            <div className="space-y-3">
+              {/* Prominent success summary */}
+              {successCount > 0 && (
+                <div className="p-4 rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/40 dark:to-emerald-950/40 border border-green-200 dark:border-green-800">
+                  <div className="flex items-center gap-3 mb-1">
+                    <div className="w-9 h-9 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center shrink-0">
+                      <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-green-800 dark:text-green-300">
+                        {successCount} candidate{successCount === 1 ? '' : 's'} added successfully
+                      </p>
+                      <p className="text-xs text-green-700 dark:text-green-400">
+                        AI analysis complete — view scores and details in the candidates list.
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
-            <Button onClick={handleClose} className="w-full">{u.done}</Button>
-          </div>
-        ) : (
+              )}
+              {failedCount > 0 && (
+                <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900 flex items-start gap-2.5">
+                  <X className="w-4 h-4 text-red-500 dark:text-red-400 mt-0.5 shrink-0" />
+                  <div className="text-xs text-red-700 dark:text-red-400">
+                    {failedCount} file{failedCount === 1 ? '' : 's'} could not be processed. See details below.
+                  </div>
+                </div>
+              )}
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{u.analysisComplete}</p>
+              {results.map((r, i) => (
+                <div key={i} className={`flex items-center gap-3 p-3 rounded-lg ${r.success ? 'bg-green-50 dark:bg-green-950/30' : 'bg-red-50 dark:bg-red-950/30'}`}>
+                  {r.success ? <CheckCircle className="w-4 h-4 text-green-600 shrink-0" /> : <X className="w-4 h-4 text-red-500 shrink-0" />}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{r.file}</p>
+                    {r.success && r.score && (
+                      <p className="text-xs text-gray-500">{u.matchScore} <strong>{r.score.toFixed(0)}%</strong></p>
+                    )}
+                    {!r.success && <p className="text-xs text-red-600">{r.error}</p>}
+                  </div>
+                </div>
+              ))}
+              <Button onClick={handleClose} className="w-full gradient-bg">{u.done}</Button>
+            </div>
+          )
+        })() : (
           <div className="space-y-4">
             <div
               {...getRootProps()}

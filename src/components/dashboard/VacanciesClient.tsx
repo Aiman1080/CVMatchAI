@@ -74,9 +74,15 @@ export function VacanciesClient({ initialVacancies, isDemo }: { initialVacancies
             if (data.upgrade) {
               toast({ title: 'Upgrade required', description: 'Upgrade to Pro to manage more vacancies.', variant: 'destructive' })
             } else {
-              toast({ title: data.error || tv.deleteError, variant: 'destructive' })
+              toast({
+                title: tv.deleteError,
+                description: data.error || 'Could not delete the vacancy. Please refresh the page and try again.',
+                variant: 'destructive',
+              })
             }
           }
+        } catch {
+          toast({ title: tv.deleteError, description: 'Please check your connection and try again.', variant: 'destructive' })
         } finally { setDeleting(null) }
       },
     })
@@ -94,13 +100,13 @@ export function VacanciesClient({ initialVacancies, isDemo }: { initialVacancies
         toast({ title: tv.duplicated, description: `"${data.title}" has been created.` })
       } else {
         if (data.upgrade) {
-          toast({ title: 'Upgrade required', description: data.error, variant: 'destructive' })
+          toast({ title: 'Upgrade required', description: data.error || 'Upgrade to Pro to duplicate more vacancies.', variant: 'destructive' })
         } else {
-          toast({ title: data.error || 'Duplication failed', variant: 'destructive' })
+          toast({ title: 'Duplication failed', description: data.error || 'Could not duplicate the vacancy. Please try again.', variant: 'destructive' })
         }
       }
     } catch {
-      toast({ title: 'Duplication failed', variant: 'destructive' })
+      toast({ title: 'Duplication failed', description: 'Please check your connection and try again.', variant: 'destructive' })
     } finally {
       setDuplicating(null)
     }

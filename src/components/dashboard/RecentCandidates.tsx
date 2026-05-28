@@ -25,7 +25,10 @@ export function RecentCandidates({ candidates }: { candidates: Candidate[] }) {
         ) : (
           <div className="space-y-3">
             {candidates.map(c => {
-              const initials = `${c.firstName?.[0] ?? '?'}${c.lastName?.[0] ?? ''}`.toUpperCase()
+              // Trim before extracting initials so whitespace-only names don't render blank avatars
+              const firstInitial = c.firstName?.trim()?.[0] ?? '?'
+              const lastInitial = c.lastName?.trim()?.[0] ?? ''
+              const initials = `${firstInitial}${lastInitial}`.toUpperCase()
               const score = c.matchScore || 0
               return (
                 <Link key={c.id} href={`/candidates/${c.id}`}>

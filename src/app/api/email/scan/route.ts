@@ -128,16 +128,30 @@ export async function POST(req: Request) {
             attachmentBuffers.map(a => a.name),
           )
 
-          // Skip emails already recorded to prevent duplicate candidates on re-scan
+          // Skip emails already recorded to prevent duplicate candidates on re-scan.
+          // Include receivedAt in the dedup key so the same person can send multiple
+          // distinct applications without being silently swallowed — only literally
+          // identical messages (the same email re-fetched) are treated as duplicates.
+          // The IMAP message uid is also encoded into the subject of the lookup so
+          // re-applications with the same subject/timestamp don't collide either.
+          const uidTag = msg.uid ? `::uid=${msg.uid}` : ''
           const alreadyScanned = await prisma.emailScan.findFirst({
-            where: { inboxId: inbox.id, subject, sender },
+            where: {
+              inboxId: inbox.id,
+              sender,
+              receivedAt: new Date(receivedAt),
+              subject: uidTag ? { contains: uidTag } : subject,
+            },
           })
           if (alreadyScanned) continue
 
-          // Always record the scan attempt for audit purposes
+          // Always record the scan attempt for audit purposes.
+          // The IMAP uid is appended to the subject as a hidden tag so future scans
+          // can deduplicate against this specific message rather than every message
+          // with the same subject/sender pair (which fails for repeat applicants).
           const scan = await prisma.emailScan.create({
             data: {
-              subject,
+              subject: subject + uidTag,
               sender,
               receivedAt: new Date(receivedAt),
               processed: false,

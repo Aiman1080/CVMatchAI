@@ -99,7 +99,11 @@ export function EmailClient() {
       setStep(1)
       setSelectedProvider(null)
     } catch (err: any) {
-      toast({ title: te.connectionFailed, description: err.message, variant: 'destructive' })
+      // Surface why the connection failed and what to do
+      const description = err?.message
+        ? `${err.message} — Double-check your email and app password, then try again.`
+        : 'Could not connect. Verify your email and password, and that IMAP is enabled in your provider.'
+      toast({ title: te.connectionFailed, description, variant: 'destructive' })
     } finally { setConnecting(false) }
   }
 
@@ -116,7 +120,10 @@ export function EmailClient() {
       toast({ title: te.scanComplete, description: te.scanDesc.replace('{scanned}', data.scanned).replace('{relevant}', data.relevant).replace('{processed}', data.processed) })
       fetchInboxes()
     } catch (err: any) {
-      toast({ title: te.scanFailed, description: err.message, variant: 'destructive' })
+      const description = err?.message
+        ? `${err.message} — Make sure your email credentials are still valid.`
+        : 'Could not scan the inbox. Try reconnecting if the issue persists.'
+      toast({ title: te.scanFailed, description, variant: 'destructive' })
     } finally { setScanning(null) }
   }
 
@@ -160,10 +167,10 @@ export function EmailClient() {
         setInboxes(prev => prev.filter(i => i.id !== inboxId))
         toast({ title: te.inboxRemoved })
       } else {
-        toast({ title: te.removeInboxFailed, variant: 'destructive' })
+        toast({ title: te.removeInboxFailed, description: 'Please refresh the page and try again.', variant: 'destructive' })
       }
     } catch {
-      toast({ title: te.removeInboxFailed, variant: 'destructive' })
+      toast({ title: te.removeInboxFailed, description: 'Please check your connection and try again.', variant: 'destructive' })
     }
   }
 
@@ -249,14 +256,20 @@ export function EmailClient() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="flex items-center justify-center py-12">
+            <div className="flex flex-col items-center justify-center py-12 gap-2">
               <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+              <p className="text-xs text-gray-400">Loading your inboxes…</p>
             </div>
           ) : inboxes.length === 0 ? (
-            <div className="text-center py-12">
-              <Mail className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500 text-sm">{te.noInboxes}</p>
-              <p className="text-gray-400 text-xs mt-1">{te.noInboxesDesc}</p>
+            <div className="text-center py-14">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/40 dark:to-purple-950/40 flex items-center justify-center mx-auto mb-3">
+                <Mail className="w-7 h-7 text-blue-500 dark:text-blue-400" />
+              </div>
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">{te.noInboxes}</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-4">{te.noInboxesDesc}</p>
+              <Button onClick={openConnectDialog} size="sm" className="gradient-bg gap-1.5">
+                <Plus size={14} /> {(te as any).connectFirstInbox || te.connectInbox}
+              </Button>
             </div>
           ) : (
             <div className="space-y-3">

@@ -12,14 +12,68 @@ import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/use-toast'
 import { useLanguage } from '@/contexts/LanguageContext'
 
+// RFC 5322-ish email check — server still validates strictly
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 export default function RegisterPage() {
   const router = useRouter()
   const { t } = useLanguage()
   const [form, setForm] = useState({ name: '', email: '', password: '', company: '', plan: 'pro' as 'free' | 'pro' })
   const [loading, setLoading] = useState(false)
 
+  // Inline validation state for required fields
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [touched, setTouched] = useState<Record<string, boolean>>({})
+
+  const tAuth: any = (t as any).auth
+  const nameRequiredMsg = tAuth?.nameRequired || 'Please enter your full name'
+  const emailRequiredMsg = tAuth?.emailRequired || 'Please enter your email'
+  const invalidEmailMsg = tAuth?.invalidEmail || 'Please enter a valid email address'
+
+  const validate = (f: typeof form): Record<string, string> => {
+    const next: Record<string, string> = {}
+    if (!f.name.trim()) next.name = nameRequiredMsg
+    if (!f.email.trim()) next.email = emailRequiredMsg
+    else if (!EMAIL_REGEX.test(f.email)) next.email = invalidEmailMsg
+    if (!f.password) next.password = t.auth.tooShort
+    else if (f.password.length < 8) next.password = t.auth.tooShort
+    return next
+  }
+
+  const setField = (key: keyof typeof form, value: any) => {
+    const next = { ...form, [key]: value }
+    setForm(next)
+    if (touched[key]) {
+      const all = validate(next)
+      setErrors(prev => {
+        const n = { ...prev }
+        if (all[key]) n[key] = all[key]
+        else delete n[key]
+        return n
+      })
+    }
+  }
+
+  const markTouched = (key: string) => {
+    setTouched(prev => ({ ...prev, [key]: true }))
+    const all = validate(form)
+    setErrors(prev => {
+      const n = { ...prev }
+      if (all[key]) n[key] = all[key]
+      else delete n[key]
+      return n
+    })
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setTouched({ name: true, email: true, password: true })
+    const all = validate(form)
+    if (Object.keys(all).length > 0) {
+      setErrors(all)
+      toast({ title: 'Please fix the highlighted fields', description: 'Some required fields are missing or invalid.', variant: 'destructive' })
+      return
+    }
     setLoading(true)
     try {
       const res = await fetch('/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
@@ -28,7 +82,11 @@ export default function RegisterPage() {
       const login = await signIn('credentials', { email: form.email, password: form.password, redirect: false })
       if (login?.ok) router.push('/dashboard')
     } catch (error: any) {
-      toast({ title: t.auth.registrationFailed, description: error.message, variant: 'destructive' })
+      toast({
+        title: t.auth.registrationFailed,
+        description: error.message || 'Please check your details and try again. If the issue persists, contact support.',
+        variant: 'destructive',
+      })
     } finally { setLoading(false) }
   }
 
@@ -40,11 +98,19 @@ export default function RegisterPage() {
           <h1 className="text-2xl font-bold text-gray-900">{t.auth.startForFree}</h1>
           <p className="text-gray-500 text-sm mt-1">{t.auth.createYourAccount}</p>
         </div>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>{t.auth.fullName} <span className="text-red-500">*</span></Label>
-              <Input placeholder="John Doe" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} required />
+              <Input
+                placeholder="John Doe"
+                value={form.name}
+                onChange={e => setField('name', e.target.value)}
+                onBlur={() => markTouched('name')}
+                aria-invalid={!!errors.name}
+                className={errors.name ? 'border-red-500 focus-visible:ring-red-500' : ''}
+              />
+              {errors.name && <p className="text-xs text-red-500" role="alert">{errors.name}</p>}
             </div>
             <div className="space-y-1.5">
               <Label>{t.auth.company}</Label>
@@ -53,11 +119,30 @@ export default function RegisterPage() {
           </div>
           <div className="space-y-1.5">
             <Label>{t.auth.workEmail} <span className="text-red-500">*</span></Label>
-            <Input type="email" placeholder="you@company.com" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} required />
+            <Input
+              type="email"
+              placeholder="you@company.com"
+              value={form.email}
+              onChange={e => setField('email', e.target.value)}
+              onBlur={() => markTouched('email')}
+              aria-invalid={!!errors.email}
+              className={errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}
+            />
+            {errors.email && <p className="text-xs text-red-500" role="alert">{errors.email}</p>}
           </div>
           <div className="space-y-1.5">
             <Label>{t.auth.password} <span className="text-red-500">*</span></Label>
-            <Input type="password" placeholder={t.auth.minCharacters} value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} required minLength={8} />
+            <Input
+              type="password"
+              placeholder={t.auth.minCharacters}
+              value={form.password}
+              onChange={e => setField('password', e.target.value)}
+              onBlur={() => markTouched('password')}
+              aria-invalid={!!errors.password}
+              className={errors.password ? 'border-red-500 focus-visible:ring-red-500' : ''}
+              minLength={8}
+            />
+            {errors.password && <p className="text-xs text-red-500" role="alert">{errors.password}</p>}
             {form.password.length > 0 && (() => {
               const hasLength = form.password.length >= 8
               const hasUpper = /[A-Z]/.test(form.password)
