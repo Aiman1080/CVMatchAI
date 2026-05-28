@@ -67,7 +67,7 @@ function buildPDFHtml(candidates: any[], vacancyTitle: string, generatedBy: stri
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Candidate Report — CVMatch AI</title>
+  <title>Candidate Report — DeltaMatch</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8fafc; color: #1e293b; }
@@ -123,7 +123,7 @@ function buildPDFHtml(candidates: any[], vacancyTitle: string, generatedBy: stri
       <div class="brand">
         <div class="brand-icon">⚡</div>
         <div class="brand-text">
-          <h1>CVMatch AI</h1>
+          <h1>DeltaMatch</h1>
           <p>Intelligent Recruitment Platform</p>
         </div>
       </div>
@@ -162,7 +162,7 @@ function buildPDFHtml(candidates: any[], vacancyTitle: string, generatedBy: stri
     ${rows}
 
     <div class="footer">
-      Report generated on ${date} by CVMatch AI — Intelligent Recruitment Platform<br>
+      Report generated on ${date} by DeltaMatch — Intelligent Recruitment Platform<br>
       This document is confidential and intended solely for authorized recruiters.
     </div>
   </div>
@@ -208,7 +208,7 @@ export async function GET(req: Request) {
   return new NextResponse(html, {
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
-      'Content-Disposition': `inline; filename="cvmatch-report-${new Date().toISOString().slice(0, 10)}.html"`,
+      'Content-Disposition': `inline; filename="deltamatch-report-${new Date().toISOString().slice(0, 10)}.html"`,
     },
   })
 }

@@ -60,7 +60,7 @@ export async function POST(req: Request) {
     })
     const senderAddress = fromEmail || smtpUser
     await transporter.sendMail({
-      from: `${session.user.name || 'CVMatch AI'} <${smtpUser}>`,
+      from: `${session.user.name || 'DeltaMatch'} <${smtpUser}>`,
       to: candidate.email,
       replyTo: senderAddress,
       subject,

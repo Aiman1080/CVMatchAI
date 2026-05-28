@@ -19,13 +19,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Email not configured' }, { status: 500 })
     }
 
-    const body = `New contact message from CVMatch AI\n\n` +
+    const body = `New contact message from DeltaMatch\n\n` +
       `Name: ${name}\n` +
       `Email: ${email}\n` +
       `Subject: ${subject}\n\n` +
       `Message:\n${message}`
 
-    await sendEmail(ADMIN_EMAIL, `[CVMatch Contact] ${subject}`, body)
+    await sendEmail(ADMIN_EMAIL, `[DeltaMatch Contact] ${subject}`, body)
 
     return NextResponse.json({ success: true })
   } catch (err: any) {

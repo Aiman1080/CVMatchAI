@@ -1,4 +1,4 @@
-// Core sync engine — pulls candidates from an ATS and creates/updates them in CVMatch AI
+// Core sync engine — pulls candidates from an ATS and creates/updates them in DeltaMatch
 import prisma from '@/lib/prisma'
 import { parseDocument } from '@/lib/pdf-parser'
 import { analyzeCVAgainstVacancy } from '@/lib/ai'
@@ -63,7 +63,7 @@ function calculateSimilarity(a: string, b: string): number {
   return union > 0 ? intersection / union : 0
 }
 
-// Ensure a CVMatch AI vacancy exists for an external job, returns its id
+// Ensure a DeltaMatch vacancy exists for an external job, returns its id
 // and whether a similar manual vacancy was found and linked (duplicate detection)
 async function upsertVacancy(userId: string, externalId: string, platform: string, job: {
   title: string; description: string; requirements: string; company: string; location?: string

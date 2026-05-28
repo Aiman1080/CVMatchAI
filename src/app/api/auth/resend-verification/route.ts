@@ -43,7 +43,7 @@ export async function POST() {
 
     await sendEmail(
       email,
-      'Verify your email — CVMatch AI',
+      'Verify your email — DeltaMatch',
       `Hi ${user.name || ''},\n\nPlease verify your email address by clicking the link below:\n\n${verifyUrl}\n\nThis link expires in 24 hours.\n\nIf you didn't request this, you can safely ignore this email.`
     )
 

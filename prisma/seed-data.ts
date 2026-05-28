@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// seed-data.ts  –  10 vacancies + 60 candidates for CVMatchAI demo seed
+// seed-data.ts  –  10 vacancies + 60 candidates for DeltaMatch demo seed
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type VacancyData = {

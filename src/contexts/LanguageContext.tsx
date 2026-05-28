@@ -24,18 +24,18 @@ export function LanguageProvider({ children, initialLocale = 'fr' }: { children:
     // Migrate from localStorage-only (old system) to cookie+localStorage (new system).
     // Runs once: if localStorage has a locale the server didn't know about, adopt it
     // and write it to the cookie so the server picks it up on the next request.
-    const lsLocale = localStorage.getItem('cvmatch-locale') as Locale
+    const lsLocale = localStorage.getItem('deltamatch-locale') as Locale
     if (lsLocale && ['en', 'nl', 'fr'].includes(lsLocale) && lsLocale !== initialLocale) {
       setLocaleState(lsLocale)
-      document.cookie = `cvmatch-locale=${lsLocale}; path=/; max-age=31536000; SameSite=Lax`
+      document.cookie = `deltamatch-locale=${lsLocale}; path=/; max-age=31536000; SameSite=Lax`
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const setLocale = (l: Locale) => {
     setLocaleState(l)
-    localStorage.setItem('cvmatch-locale', l)
-    document.cookie = `cvmatch-locale=${l}; path=/; max-age=31536000; SameSite=Lax`
+    localStorage.setItem('deltamatch-locale', l)
+    document.cookie = `deltamatch-locale=${l}; path=/; max-age=31536000; SameSite=Lax`
   }
 
   return (

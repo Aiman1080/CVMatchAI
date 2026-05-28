@@ -253,7 +253,7 @@ export function SettingsClient({ user }: Props) {
                         const blob = await res.blob()
                         const a = document.createElement('a')
                         a.href = URL.createObjectURL(blob)
-                        a.download = `cvmatch-export-${new Date().toISOString().slice(0, 10)}.json`
+                        a.download = `deltamatch-export-${new Date().toISOString().slice(0, 10)}.json`
                         a.click()
                         toast({ title: t.dashboard.settingsPage.dataExported })
                       } catch {

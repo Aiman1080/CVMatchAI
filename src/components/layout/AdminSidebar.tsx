@@ -44,7 +44,7 @@ export function AdminSidebar() {
         <Link href="/admin" className="flex items-center gap-2.5" onClick={() => setMobileOpen(false)}>
           <LogoAdmin size={36} />
           <div>
-            <span className="font-bold text-white text-lg leading-tight block">CVMatch</span>
+            <span className="font-bold text-white text-lg leading-tight block">DeltaMatch</span>
             <span className="text-xs text-purple-400 font-semibold leading-tight">Admin Panel</span>
           </div>
         </Link>

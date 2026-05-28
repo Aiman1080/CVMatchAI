@@ -12,28 +12,28 @@ export default function TermsPage() {
   const content = {
     en: {
       title: 'Terms of Service',
-      subtitle: 'Please read these terms carefully before using CVMatch AI.',
+      subtitle: 'Please read these terms carefully before using DeltaMatch.',
       lastUpdated: 'Last updated: May 2026',
       sections: [
         {
           icon: FileText,
           title: '1. Acceptance of terms',
-          text: 'By creating an account or using CVMatch AI, you agree to these Terms of Service and our Privacy Policy. If you do not agree, do not use the service. These terms apply to all users including recruiters, HR professionals, and organisations.',
+          text: 'By creating an account or using DeltaMatch, you agree to these Terms of Service and our Privacy Policy. If you do not agree, do not use the service. These terms apply to all users including recruiters, HR professionals, and organisations.',
         },
         {
           icon: Globe,
           title: '2. Description of service',
-          text: 'CVMatch AI is an AI-powered recruitment platform that helps recruiters analyse CVs, manage candidates, and match applicants to vacancies. The service is provided "as is" and we reserve the right to modify or discontinue features with reasonable notice.',
+          text: 'DeltaMatch is an AI-powered recruitment platform that helps recruiters analyse CVs, manage candidates, and match applicants to vacancies. The service is provided "as is" and we reserve the right to modify or discontinue features with reasonable notice.',
         },
         {
           icon: Scale,
           title: '3. Acceptable use',
-          text: 'You may only use CVMatch AI for lawful recruitment purposes. You must not: upload data of individuals without their consent, use the service for spam or unsolicited communications, attempt to reverse-engineer or scrape the platform, share your account credentials, or use the service in violation of applicable employment and data protection laws.',
+          text: 'You may only use DeltaMatch for lawful recruitment purposes. You must not: upload data of individuals without their consent, use the service for spam or unsolicited communications, attempt to reverse-engineer or scrape the platform, share your account credentials, or use the service in violation of applicable employment and data protection laws.',
         },
         {
           icon: AlertTriangle,
           title: '4. GDPR and candidate data',
-          text: 'You are responsible for ensuring compliance with GDPR and applicable data protection laws when processing candidate data. This includes obtaining informed consent from candidates before uploading their CVs. CVMatch AI provides tools to help with compliance but does not assume legal responsibility for your use of candidate data.',
+          text: 'You are responsible for ensuring compliance with GDPR and applicable data protection laws when processing candidate data. This includes obtaining informed consent from candidates before uploading their CVs. DeltaMatch provides tools to help with compliance but does not assume legal responsibility for your use of candidate data.',
         },
         {
           icon: CreditCard,
@@ -53,7 +53,7 @@ export default function TermsPage() {
         {
           icon: Scale,
           title: '8. Intellectual property',
-          text: 'CVMatch AI and its technology, design, and content are the intellectual property of CVMatch AI. Your data (CVs, vacancies, candidates) remains yours. By using the service, you grant us a limited licence to process your data to provide the service.',
+          text: 'DeltaMatch and its technology, design, and content are the intellectual property of DeltaMatch. Your data (CVs, vacancies, candidates) remains yours. By using the service, you grant us a limited licence to process your data to provide the service.',
         },
         {
           icon: Mail,
@@ -64,28 +64,28 @@ export default function TermsPage() {
     },
     nl: {
       title: 'Gebruiksvoorwaarden',
-      subtitle: 'Lees deze voorwaarden zorgvuldig door voordat u CVMatch AI gebruikt.',
+      subtitle: 'Lees deze voorwaarden zorgvuldig door voordat u DeltaMatch gebruikt.',
       lastUpdated: 'Laatste update: mei 2026',
       sections: [
         {
           icon: FileText,
           title: '1. Aanvaarding van voorwaarden',
-          text: 'Door een account aan te maken of CVMatch AI te gebruiken, gaat u akkoord met deze Gebruiksvoorwaarden en ons Privacybeleid. Als u niet akkoord gaat, gebruik de service dan niet. Deze voorwaarden zijn van toepassing op alle gebruikers, waaronder recruiters, HR-professionals en organisaties.',
+          text: 'Door een account aan te maken of DeltaMatch te gebruiken, gaat u akkoord met deze Gebruiksvoorwaarden en ons Privacybeleid. Als u niet akkoord gaat, gebruik de service dan niet. Deze voorwaarden zijn van toepassing op alle gebruikers, waaronder recruiters, HR-professionals en organisaties.',
         },
         {
           icon: Globe,
           title: '2. Beschrijving van de service',
-          text: 'CVMatch AI is een AI-gedreven wervingsplatform dat recruiters helpt cv\'s te analyseren, kandidaten te beheren en sollicitanten te matchen met vacatures. De service wordt geleverd "zoals die is" en wij behouden ons het recht voor om functies te wijzigen of te beëindigen met redelijke kennisgeving.',
+          text: 'DeltaMatch is een AI-gedreven wervingsplatform dat recruiters helpt cv\'s te analyseren, kandidaten te beheren en sollicitanten te matchen met vacatures. De service wordt geleverd "zoals die is" en wij behouden ons het recht voor om functies te wijzigen of te beëindigen met redelijke kennisgeving.',
         },
         {
           icon: Scale,
           title: '3. Aanvaardbaar gebruik',
-          text: 'U mag CVMatch AI alleen gebruiken voor wettige wervingsdoeleinden. Het is verboden om: gegevens van personen te uploaden zonder hun toestemming, de service te gebruiken voor spam, te proberen het platform te reverse-engineeren of te scrapen, uw accountgegevens te delen, of de service te gebruiken in strijd met toepasselijke wetgeving.',
+          text: 'U mag DeltaMatch alleen gebruiken voor wettige wervingsdoeleinden. Het is verboden om: gegevens van personen te uploaden zonder hun toestemming, de service te gebruiken voor spam, te proberen het platform te reverse-engineeren of te scrapen, uw accountgegevens te delen, of de service te gebruiken in strijd met toepasselijke wetgeving.',
         },
         {
           icon: AlertTriangle,
           title: '4. AVG en kandidaatgegevens',
-          text: 'U bent verantwoordelijk voor naleving van de AVG en toepasselijke gegevensbeschermingswetten bij de verwerking van kandidaatgegevens. Dit omvat het verkrijgen van geïnformeerde toestemming van kandidaten voordat u hun cv\'s uploadt. CVMatch AI biedt tools om te helpen bij naleving, maar neemt geen juridische verantwoordelijkheid voor uw gebruik van kandidaatgegevens.',
+          text: 'U bent verantwoordelijk voor naleving van de AVG en toepasselijke gegevensbeschermingswetten bij de verwerking van kandidaatgegevens. Dit omvat het verkrijgen van geïnformeerde toestemming van kandidaten voordat u hun cv\'s uploadt. DeltaMatch biedt tools om te helpen bij naleving, maar neemt geen juridische verantwoordelijkheid voor uw gebruik van kandidaatgegevens.',
         },
         {
           icon: CreditCard,
@@ -105,7 +105,7 @@ export default function TermsPage() {
         {
           icon: Scale,
           title: '8. Intellectueel eigendom',
-          text: 'CVMatch AI en haar technologie, ontwerp en inhoud zijn het intellectueel eigendom van CVMatch AI. Uw gegevens (cv\'s, vacatures, kandidaten) blijven van u. Door de service te gebruiken, verleent u ons een beperkte licentie om uw gegevens te verwerken om de service te leveren.',
+          text: 'DeltaMatch en haar technologie, ontwerp en inhoud zijn het intellectueel eigendom van DeltaMatch. Uw gegevens (cv\'s, vacatures, kandidaten) blijven van u. Door de service te gebruiken, verleent u ons een beperkte licentie om uw gegevens te verwerken om de service te leveren.',
         },
         {
           icon: Mail,
@@ -116,28 +116,28 @@ export default function TermsPage() {
     },
     fr: {
       title: "Conditions d'utilisation",
-      subtitle: "Veuillez lire attentivement ces conditions avant d'utiliser CVMatch AI.",
+      subtitle: "Veuillez lire attentivement ces conditions avant d'utiliser DeltaMatch.",
       lastUpdated: 'Dernière mise à jour : mai 2026',
       sections: [
         {
           icon: FileText,
           title: "1. Acceptation des conditions",
-          text: "En créant un compte ou en utilisant CVMatch AI, vous acceptez ces Conditions d'utilisation et notre Politique de confidentialité. Si vous n'acceptez pas, veuillez ne pas utiliser le service. Ces conditions s'appliquent à tous les utilisateurs, y compris les recruteurs, professionnels RH et organisations.",
+          text: "En créant un compte ou en utilisant DeltaMatch, vous acceptez ces Conditions d'utilisation et notre Politique de confidentialité. Si vous n'acceptez pas, veuillez ne pas utiliser le service. Ces conditions s'appliquent à tous les utilisateurs, y compris les recruteurs, professionnels RH et organisations.",
         },
         {
           icon: Globe,
           title: '2. Description du service',
-          text: "CVMatch AI est une plateforme de recrutement propulsée par l'IA qui aide les recruteurs à analyser les CV, gérer les candidats et faire correspondre les candidatures aux offres d'emploi. Le service est fourni \"en l'état\" et nous nous réservons le droit de modifier ou d'interrompre des fonctionnalités avec un préavis raisonnable.",
+          text: "DeltaMatch est une plateforme de recrutement propulsée par l'IA qui aide les recruteurs à analyser les CV, gérer les candidats et faire correspondre les candidatures aux offres d'emploi. Le service est fourni \"en l'état\" et nous nous réservons le droit de modifier ou d'interrompre des fonctionnalités avec un préavis raisonnable.",
         },
         {
           icon: Scale,
           title: '3. Utilisation acceptable',
-          text: "Vous ne pouvez utiliser CVMatch AI qu'à des fins de recrutement légales. Il est interdit de : uploader des données de personnes sans leur consentement, utiliser le service pour du spam, tenter de faire de l'ingénierie inverse ou du scraping, partager vos identifiants de compte, ou utiliser le service en violation des lois applicables.",
+          text: "Vous ne pouvez utiliser DeltaMatch qu'à des fins de recrutement légales. Il est interdit de : uploader des données de personnes sans leur consentement, utiliser le service pour du spam, tenter de faire de l'ingénierie inverse ou du scraping, partager vos identifiants de compte, ou utiliser le service en violation des lois applicables.",
         },
         {
           icon: AlertTriangle,
           title: '4. RGPD et données candidats',
-          text: "Vous êtes responsable du respect du RGPD et des lois applicables en matière de protection des données lors du traitement des données candidats. Cela inclut l'obtention du consentement éclairé des candidats avant l'upload de leurs CV. CVMatch AI fournit des outils pour faciliter la conformité mais n'assume pas de responsabilité juridique pour votre utilisation des données candidats.",
+          text: "Vous êtes responsable du respect du RGPD et des lois applicables en matière de protection des données lors du traitement des données candidats. Cela inclut l'obtention du consentement éclairé des candidats avant l'upload de leurs CV. DeltaMatch fournit des outils pour faciliter la conformité mais n'assume pas de responsabilité juridique pour votre utilisation des données candidats.",
         },
         {
           icon: CreditCard,
@@ -157,7 +157,7 @@ export default function TermsPage() {
         {
           icon: Scale,
           title: '8. Propriété intellectuelle',
-          text: "CVMatch AI et sa technologie, son design et son contenu sont la propriété intellectuelle de CVMatch AI. Vos données (CV, offres, candidats) vous appartiennent. En utilisant le service, vous nous accordez une licence limitée pour traiter vos données afin de fournir le service.",
+          text: "DeltaMatch et sa technologie, son design et son contenu sont la propriété intellectuelle de DeltaMatch. Vos données (CV, offres, candidats) vous appartiennent. En utilisant le service, vous nous accordez une licence limitée pour traiter vos données afin de fournir le service.",
         },
         {
           icon: Mail,
@@ -177,7 +177,7 @@ export default function TermsPage() {
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <Logo size={32} />
-            <span className="font-bold text-gray-900 dark:text-white">CVMatch AI</span>
+            <span className="font-bold text-gray-900 dark:text-white">DeltaMatch</span>
           </Link>
           <div className="flex items-center gap-4">
             
@@ -220,7 +220,7 @@ export default function TermsPage() {
       {/* Footer */}
       <footer className="border-t border-gray-100 dark:border-gray-800 py-8 px-6">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-400">
-          <span>© {new Date().getFullYear()} CVMatch AI</span>
+          <span>© {new Date().getFullYear()} DeltaMatch</span>
           <div className="flex gap-6">
             <Link href="/privacy" className="hover:text-gray-900 dark:hover:text-white">
               {locale === 'nl' ? 'Privacy' : locale === 'en' ? 'Privacy' : 'Confidentialité'}

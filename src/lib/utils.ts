@@ -6,11 +6,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-// Resolves a BCP-47 locale from the cvmatch-locale cookie (client-side) or falls back to 'en-GB'
+// Resolves a BCP-47 locale from the deltamatch-locale cookie (client-side) or falls back to 'en-GB'
 function detectLocale(): string {
   const LOCALE_MAP: Record<string, string> = { fr: 'fr-FR', nl: 'nl-NL', en: 'en-GB' }
   if (typeof document !== 'undefined') {
-    const match = document.cookie.match(/(?:^|;\s*)cvmatch-locale=(\w+)/)
+    const match = document.cookie.match(/(?:^|;\s*)deltamatch-locale=(\w+)/)
     if (match) return LOCALE_MAP[match[1]] || 'en-GB'
   }
   return 'en-GB'

@@ -98,7 +98,7 @@ export default function ContactPage() {
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <Logo size={32} />
-            <span className="font-bold text-gray-900 dark:text-white">CVMatch AI</span>
+            <span className="font-bold text-gray-900 dark:text-white">DeltaMatch</span>
           </Link>
           <div className="flex items-center gap-4">
             
@@ -211,7 +211,7 @@ export default function ContactPage() {
       {/* Footer */}
       <footer className="border-t border-gray-100 dark:border-gray-800 py-8 px-6">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-400">
-          <span>© {new Date().getFullYear()} CVMatch AI</span>
+          <span>© {new Date().getFullYear()} DeltaMatch</span>
           <div className="flex gap-6">
             <Link href="/privacy" className="hover:text-gray-900 dark:hover:text-white">
               {locale === 'nl' ? 'Privacy' : locale === 'en' ? 'Privacy' : 'Confidentialité'}

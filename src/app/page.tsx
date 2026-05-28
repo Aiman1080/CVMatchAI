@@ -227,7 +227,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
             <Logo size={32} />
-            <span className="font-bold text-gray-900 dark:text-white text-lg">CVMatch AI</span>
+            <span className="font-bold text-gray-900 dark:text-white text-lg">DeltaMatch</span>
           </Link>
           <div className="hidden md:flex items-center gap-8 text-sm text-gray-500 dark:text-gray-400">
             <a href="#ai-features" onClick={handleNavClick} className="hover:text-gray-900 dark:hover:text-white transition-colors">{t.landing.navAiFeatures}</a>
@@ -595,7 +595,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Logo size={28} />
-            <span className="text-gray-900 dark:text-white font-semibold">CVMatch AI</span>
+            <span className="text-gray-900 dark:text-white font-semibold">DeltaMatch</span>
           </div>
           <p className="text-sm text-gray-500 dark:text-gray-400">{t.footer.copyright}</p>
           <div className="flex items-center gap-6 text-sm">

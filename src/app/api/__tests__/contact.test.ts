@@ -104,7 +104,7 @@ describe('POST /api/contact', () => {
     expect(sendEmail).toHaveBeenCalledOnce()
     expect(sendEmail).toHaveBeenCalledWith(
       'contactcvmatchia@gmail.com',
-      '[CVMatch Contact] Question',
+      '[DeltaMatch Contact] Question',
       expect.stringContaining('John'),
     )
   })

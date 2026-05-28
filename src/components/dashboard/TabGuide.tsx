@@ -18,8 +18,8 @@ const TAB_KEYS: Record<string, string> = {
   '/support': 'support',
 }
 
-const STORAGE_KEY = 'cvmatch-show-guides'
-const DISMISSED_KEY = 'cvmatch-guides-dismissed'
+const STORAGE_KEY = 'deltamatch-show-guides'
+const DISMISSED_KEY = 'deltamatch-guides-dismissed'
 
 export function TabGuide() {
   const pathname = usePathname()

@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { CreateVacancyDialog } from './CreateVacancyDialog'
 import { useLanguage } from '@/contexts/LanguageContext'
 
-const DISMISS_KEY = 'cvmatch-onboarding-dismissed'
+const DISMISS_KEY = 'deltamatch-onboarding-dismissed'
 
 interface Props {
   hasVacancy: boolean

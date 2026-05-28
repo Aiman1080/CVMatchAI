@@ -720,7 +720,7 @@ export function CandidatesClient({ initialCandidates, initialTotal }: { initialC
           <div className="space-y-4 mt-2">
             <p className="text-sm text-gray-500 dark:text-gray-400">{filtered.length} candidate(s) included in export.</p>
             <Button onClick={() => handleExport(null as any)} disabled={exporting} className="w-full gap-2" variant="outline">
-              <FileText size={16} /> CVMatch AI branded PDF report
+              <FileText size={16} /> DeltaMatch branded PDF report
             </Button>
             <Button onClick={() => handleExport(false)} disabled={exporting} className="w-full gap-2" variant="outline">
               <Download size={16} /> Download as CSV

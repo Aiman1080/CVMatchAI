@@ -24,7 +24,7 @@ async function main() {
     create: {
       email: 'admin@cvmatch.ai', name: 'Admin User',
       password: adminPassword, role: 'admin',
-      company: 'CVMatch AI', subscription: 'pro',
+      company: 'DeltaMatch', subscription: 'pro',
     },
   })
 
