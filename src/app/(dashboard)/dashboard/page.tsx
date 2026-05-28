@@ -18,7 +18,12 @@ export default async function DashboardPage() {
     await prisma.user.update({ where: { id: userId }, data: { lastSeenAt: new Date() } }).catch(() => {})
   }
 
-  const where = userId ? (isAdmin ? {} : { userId }) : {}
+  if (!userId) {
+    const { redirect } = await import('next/navigation')
+    redirect('/login')
+  }
+
+  const where = isAdmin ? {} : { userId }
 
   const [vacancyCount, candidateCount, shortlistedCount, avgScore, inboxCount, vacanciesThisWeek, candidatesThisWeek] = await Promise.all([
     prisma.vacancy.count({ where }),

@@ -80,9 +80,9 @@ async function main() {
     })
   }
 
-  // ── Demo Pro: 3 vacancies, 10 candidates ─────────────────────────────────
+  // ── Demo Pro: vacancies 3-5, different candidates ─────────────────────────
 
-  const proVacancies = VACANCIES.slice(0, 3)
+  const proVacancies = VACANCIES.slice(3, 6)
   const proVacancyIds: string[] = []
   for (const v of proVacancies) {
     const vacancy = await prisma.vacancy.create({
@@ -91,11 +91,12 @@ async function main() {
     proVacancyIds.push(vacancy.id)
   }
 
-  const proCandidates = ALL_CANDIDATES.filter(c => c.vacancyIndex < 3).slice(0, 10)
+  const proCandidates = ALL_CANDIDATES.filter(c => c.vacancyIndex >= 3 && c.vacancyIndex < 6).slice(0, 10)
   for (const c of proCandidates) {
     const { vacancyIndex, strengths, weaknesses, skills, ...rest } = c
-    const vacancyId = proVacancyIds[vacancyIndex]
-    const vacancyTitle = proVacancies[vacancyIndex].title
+    const proIndex = vacancyIndex - 3
+    const vacancyId = proVacancyIds[proIndex]
+    const vacancyTitle = proVacancies[proIndex].title
     await prisma.candidate.create({
       data: {
         ...rest,
