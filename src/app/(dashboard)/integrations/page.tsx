@@ -14,17 +14,17 @@ export default async function IntegrationsPage() {
   const userId = user?.id
 
   const dbUser = userId
-    ? await prisma.user.findUnique({ where: { id: userId }, select: { subscription: true, subscriptionEnd: true } })
+    ? await prisma.user.findUnique({ where: { id: userId }, select: { subscription: true, subscriptionEnd: true } }).catch(() => null)
     : null
   const effectiveSubscription = getEffectiveSubscription(dbUser?.subscription || 'free', dbUser?.subscriptionEnd || null)
   const limits = getPlanLimits(effectiveSubscription)
 
-  const integrations = userId && limits.atsIntegrations
+  const integrations: any[] = (userId && limits.atsIntegrations)
     ? await prisma.integration.findMany({
         where: { userId },
         orderBy: { createdAt: 'desc' },
         select: { id: true, platform: true, apiKey: false, companySlug: true, status: true, lastSyncAt: true, syncCount: true },
-      }).then(rows => rows.map(r => ({ ...r, apiKey: '••••••••', lastSyncAt: r.lastSyncAt ? r.lastSyncAt.toISOString() : null })))
+      }).then(rows => rows.map(r => ({ ...r, apiKey: '••••••••', lastSyncAt: r.lastSyncAt ? r.lastSyncAt.toISOString() : null }))).catch(() => [])
     : []
 
   const cookieStore = await cookies()

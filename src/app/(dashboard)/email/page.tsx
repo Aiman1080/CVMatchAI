@@ -11,7 +11,7 @@ export default async function EmailPage() {
   const session = await getServerSession(authOptions)
   const userId = (session?.user as any)?.id
   const dbUser = userId
-    ? await prisma.user.findUnique({ where: { id: userId }, select: { subscription: true, subscriptionEnd: true } })
+    ? await prisma.user.findUnique({ where: { id: userId }, select: { subscription: true, subscriptionEnd: true } }).catch(() => null)
     : null
   const effectiveSubscription = getEffectiveSubscription(dbUser?.subscription || 'free', dbUser?.subscriptionEnd || null)
   const limits = getPlanLimits(effectiveSubscription)

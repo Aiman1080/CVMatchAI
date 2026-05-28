@@ -16,15 +16,24 @@ export default async function VacanciesPage() {
   const userId = (session?.user as any)?.id
   const isAdmin = (session?.user as any)?.role === 'admin'
   const where = isAdmin ? {} : { userId }
-  const [vacancies, totalVacancies] = await Promise.all([
-    prisma.vacancy.findMany({
-      where,
-      include: { _count: { select: { candidates: true } } },
-      orderBy: { createdAt: 'desc' },
-      take: PAGE_SIZE,
-    }),
-    prisma.vacancy.count({ where }),
-  ])
+
+  let vacancies: any[] = []
+  let totalVacancies = 0
+  try {
+    const [v, t] = await Promise.all([
+      prisma.vacancy.findMany({
+        where,
+        include: { _count: { select: { candidates: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: PAGE_SIZE,
+      }),
+      prisma.vacancy.count({ where }),
+    ])
+    vacancies = v
+    totalVacancies = t
+  } catch (e: any) {
+    console.error('[VacanciesPage] DB error:', e?.message || e)
+  }
 
   const cookieStore = await cookies()
   const locale = (cookieStore.get('deltamatch-locale')?.value || 'en') as 'en' | 'nl' | 'fr'
