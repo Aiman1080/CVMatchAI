@@ -13,7 +13,7 @@ import {
   Search, Download, Bell, Eye,
   Megaphone, Table2, Filter,
 } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -1510,6 +1510,177 @@ export function AdminClient({
 
         {/* ══ System tab ══ */}
         <TabsContent value="system" className="mt-4 space-y-4">
+          {/* ── Scaling roadmap & infrastructure status ── */}
+          <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Database className="w-5 h-5 text-purple-500" /> Infrastructure & Scaling
+              </CardTitle>
+              <CardDescription>Current setup, capacity, and when to upgrade</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Current phase indicator */}
+              {(() => {
+                const userCount = counts.users
+                let phase = 1
+                let phaseLabel = 'Startup'
+                let phaseColor = 'green'
+                if (userCount > 2000) { phase = 4; phaseLabel = 'Enterprise'; phaseColor = 'red' }
+                else if (userCount > 300) { phase = 3; phaseLabel = 'Growth'; phaseColor = 'orange' }
+                else if (userCount > 50) { phase = 2; phaseLabel = 'Traction'; phaseColor = 'amber' }
+                const phaseBg = { green: 'bg-green-50 border-green-200 text-green-800 dark:bg-green-950/40 dark:border-green-800 dark:text-green-300',
+                                  amber: 'bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-950/40 dark:border-amber-800 dark:text-amber-300',
+                                  orange: 'bg-orange-50 border-orange-200 text-orange-800 dark:bg-orange-950/40 dark:border-orange-800 dark:text-orange-300',
+                                  red: 'bg-red-50 border-red-200 text-red-800 dark:bg-red-950/40 dark:border-red-800 dark:text-red-300' }[phaseColor]
+                return (
+                  <div className={`p-3 rounded-lg border ${phaseBg}`}>
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div>
+                        <p className="text-xs uppercase font-semibold opacity-70">Current phase</p>
+                        <p className="text-lg font-bold">Phase {phase} — {phaseLabel}</p>
+                        <p className="text-xs mt-1">{userCount} total accounts</p>
+                      </div>
+                      <div className="text-right text-xs">
+                        <p>Monthly cost</p>
+                        <p className="text-lg font-bold">
+                          {phase === 1 ? '€0' : phase === 2 ? '~€25' : phase === 3 ? '~€45' : '~€150'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })()}
+
+              {/* Scaling phases roadmap */}
+              <div>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-2">Scaling roadmap</p>
+                <div className="space-y-2">
+                  {[
+                    {
+                      phase: 1, name: 'Startup', range: '0-50 users', cost: '€0/mo',
+                      stack: 'Vercel Free + Supabase Free (60 connections)',
+                      reached: counts.users <= 50,
+                      current: counts.users <= 50,
+                    },
+                    {
+                      phase: 2, name: 'Traction', range: '50-300 users', cost: '~€25/mo',
+                      stack: 'Vercel Free + Supabase Pro (500 connections, daily backups)',
+                      reached: counts.users > 50,
+                      current: counts.users > 50 && counts.users <= 300,
+                    },
+                    {
+                      phase: 3, name: 'Growth', range: '300-2000 users', cost: '~€45/mo',
+                      stack: 'Vercel Pro + Supabase Pro + CDN (Cloudinary free)',
+                      reached: counts.users > 300,
+                      current: counts.users > 300 && counts.users <= 2000,
+                    },
+                    {
+                      phase: 4, name: 'Enterprise', range: '2000+ users', cost: '~€150/mo',
+                      stack: 'AWS RDS / PlanetScale + Upstash Redis + S3',
+                      reached: counts.users > 2000,
+                      current: counts.users > 2000,
+                    },
+                  ].map(p => (
+                    <div key={p.phase} className={`p-2.5 rounded-lg border text-xs ${p.current ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800' : 'bg-gray-50 dark:bg-gray-800/40 border-gray-200 dark:border-gray-700'}`}>
+                      <div className="flex items-center justify-between flex-wrap gap-1">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${p.current ? 'bg-blue-500 text-white' : p.reached ? 'bg-green-500 text-white' : 'bg-gray-300 dark:bg-gray-700 text-gray-600 dark:text-gray-400'}`}>
+                            {p.reached && !p.current ? '✓' : p.phase}
+                          </span>
+                          <span className="font-semibold text-gray-900 dark:text-white">{p.name}</span>
+                          <span className="text-gray-500">{p.range}</span>
+                        </div>
+                        <span className="font-mono font-semibold text-gray-900 dark:text-white">{p.cost}</span>
+                      </div>
+                      <p className="text-gray-500 dark:text-gray-400 mt-1 ml-7">{p.stack}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Health checks */}
+              <div>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-2">Health checks</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-800/40">
+                    <span className={hasAiKey ? 'text-green-500' : 'text-red-500'}>{hasAiKey ? '●' : '○'}</span>
+                    <span className="text-gray-700 dark:text-gray-300">Gemini AI API</span>
+                    <span className="ml-auto font-mono text-gray-500">{hasAiKey ? 'OK' : 'Not configured'}</span>
+                  </div>
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-800/40">
+                    <span className={hasSmtp ? 'text-green-500' : 'text-red-500'}>{hasSmtp ? '●' : '○'}</span>
+                    <span className="text-gray-700 dark:text-gray-300">SMTP (Email)</span>
+                    <span className="ml-auto font-mono text-gray-500">{hasSmtp ? 'OK' : 'Not configured'}</span>
+                  </div>
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-800/40">
+                    <span className="text-green-500">●</span>
+                    <span className="text-gray-700 dark:text-gray-300">Database</span>
+                    <span className="ml-auto font-mono text-gray-500">Supabase connected</span>
+                  </div>
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-800/40">
+                    <span className="text-green-500">●</span>
+                    <span className="text-gray-700 dark:text-gray-300">Hosting</span>
+                    <span className="ml-auto font-mono text-gray-500">Vercel</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Upgrade triggers */}
+              <div>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-2">When to upgrade — watch for these signs</p>
+                <ul className="space-y-1.5 text-xs text-gray-700 dark:text-gray-300">
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-500 mt-0.5">⚠</span>
+                    <span>Vercel logs show <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">max clients reached</code> errors → upgrade Supabase</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-500 mt-0.5">⚠</span>
+                    <span>Supabase Dashboard → DB connections {'>'} 70% on average → upgrade Supabase</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-500 mt-0.5">⚠</span>
+                    <span>Vercel Analytics P95 response time {'>'} 2s → upgrade Vercel</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-500 mt-0.5">⚠</span>
+                    <span>Users complain about slowness or HTTP 500 errors → check both</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* External monitoring links */}
+              <div>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-2">Monitor live</p>
+                <div className="flex flex-wrap gap-2">
+                  <a
+                    href="https://supabase.com/dashboard/project/rlvxyzudngineksyftqv/reports/database"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs px-3 py-1.5 rounded-lg bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900 font-medium border border-green-200 dark:border-green-800"
+                  >
+                    🗄 Supabase Reports
+                  </a>
+                  <a
+                    href="https://vercel.com/dashboard"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900 font-medium border border-blue-200 dark:border-blue-800"
+                  >
+                    ▲ Vercel Dashboard
+                  </a>
+                  <a
+                    href="https://dashboard.stripe.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs px-3 py-1.5 rounded-lg bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900 font-medium border border-purple-200 dark:border-purple-800"
+                  >
+                    💳 Stripe Dashboard
+                  </a>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
               <CardHeader className="pb-2">
