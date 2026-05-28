@@ -252,11 +252,11 @@ export function IntegrationsClient({ initialIntegrations }: { initialIntegration
   const [atsTipDismissed, setAtsTipDismissed] = useState(true) // default true to avoid flash
 
   useEffect(() => {
-    setAtsTipDismissed(localStorage.getItem('cvmatch-ats-tip-dismissed') === 'true')
+    setAtsTipDismissed(localStorage.getItem('deltamatch-ats-tip-dismissed') === 'true')
   }, [])
 
   const dismissAtsTip = () => {
-    localStorage.setItem('cvmatch-ats-tip-dismissed', 'true')
+    localStorage.setItem('deltamatch-ats-tip-dismissed', 'true')
     setAtsTipDismissed(true)
   }
 

@@ -42,7 +42,7 @@ export async function POST(req: Request) {
         `Priority: ${priority || 'normal'}\n\n` +
         `Subject: ${subject}\n\n` +
         `Message:\n${message}`
-      sendEmail(ADMIN_EMAIL, `[CVMatch Support] ${subject}`, body).catch(() => {})
+      sendEmail(ADMIN_EMAIL, `[DeltaMatch Support] ${subject}`, body).catch(() => {})
     }
 
     return NextResponse.json(ticket, { status: 201 })

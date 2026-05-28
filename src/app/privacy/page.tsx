@@ -23,12 +23,12 @@ export default function PrivacyPage() {
         {
           icon: Database,
           title: 'How we use your data',
-          text: 'Your data is used exclusively to provide the CVMatch AI service: AI analysis of CVs against your vacancies, candidate management, email scanning, and third-party ATS integrations you configure. We never sell your data or use it to train our AI models without explicit consent.',
+          text: 'Your data is used exclusively to provide the DeltaMatch service: AI analysis of CVs against your vacancies, candidate management, email scanning, and third-party ATS integrations you configure. We never sell your data or use it to train our AI models without explicit consent.',
         },
         {
           icon: Shield,
           title: 'GDPR compliance',
-          text: 'CVMatch AI is compliant with the EU General Data Protection Regulation (GDPR). As a recruiter, you are the data controller for candidate personal data. We are the data processor. You must ensure candidates have given consent before uploading their data. We provide tools to export and delete all candidate data on request.',
+          text: 'DeltaMatch is compliant with the EU General Data Protection Regulation (GDPR). As a recruiter, you are the data controller for candidate personal data. We are the data processor. You must ensure candidates have given consent before uploading their data. We provide tools to export and delete all candidate data on request.',
         },
         {
           icon: Lock,
@@ -48,7 +48,7 @@ export default function PrivacyPage() {
         {
           icon: Shield,
           title: 'AI as a decision-support tool',
-          text: 'CVMatch AI uses artificial intelligence exclusively as a decision-support tool. AI-generated scores, recommendations, and analyses are designed to assist recruiters — they never replace human judgment. Every hiring decision remains entirely in the hands of the recruiter. AI outputs may contain errors or biases; recruiters are responsible for reviewing and validating all AI-generated information before acting on it. No candidate is automatically rejected or accepted based solely on an AI score. When candidates are imported via ATS integrations, we assume the recruiter has obtained proper consent for AI-assisted processing as part of their recruitment workflow.',
+          text: 'DeltaMatch uses artificial intelligence exclusively as a decision-support tool. AI-generated scores, recommendations, and analyses are designed to assist recruiters — they never replace human judgment. Every hiring decision remains entirely in the hands of the recruiter. AI outputs may contain errors or biases; recruiters are responsible for reviewing and validating all AI-generated information before acting on it. No candidate is automatically rejected or accepted based solely on an AI score. When candidates are imported via ATS integrations, we assume the recruiter has obtained proper consent for AI-assisted processing as part of their recruitment workflow.',
         },
         {
           icon: UserX,
@@ -75,12 +75,12 @@ export default function PrivacyPage() {
         {
           icon: Database,
           title: 'Hoe we uw gegevens gebruiken',
-          text: 'Uw gegevens worden uitsluitend gebruikt om de CVMatch AI-service te leveren: AI-analyse van cv\'s ten opzichte van uw vacatures, kandidaatbeheer, e-mailscannen en door u geconfigureerde ATS-integraties van derden. We verkopen uw gegevens nooit en gebruiken ze niet om onze AI-modellen te trainen zonder uitdrukkelijke toestemming.',
+          text: 'Uw gegevens worden uitsluitend gebruikt om de DeltaMatch-service te leveren: AI-analyse van cv\'s ten opzichte van uw vacatures, kandidaatbeheer, e-mailscannen en door u geconfigureerde ATS-integraties van derden. We verkopen uw gegevens nooit en gebruiken ze niet om onze AI-modellen te trainen zonder uitdrukkelijke toestemming.',
         },
         {
           icon: Shield,
           title: 'AVG-naleving',
-          text: 'CVMatch AI voldoet aan de Europese Algemene Verordening Gegevensbescherming (AVG/GDPR). Als recruiter bent u de verwerkingsverantwoordelijke voor persoonsgegevens van kandidaten. Wij zijn de verwerker. U moet ervoor zorgen dat kandidaten toestemming hebben gegeven voordat u hun gegevens uploadt.',
+          text: 'DeltaMatch voldoet aan de Europese Algemene Verordening Gegevensbescherming (AVG/GDPR). Als recruiter bent u de verwerkingsverantwoordelijke voor persoonsgegevens van kandidaten. Wij zijn de verwerker. U moet ervoor zorgen dat kandidaten toestemming hebben gegeven voordat u hun gegevens uploadt.',
         },
         {
           icon: Lock,
@@ -100,7 +100,7 @@ export default function PrivacyPage() {
         {
           icon: Shield,
           title: 'AI als beslissingsondersteunend hulpmiddel',
-          text: 'CVMatch AI gebruikt kunstmatige intelligentie uitsluitend als beslissingsondersteunend hulpmiddel. AI-gegenereerde scores, aanbevelingen en analyses zijn bedoeld om recruiters te ondersteunen — ze vervangen nooit menselijk oordeel. Elke wervingsbeslissing blijft volledig in handen van de recruiter. AI-resultaten kunnen fouten of vooroordelen bevatten; recruiters zijn verantwoordelijk voor het beoordelen en valideren van alle door AI gegenereerde informatie. Geen enkele kandidaat wordt automatisch afgewezen of aangenomen op basis van een AI-score. Bij import via ATS-integraties gaan wij ervan uit dat de recruiter gepaste toestemming heeft verkregen voor AI-ondersteunde verwerking.',
+          text: 'DeltaMatch gebruikt kunstmatige intelligentie uitsluitend als beslissingsondersteunend hulpmiddel. AI-gegenereerde scores, aanbevelingen en analyses zijn bedoeld om recruiters te ondersteunen — ze vervangen nooit menselijk oordeel. Elke wervingsbeslissing blijft volledig in handen van de recruiter. AI-resultaten kunnen fouten of vooroordelen bevatten; recruiters zijn verantwoordelijk voor het beoordelen en valideren van alle door AI gegenereerde informatie. Geen enkele kandidaat wordt automatisch afgewezen of aangenomen op basis van een AI-score. Bij import via ATS-integraties gaan wij ervan uit dat de recruiter gepaste toestemming heeft verkregen voor AI-ondersteunde verwerking.',
         },
         {
           icon: UserX,
@@ -127,12 +127,12 @@ export default function PrivacyPage() {
         {
           icon: Database,
           title: 'Utilisation des données',
-          text: 'Vos données sont utilisées exclusivement pour fournir le service CVMatch AI : analyse IA des CV par rapport à vos offres, gestion des candidats, scan d\'e-mails et intégrations ATS que vous configurez. Nous ne vendons jamais vos données et ne les utilisons pas pour entraîner nos modèles IA sans consentement explicite.',
+          text: 'Vos données sont utilisées exclusivement pour fournir le service DeltaMatch : analyse IA des CV par rapport à vos offres, gestion des candidats, scan d\'e-mails et intégrations ATS que vous configurez. Nous ne vendons jamais vos données et ne les utilisons pas pour entraîner nos modèles IA sans consentement explicite.',
         },
         {
           icon: Shield,
           title: 'Conformité RGPD',
-          text: 'CVMatch AI est conforme au Règlement Général sur la Protection des Données (RGPD). En tant que recruteur, vous êtes le responsable du traitement des données personnelles des candidats. Nous sommes le sous-traitant. Vous devez vous assurer que les candidats ont donné leur consentement avant l\'upload de leurs données. Nous fournissons des outils pour exporter et supprimer toutes les données candidats sur demande.',
+          text: 'DeltaMatch est conforme au Règlement Général sur la Protection des Données (RGPD). En tant que recruteur, vous êtes le responsable du traitement des données personnelles des candidats. Nous sommes le sous-traitant. Vous devez vous assurer que les candidats ont donné leur consentement avant l\'upload de leurs données. Nous fournissons des outils pour exporter et supprimer toutes les données candidats sur demande.',
         },
         {
           icon: Lock,
@@ -152,7 +152,7 @@ export default function PrivacyPage() {
         {
           icon: Shield,
           title: 'L\'IA comme outil d\'aide à la décision',
-          text: 'CVMatch AI utilise l\'intelligence artificielle exclusivement comme outil d\'aide à la décision. Les scores, recommandations et analyses générés par l\'IA sont conçus pour assister les recruteurs — ils ne remplacent jamais le jugement humain. Chaque décision de recrutement reste entièrement entre les mains du recruteur. Les résultats de l\'IA peuvent contenir des erreurs ou des biais ; les recruteurs sont responsables de vérifier et valider toutes les informations générées par l\'IA avant d\'agir. Aucun candidat n\'est automatiquement rejeté ou accepté sur la base d\'un score IA. Lors de l\'importation via des intégrations ATS, nous présumons que le recruteur a obtenu le consentement approprié pour le traitement assisté par IA.',
+          text: 'DeltaMatch utilise l\'intelligence artificielle exclusivement comme outil d\'aide à la décision. Les scores, recommandations et analyses générés par l\'IA sont conçus pour assister les recruteurs — ils ne remplacent jamais le jugement humain. Chaque décision de recrutement reste entièrement entre les mains du recruteur. Les résultats de l\'IA peuvent contenir des erreurs ou des biais ; les recruteurs sont responsables de vérifier et valider toutes les informations générées par l\'IA avant d\'agir. Aucun candidat n\'est automatiquement rejeté ou accepté sur la base d\'un score IA. Lors de l\'importation via des intégrations ATS, nous présumons que le recruteur a obtenu le consentement approprié pour le traitement assisté par IA.',
         },
         {
           icon: UserX,
@@ -177,7 +177,7 @@ export default function PrivacyPage() {
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <Logo size={32} />
-            <span className="font-bold text-gray-900 dark:text-white">CVMatch AI</span>
+            <span className="font-bold text-gray-900 dark:text-white">DeltaMatch</span>
           </Link>
           <div className="flex items-center gap-4">
             
@@ -220,7 +220,7 @@ export default function PrivacyPage() {
       {/* Footer */}
       <footer className="border-t border-gray-100 dark:border-gray-800 py-8 px-6">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-400">
-          <span>© {new Date().getFullYear()} CVMatch AI</span>
+          <span>© {new Date().getFullYear()} DeltaMatch</span>
           <div className="flex gap-6">
             <Link href="/privacy" className="hover:text-gray-900 dark:hover:text-white text-blue-600 dark:text-blue-400 font-medium">
               {locale === 'nl' ? 'Privacy' : locale === 'en' ? 'Privacy' : 'Confidentialité'}

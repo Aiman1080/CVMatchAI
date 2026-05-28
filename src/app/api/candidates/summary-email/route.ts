@@ -179,7 +179,7 @@ function generateTemplateSummary(
   const topCandidate = sorted[0]
   const recommendation = `\nCLEAR RECOMMENDATION:\nWe recommend prioritizing ${topCandidate.firstName} ${topCandidate.lastName} (${topCandidate.matchScore?.toFixed(0) || 'N/A'}% match — ${scoreInterpretation(topCandidate.matchScore)}) for the first interview. ${sorted.length > 1 ? `${sorted[1].firstName} ${sorted[1].lastName} should be scheduled as the second interview.` : ''} This ordering is based on overall match score, strengths alignment, and fewer areas of concern.`
 
-  const footer = `\n\nBest regards,\nCVMatch AI`
+  const footer = `\n\nBest regards,\nDeltaMatch`
 
   return `${header}\n${lines.join('\n\n---\n\n')}\n${comparisonHeader}${comparisonLines}\n${recommendation}\n${interviewOrder}\n${redFlags}\n${footer}`
 }

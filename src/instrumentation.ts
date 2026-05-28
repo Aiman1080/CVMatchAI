@@ -17,7 +17,7 @@ export async function register() {
             name: 'Admin User',
             password: await bcrypt.hash('admin123', 12),
             role: 'admin',
-            company: 'CVMatch AI',
+            company: 'DeltaMatch',
             subscription: 'enterprise',
           },
           {
@@ -39,7 +39,7 @@ export async function register() {
         ],
       })
       console.log(
-        '✅ CVMatch AI: demo accounts created\n' +
+        '✅ DeltaMatch: demo accounts created\n' +
         '  admin:   admin@cvmatch.ai  / admin123\n' +
         '  pro:     pro@cvmatch.ai    / pro123\n' +
         '  free:    demo@cvmatch.ai   / recruiter123'

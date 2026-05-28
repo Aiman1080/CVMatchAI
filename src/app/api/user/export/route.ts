@@ -40,7 +40,7 @@ export async function GET() {
     return new NextResponse(JSON.stringify(exportData, null, 2), {
       headers: {
         'Content-Type': 'application/json',
-        'Content-Disposition': `attachment; filename="cvmatch-export-${new Date().toISOString().slice(0, 10)}.json"`,
+        'Content-Disposition': `attachment; filename="deltamatch-export-${new Date().toISOString().slice(0, 10)}.json"`,
       },
     })
   } catch {

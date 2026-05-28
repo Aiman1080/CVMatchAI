@@ -107,7 +107,7 @@ export async function exportCandidatesToPDF(
   // Header
   doc.setFontSize(18)
   doc.setTextColor(37, 99, 235) // blue-600
-  doc.text('CVMatch AI - Candidate Report', 14, 18)
+  doc.text('DeltaMatch - Candidate Report', 14, 18)
 
   doc.setFontSize(11)
   doc.setTextColor(100, 100, 100)
@@ -177,7 +177,7 @@ export async function exportHiringReportPDF(
   // Header
   doc.setFontSize(18)
   doc.setTextColor(37, 99, 235)
-  doc.text('CVMatch AI - Hiring Report', margin, 18)
+  doc.text('DeltaMatch - Hiring Report', margin, 18)
 
   doc.setFontSize(12)
   doc.setTextColor(60, 60, 60)
@@ -227,7 +227,7 @@ export async function exportHiringReportPDF(
     doc.setFontSize(8)
     doc.setTextColor(150, 150, 150)
     doc.text(
-      `CVMatch AI  |  Page ${i} of ${totalPages}  |  ${new Date().toLocaleDateString('en-GB')}`,
+      `DeltaMatch  |  Page ${i} of ${totalPages}  |  ${new Date().toLocaleDateString('en-GB')}`,
       margin,
       pageHeight - 8
     )

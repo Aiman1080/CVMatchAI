@@ -199,7 +199,7 @@ export function AdminClient({
           userIds: filteredEmailUsers.map(u => u.id),
           subject: emailSubject,
           body: emailBody,
-          fromName: senderEmail.includes('@') ? senderEmail.split('@')[0] : 'CVMatch AI',
+          fromName: senderEmail.includes('@') ? senderEmail.split('@')[0] : 'DeltaMatch',
         }),
       })
       if (res.ok) {
@@ -421,7 +421,7 @@ export function AdminClient({
     },
     {
       name: 'ATS Integrations', icon: Network, color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-950/30',
-      status: integrationsCount > 0 ? 'live' : 'available', model: 'REST API + synchronization', thinking: 'Sync one-way to CVMatch',
+      status: integrationsCount > 0 ? 'live' : 'available', model: 'REST API + synchronization', thinking: 'Sync one-way to DeltaMatch',
       details: ['Teamtailor: import candidates & jobs via API', 'Recruitee: sync applications and statuses', 'SmartRecruiters: bulk import', 'AI analyzes each imported CV automatically', 'Intelligent deduplication of candidates'],
       stat: `${integrationsCount} integration${integrationsCount !== 1 ? 's' : ''}`,
     },

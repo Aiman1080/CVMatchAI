@@ -60,7 +60,7 @@ export function Sidebar() {
         <Link href="/dashboard" className="flex items-center gap-2.5" onClick={() => setMobileOpen(false)}>
           <Logo size={36} />
           <div>
-            <span className="font-bold text-gray-900 dark:text-white text-lg leading-tight block">CVMatch</span>
+            <span className="font-bold text-gray-900 dark:text-white text-lg leading-tight block">DeltaMatch</span>
             <span className="text-xs text-blue-600 font-semibold leading-tight">AI Platform</span>
           </div>
         </Link>
