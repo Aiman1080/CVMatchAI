@@ -15,6 +15,7 @@ import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
 interface Props {
   user: { name?: string; email?: string; company?: string; subscription?: string; image?: string; emailSignature?: string }
+  isDemo?: boolean
 }
 
 const PLANS = [
@@ -22,7 +23,7 @@ const PLANS = [
   { id: 'pro', name: 'Pro', price: '€55/mo', features: ['Unlimited vacancies', 'Unlimited candidates', 'AI interview questions', 'AI hiring reports', 'Email scanning', '14 ATS integrations', 'Analytics & export'], popular: true },
 ]
 
-export function SettingsClient({ user }: Props) {
+export function SettingsClient({ user, isDemo }: Props) {
   const { t } = useLanguage()
   const [form, setForm] = useState({ name: user.name || '', company: user.company || '', image: user.image || '', emailSignature: user.emailSignature || '' })
   const initials = user.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'
@@ -125,7 +126,8 @@ export function SettingsClient({ user }: Props) {
                 />
                 <p className="text-xs text-gray-400">{"You can paste HTML with images. Use <img src='...'> for your company logo."}</p>
               </div>
-              <Button type="submit" disabled={saving} className="gradient-bg gap-2"><Save size={14} />{saving ? t.dashboard.settingsProfile.saving : t.dashboard.settingsProfile.saveChanges}</Button>
+              <Button type="submit" disabled={saving || isDemo} className="gradient-bg gap-2"><Save size={14} />{saving ? t.dashboard.settingsProfile.saving : t.dashboard.settingsProfile.saveChanges}</Button>
+              {isDemo && <p className="text-xs text-amber-600">Demo accounts cannot modify profile settings.</p>}
             </form>
           </CardContent>
         </Card>
@@ -143,8 +145,8 @@ export function SettingsClient({ user }: Props) {
           </CardContent>
         </Card>
 
-        {/* Password change */}
-        <Card className="border-0 shadow-sm max-w-lg">
+        {/* Password change — hidden for demo accounts */}
+        {!isDemo && <Card className="border-0 shadow-sm max-w-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base text-gray-900 dark:text-white">
               <Lock className="w-4 h-4" /> {t.dashboard.settingsPassword.title}
@@ -194,7 +196,7 @@ export function SettingsClient({ user }: Props) {
               </Button>
             </form>
           </CardContent>
-        </Card>
+        </Card>}
       </TabsContent>
 
       <TabsContent value="subscription">

@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { Header } from '@/components/layout/Header'
 import { SettingsClient } from '@/components/dashboard/SettingsClient'
+import { isDemoAccount } from '@/lib/demo-guard'
 
 export const metadata = { title: 'Settings' }
 
@@ -15,6 +16,7 @@ export default async function SettingsPage() {
       <div className="p-8">
         <SettingsClient
           user={{ name: user?.name, email: user?.email, company: user?.company, subscription: user?.subscription, image: user?.image, emailSignature: user?.emailSignature }}
+          isDemo={isDemoAccount(user?.email)}
         />
       </div>
     </div>
