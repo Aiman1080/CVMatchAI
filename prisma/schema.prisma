@@ -135,6 +135,9 @@ model Candidate {
   gdprConsentDate DateTime?
   analyzedAt      DateTime?
   notes           String?
+  // JSON-encoded array of recruiter-typed answers for AI-generated interview questions.
+  // Persists across sessions so notes survive logout/re-login.
+  interviewAnswers String?
   liked           Boolean    @default(false)
   priority        Boolean    @default(false)
   savedToPool     Boolean    @default(false)
