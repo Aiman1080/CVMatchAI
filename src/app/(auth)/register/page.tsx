@@ -18,7 +18,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 export default function RegisterPage() {
   const router = useRouter()
   const { t } = useLanguage()
-  const [form, setForm] = useState({ name: '', email: '', password: '', company: '', plan: 'pro' as 'free' | 'pro' })
+  const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '', company: '', plan: 'pro' as 'free' | 'pro' })
   const [loading, setLoading] = useState(false)
 
   // Inline validation state for required fields
@@ -37,6 +37,7 @@ export default function RegisterPage() {
     else if (!EMAIL_REGEX.test(f.email)) next.email = invalidEmailMsg
     if (!f.password) next.password = t.auth.tooShort
     else if (f.password.length < 8) next.password = t.auth.tooShort
+    if (f.confirmPassword !== f.password) next.confirmPassword = 'Passwords do not match'
     return next
   }
 
@@ -67,7 +68,7 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setTouched({ name: true, email: true, password: true })
+    setTouched({ name: true, email: true, password: true, confirmPassword: true })
     const all = validate(form)
     if (Object.keys(all).length > 0) {
       setErrors(all)
@@ -76,7 +77,9 @@ export default function RegisterPage() {
     }
     setLoading(true)
     try {
-      const res = await fetch('/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
+      // Strip confirmPassword — server doesn't need it (already validated client-side)
+      const { confirmPassword: _, ...payload } = form
+      const res = await fetch('/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       const login = await signIn('credentials', { email: form.email, password: form.password, redirect: false })
@@ -198,6 +201,23 @@ export default function RegisterPage() {
                 </div>
               )
             })()}
+          </div>
+          {/* Confirm password */}
+          <div className="space-y-1.5">
+            <Label>Confirm password <span className="text-red-500">*</span></Label>
+            <Input
+              type="password"
+              placeholder="Re-enter your password"
+              value={form.confirmPassword}
+              onChange={e => setField('confirmPassword', e.target.value)}
+              onBlur={() => markTouched('confirmPassword')}
+              aria-invalid={!!errors.confirmPassword}
+              className={errors.confirmPassword ? 'border-red-500 focus-visible:ring-red-500' : ''}
+            />
+            {errors.confirmPassword && <p className="text-xs text-red-500" role="alert">{errors.confirmPassword}</p>}
+            {form.confirmPassword && form.password && form.confirmPassword === form.password && (
+              <p className="text-xs text-green-600">✓ Passwords match</p>
+            )}
           </div>
           {/* Plan selector */}
           <div className="space-y-2">
