@@ -70,12 +70,11 @@ export async function POST(req: Request) {
     const lock = await client.getMailboxLock('INBOX')
 
     try {
-      // Only look at emails from the last 30 days to keep scans fast.
-      // Include BOTH seen and unseen emails — recruiters often open emails
-      // before scanning, which previously caused 'nothing found' even though
-      // applications were in the inbox.
+      // Only look at emails from the last 15 days to keep scans focused and fast.
+      // Include BOTH read and unread emails — recruiters often open emails
+      // before scanning.
       const since = new Date()
-      since.setDate(since.getDate() - 30)
+      since.setDate(since.getDate() - 15)
 
       const messages: any[] = []
       for await (const msg of client.fetch(
@@ -219,6 +218,24 @@ export async function POST(req: Request) {
           let cvText = ''
           let motivationText = ''
 
+          // Helper: try to parse a downloaded buffer as a CV/motivation document.
+          // Returns the parsed text and detected type, or empty strings on failure.
+          const tryParseBuffer = async (buffer: Buffer, hint: string): Promise<{ text: string; docType: string }> => {
+            if (buffer.length < 100) return { text: '', docType: 'unknown' }
+            // Try PDF first, then DOCX, then plain text
+            for (const mime of ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain']) {
+              try {
+                const text = await parseDocument(buffer, mime)
+                if (text.length >= 100) {
+                  const docType = await detectDocumentType(text)
+                  console.log(`[email/scan] ${hint}: parsed ${text.length} chars as ${mime}, detected as ${docType}`)
+                  return { text, docType }
+                }
+              } catch {}
+            }
+            return { text: '', docType: 'unknown' }
+          }
+
           // Download each attachment using its ACTUAL MIME part path
           for (const att of attachments) {
             try {
@@ -227,20 +244,36 @@ export async function POST(req: Request) {
               const chunks: Buffer[] = []
               for await (const chunk of dl.content) chunks.push(chunk)
               const buffer = Buffer.concat(chunks)
-              if (buffer.length < 100) continue
-
-              const text = await parseDocument(buffer, att.mimeType)
-              if (text.length < 100) {
-                console.log(`[email/scan] msg ${msg.uid}: attachment ${att.name} parsed too short (${text.length} chars)`)
-                continue
-              }
-              const docType = await detectDocumentType(text)
-              console.log(`[email/scan] msg ${msg.uid}: attachment ${att.name} parsed ${text.length} chars, detected as ${docType}`)
+              const { text, docType } = await tryParseBuffer(buffer, `msg ${msg.uid} att ${att.name}`)
+              if (!text) continue
               if (docType === 'cv' && !cvText) cvText = text
               else if (docType === 'motivation' && !motivationText) motivationText = text
-              else if (!cvText) cvText = text  // fallback: treat unclassified as CV
+              else if (!cvText) cvText = text
             } catch (e: any) {
               console.error(`[email/scan] msg ${msg.uid}: failed to download attachment ${att.name} at path ${att.path}:`, e?.message)
+            }
+          }
+
+          // BRUTE-FORCE FALLBACK: if no CV found yet, try downloading every plausible
+          // MIME part path. Webmail providers sometimes hide attachments under unusual
+          // paths that our bodyStructure walk misses. We try a depth-2 grid of paths.
+          if (!cvText) {
+            console.log(`[email/scan] msg ${msg.uid}: no CV found via bodyStructure, attempting brute-force part download`)
+            const candidatePaths = ['1', '2', '3', '4', '5', '1.1', '1.2', '1.3', '2.1', '2.2', '2.3', '3.1', '3.2']
+            for (const path of candidatePaths) {
+              if (cvText) break
+              try {
+                const dl = await client.download(msg.uid.toString(), path, { uid: true }) as any
+                if (!dl?.content) continue
+                const chunks: Buffer[] = []
+                for await (const chunk of dl.content) chunks.push(chunk)
+                const buffer = Buffer.concat(chunks)
+                if (buffer.length < 500) continue  // probably not a CV
+                const { text, docType } = await tryParseBuffer(buffer, `msg ${msg.uid} brute-path ${path}`)
+                if (!text) continue
+                if (docType === 'motivation' && !motivationText) motivationText = text
+                if (!cvText && text.length > 200) cvText = text
+              } catch { /* path doesn't exist, try next */ }
             }
           }
 
