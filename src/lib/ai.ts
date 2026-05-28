@@ -141,15 +141,23 @@ ${cvText.slice(0, 6000)}` +
 
 const EMAIL_CLASSIFY_TOOL: FunctionDeclaration = {
   name: 'classify_email',
-  description: 'Classify whether this email is a recruitment job application',
+  description: 'Determine whether the email is from someone applying for a job (with or without explicit mention)',
   parameters: {
     type: SchemaType.OBJECT,
     properties: {
-      isRelevant: { type: SchemaType.BOOLEAN, description: 'True if this is a job application with CV or motivation letter' },
-      candidateName: { type: SchemaType.STRING, description: 'Candidate name if detectable' },
-      appliedPosition: { type: SchemaType.STRING, description: 'Position applied for if mentioned' },
-      hasAttachments: { type: SchemaType.BOOLEAN, description: 'Whether the email has document attachments' },
-      confidence: { type: SchemaType.NUMBER, description: 'Confidence score 0-100' },
+      isRelevant: {
+        type: SchemaType.BOOLEAN,
+        description:
+          'TRUE if the email is sent by a person who wants to apply for a job, sends their CV, or expresses interest in a position. Includes: explicit applications, spontaneous applications, follow-up emails to recruiters, emails mentioning CV/resume attached, emails about a candidate sending their profile, emails forwarding a CV from any platform (LinkedIn, Indeed, careers portals). FALSE only for: marketing emails, newsletters, transactional emails (orders, receipts), social notifications, spam, automated alerts, OR completely off-topic personal correspondence.',
+      },
+      candidateName: { type: SchemaType.STRING, description: 'Full name of the candidate as it appears in the email signature or body' },
+      appliedPosition: { type: SchemaType.STRING, description: 'Position or role the person is applying for (if mentioned)' },
+      intent: {
+        type: SchemaType.STRING,
+        description: 'Short summary of the sender intent in 5-10 words. Examples: "Spontaneous application", "Applying for Senior Developer", "Forwarded CV from LinkedIn", "Following up on previous application"',
+      },
+      hasAttachments: { type: SchemaType.BOOLEAN, description: 'Whether the email has document attachments listed' },
+      confidence: { type: SchemaType.NUMBER, description: 'Confidence score 0-100 in the isRelevant decision' },
     },
     required: ['isRelevant', 'hasAttachments', 'confidence'],
   },
@@ -159,7 +167,7 @@ export async function classifyRecruitmentEmail(
   subject: string,
   bodyPreview: string,
   attachmentNames: string[],
-): Promise<{ isRelevant: boolean; candidateName?: string; appliedPosition?: string; confidence: number }> {
+): Promise<{ isRelevant: boolean; candidateName?: string; appliedPosition?: string; intent?: string; confidence: number }> {
   if (isDemoMode()) {
     const keywords = ['sollicitatie', 'application', 'cv', 'resume', 'motivation', 'candidature', 'apply', 'kandidaat']
     const text = `${subject} ${bodyPreview}`.toLowerCase()
@@ -179,7 +187,20 @@ export async function classifyRecruitmentEmail(
     })
 
     const result = await model.generateContent(
-      `Classify this email:\n\nSubject: ${subject}\nBody: ${bodyPreview.slice(0, 500)}\nAttachments: ${attachmentNames.join(', ') || 'none'}\n\nCall classify_email now.`
+      `You are reading an email that just arrived in a recruiter's inbox. ` +
+      `Determine whether the SENDER WANTS TO APPLY FOR A JOB at the recruiter's company. ` +
+      `Be GENEROUS: include spontaneous applications, follow-ups, forwarded CVs, expressions of interest. ` +
+      `Even if the body is short, ambiguous, or in another language (FR/NL/EN/DE/ES), still mark TRUE if there's any sign the person is sending themselves or their CV.\n\n` +
+      `Rules:\n` +
+      `- A CV/resume attachment is the STRONGEST signal — almost always means application.\n` +
+      `- Phrases like "please find attached my CV", "I'm interested", "my profile", "I would like to apply", "ci-joint mon CV", "candidature spontanée", "veuillez trouver", "voici mon CV", "sollicit", "kandidaat", "bewerb" all mean YES.\n` +
+      `- Forwarded emails from LinkedIn/Indeed/Welcome to the Jungle: YES.\n` +
+      `- Newsletters, "Welcome to X", order confirmations, password resets, marketing: NO.\n` +
+      `- When in doubt, lean YES.\n\n` +
+      `Subject: ${subject}\n` +
+      `Body: ${bodyPreview.slice(0, 1500)}\n` +
+      `Attachments: ${attachmentNames.join(', ') || 'none'}\n\n` +
+      `Call classify_email now with your decision.`
     )
 
     const call = result.response.functionCalls()?.[0]
@@ -189,6 +210,7 @@ export async function classifyRecruitmentEmail(
         isRelevant: input.isRelevant,
         candidateName: input.candidateName,
         appliedPosition: input.appliedPosition,
+        intent: input.intent,
         confidence: input.confidence,
       }
     }
