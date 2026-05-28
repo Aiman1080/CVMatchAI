@@ -91,10 +91,10 @@ export function Sidebar() {
                   : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-200'
               )}
             >
-              <Icon className={cn(active ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-600')} size={18} />
-              {label}
-              {active && !locked && <ChevronRight className="ml-auto w-3.5 h-3.5 text-blue-400" />}
-              {locked && <Lock className="ml-auto w-3 h-3 text-gray-400 dark:text-gray-600" />}
+              <Icon className={cn('shrink-0', active ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-600')} size={18} />
+              <span className="truncate flex-1 min-w-0">{label}</span>
+              {active && !locked && <ChevronRight className="shrink-0 w-3.5 h-3.5 text-blue-400" />}
+              {locked && <Lock className="shrink-0 w-3 h-3 text-gray-400 dark:text-gray-600" />}
             </Link>
           )
         })}
