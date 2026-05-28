@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { toast } from '@/components/ui/use-toast'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface Props {
   open: boolean
@@ -18,6 +19,8 @@ interface Props {
 
 // Handles multi-file CV/motivation letter uploads with per-file progress and GDPR consent gate
 export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploaded }: Props) {
+  const { t } = useLanguage()
+  const u = t.dashboard.upload
   const [files, setFiles] = useState<File[]>([])
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -42,7 +45,7 @@ export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploa
 
   const handleUpload = async () => {
     if (!gdprConsent) {
-      toast({ title: 'GDPR consent required', description: 'Please confirm GDPR consent before uploading', variant: 'destructive' })
+      toast({ title: u.gdprRequired, description: u.gdprRequiredDesc, variant: 'destructive' })
       return
     }
     setUploading(true)
@@ -65,10 +68,10 @@ export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploa
           uploaded.push({ file: file.name, success: true, candidate: data.candidate, score: data.candidate.matchScore })
           onUploaded(data.candidate)
         } else {
-          uploaded.push({ file: file.name, success: false, error: data.error || 'Upload failed' })
+          uploaded.push({ file: file.name, success: false, error: data.error || u.uploadFailed })
         }
       } catch {
-        uploaded.push({ file: file.name, success: false, error: 'Upload failed' })
+        uploaded.push({ file: file.name, success: false, error: u.uploadFailed })
       }
     }
 
@@ -78,8 +81,8 @@ export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploa
 
     const successes = uploaded.filter(r => r.success).length
     toast({
-      title: `${successes}/${files.length} files processed`,
-      description: `AI analysis complete. ${successes} candidate${successes !== 1 ? 's' : ''} added.`,
+      title: u.filesProcessed.replace('{success}', String(successes)).replace('{total}', String(files.length)),
+      description: u.aiAnalysisComplete.replace('{count}', String(successes)),
     })
   }
 
@@ -96,26 +99,26 @@ export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploa
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Upload CVs & Motivation Letters</DialogTitle>
-          <DialogDescription>For vacancy: <strong>{vacancyTitle}</strong></DialogDescription>
+          <DialogTitle>{u.dialogTitle}</DialogTitle>
+          <DialogDescription>{u.forVacancy} <strong>{vacancyTitle}</strong></DialogDescription>
         </DialogHeader>
 
         {results.length > 0 ? (
           <div className="space-y-3">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Analysis Complete:</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{u.analysisComplete}</p>
             {results.map((r, i) => (
               <div key={i} className={`flex items-center gap-3 p-3 rounded-lg ${r.success ? 'bg-green-50 dark:bg-green-950/30' : 'bg-red-50 dark:bg-red-950/30'}`}>
                 {r.success ? <CheckCircle className="w-4 h-4 text-green-600 shrink-0" /> : <X className="w-4 h-4 text-red-500 shrink-0" />}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{r.file}</p>
                   {r.success && r.score && (
-                    <p className="text-xs text-gray-500">Match score: <strong>{r.score.toFixed(0)}%</strong></p>
+                    <p className="text-xs text-gray-500">{u.matchScore} <strong>{r.score.toFixed(0)}%</strong></p>
                   )}
                   {!r.success && <p className="text-xs text-red-600">{r.error}</p>}
                 </div>
               </div>
             ))}
-            <Button onClick={handleClose} className="w-full">Done</Button>
+            <Button onClick={handleClose} className="w-full">{u.done}</Button>
           </div>
         ) : (
           <div className="space-y-4">
@@ -126,9 +129,9 @@ export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploa
               <input {...getInputProps()} />
               <Upload className={`w-8 h-8 mx-auto mb-3 ${isDragActive ? 'text-blue-500' : 'text-gray-400'}`} />
               <p className="text-sm font-medium text-gray-700">
-                {isDragActive ? 'Drop files here' : 'Drag & drop CVs or motivation letters'}
+                {isDragActive ? u.dropFiles : u.dragDrop}
               </p>
-              <p className="text-xs text-gray-400 mt-1">PDF, DOCX, DOC, TXT — max 10MB each</p>
+              <p className="text-xs text-gray-400 mt-1">{u.fileFormats}</p>
             </div>
 
             {files.length > 0 && (
@@ -149,7 +152,7 @@ export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploa
             {uploading && (
               <div className="space-y-1">
                 <div className="flex justify-between text-xs text-gray-500">
-                  <span>Processing with AI...</span>
+                  <span>{u.processingAI}</span>
                   <span>{progress}%</span>
                 </div>
                 <Progress value={progress} />
@@ -166,21 +169,21 @@ export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploa
                 className="mt-0.5 rounded"
               />
               <label htmlFor="gdpr" className="text-xs text-gray-600 dark:text-gray-300 cursor-pointer">
-                I confirm that candidates have given GDPR consent for their data to be processed for recruitment purposes, in accordance with EU data protection regulations.
+                {u.gdprConsent}
               </label>
             </div>
 
             <div className="flex gap-3">
-              <Button variant="outline" onClick={handleClose} className="flex-1">Cancel</Button>
+              <Button variant="outline" onClick={handleClose} className="flex-1">{u.cancelBtn}</Button>
               <Button
                 onClick={handleUpload}
                 disabled={files.length === 0 || uploading || !gdprConsent}
                 className="flex-1 gradient-bg"
               >
                 {uploading ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Analyzing...</>
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {u.analyzing}</>
                 ) : (
-                  <><Upload className="w-4 h-4 mr-2" /> Upload & Analyze</>
+                  <><Upload className="w-4 h-4 mr-2" /> {u.uploadAnalyze}</>
                 )}
               </Button>
             </div>

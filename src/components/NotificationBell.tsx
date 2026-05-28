@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Bell, FileText, MessageSquare, UserPlus, Scan, Check, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface Notification {
   id: string
@@ -29,18 +30,22 @@ const typeColors: Record<string, string> = {
   scan_complete: 'text-amber-500',
 }
 
-function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime()
-  const minutes = Math.floor(diff / 60_000)
-  if (minutes < 1) return 'just now'
-  if (minutes < 60) return `${minutes}m ago`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h ago`
-  const days = Math.floor(hours / 24)
-  return `${days}d ago`
-}
-
 export function NotificationBell() {
+  const { t } = useLanguage()
+  const n = t.dashboard.notifications
+
+  // Builds a localized "x time ago" string from translation keys
+  const timeAgo = (dateStr: string): string => {
+    const diff = Date.now() - new Date(dateStr).getTime()
+    const minutes = Math.floor(diff / 60_000)
+    if (minutes < 1) return n.justNow
+    if (minutes < 60) return n.minutesAgo.replace('{count}', String(minutes))
+    const hours = Math.floor(minutes / 60)
+    if (hours < 24) return n.hoursAgo.replace('{count}', String(hours))
+    const days = Math.floor(hours / 24)
+    return n.daysAgo.replace('{count}', String(days))
+  }
+
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [open, setOpen] = useState(false)
@@ -125,7 +130,7 @@ export function NotificationBell() {
       <button
         onClick={() => setOpen(prev => !prev)}
         className="relative p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg transition-colors"
-        aria-label="Notifications"
+        aria-label={n.ariaLabel}
       >
         <Bell size={20} />
         {unreadCount > 0 && (
@@ -139,14 +144,14 @@ export function NotificationBell() {
         <div className="fixed left-64 top-16 md:absolute md:left-0 md:top-full md:mt-2 w-80 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg z-[100] overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Notifications</h3>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{n.title}</h3>
             {unreadCount > 0 && (
               <button
                 onClick={markAllRead}
                 className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
               >
                 <Check size={12} />
-                Mark all read
+                {n.markAllRead}
               </button>
             )}
           </div>
@@ -156,7 +161,7 @@ export function NotificationBell() {
             {notifications.length === 0 ? (
               <div className="px-4 py-8 text-center">
                 <Bell size={24} className="mx-auto mb-2 text-gray-300 dark:text-gray-600" />
-                <p className="text-sm text-gray-500 dark:text-gray-400">No notifications yet</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{n.noNotifications}</p>
               </div>
             ) : (
               notifications.map(notification => {
@@ -198,7 +203,7 @@ export function NotificationBell() {
                     <button
                       onClick={() => deleteOne(notification.id)}
                       className="mt-1 shrink-0 p-1 text-gray-300 hover:text-red-500 dark:text-gray-600 dark:hover:text-red-400 rounded transition-colors"
-                      title="Delete"
+                      title={n.delete}
                     >
                       <X size={14} />
                     </button>
@@ -214,7 +219,7 @@ export function NotificationBell() {
               onClick={() => { setShowAll(!showAll); }}
               className="w-full text-xs text-center text-blue-600 dark:text-blue-400 hover:text-blue-700 font-medium py-1"
             >
-              {showAll ? 'Show recent' : 'View all history'}
+              {showAll ? n.showRecent : n.viewAllHistory}
             </button>
           </div>
         </div>

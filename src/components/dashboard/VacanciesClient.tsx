@@ -191,7 +191,7 @@ export function VacanciesClient({ initialVacancies, isDemo }: { initialVacancies
                         <button
                           onClick={e => handleDuplicate(e, v.id)}
                           disabled={duplicating === v.id}
-                          className="p-1 text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                          className="p-1 text-gray-300 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-lg transition-colors"
                           title="Duplicate vacancy"
                         >
                           <Copy size={13} />
@@ -201,7 +201,7 @@ export function VacanciesClient({ initialVacancies, isDemo }: { initialVacancies
                         <button
                           onClick={e => handleDelete(e, v.id, v.title)}
                           disabled={deleting === v.id}
-                          className="p-1 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-1 text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors"
                           title="Delete vacancy"
                         >
                           <Trash2 size={13} />

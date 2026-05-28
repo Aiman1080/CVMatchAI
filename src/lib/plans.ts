@@ -56,3 +56,10 @@ export const PLAN_LIMITS = {
 export function getPlanLimits(subscription: string) {
   return PLAN_LIMITS[subscription as keyof typeof PLAN_LIMITS] || PLAN_LIMITS.free
 }
+
+export function getEffectiveSubscription(subscription: string, subscriptionEnd: Date | null): string {
+  if (subscription === 'pro' && subscriptionEnd && subscriptionEnd < new Date()) {
+    return 'free'
+  }
+  return subscription
+}

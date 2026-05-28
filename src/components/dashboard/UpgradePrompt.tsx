@@ -19,7 +19,7 @@ export function UpgradePrompt({ feature, description }: Props) {
       </div>
       <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{feature}</h2>
       <p className="text-gray-500 dark:text-gray-400 text-sm max-w-sm mb-6">{description}</p>
-      <Link href="/settings">
+      <Link href="/upgrade">
         <Button className="gradient-bg gap-2">
           <Zap size={16} /> {tu.cta}
         </Button>

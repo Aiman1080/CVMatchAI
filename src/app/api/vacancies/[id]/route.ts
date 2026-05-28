@@ -40,6 +40,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const existing = await prisma.vacancy.findFirst({ where: isAdmin ? { id } : { id, userId } })
     if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     const body = await req.json()
+    if (body.description !== undefined && !body.description.trim()) {
+      return NextResponse.json({ error: 'Description cannot be empty' }, { status: 400 })
+    }
+    if (body.requirements !== undefined && !body.requirements.trim()) {
+      return NextResponse.json({ error: 'Requirements cannot be empty' }, { status: 400 })
+    }
     const allowed = ['title', 'company', 'department', 'location', 'type', 'description', 'requirements', 'niceToHave', 'salary', 'language', 'status']
     const data: any = {}
     for (const key of allowed) { if (body[key] !== undefined) data[key] = body[key] }

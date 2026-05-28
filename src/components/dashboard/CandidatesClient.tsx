@@ -40,7 +40,7 @@ interface Candidate {
 const PAGE_SIZE = 30
 
 // Client component: compact grid + kanban toggle, like/priority/pool, export CSV
-export function CandidatesClient({ initialCandidates, initialTotal }: { initialCandidates: Candidate[]; initialTotal: number }) {
+export function CandidatesClient({ initialCandidates, initialTotal, isPro = false }: { initialCandidates: Candidate[]; initialTotal: number; isPro?: boolean }) {
   const router = useRouter()
   const { t } = useLanguage()
   const tc = t.dashboard.candidates
@@ -438,7 +438,8 @@ export function CandidatesClient({ initialCandidates, initialTotal }: { initialC
         <Button
           variant="outline"
           size="sm"
-          disabled={exportingExcel}
+          disabled={exportingExcel || !isPro}
+          title={!isPro ? 'Pro feature' : undefined}
           onClick={async () => {
             setExportingExcel(true)
             try {
@@ -454,7 +455,8 @@ export function CandidatesClient({ initialCandidates, initialTotal }: { initialC
         <Button
           variant="outline"
           size="sm"
-          disabled={exportingPdf}
+          disabled={exportingPdf || !isPro}
+          title={!isPro ? 'Pro feature' : undefined}
           onClick={async () => {
             setExportingPdf(true)
             try {

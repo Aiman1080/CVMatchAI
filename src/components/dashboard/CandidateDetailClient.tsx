@@ -493,7 +493,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                  <span>Global</span>
+                  <span>{cd.global}</span>
                   <span className={`font-bold text-sm ${scoreColor}`}>{score.toFixed(0)}%</span>
                 </div>
                 <Progress value={score} className="h-2" />
@@ -516,8 +516,8 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
               {hasEmailSource && <TabsTrigger value="email">{cd.emailPanel}</TabsTrigger>}
               <TabsTrigger value="interview" className="gap-1"><MessageSquareText size={14} /> {ci.interviewTab}</TabsTrigger>
               <TabsTrigger value="report" className="gap-1"><ClipboardList size={14} /> {ci.reportTab}</TabsTrigger>
-              <TabsTrigger value="activity" className="gap-1" onClick={fetchActivities}><History size={14} /> Activity</TabsTrigger>
-              <TabsTrigger value="cv">CV</TabsTrigger>
+              <TabsTrigger value="activity" className="gap-1" onClick={fetchActivities}><History size={14} /> {cd.activityTab}</TabsTrigger>
+              <TabsTrigger value="cv">{cd.cvTab}</TabsTrigger>
               {hasMotivationText && <TabsTrigger value="motivation">{ci.motivationTab}</TabsTrigger>}
             </TabsList>
 
@@ -750,7 +750,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                                 className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 font-medium transition-colors"
                               >
                                 {visibleAnswers.has(i) ? <EyeOff size={12} /> : <Eye size={12} />}
-                                {visibleAnswers.has(i) ? 'Hide expected answer' : 'Show expected answer'}
+                                {visibleAnswers.has(i) ? cd.hideExpectedAnswer : cd.showExpectedAnswer}
                               </button>
                               {visibleAnswers.has(i) && (
                                 <div className="mt-2 p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg">
@@ -841,19 +841,19 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
               <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm flex items-center gap-2">
-                    <History className="w-4 h-4 text-blue-500" /> Activity Timeline
+                    <History className="w-4 h-4 text-blue-500" /> {cd.activityTimeline}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {loadingActivities ? (
                     <div className="py-12 text-center">
                       <Loader2 className="w-6 h-6 text-gray-300 mx-auto mb-2 animate-spin" />
-                      <p className="text-gray-400 text-sm">Loading activity...</p>
+                      <p className="text-gray-400 text-sm">{cd.loadingActivity}</p>
                     </div>
                   ) : activities.length === 0 ? (
                     <div className="py-12 text-center">
                       <History className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                      <p className="text-gray-400 text-sm">No activity yet</p>
+                      <p className="text-gray-400 text-sm">{cd.noActivityYet}</p>
                     </div>
                   ) : (
                     <div className="relative">

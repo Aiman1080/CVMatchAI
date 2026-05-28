@@ -63,27 +63,27 @@ export function UploadWithVacancyDialog({ open, onClose, onUploaded }: Props) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Upload className="w-5 h-5 text-blue-500" />
-            Upload CV
+            {t.dashboard.upload.uploadCvTitle}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 mt-2">
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Select a vacancy <span className="text-red-500">*</span>
+              {t.dashboard.upload.selectVacancyLabel} <span className="text-red-500">*</span>
             </label>
             {loading ? (
               <div className="flex items-center gap-2 p-3 text-sm text-gray-500">
-                <Loader2 className="w-4 h-4 animate-spin" /> Loading vacancies...
+                <Loader2 className="w-4 h-4 animate-spin" /> {t.dashboard.upload.loadingVacancies}
               </div>
             ) : vacancies.length === 0 ? (
               <div className="p-4 text-center bg-gray-50 dark:bg-gray-800 rounded-xl">
                 <Briefcase className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">{t.dashboard?.vacancies?.createFirst || 'Create a vacancy first'}</p>
+                <p className="text-sm text-gray-500">{t.dashboard.vacancies.createFirst}</p>
               </div>
             ) : (
               <Select value={selectedVacancy} onValueChange={setSelectedVacancy}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Choose a vacancy..." />
+                  <SelectValue placeholder={t.dashboard.upload.choosePlaceholder} />
                 </SelectTrigger>
                 <SelectContent>
                   {vacancies.map(v => (
@@ -98,7 +98,7 @@ export function UploadWithVacancyDialog({ open, onClose, onUploaded }: Props) {
 
           <div className="flex gap-3 pt-2">
             <Button variant="outline" onClick={handleClose} className="flex-1">
-              {t.dashboard?.createVacancy?.cancel || 'Cancel'}
+              {t.dashboard.createVacancy.cancel}
             </Button>
             <Button
               onClick={() => setShowUpload(true)}
@@ -106,7 +106,7 @@ export function UploadWithVacancyDialog({ open, onClose, onUploaded }: Props) {
               className="flex-1 gradient-bg"
             >
               <Upload className="w-4 h-4 mr-2" />
-Continue
+              {t.dashboard.upload.continueBtn}
             </Button>
           </div>
         </div>

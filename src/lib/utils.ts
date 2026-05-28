@@ -22,13 +22,44 @@ export function formatDate(date: Date | string, locale?: string): string {
   return new Date(date).toLocaleDateString(resolvedLocale, { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
-// Shows human-readable relative time for recent events, falls back to formatDate after 7 days
+// Reads the short locale code ('en' | 'nl' | 'fr') from the cookie for relative-time strings
+function detectShortLocale(): 'en' | 'nl' | 'fr' {
+  if (typeof document !== 'undefined') {
+    const match = document.cookie.match(/(?:^|;\s*)deltamatch-locale=(\w+)/)
+    if (match && ['en', 'nl', 'fr'].includes(match[1])) return match[1] as 'en' | 'nl' | 'fr'
+  }
+  return 'en'
+}
+
+// Shows human-readable relative time for recent events, falls back to formatDate after 7 days.
+// Optional locale param accepts either a short code ('en'|'nl'|'fr') for translation or
+// a BCP-47 tag for the formatDate fallback — short codes are normalized to BCP-47 internally.
 export function formatRelativeTime(date: Date | string, locale?: string): string {
-  const now = new Date()
   const d = new Date(date)
-  const diff = now.getTime() - d.getTime()
+  const diff = Date.now() - d.getTime()
   const hours = Math.floor(diff / 3600000)
   const days = Math.floor(diff / 86400000)
+
+  // Derive a short locale for translation, defaulting to the cookie when not passed
+  const shortLocale: 'en' | 'nl' | 'fr' =
+    locale === 'fr' || locale?.startsWith('fr-') ? 'fr'
+    : locale === 'nl' || locale?.startsWith('nl-') ? 'nl'
+    : locale === 'en' || locale?.startsWith('en-') ? 'en'
+    : detectShortLocale()
+
+  if (shortLocale === 'fr') {
+    if (hours < 1) return "À l'instant"
+    if (hours < 24) return `Il y a ${hours}h`
+    if (days < 7) return `Il y a ${days}j`
+    return formatDate(date, locale)
+  }
+  if (shortLocale === 'nl') {
+    if (hours < 1) return 'Zojuist'
+    if (hours < 24) return `${hours}u geleden`
+    if (days < 7) return `${days}d geleden`
+    return formatDate(date, locale)
+  }
+  // Default to English
   if (hours < 1) return 'Just now'
   if (hours < 24) return `${hours}h ago`
   if (days < 7) return `${days}d ago`
