@@ -7,14 +7,10 @@ import { isDemoAccount } from '@/lib/demo-guard'
 // Fetch recent notifications for the current user
 export async function GET() {
   const session = await getServerSession(authOptions)
-  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!session?.user) return NextResponse.json({ notifications: [], unreadCount: 0 })
 
   const userId = (session.user as any).id
   if (!userId) return NextResponse.json({ notifications: [], unreadCount: 0 })
-
-  // Stale-JWT guard
-  const userExists = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } }).catch(() => null)
-  if (!userExists) return NextResponse.json({ notifications: [], unreadCount: 0 })
 
   try {
     const notifications = await prisma.notification.findMany({
