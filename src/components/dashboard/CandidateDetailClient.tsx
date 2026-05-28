@@ -71,8 +71,13 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
   const [sendingEmail, setSendingEmail] = useState(false)
   const [generatingEmail, setGeneratingEmail] = useState(false)
   const [interviewQuestions, setInterviewQuestions] = useState<Array<{ question: string; category: string; rationale: string; expectedAnswer: string }> | null>(null)
-  // Recruiter's actual answers per question — saved to localStorage so they persist across page reloads
-  const [questionAnswers, setQuestionAnswers] = useState<Record<number, string>>({})
+  // Recruiter's actual answers per question — persisted to the database so they survive
+  // logout/re-login from any device. Initialized from the candidate record on first render.
+  const [questionAnswers, setQuestionAnswers] = useState<Record<number, string>>(() => {
+    if (!initial.interviewAnswers) return {}
+    try { return JSON.parse(initial.interviewAnswers) || {} } catch { return {} }
+  })
+  const answersSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [visibleAnswers, setVisibleAnswers] = useState<Set<number>>(new Set())
   const [loadingQuestions, setLoadingQuestions] = useState(false)
   const [hiringReport, setHiringReport] = useState<string | null>(null)
@@ -83,13 +88,19 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
   const [activitiesLoaded, setActivitiesLoaded] = useState(false)
   const notesTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Restore saved interview answers from localStorage on mount
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(`deltamatch-answers-${candidate.id}`)
-      if (saved) setQuestionAnswers(JSON.parse(saved))
-    } catch {}
-  }, [candidate.id])
+  // Persist interview answers to the DB with 800ms debounce — survives reload, logout, days off
+  const saveAnswersToDb = (answers: Record<number, string>) => {
+    if (answersSaveTimer.current) clearTimeout(answersSaveTimer.current)
+    answersSaveTimer.current = setTimeout(async () => {
+      try {
+        await fetch(`/api/candidates/${candidate.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ interviewAnswers: JSON.stringify(answers) }),
+        })
+      } catch {}
+    }, 800)
+  }
 
   const score = candidate.matchScore || 0
   const strengths = parseJsonSafe<string[]>(candidate.strengths, [])
@@ -758,12 +769,15 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                               onChange={(e) => {
                                 const next = { ...questionAnswers, [i]: e.target.value }
                                 setQuestionAnswers(next)
-                                try { localStorage.setItem(`deltamatch-answers-${candidate.id}`, JSON.stringify(next)) } catch {}
+                                saveAnswersToDb(next)
                               }}
                               placeholder="Type the candidate's answer here..."
                               rows={3}
                               className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                             />
+                            {questionAnswers[i] && (
+                              <p className="text-[10px] text-gray-400 mt-1">✓ Auto-saved</p>
+                            )}
                           </div>
                           {q.expectedAnswer && (
                             <div className="pt-1">
