@@ -70,17 +70,21 @@ export async function POST(req: Request) {
     const lock = await client.getMailboxLock('INBOX')
 
     try {
-      // Only look at emails from the last 30 days to keep scans fast
+      // Only look at emails from the last 30 days to keep scans fast.
+      // Include BOTH seen and unseen emails — recruiters often open emails
+      // before scanning, which previously caused 'nothing found' even though
+      // applications were in the inbox.
       const since = new Date()
       since.setDate(since.getDate() - 30)
 
       const messages: any[] = []
       for await (const msg of client.fetch(
-        { seen: false, since },
+        { since },
         { uid: true, envelope: true, bodyStructure: true, source: true },
       )) {
         messages.push(msg)
       }
+      console.log(`[email/scan] Inbox ${inbox.id}: fetched ${messages.length} messages from last 30 days`)
 
       results.scanned = messages.length
 
@@ -253,9 +257,32 @@ export async function POST(req: Request) {
 
     await client.logout()
     await prisma.emailInbox.update({ where: { id: inbox.id }, data: { lastScan: new Date() } })
+    console.log(`[email/scan] Inbox ${inbox.id}: scanned=${results.scanned} relevant=${results.relevant} processed=${results.processed} errors=${results.errors.length}`)
   } catch (error: any) {
-    return NextResponse.json({ error: `Scan failed: ${error.message}` }, { status: 500 })
+    console.error(`[email/scan] FAILED for inbox ${inbox.id}:`, error?.message, error?.code)
+    // Surface a useful hint to the user
+    let hint = ''
+    if (error?.code === 'ETIMEOUT' || error?.message?.includes('timeout')) {
+      hint = ' — The IMAP server took too long to respond. Check your host/port settings or try a smaller scan window.'
+    } else if (error?.code === 'EAUTH' || error?.message?.includes('AUTHENTICATIONFAILED')) {
+      hint = ' — Authentication failed. For Gmail, you need an App Password (not your regular password).'
+    } else if (error?.code === 'ECONNREFUSED' || error?.message?.includes('connect')) {
+      hint = ' — Could not reach the IMAP server. Check your host and port are correct.'
+    }
+    return NextResponse.json({ error: `Scan failed: ${error.message}${hint}` }, { status: 500 })
   }
 
-  return NextResponse.json(results)
+  // Add a diagnostic message so the recruiter knows why nothing was added
+  let diagnostic = ''
+  if (results.scanned === 0) {
+    diagnostic = 'No emails found in the last 30 days. Make sure your inbox has recent messages.'
+  } else if (results.relevant === 0) {
+    diagnostic = `Found ${results.scanned} email(s), but AI determined none are job applications. Recruiters typically receive CVs as PDF/DOCX attachments — check that your applicants are sending attachments.`
+  } else if (results.processed === 0) {
+    diagnostic = `Found ${results.relevant} relevant email(s), but couldn't extract CV text. The attachments may be empty, image-only PDFs, or already-imported messages.`
+  } else {
+    diagnostic = `Successfully imported ${results.processed} new candidate(s).`
+  }
+
+  return NextResponse.json({ ...results, diagnostic })
 }

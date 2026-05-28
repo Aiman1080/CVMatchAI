@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Mail, Plus, Loader2, CheckCircle, AlertCircle, Scan, Info, Trash2, RefreshCw, Zap, Eraser, ChevronLeft, ChevronDown, ChevronUp } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -41,6 +41,9 @@ export function EmailClient() {
   const [form, setForm] = useState({ email: '', password: '', host: '', port: 993 })
   const [connecting, setConnecting] = useState(false)
   const [scanning, setScanning] = useState<string | null>(null)
+  const [scanProgress, setScanProgress] = useState<number>(0)
+  const [scanTimer, setScanTimer] = useState<number>(0)
+  const scanIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [demoScanning, setDemoScanning] = useState(false)
   const [cleaning, setCleaning] = useState(false)
   const [inboxes, setInboxes] = useState<Inbox[]>([])
@@ -109,6 +112,25 @@ export function EmailClient() {
 
   const handleScan = async (inboxId: string) => {
     setScanning(inboxId)
+    setScanProgress(0)
+    setScanTimer(0)
+    // Fake progress: slowly fills to 95% while the scan is running. Reaches 100%
+    // only when the server actually responds. Estimated scan duration: ~90s.
+    const startTime = Date.now()
+    scanIntervalRef.current = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000)
+      setScanTimer(elapsed)
+      // Approach 95% asymptotically — never quite reach it from progress alone
+      setScanProgress(prev => Math.min(95, prev + (95 - prev) * 0.02))
+    }, 500)
+
+    // Warn user if they try to leave during scan
+    const beforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', beforeUnload)
+
     try {
       const res = await fetch('/api/email/scan', {
         method: 'POST',
@@ -117,14 +139,28 @@ export function EmailClient() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
-      toast({ title: te.scanComplete, description: te.scanDesc.replace('{scanned}', data.scanned).replace('{relevant}', data.relevant).replace('{processed}', data.processed) })
+      setScanProgress(100)
+      // Show the diagnostic from the server — it explains 0-result cases clearly
+      toast({
+        title: te.scanComplete,
+        description: data.diagnostic || te.scanDesc.replace('{scanned}', data.scanned).replace('{relevant}', data.relevant).replace('{processed}', data.processed),
+      })
       fetchInboxes()
     } catch (err: any) {
       const description = err?.message
         ? `${err.message} — ${te.scanCredentialsTip}`
         : te.scanGenericError
       toast({ title: te.scanFailed, description, variant: 'destructive' })
-    } finally { setScanning(null) }
+    } finally {
+      window.removeEventListener('beforeunload', beforeUnload)
+      if (scanIntervalRef.current) clearInterval(scanIntervalRef.current)
+      // Small delay so user sees 100% before the bar disappears
+      setTimeout(() => {
+        setScanning(null)
+        setScanProgress(0)
+        setScanTimer(0)
+      }, 800)
+    }
   }
 
   // Demo scan is safe to run multiple times — the server uses upsert so no duplicates
@@ -246,6 +282,41 @@ export function EmailClient() {
           </Card>
         ))}
       </div>
+
+      {/* Live scan progress — appears only while a scan is in flight */}
+      {scanning && (
+        <Card className="border-2 border-blue-300 dark:border-blue-700 bg-blue-50/70 dark:bg-blue-950/30 shadow-sm">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <Loader2 className="w-5 h-5 text-blue-600 dark:text-blue-400 animate-spin shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-blue-900 dark:text-blue-200 break-words">
+                  Scanning your inbox… please don&apos;t close this page
+                </p>
+                <p className="text-xs text-blue-700 dark:text-blue-300 mt-0.5 break-words">
+                  Connecting to IMAP, downloading attachments, and running AI analysis on each application.
+                  This typically takes 30 seconds to 3 minutes depending on inbox size.
+                </p>
+              </div>
+              <div className="text-right shrink-0">
+                <p className="text-xs text-blue-700 dark:text-blue-300">Elapsed</p>
+                <p className="text-lg font-bold text-blue-900 dark:text-blue-200 font-mono">
+                  {Math.floor(scanTimer / 60).toString().padStart(2, '0')}:{(scanTimer % 60).toString().padStart(2, '0')}
+                </p>
+              </div>
+            </div>
+            <div className="w-full bg-blue-200 dark:bg-blue-900 rounded-full h-2 overflow-hidden">
+              <div
+                className="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-500 ease-out"
+                style={{ width: `${scanProgress}%` }}
+              />
+            </div>
+            <p className="text-[10px] text-blue-600 dark:text-blue-400 mt-1 text-right">
+              {Math.round(scanProgress)}%
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
         <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-3 gap-2">
