@@ -15,9 +15,9 @@ export function RecentCandidates({ candidates }: { candidates: Candidate[] }) {
   const rc = t.dashboard.recentCandidates
   return (
     <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-base">{rc.title}</CardTitle>
-        <Link href="/candidates" className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1">{rc.viewAll} <ArrowRight size={14} /></Link>
+      <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
+        <CardTitle className="text-base truncate min-w-0">{rc.title}</CardTitle>
+        <Link href="/candidates" className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1 shrink-0"><span className="truncate">{rc.viewAll}</span> <ArrowRight size={14} className="shrink-0" /></Link>
       </CardHeader>
       <CardContent>
         {candidates.length === 0 ? (
@@ -36,8 +36,8 @@ export function RecentCandidates({ candidates }: { candidates: Candidate[] }) {
                     <Avatar className="w-9 h-9 sm:w-10 sm:h-10 shrink-0"><AvatarFallback className="text-sm gradient-bg text-white font-semibold">{initials}</AvatarFallback></Avatar>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{c.firstName} {c.lastName}</p>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getStatusColor(c.status)}`}>{c.status}</span>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 break-words min-w-0">{c.firstName} {c.lastName}</p>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium break-words ${getStatusColor(c.status)}`}>{c.status}</span>
                       </div>
                       <p className="text-xs text-gray-500 truncate">{c.vacancy?.title || rc.noVacancy}</p>
                       <div className="flex items-center gap-2 mt-1.5">

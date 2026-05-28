@@ -23,23 +23,23 @@ export function AIInsightsPanel({ candidates, totalCandidates, avgScore }: Props
   ]
   return (
     <Card className="border-0 shadow-sm h-full">
-      <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><Sparkles className="w-4 h-4 text-blue-500" />{ai.title}</CardTitle></CardHeader>
+      <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2 min-w-0"><Sparkles className="w-4 h-4 text-blue-500 shrink-0" /><span className="truncate">{ai.title}</span></CardTitle></CardHeader>
       <CardContent className="space-y-3">
         {insights.map((insight, i) => (
           <div key={i} className={`flex items-start gap-3 p-3 rounded-lg ${insight.bg}`}>
             <insight.icon className={`w-4 h-4 mt-0.5 shrink-0 ${insight.color}`} />
-            <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">{insight.text}</p>
+            <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed break-words min-w-0">{insight.text}</p>
           </div>
         ))}
         {candidates.length > 0 && (
           <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
-            <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{ai.topMatches}</p>
+            <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 break-words">{ai.topMatches}</p>
             <div className="space-y-2">
               {/* Sort a copy (not the prop array) to show best-scoring candidates first */}
               {[...candidates].sort((a, b) => b.matchScore - a.matchScore).slice(0, 3).map((c, i) => (
-                <div key={i} className="flex items-center justify-between">
-                  <span className="text-xs text-gray-600 dark:text-gray-400 truncate max-w-[140px]">{c.name}</span>
-                  <span className={`text-xs font-bold ${c.matchScore >= 75 ? 'text-green-600' : c.matchScore >= 50 ? 'text-amber-600' : 'text-red-500'}`}>{c.matchScore.toFixed(0)}%</span>
+                <div key={i} className="flex items-center justify-between gap-2">
+                  <span className="text-xs text-gray-600 dark:text-gray-400 truncate min-w-0 flex-1">{c.name}</span>
+                  <span className={`text-xs font-bold shrink-0 ${c.matchScore >= 75 ? 'text-green-600' : c.matchScore >= 50 ? 'text-amber-600' : 'text-red-500'}`}>{c.matchScore.toFixed(0)}%</span>
                 </div>
               ))}
             </div>

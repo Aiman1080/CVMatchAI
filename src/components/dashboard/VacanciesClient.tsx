@@ -132,8 +132,8 @@ export function VacanciesClient({ initialVacancies, isDemo }: { initialVacancies
             className="pl-9"
           />
         </div>
-        <Button onClick={() => setShowCreate(true)} disabled={isDemo} className="gap-2 gradient-bg w-full sm:w-auto">
-          <Plus size={16} /> {tv.newVacancy}
+        <Button onClick={() => setShowCreate(true)} disabled={isDemo} className="gap-2 gradient-bg w-full sm:w-auto h-auto py-2 whitespace-normal text-center leading-tight">
+          <Plus size={16} className="shrink-0" /> {tv.newVacancy}
         </Button>
       </div>
 
@@ -142,18 +142,18 @@ export function VacanciesClient({ initialVacancies, isDemo }: { initialVacancies
           <div className="w-16 h-16 rounded-2xl gradient-bg flex items-center justify-center mx-auto mb-4">
             <Briefcase className="w-8 h-8 text-white" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 break-words">
             {search ? tv.noResults : tv.createFirst}
           </h3>
-          <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
+          <p className="text-gray-500 dark:text-gray-400 text-sm mb-4 break-words">
             {search ? tv.noResultsDesc : tv.createFirstDesc}
           </p>
           {!search && (
             <>
-              <Button onClick={() => setShowCreate(true)} disabled={isDemo} className="gradient-bg gap-2 mb-4">
-                <Plus size={16} /> {tv.createVacancy}
+              <Button onClick={() => setShowCreate(true)} disabled={isDemo} className="gradient-bg gap-2 mb-4 h-auto py-2 whitespace-normal text-center leading-tight">
+                <Plus size={16} className="shrink-0" /> {tv.createVacancy}
               </Button>
-              <p className="text-gray-400 dark:text-gray-500 text-xs">
+              <p className="text-gray-400 dark:text-gray-500 text-xs break-words">
                 {tv.atsHint}
               </p>
             </>
@@ -169,29 +169,29 @@ export function VacanciesClient({ initialVacancies, isDemo }: { initialVacancies
                     <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center shrink-0">
                       <Briefcase className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                     </div>
-                    <span className={`text-xs px-2 py-1 rounded-full font-medium shrink-0 ${getStatusColor(v.status)}`}>
+                    <span className={`text-xs px-2 py-1 rounded-full font-medium shrink-0 break-words ${getStatusColor(v.status)}`}>
                       {v.status}
                     </span>
                   </div>
                   <h3 className="font-semibold text-gray-900 dark:text-white mb-1 break-words">{v.title}</h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 break-words">{v.company}</p>
                   <div className="flex flex-wrap gap-2 mb-4">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${typeColors[v.type] || 'bg-gray-50 text-gray-600'}`}>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium break-words ${typeColors[v.type] || 'bg-gray-50 text-gray-600'}`}>
                       {v.type}
                     </span>
                     {v.location && (
-                      <span className="text-xs flex items-center gap-1 text-gray-400 break-words">
+                      <span className="text-xs flex items-center gap-1 text-gray-400 break-words min-w-0">
                         <MapPin size={10} className="shrink-0" /> {v.location}
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center justify-between text-xs text-gray-400 pt-3 border-t border-gray-50 dark:border-gray-800">
-                    <span className="flex items-center gap-1">
-                      <Users size={11} /> {v._count.candidates}
+                  <div className="flex items-center justify-between gap-2 text-xs text-gray-400 pt-3 border-t border-gray-50 dark:border-gray-800 flex-wrap">
+                    <span className="flex items-center gap-1 shrink-0">
+                      <Users size={11} className="shrink-0" /> {v._count.candidates}
                     </span>
-                    <div className="flex items-center gap-2">
-                      <span className="flex items-center gap-1">
-                        <Clock size={11} /> {formatRelativeTime(v.createdAt)}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="flex items-center gap-1 shrink-0">
+                        <Clock size={11} className="shrink-0" /> {formatRelativeTime(v.createdAt)}
                       </span>
                       {!isDemo && (
                         <button
