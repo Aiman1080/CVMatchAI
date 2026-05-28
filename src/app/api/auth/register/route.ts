@@ -29,9 +29,9 @@ export async function POST(req: Request) {
     if (existing) return NextResponse.json({ error: 'Email already registered' }, { status: 400 })
 
     const hashed = await bcrypt.hash(password, 12)
-    const subscription = plan === 'pro' ? 'pro' : 'free'
-    // Pro plan starts with a 30-day free trial
-    const subscriptionEnd = plan === 'pro' ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : undefined
+    // ALWAYS create as Free. Pro is granted only after a successful Stripe payment
+    // (handled by the /api/stripe/checkout flow + webhook). Selecting "Pro" at
+    // registration only marks the user as wanting to upgrade — it doesn't grant access.
     const user = await prisma.user.create({
       data: {
         name,
@@ -39,8 +39,7 @@ export async function POST(req: Request) {
         password: hashed,
         company,
         role: 'recruiter',
-        subscription,
-        ...(subscriptionEnd ? { subscriptionEnd } : {}),
+        subscription: 'free',
       },
     })
 
@@ -67,7 +66,8 @@ export async function POST(req: Request) {
       }
     }
 
-    return NextResponse.json({ success: true, userId: user.id })
+    // Signal to the client whether to redirect to /upgrade after auto-login
+    return NextResponse.json({ success: true, userId: user.id, wantsUpgrade: plan === 'pro' })
   } catch (error) {
     if (error instanceof z.ZodError) return NextResponse.json({ error: error.errors[0].message }, { status: 400 })
     return NextResponse.json({ error: 'Registration failed' }, { status: 500 })
