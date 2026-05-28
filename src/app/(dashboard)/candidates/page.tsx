@@ -10,6 +10,8 @@ export default async function CandidatesPage() {
   const session = await getServerSession(authOptions)
   const userId = (session?.user as any)?.id
   const isAdmin = (session?.user as any)?.role === 'admin'
+  const subscription = (session?.user as any)?.subscription || 'free'
+  const isPro = subscription === 'pro' || subscription === 'demo_pro' || isAdmin
   const where = isAdmin ? {} : { userId }
   const [candidates, total] = await Promise.all([
     prisma.candidate.findMany({
@@ -23,7 +25,7 @@ export default async function CandidatesPage() {
   return (
     <div>
       <Header title="Candidates" description={`${total} candidate${total !== 1 ? 's' : ''} in your pipeline`} />
-      <div className="p-8"><CandidatesClient initialCandidates={candidates} initialTotal={total} /></div>
+      <div className="p-8"><CandidatesClient initialCandidates={candidates} initialTotal={total} isPro={isPro} /></div>
     </div>
   )
 }

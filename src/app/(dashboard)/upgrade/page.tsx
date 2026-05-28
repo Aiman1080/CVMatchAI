@@ -6,6 +6,7 @@ import { CheckCircle, Zap, Star, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useSession } from 'next-auth/react'
+import { toast } from '@/components/ui/use-toast'
 
 export default function UpgradePage() {
   const { t } = useLanguage()
@@ -27,9 +28,11 @@ export default function UpgradePage() {
       const data = await res.json()
       if (data.url) {
         window.location.href = data.url
+      } else {
+        toast({ title: 'Failed to start checkout', description: 'Please try again or contact support', variant: 'destructive' })
       }
     } catch {
-      // silently fail
+      toast({ title: 'Failed to start checkout', description: 'Please try again or contact support', variant: 'destructive' })
     } finally {
       setLoading(false)
     }

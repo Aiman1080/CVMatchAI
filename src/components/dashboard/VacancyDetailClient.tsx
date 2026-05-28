@@ -309,7 +309,7 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
                 {!vacancy.externalId && (
                   <button
                     onClick={() => setShowLinkAts(true)}
-                    className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-lg transition-colors"
                     title={vd.linkToAts}
                   >
                     <Link2 size={16} />
@@ -318,7 +318,7 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
                 <button
                   onClick={handleDuplicate}
                   disabled={duplicating}
-                  className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-lg transition-colors"
                   title={vd.duplicateTooltip}
                 >
                   {duplicating ? <Loader2 size={16} className="animate-spin" /> : <Copy size={16} />}
@@ -339,7 +339,7 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
                     })
                     setShowEdit(true)
                   }}
-                  className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-lg transition-colors"
                   title={vd.editTooltip}
                 >
                   <Pencil size={16} />
@@ -543,20 +543,20 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
                       <div className="flex gap-1">
                         <button
                           onClick={() => handleStatusChange(c.id, 'shortlisted')}
-                          className="p-1.5 hover:bg-green-50 rounded-lg transition-colors text-gray-400 hover:text-green-600"
+                          className="p-1.5 hover:bg-green-50 dark:hover:bg-green-950/40 rounded-lg transition-colors text-gray-400 hover:text-green-600"
                           title={vd.shortlistTooltip}
                         >
                           <CheckCircle size={16} />
                         </button>
                         <button
                           onClick={() => handleStatusChange(c.id, 'rejected')}
-                          className="p-1.5 hover:bg-red-50 rounded-lg transition-colors text-gray-400 hover:text-red-500"
+                          className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors text-gray-400 hover:text-red-500"
                           title={vd.rejectTooltip}
                         >
                           <XCircle size={16} />
                         </button>
                       </div>
-                      <Link href={`/candidates/${c.id}`} className="p-1.5 hover:bg-blue-50 rounded-lg text-gray-400 hover:text-blue-600 transition-colors">
+                      <Link href={`/candidates/${c.id}`} className="p-1.5 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-lg text-gray-400 hover:text-blue-600 transition-colors">
                         <ChevronRight size={16} />
                       </Link>
                     </div>
@@ -715,8 +715,9 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">{vd.statusActive}</SelectItem>
-                    <SelectItem value="paused">{vd.statusPaused}</SelectItem>
-                    <SelectItem value="closed">{vd.statusClosed}</SelectItem>
+                    <SelectItem value="archived">Archived</SelectItem>
+                    <SelectItem value="filled">Filled</SelectItem>
+                    <SelectItem value="on_hold">On Hold</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

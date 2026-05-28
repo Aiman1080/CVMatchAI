@@ -49,10 +49,10 @@ const PLAN_COLORS: Record<string, string> = {
 }
 
 const TICKET_STATUS_COLORS: Record<string, string> = {
-  open: 'bg-red-100 text-red-700',
-  in_progress: 'bg-amber-100 text-amber-700',
-  resolved: 'bg-green-100 text-green-700',
-  closed: 'bg-gray-100 text-gray-600',
+  open: 'bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400',
+  in_progress: 'bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400',
+  resolved: 'bg-green-100 dark:bg-green-950/40 text-green-700 dark:text-green-400',
+  closed: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400',
 }
 
 const PRIORITY_BG: Record<string, string> = {
@@ -448,7 +448,7 @@ export function AdminClient({
     <div className="space-y-6">
 
       {/* ── KPI Row ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3">
         {[
           { label: 'Real users', value: realUsers.length, icon: Building2, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950' },
           { label: 'Active today', value: activeToday, icon: Eye, color: 'text-cyan-600', bg: 'bg-cyan-50 dark:bg-cyan-950' },

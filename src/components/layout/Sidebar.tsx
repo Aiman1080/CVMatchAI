@@ -82,7 +82,7 @@ export function Sidebar() {
             <Link
               key={href}
               href={locked ? '#' : href}
-              onClick={(e) => { if (locked) e.preventDefault(); else setMobileOpen(false); }}
+              onClick={(e) => { if (locked) { e.preventDefault(); setMobileOpen(false); } else setMobileOpen(false); }}
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
                 locked && 'opacity-60 pointer-events-none cursor-not-allowed',
@@ -140,7 +140,7 @@ export function Sidebar() {
           <div className="p-3 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/40 dark:to-purple-950/40 rounded-xl border border-blue-100 dark:border-blue-900">
             <p className="text-xs font-bold text-blue-800 dark:text-blue-300 mb-1">{t.dashboard.nav.upgradeTitle}</p>
             <p className="text-xs text-blue-600 dark:text-blue-400 mb-2">{t.dashboard.nav.upgradeDesc}</p>
-            <a href="/settings" onClick={() => setMobileOpen(false)} className="block text-center text-xs bg-blue-600 text-white rounded-lg py-1.5 font-semibold hover:bg-blue-700 transition-colors">Upgrade →</a>
+            <a href="/upgrade" onClick={() => setMobileOpen(false)} className="block text-center text-xs bg-blue-600 text-white rounded-lg py-1.5 font-semibold hover:bg-blue-700 transition-colors">{t.dashboard.nav.upgradeArrow}</a>
           </div>
         </div>
       )}
@@ -151,7 +151,7 @@ export function Sidebar() {
             <AvatarFallback className="text-xs gradient-bg text-white font-semibold">{initials}</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{user?.name || 'User'}</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{user?.name || t.dashboard.nav.userFallback}</p>
             <span className={cn('text-xs px-1.5 py-0.5 rounded-full font-medium capitalize', planColors[user?.subscription || 'free'])}>
               {user?.subscription || 'free'}
             </span>
@@ -174,12 +174,12 @@ export function Sidebar() {
       <Dialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Sign out?</DialogTitle>
-            <DialogDescription>Are you sure you want to sign out?</DialogDescription>
+            <DialogTitle>{t.dashboard.nav.signOutConfirmTitle}</DialogTitle>
+            <DialogDescription>{t.dashboard.nav.signOutConfirmDesc}</DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex gap-2 sm:justify-end">
-            <Button variant="outline" onClick={() => setShowLogoutConfirm(false)}>Cancel</Button>
-            <Button variant="destructive" onClick={() => signOut({ callbackUrl: '/' })}>Sign out</Button>
+            <Button variant="outline" onClick={() => setShowLogoutConfirm(false)}>{t.dashboard.nav.cancel}</Button>
+            <Button variant="destructive" onClick={() => signOut({ callbackUrl: '/' })}>{t.dashboard.nav.signOutConfirm}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -188,7 +188,7 @@ export function Sidebar() {
       <button
         onClick={() => setMobileOpen(true)}
         className="md:hidden fixed top-4 left-4 z-50 p-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-        aria-label="Open menu"
+        aria-label={t.dashboard.nav.openMenu}
       >
         <Menu size={20} />
       </button>

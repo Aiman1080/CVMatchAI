@@ -68,7 +68,7 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
           <DialogTitle>{cv.title}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>{cv.jobTitle} <span className="text-red-500">*</span></Label>
               <Input placeholder={cv.jobTitlePlaceholder} value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} required />
@@ -78,7 +78,7 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
               <Input placeholder={cv.companyPlaceholder} value={form.company} onChange={e => setForm(p => ({ ...p, company: e.target.value }))} required />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>{cv.department}</Label>
               <Input placeholder={cv.departmentPlaceholder} value={form.department} onChange={e => setForm(p => ({ ...p, department: e.target.value }))} />
@@ -88,7 +88,7 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
               <Input placeholder={cv.locationPlaceholder} value={form.location} onChange={e => setForm(p => ({ ...p, location: e.target.value }))} />
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-1.5">
               <Label>{cv.type}</Label>
               <Select value={form.type} onValueChange={v => setForm(p => ({ ...p, type: v }))}>
@@ -110,7 +110,6 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
                   <SelectItem value="en">{cv.languages.en}</SelectItem>
                   <SelectItem value="nl">{cv.languages.nl}</SelectItem>
                   <SelectItem value="fr">{cv.languages.fr}</SelectItem>
-                  <SelectItem value="de">{cv.languages.de}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
