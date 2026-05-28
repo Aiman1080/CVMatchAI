@@ -19,7 +19,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     ? await prisma.user.findUnique({ where: { id: userId }, select: { emailVerified: true } }).catch(() => null)
     : null
   const emailVerified = dbUser?.emailVerified ?? (session.user as any)?.emailVerified
-  const isDemoAccount = ['demo@cvmatch.ai', 'pro@cvmatch.ai', 'admin@cvmatch.ai', 'free@cvmatch.ai'].includes(email)
+  const isDemoAccount = ['demo@cvmatch.ai', 'pro@cvmatch.ai', 'free@cvmatch.ai'].includes(email)
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex">
       <Sidebar />

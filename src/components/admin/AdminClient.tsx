@@ -208,7 +208,7 @@ export function AdminClient({
   const [broadcastMessage, setBroadcastMessage] = useState('')
   const [broadcastSending, setBroadcastSending] = useState(false)
 
-  const DEMO_EMAILS = ['demo@cvmatch.ai', 'pro@cvmatch.ai', 'admin@cvmatch.ai', 'free@cvmatch.ai']
+  const DEMO_EMAILS = ['demo@cvmatch.ai', 'pro@cvmatch.ai', 'free@cvmatch.ai']
   const realUsers = users.filter(u => !DEMO_EMAILS.includes(u.email || ''))
   const realProUsers = realUsers.filter(u => u.subscription === 'pro')
   const demoCount = users.length - realUsers.length
