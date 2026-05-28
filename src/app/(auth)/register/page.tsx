@@ -83,7 +83,11 @@ export default function RegisterPage() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       const login = await signIn('credentials', { email: form.email, password: form.password, redirect: false })
-      if (login?.ok) router.push('/dashboard')
+      if (login?.ok) {
+        // If they selected Pro at registration, send them to /upgrade to pay via Stripe.
+        // Pro access is only granted after a successful payment + webhook confirmation.
+        router.push(data.wantsUpgrade ? '/upgrade' : '/dashboard')
+      }
     } catch (error: any) {
       toast({
         title: t.auth.registrationFailed,
