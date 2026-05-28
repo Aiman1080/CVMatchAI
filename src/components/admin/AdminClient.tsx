@@ -500,9 +500,9 @@ export function AdminClient({
             ].map(s => (
               <div key={s.label} className={`flex items-center gap-3 p-3 rounded-xl ${s.bg}`}>
                 <s.icon className={`w-5 h-5 shrink-0 ${s.color}`} />
-                <div>
+                <div className="min-w-0 flex-1">
                   <div className={`text-xl font-bold ${s.color}`}>{s.value}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">{s.label}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{s.label}</div>
                 </div>
               </div>
             ))}
@@ -1273,9 +1273,9 @@ export function AdminClient({
                     { label: 'Candidates this week', value: candidatesThisWeek, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-950/30' },
                     { label: 'New accounts 7d', value: newUsersThisWeek, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/30' },
                   ].map(item => (
-                    <div key={item.label} className={`text-center p-3 rounded-xl ${item.bg}`}>
-                      <div className={`text-2xl font-bold ${item.color}`}>{item.value}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-tight">{item.label}</div>
+                    <div key={item.label} className={`text-center p-3 rounded-xl ${item.bg} min-w-0`}>
+                      <div className={`text-2xl font-bold ${item.color} break-words`}>{item.value}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-tight break-words">{item.label}</div>
                     </div>
                   ))}
                 </div>

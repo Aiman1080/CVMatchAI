@@ -246,10 +246,10 @@ export default function LandingPage() {
             ) : null}
             <LanguageSwitcher />
             <Link href="/login" className="hidden sm:block">
-              <Button variant="ghost" size="sm">{t.nav.signIn}</Button>
+              <Button variant="ghost" size="sm" className="h-auto py-2 whitespace-normal text-center leading-tight">{t.nav.signIn}</Button>
             </Link>
             <Link href="/register">
-              <Button size="sm" className="gradient-bg whitespace-nowrap">{t.nav.startFree}</Button>
+              <Button size="sm" className="gradient-bg h-auto py-2 whitespace-normal text-center leading-tight">{t.nav.startFree}</Button>
             </Link>
           </div>
         </div>
@@ -333,12 +333,12 @@ export default function LandingPage() {
             }}
           >
             <Link href="/register" className="w-full sm:w-auto">
-              <Button size="lg" className="gradient-bg shadow-xl gap-2 w-full sm:w-auto">
-                {t.hero.startFree} <ArrowRight size={18} />
+              <Button size="lg" className="gradient-bg shadow-xl gap-2 w-full sm:w-auto h-auto py-3 whitespace-normal text-center leading-tight">
+                {t.hero.startFree} <ArrowRight size={18} className="shrink-0" />
               </Button>
             </Link>
             <Link href="/login?demo=true" className="w-full sm:w-auto">
-              <Button size="lg" variant="outline" className="border-blue-300 dark:border-white/30 text-blue-700 dark:text-white bg-blue-50 dark:bg-white/10 hover:bg-blue-100 dark:hover:bg-white/20 backdrop-blur-sm w-full sm:w-auto">
+              <Button size="lg" variant="outline" className="border-blue-300 dark:border-white/30 text-blue-700 dark:text-white bg-blue-50 dark:bg-white/10 hover:bg-blue-100 dark:hover:bg-white/20 backdrop-blur-sm w-full sm:w-auto h-auto py-3 whitespace-normal text-center leading-tight">
                 {t.hero.viewDemo}
               </Button>
             </Link>
@@ -416,8 +416,8 @@ export default function LandingPage() {
               <div className="inline-flex items-center gap-2 bg-blue-600/10 dark:bg-blue-500/20 border border-blue-400/30 dark:border-blue-500/30 text-blue-700 dark:text-blue-300 text-sm px-4 py-1.5 rounded-full mb-6">
                 <Sparkles size={14} /> {t.landing.aiSection.badge}
               </div>
-              <h2 className="text-3xl sm:text-4xl font-bold mb-4">{t.landing.aiSection.title}</h2>
-              <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">{t.landing.aiSection.subtitle}</p>
+              <h2 className="text-3xl sm:text-4xl font-bold mb-4 break-words">{t.landing.aiSection.title}</h2>
+              <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto break-words">{t.landing.aiSection.subtitle}</p>
             </div>
           </ScrollReveal>
 
@@ -430,12 +430,12 @@ export default function LandingPage() {
                     <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-110 shrink-0">
                       <Brain className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
                     </div>
-                    <div className="min-w-0">
-                      <h3 className="text-xl sm:text-2xl font-bold">{t.landing.aiFeatures.cvAnalysis.title}</h3>
-                      <span className="text-xs bg-blue-500/30 text-blue-200 px-2 py-0.5 rounded-full">{t.landing.aiFeatures.cvAnalysis.tag}</span>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-xl sm:text-2xl font-bold break-words">{t.landing.aiFeatures.cvAnalysis.title}</h3>
+                      <span className="text-xs bg-blue-500/30 text-blue-200 px-2 py-0.5 rounded-full break-words inline-block max-w-full">{t.landing.aiFeatures.cvAnalysis.tag}</span>
                     </div>
                   </div>
-                  <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 leading-relaxed mb-4">{t.landing.aiFeatures.cvAnalysis.desc}</p>
+                  <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 leading-relaxed mb-4 break-words">{t.landing.aiFeatures.cvAnalysis.desc}</p>
                   <div className="flex flex-wrap gap-3">
                     {t.landing.aiFeatures.cvAnalysis.tags.map(tag => (
                       <span key={tag} className="text-xs bg-blue-100 dark:bg-white/10 text-blue-700 dark:text-gray-300 px-3 py-1 rounded-full">{tag}</span>
@@ -472,9 +472,9 @@ export default function LandingPage() {
                     <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4 shadow-lg transition-transform duration-300 group-hover:scale-110`}>
                       <Icon className="w-5 h-5 text-white" />
                     </div>
-                    <h3 className="text-lg font-bold mb-2">{feature.title}</h3>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed mb-3">{feature.desc}</p>
-                    <span className="inline-block text-xs bg-blue-100 dark:bg-white/10 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full font-medium">{feature.tag}</span>
+                    <h3 className="text-lg font-bold mb-2 break-words">{feature.title}</h3>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed mb-3 break-words">{feature.desc}</p>
+                    <span className="inline-block text-xs bg-blue-100 dark:bg-white/10 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full font-medium break-words max-w-full">{feature.tag}</span>
                   </div>
                 </ScrollReveal>
               )
@@ -488,8 +488,8 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto">
           <ScrollReveal>
             <div className="text-center mb-10 sm:mb-16">
-              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">{t.landing.platformSection.title}</h2>
-              <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">{t.landing.platformSection.subtitle}</p>
+              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4 break-words">{t.landing.platformSection.title}</h2>
+              <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto break-words">{t.landing.platformSection.subtitle}</p>
             </div>
           </ScrollReveal>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -501,8 +501,8 @@ export default function LandingPage() {
                     <div className={`w-12 h-12 rounded-xl ${feature.color} flex items-center justify-center mb-4`}>
                       <Icon className="w-6 h-6" />
                     </div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">{feature.title}</h3>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">{feature.desc}</p>
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2 break-words">{feature.title}</h3>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed break-words">{feature.desc}</p>
                   </div>
                 </ScrollReveal>
               )
@@ -516,7 +516,7 @@ export default function LandingPage() {
         <div className="max-w-4xl mx-auto">
           <ScrollReveal>
             <div className="text-center mb-10 sm:mb-16">
-              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">{t.howItWorks.title}</h2>
+              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4 break-words">{t.howItWorks.title}</h2>
             </div>
           </ScrollReveal>
           <div className="space-y-6 sm:space-y-8">
@@ -526,9 +526,9 @@ export default function LandingPage() {
                   <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl gradient-bg flex items-center justify-center shrink-0 shadow-lg">
                     <span className="text-white font-bold text-base sm:text-lg">{String(i + 1).padStart(2, '0')}</span>
                   </div>
-                  <div className="pt-1 sm:pt-2 min-w-0">
-                    <h3 className="font-semibold text-gray-900 dark:text-white text-base sm:text-lg mb-1">{step.title}</h3>
-                    <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">{step.desc}</p>
+                  <div className="pt-1 sm:pt-2 min-w-0 flex-1">
+                    <h3 className="font-semibold text-gray-900 dark:text-white text-base sm:text-lg mb-1 break-words">{step.title}</h3>
+                    <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 break-words">{step.desc}</p>
                   </div>
                 </div>
               </ScrollReveal>
@@ -542,8 +542,8 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto">
           <ScrollReveal>
             <div className="text-center mb-10 sm:mb-16">
-              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">{t.pricing.title}</h2>
-              <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400">{t.pricing.subtitle}</p>
+              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4 break-words">{t.pricing.title}</h2>
+              <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400 break-words">{t.pricing.subtitle}</p>
             </div>
           </ScrollReveal>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-3xl mx-auto">
@@ -554,23 +554,23 @@ export default function LandingPage() {
                   <div className={`p-6 sm:p-8 rounded-2xl border-2 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${highlight ? 'border-blue-500 shadow-xl md:scale-105' : 'border-gray-100 dark:border-gray-800'}`}>
                     {highlight && (
                       <div className="text-center mb-4">
-                        <span className="gradient-bg text-white text-xs px-3 py-1 rounded-full font-medium">{t.pricing.mostPopular}</span>
+                        <span className="gradient-bg text-white text-xs px-3 py-1 rounded-full font-medium break-words inline-block max-w-full">{t.pricing.mostPopular}</span>
                       </div>
                     )}
-                    <h3 className="font-bold text-gray-900 dark:text-white text-xl mb-1">{plan.name}</h3>
-                    <div className="flex items-baseline gap-1 mb-6">
-                      <span className="text-4xl font-extrabold text-gray-900 dark:text-white">{plan.price}</span>
-                      <span className="text-gray-400 dark:text-gray-500 text-sm">{plan.period}</span>
+                    <h3 className="font-bold text-gray-900 dark:text-white text-xl mb-1 break-words">{plan.name}</h3>
+                    <div className="flex items-baseline gap-1 mb-6 flex-wrap">
+                      <span className="text-4xl font-extrabold text-gray-900 dark:text-white break-words">{plan.price}</span>
+                      <span className="text-gray-400 dark:text-gray-500 text-sm break-words">{plan.period}</span>
                     </div>
                     <ul className="space-y-3 mb-8">
                       {plan.features.map((f, i) => (
-                        <li key={i} className="flex items-center gap-2 text-gray-600 dark:text-gray-300 text-sm">
-                          <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />{f}
+                        <li key={i} className="flex items-start gap-2 text-gray-600 dark:text-gray-300 text-sm break-words">
+                          <CheckCircle className="w-4 h-4 text-green-500 shrink-0 mt-0.5" /><span className="min-w-0">{f}</span>
                         </li>
                       ))}
                     </ul>
                     <Link href="/register">
-                      <Button className={`w-full ${highlight ? 'gradient-bg' : ''}`} variant={highlight ? 'default' : 'outline'}>{plan.cta}</Button>
+                      <Button className={`w-full h-auto py-2 whitespace-normal text-center leading-tight ${highlight ? 'gradient-bg' : ''}`} variant={highlight ? 'default' : 'outline'}>{plan.cta}</Button>
                     </Link>
                   </div>
                 </ScrollReveal>
@@ -584,11 +584,11 @@ export default function LandingPage() {
       <section className="py-16 sm:py-24 px-4 sm:px-6 bg-gradient-to-br from-blue-600 to-indigo-700">
         <ScrollReveal>
           <div className="max-w-3xl mx-auto text-center text-white">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">{t.cta.title}</h2>
-            <p className="text-base sm:text-xl text-blue-100 mb-8 sm:mb-10">{t.cta.subtitle}</p>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4 break-words">{t.cta.title}</h2>
+            <p className="text-base sm:text-xl text-blue-100 mb-8 sm:mb-10 break-words">{t.cta.subtitle}</p>
             <Link href="/register" className="inline-block w-full sm:w-auto">
-              <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50 shadow-xl gap-2 w-full sm:w-auto">
-                {t.cta.button} <ArrowRight size={18} />
+              <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50 shadow-xl gap-2 w-full sm:w-auto h-auto py-3 whitespace-normal text-center leading-tight">
+                {t.cta.button} <ArrowRight size={18} className="shrink-0" />
               </Button>
             </Link>
           </div>

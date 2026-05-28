@@ -305,7 +305,7 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
                 </div>
               </div>
               <div className="flex gap-2 items-center flex-wrap">
-                <span className={`text-sm px-3 py-1 rounded-full font-medium ${getStatusColor(vacancy.status)}`}>{vacancy.status}</span>
+                <span className={`text-sm px-3 py-1 rounded-full font-medium break-words ${getStatusColor(vacancy.status)}`}>{vacancy.status}</span>
                 {!vacancy.externalId && (
                   <button
                     onClick={() => setShowLinkAts(true)}
@@ -348,16 +348,16 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
             </div>
 
             <div className="flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400 mb-4">
-              {vacancy.location && <span className="flex items-center gap-1.5"><MapPin size={14} />{vacancy.location}</span>}
-              <span className="flex items-center gap-1.5"><Briefcase size={14} />{vacancy.type}</span>
-              {vacancy.salary && <span className="flex items-center gap-1.5"><DollarSign size={14} />{vacancy.salary}</span>}
-              <span className="flex items-center gap-1.5"><Clock size={14} />{vd.posted} {formatDate(vacancy.createdAt)}</span>
+              {vacancy.location && <span className="flex items-center gap-1.5 min-w-0 break-words"><MapPin size={14} className="shrink-0" />{vacancy.location}</span>}
+              <span className="flex items-center gap-1.5 min-w-0 break-words"><Briefcase size={14} className="shrink-0" />{vacancy.type}</span>
+              {vacancy.salary && <span className="flex items-center gap-1.5 min-w-0 break-words"><DollarSign size={14} className="shrink-0" />{vacancy.salary}</span>}
+              <span className="flex items-center gap-1.5 min-w-0 break-words"><Clock size={14} className="shrink-0" />{vd.posted} {formatDate(vacancy.createdAt)}</span>
             </div>
 
             <Tabs defaultValue="description">
               <TabsList className="mb-4">
-                <TabsTrigger value="description">{vd.descriptionTab}</TabsTrigger>
-                <TabsTrigger value="requirements">{vd.requirementsTab}</TabsTrigger>
+                <TabsTrigger value="description" className="whitespace-normal text-center leading-tight">{vd.descriptionTab}</TabsTrigger>
+                <TabsTrigger value="requirements" className="whitespace-normal text-center leading-tight">{vd.requirementsTab}</TabsTrigger>
               </TabsList>
               <TabsContent value="description">
                 <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">{vacancy.description}</p>
@@ -386,9 +386,9 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
                 {['new', 'reviewing', 'shortlisted', 'rejected'].map(s => {
                   const count = vacancy.candidates.filter(c => c.status === s).length
                   return (
-                    <div key={s} className="flex items-center justify-between">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(s)}`}>{vd.statusLabels[s as keyof typeof vd.statusLabels] || s}</span>
-                      <span className="font-semibold text-gray-700 dark:text-gray-300">{count}</span>
+                    <div key={s} className="flex items-center justify-between gap-2">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium break-words min-w-0 ${getStatusColor(s)}`}>{vd.statusLabels[s as keyof typeof vd.statusLabels] || s}</span>
+                      <span className="font-semibold text-gray-700 dark:text-gray-300 shrink-0">{count}</span>
                     </div>
                   )
                 })}
@@ -396,8 +396,8 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
             </CardContent>
           </Card>
 
-          <Button onClick={() => setShowUpload(true)} className="w-full gradient-bg gap-2">
-            <Upload size={16} /> {vd.uploadCV}
+          <Button onClick={() => setShowUpload(true)} className="w-full gradient-bg gap-2 h-auto py-2 whitespace-normal text-center leading-tight">
+            <Upload size={16} className="shrink-0" /> {vd.uploadCV}
           </Button>
         </div>
       </div>
@@ -405,25 +405,25 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
       {/* Candidate Rankings */}
       <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
         <CardHeader className="pb-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Star className="w-4 h-4 text-amber-500" />
-            {vd.candidateRankings}
+          <CardTitle className="text-base flex items-center gap-2 min-w-0">
+            <Star className="w-4 h-4 text-amber-500 shrink-0" />
+            <span className="break-words min-w-0">{vd.candidateRankings}</span>
           </CardTitle>
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2 flex-wrap w-full sm:w-auto">
             {shortlistedCount > 0 && (
               <Button
                 size="sm"
                 variant="outline"
                 onClick={() => { setSummarySent(false); setShowSummaryDialog(true) }}
-                className="gap-1.5 border-green-200 text-green-700 hover:bg-green-50 dark:border-green-800 dark:text-green-400"
+                className="gap-1.5 border-green-200 text-green-700 hover:bg-green-50 dark:border-green-800 dark:text-green-400 h-auto py-2 whitespace-normal text-center leading-tight"
               >
-                <Mail size={13} />
+                <Mail size={13} className="shrink-0" />
                 {vd.sendSummaryBtn}
               </Button>
             )}
             {sortedCandidates.length >= 2 && (
-              <Button size="sm" variant="outline" onClick={handleAIRanking} disabled={rankingLoading} className="gap-1.5 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-400">
-                {rankingLoading ? <Loader2 size={13} className="animate-spin" /> : <Trophy size={13} />}
+              <Button size="sm" variant="outline" onClick={handleAIRanking} disabled={rankingLoading} className="gap-1.5 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-400 h-auto py-2 whitespace-normal text-center leading-tight">
+                {rankingLoading ? <Loader2 size={13} className="animate-spin shrink-0" /> : <Trophy size={13} className="shrink-0" />}
                 {rankingLoading ? vd.rankingInProgress : vd.aiRanking}
               </Button>
             )}
@@ -441,9 +441,9 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
                     } catch { toast({ title: vd.exportFailed, variant: 'destructive' }) }
                     finally { setExportingExcel(false) }
                   }}
-                  className="gap-1.5"
+                  className="gap-1.5 h-auto py-2 whitespace-normal text-center leading-tight"
                 >
-                  <Download size={13} /> {exportingExcel ? vd.exportingInProgress : vd.exportExcel}
+                  <Download size={13} className="shrink-0" /> {exportingExcel ? vd.exportingInProgress : vd.exportExcel}
                 </Button>
                 <Button
                   size="sm"
@@ -457,14 +457,14 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
                     } catch { toast({ title: vd.exportFailed, variant: 'destructive' }) }
                     finally { setExportingPdf(false) }
                   }}
-                  className="gap-1.5"
+                  className="gap-1.5 h-auto py-2 whitespace-normal text-center leading-tight"
                 >
-                  <Download size={13} /> {exportingPdf ? vd.exportingInProgress : vd.exportPdf}
+                  <Download size={13} className="shrink-0" /> {exportingPdf ? vd.exportingInProgress : vd.exportPdf}
                 </Button>
               </>
             )}
-            <Button size="sm" variant="outline" onClick={() => setShowUpload(true)} className="gap-1">
-              <Upload size={13} /> {vd.addCandidate}
+            <Button size="sm" variant="outline" onClick={() => setShowUpload(true)} className="gap-1 h-auto py-2 whitespace-normal text-center leading-tight">
+              <Upload size={13} className="shrink-0" /> {vd.addCandidate}
             </Button>
           </div>
         </CardHeader>
@@ -518,10 +518,10 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <Link href={`/candidates/${c.id}`} className="font-semibold text-gray-900 dark:text-white text-sm hover:text-blue-600 truncate">
+                        <Link href={`/candidates/${c.id}`} className="font-semibold text-gray-900 dark:text-white text-sm hover:text-blue-600 break-words min-w-0">
                           {c.firstName} {c.lastName}
                         </Link>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getStatusColor(c.status)}`}>{vd.statusLabels[c.status as keyof typeof vd.statusLabels] || c.status}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium break-words ${getStatusColor(c.status)}`}>{vd.statusLabels[c.status as keyof typeof vd.statusLabels] || c.status}</span>
                         {c.source === 'email' && <span className="text-xs text-blue-500 font-medium">via email</span>}
                       </div>
                       {c.email && <p className="text-xs text-gray-400 mb-1.5 break-all">{c.email}</p>}

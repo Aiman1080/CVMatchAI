@@ -143,14 +143,14 @@ export function NotificationBell() {
       {open && (
         <div className="fixed left-2 right-2 top-16 md:absolute md:left-0 md:right-auto md:top-full md:mt-2 w-auto md:w-80 max-w-[calc(100vw-1rem)] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg z-[100] overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{n.title}</h3>
+          <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white break-words min-w-0">{n.title}</h3>
             {unreadCount > 0 && (
               <button
                 onClick={markAllRead}
-                className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
+                className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors shrink-0 whitespace-normal text-right leading-tight"
               >
-                <Check size={12} />
+                <Check size={12} className="shrink-0" />
                 {n.markAllRead}
               </button>
             )}
@@ -163,8 +163,8 @@ export function NotificationBell() {
                 <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
                   <Bell size={20} className="text-gray-300 dark:text-gray-600" />
                 </div>
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{n.noNotifications}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-500 max-w-[260px] mx-auto leading-relaxed">{(n as any).noNotificationsDesc}</p>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 break-words">{n.noNotifications}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-500 max-w-[260px] mx-auto leading-relaxed break-words">{(n as any).noNotificationsDesc}</p>
               </div>
             ) : (
               notifications.map(notification => {
@@ -188,17 +188,17 @@ export function NotificationBell() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className={cn(
-                          'text-sm',
+                          'text-sm break-words',
                           notification.read
                             ? 'text-gray-600 dark:text-gray-400'
                             : 'text-gray-900 dark:text-white font-medium'
                         )}>
                           {notification.title}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">
+                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5 break-words">
                           {notification.message}
                         </p>
-                        <p className="text-xs text-gray-400 dark:text-gray-600 mt-1">
+                        <p className="text-xs text-gray-400 dark:text-gray-600 mt-1 break-words">
                           {timeAgo(notification.createdAt)}
                         </p>
                       </div>

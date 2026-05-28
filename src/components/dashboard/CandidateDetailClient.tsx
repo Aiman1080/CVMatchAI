@@ -343,15 +343,15 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                   {candidate.priority && <Flag className="w-5 h-5 text-red-500" />}
                   {candidate.savedToPool && <span className="text-xs bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 px-2 py-1 rounded-full font-medium border border-amber-200 dark:border-amber-800">{cd.savedToPool}</span>}
                 </div>
-                <p className="text-gray-500 dark:text-gray-400 mb-2">{candidate.vacancy?.title}</p>
+                <p className="text-gray-500 dark:text-gray-400 mb-2 break-words">{candidate.vacancy?.title}</p>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className={`text-sm px-3 py-1 rounded-full font-medium ${getStatusColor(candidate.status)}`}>{tc[candidate.status as keyof typeof tc] || candidate.status}</span>
+                  <span className={`text-sm px-3 py-1 rounded-full font-medium break-words ${getStatusColor(candidate.status)}`}>{tc[candidate.status as keyof typeof tc] || candidate.status}</span>
                   {candidate.recommendation && (
-                    <span className={`text-sm px-3 py-1 rounded-full font-medium ${RECOMMENDATION_COLORS[candidate.recommendation] || ''}`}>
+                    <span className={`text-sm px-3 py-1 rounded-full font-medium break-words ${RECOMMENDATION_COLORS[candidate.recommendation] || ''}`}>
                       AI: {RECOMMENDATION_LABELS[candidate.recommendation] || candidate.recommendation}
                     </span>
                   )}
-                  {hasEmailSource && <span className="text-xs bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-full font-medium flex items-center gap-1"><Mail size={10} /> via email</span>}
+                  {hasEmailSource && <span className="text-xs bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-full font-medium flex items-center gap-1 break-words"><Mail size={10} className="shrink-0" /> via email</span>}
                   {candidate.language && <span className="text-xs bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 px-2 py-1 rounded-full font-medium uppercase">{candidate.language}</span>}
                 </div>
               </div>
@@ -384,32 +384,32 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                   <button
                     onClick={() => handleToggle('liked')}
                     disabled={updating}
-                    className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-medium border transition-colors ${candidate.liked ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-600 border-amber-200' : 'border-gray-200 dark:border-gray-700 text-gray-400 hover:border-amber-200 hover:text-amber-500'}`}
+                    className={`flex-1 min-w-0 flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-normal text-center leading-tight ${candidate.liked ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-600 border-amber-200' : 'border-gray-200 dark:border-gray-700 text-gray-400 hover:border-amber-200 hover:text-amber-500'}`}
                     title={cd.liked}
                   >
-                    <Star size={12} fill={candidate.liked ? 'currentColor' : 'none'} /> {cd.liked}
+                    <Star size={12} fill={candidate.liked ? 'currentColor' : 'none'} className="shrink-0" /> <span className="truncate">{cd.liked}</span>
                   </button>
                   <button
                     onClick={() => handleToggle('priority')}
                     disabled={updating}
-                    className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-medium border transition-colors ${candidate.priority ? 'bg-red-50 dark:bg-red-950/30 text-red-600 border-red-200' : 'border-gray-200 dark:border-gray-700 text-gray-400 hover:border-red-200 hover:text-red-500'}`}
+                    className={`flex-1 min-w-0 flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-normal text-center leading-tight ${candidate.priority ? 'bg-red-50 dark:bg-red-950/30 text-red-600 border-red-200' : 'border-gray-200 dark:border-gray-700 text-gray-400 hover:border-red-200 hover:text-red-500'}`}
                     title={cd.priority}
                   >
-                    <Flag size={12} /> {cd.priority}
+                    <Flag size={12} className="shrink-0" /> <span className="truncate">{cd.priority}</span>
                   </button>
                   <button
                     onClick={() => handleToggle('savedToPool')}
                     disabled={updating}
-                    className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-medium border transition-colors ${candidate.savedToPool ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 border-amber-200' : 'border-gray-200 dark:border-gray-700 text-gray-400 hover:border-amber-200 hover:text-amber-600'}`}
+                    className={`flex-1 min-w-0 flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-normal text-center leading-tight ${candidate.savedToPool ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 border-amber-200' : 'border-gray-200 dark:border-gray-700 text-gray-400 hover:border-amber-200 hover:text-amber-600'}`}
                     title={cd.savedToPool}
                   >
-                    <Archive size={12} /> {cd.savedToPool}
+                    <Archive size={12} className="shrink-0" /> <span className="truncate">{cd.savedToPool}</span>
                   </button>
                 </div>
 
                 {candidate.cvContent && (
-                  <Button variant="outline" size="sm" onClick={handleReanalyze} disabled={analyzing} className="w-full gap-2">
-                    {analyzing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                  <Button variant="outline" size="sm" onClick={handleReanalyze} disabled={analyzing} className="w-full gap-2 h-auto py-2 whitespace-normal text-center leading-tight">
+                    {analyzing ? <Loader2 className="w-3 h-3 animate-spin shrink-0" /> : <RefreshCw className="w-3 h-3 shrink-0" />}
                     {analyzing ? cd.analyzing : cd.reanalyze}
                   </Button>
                 )}
@@ -420,15 +420,15 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
           {/* Quick email actions */}
           {candidate.email && (
             <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 flex flex-wrap gap-2">
-              <p className="text-xs text-gray-400 self-center mr-1">{cd.sendEmail}:</p>
-              <Button size="sm" variant="outline" onClick={() => openEmailDialog('interview')} className="gap-1.5 h-7 text-xs">
-                <Video size={12} /> {cd.interview}
+              <p className="text-xs text-gray-400 self-center mr-1 break-words">{cd.sendEmail}:</p>
+              <Button size="sm" variant="outline" onClick={() => openEmailDialog('interview')} className="gap-1.5 h-auto py-1.5 text-xs whitespace-normal text-center leading-tight">
+                <Video size={12} className="shrink-0" /> {cd.interview}
               </Button>
-              <Button size="sm" variant="outline" onClick={() => openEmailDialog('rejection')} className="gap-1.5 h-7 text-xs text-red-600 hover:text-red-700 border-red-200 hover:border-red-300">
-                <X size={12} /> {cd.rejection}
+              <Button size="sm" variant="outline" onClick={() => openEmailDialog('rejection')} className="gap-1.5 h-auto py-1.5 text-xs text-red-600 hover:text-red-700 border-red-200 hover:border-red-300 whitespace-normal text-center leading-tight">
+                <X size={12} className="shrink-0" /> {cd.rejection}
               </Button>
-              <Button size="sm" variant="outline" onClick={() => openEmailDialog('followup')} className="gap-1.5 h-7 text-xs">
-                <Send size={12} /> {cd.followup}
+              <Button size="sm" variant="outline" onClick={() => openEmailDialog('followup')} className="gap-1.5 h-auto py-1.5 text-xs whitespace-normal text-center leading-tight">
+                <Send size={12} className="shrink-0" /> {cd.followup}
               </Button>
             </div>
           )}
@@ -511,14 +511,14 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
         <div className="lg:col-span-2 space-y-4">
           <Tabs defaultValue="analysis">
             <TabsList className="flex-wrap h-auto gap-1">
-              <TabsTrigger value="analysis">{cd.aiAnalysis}</TabsTrigger>
-              <TabsTrigger value="notes">{cd.notes}</TabsTrigger>
-              {hasEmailSource && <TabsTrigger value="email">{cd.emailPanel}</TabsTrigger>}
-              <TabsTrigger value="interview" className="gap-1"><MessageSquareText size={14} /> {ci.interviewTab}</TabsTrigger>
-              <TabsTrigger value="report" className="gap-1"><ClipboardList size={14} /> {ci.reportTab}</TabsTrigger>
-              <TabsTrigger value="activity" className="gap-1" onClick={fetchActivities}><History size={14} /> {cd.activityTab}</TabsTrigger>
-              <TabsTrigger value="cv">{cd.cvTab}</TabsTrigger>
-              {hasMotivationText && <TabsTrigger value="motivation">{ci.motivationTab}</TabsTrigger>}
+              <TabsTrigger value="analysis" className="whitespace-normal text-center leading-tight h-auto py-1.5">{cd.aiAnalysis}</TabsTrigger>
+              <TabsTrigger value="notes" className="whitespace-normal text-center leading-tight h-auto py-1.5">{cd.notes}</TabsTrigger>
+              {hasEmailSource && <TabsTrigger value="email" className="whitespace-normal text-center leading-tight h-auto py-1.5">{cd.emailPanel}</TabsTrigger>}
+              <TabsTrigger value="interview" className="gap-1 whitespace-normal text-center leading-tight h-auto py-1.5"><MessageSquareText size={14} className="shrink-0" /> {ci.interviewTab}</TabsTrigger>
+              <TabsTrigger value="report" className="gap-1 whitespace-normal text-center leading-tight h-auto py-1.5"><ClipboardList size={14} className="shrink-0" /> {ci.reportTab}</TabsTrigger>
+              <TabsTrigger value="activity" className="gap-1 whitespace-normal text-center leading-tight h-auto py-1.5" onClick={fetchActivities}><History size={14} className="shrink-0" /> {cd.activityTab}</TabsTrigger>
+              <TabsTrigger value="cv" className="whitespace-normal text-center leading-tight h-auto py-1.5">{cd.cvTab}</TabsTrigger>
+              {hasMotivationText && <TabsTrigger value="motivation" className="whitespace-normal text-center leading-tight h-auto py-1.5">{ci.motivationTab}</TabsTrigger>}
             </TabsList>
 
             {/* ── AI Analysis tab ── */}

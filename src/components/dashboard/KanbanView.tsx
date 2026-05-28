@@ -200,12 +200,12 @@ export function KanbanView({ candidates, onCandidatesChange }: Props) {
             onDrop={e => handleDrop(e, col.id)}
           >
             {/* Column header */}
-            <div className={`p-3 flex items-center justify-between rounded-t-lg ${col.headerBg}`}>
-              <div className="flex items-center gap-2">
-                <span className={`w-2.5 h-2.5 rounded-full ${col.dot} ${isDropTarget ? 'animate-pulse' : ''}`} />
-                <span className="font-semibold text-sm text-gray-700 dark:text-gray-300">{col.label}</span>
+            <div className={`p-3 flex items-center justify-between gap-2 rounded-t-lg ${col.headerBg}`}>
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${col.dot} ${isDropTarget ? 'animate-pulse' : ''}`} />
+                <span className="font-semibold text-sm text-gray-700 dark:text-gray-300 break-words min-w-0">{col.label}</span>
               </div>
-              <span className={`text-xs border px-2 py-0.5 rounded-full font-bold tabular-nums transition-colors duration-200 ${
+              <span className={`text-xs border px-2 py-0.5 rounded-full font-bold tabular-nums transition-colors duration-200 shrink-0 ${
                 isDropTarget
                   ? 'bg-blue-100 dark:bg-blue-900 border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-300'
                   : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400'

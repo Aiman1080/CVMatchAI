@@ -67,8 +67,8 @@ export function AdminSidebar() {
                 active ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-200'
               )}
             >
-              <item.icon size={18} className={active ? 'text-purple-600 dark:text-purple-400' : 'text-gray-400 dark:text-gray-500'} />
-              {item.label}
+              <item.icon size={18} className={cn('shrink-0', active ? 'text-purple-600 dark:text-purple-400' : 'text-gray-400 dark:text-gray-500')} />
+              <span className="truncate flex-1 min-w-0">{item.label}</span>
             </Link>
           )
         })}
@@ -80,8 +80,8 @@ export function AdminSidebar() {
             onClick={() => setMobileOpen(false)}
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-200 transition-all"
           >
-            <ArrowLeft size={18} className="text-gray-400 dark:text-gray-500" />
-            Back to App
+            <ArrowLeft size={18} className="text-gray-400 dark:text-gray-500 shrink-0" />
+            <span className="truncate flex-1 min-w-0">Back to App</span>
           </Link>
         </div>
       </nav>
@@ -89,10 +89,10 @@ export function AdminSidebar() {
       <div className="px-4 pb-2">
         <button
           onClick={() => setTheme(isDark ? 'light' : 'dark')}
-          className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
         >
-          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{isDark ? 'Dark mode' : 'Light mode'}</span>
-          <div className="flex items-center gap-1">
+          <span className="text-xs font-medium text-gray-600 dark:text-gray-400 truncate min-w-0 text-left">{isDark ? 'Dark mode' : 'Light mode'}</span>
+          <div className="flex items-center gap-1 shrink-0">
             <Sun size={13} className={isDark ? 'text-gray-500' : 'text-amber-400'} />
             <div className={cn('w-8 h-4 rounded-full transition-colors relative', isDark ? 'bg-purple-600' : 'bg-gray-700')}>
               <div className={cn('absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-all', isDark ? 'left-4' : 'left-0.5')} />
@@ -104,14 +104,14 @@ export function AdminSidebar() {
 
       <div className="p-4 border-t border-gray-200 dark:border-gray-800">
         <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
-          <Avatar className="w-8 h-8">
+          <Avatar className="w-8 h-8 shrink-0">
             <AvatarFallback className="text-xs bg-purple-600 text-white font-semibold">{initials}</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-gray-900 dark:text-gray-200 truncate">{user?.name || 'Admin'}</p>
-            <span className="text-xs px-1.5 py-0.5 rounded-full font-medium bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300">Administrator</span>
+            <span className="text-xs px-1.5 py-0.5 rounded-full font-medium bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300 inline-block max-w-full truncate">Administrator</span>
           </div>
-          <button onClick={() => setShowLogoutConfirm(true)} className="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 rounded transition-colors" title="Sign out">
+          <button onClick={() => setShowLogoutConfirm(true)} className="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 rounded transition-colors shrink-0" title="Sign out">
             <LogOut size={15} />
           </button>
         </div>

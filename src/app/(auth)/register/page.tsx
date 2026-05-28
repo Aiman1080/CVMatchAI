@@ -95,8 +95,8 @@ export default function RegisterPage() {
       <div className="bg-white text-gray-900 rounded-2xl shadow-2xl p-6 sm:p-8 [&_input]:bg-white [&_input]:border-gray-300 [&_input]:text-gray-900 [&_label]:text-gray-700">
         <div className="text-center mb-6 sm:mb-8">
           <div className="mx-auto mb-4 w-fit"><Logo size={48} /></div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{t.auth.startForFree}</h1>
-          <p className="text-gray-500 text-sm mt-1">{t.auth.createYourAccount}</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 break-words">{t.auth.startForFree}</h1>
+          <p className="text-gray-500 text-sm mt-1 break-words">{t.auth.createYourAccount}</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -174,73 +174,73 @@ export default function RegisterPage() {
               <button
                 type="button"
                 onClick={() => setForm(p => ({ ...p, plan: 'free' }))}
-                className={`relative rounded-xl border-2 p-4 text-left transition-all ${
+                className={`relative rounded-xl border-2 p-4 pr-8 text-left transition-all ${
                   form.plan === 'free'
                     ? 'border-blue-600 bg-blue-50 ring-1 ring-blue-600'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
                 {form.plan === 'free' && (
-                  <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center">
+                  <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
                     <Check className="w-3 h-3 text-white" />
                   </div>
                 )}
-                <p className="font-semibold text-gray-900 text-sm">Free</p>
-                <p className="text-lg font-bold text-gray-900 mt-1">&euro;0</p>
+                <p className="font-semibold text-gray-900 text-sm break-words">Free</p>
+                <p className="text-lg font-bold text-gray-900 mt-1 break-words">&euro;0</p>
                 <ul className="mt-2 space-y-1 text-xs text-gray-500">
-                  <li>3 vacancies</li>
-                  <li>20 candidates/month</li>
-                  <li>AI scoring</li>
+                  <li className="break-words">3 vacancies</li>
+                  <li className="break-words">20 candidates/month</li>
+                  <li className="break-words">AI scoring</li>
                 </ul>
               </button>
               {/* Pro plan card */}
               <button
                 type="button"
                 onClick={() => setForm(p => ({ ...p, plan: 'pro' }))}
-                className={`relative rounded-xl border-2 p-4 text-left transition-all ${
+                className={`relative rounded-xl border-2 p-4 pr-8 text-left transition-all ${
                   form.plan === 'pro'
                     ? 'border-blue-600 bg-blue-50 ring-1 ring-blue-600'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
                 {form.plan === 'pro' && (
-                  <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center">
+                  <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
                     <Check className="w-3 h-3 text-white" />
                   </div>
                 )}
-                <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full mb-1">
-                  <Sparkles className="w-3 h-3" /> First month free
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full mb-1 break-words max-w-full">
+                  <Sparkles className="w-3 h-3 shrink-0" /> First month free
                 </span>
-                <p className="font-semibold text-gray-900 text-sm">Pro</p>
-                <p className="text-lg font-bold text-gray-900 mt-1">&euro;55<span className="text-xs font-normal text-gray-500">/month</span></p>
+                <p className="font-semibold text-gray-900 text-sm break-words">Pro</p>
+                <p className="text-lg font-bold text-gray-900 mt-1 break-words">&euro;55<span className="text-xs font-normal text-gray-500">/month</span></p>
                 <ul className="mt-2 space-y-1 text-xs text-gray-500">
-                  <li>Unlimited vacancies</li>
-                  <li>All AI features</li>
-                  <li>14 ATS integrations</li>
-                  <li>Email scan</li>
+                  <li className="break-words">Unlimited vacancies</li>
+                  <li className="break-words">All AI features</li>
+                  <li className="break-words">14 ATS integrations</li>
+                  <li className="break-words">Email scan</li>
                 </ul>
                 {form.plan === 'pro' && (
-                  <p className="mt-2 text-xs font-medium text-green-600">30 days free trial</p>
+                  <p className="mt-2 text-xs font-medium text-green-600 break-words">30 days free trial</p>
                 )}
               </button>
             </div>
           </div>
 
-          <p className="text-xs text-gray-400">{t.auth.gdprDisclaimer}</p>
+          <p className="text-xs text-gray-400 break-words">{t.auth.gdprDisclaimer}</p>
           <div className="flex items-start gap-2">
-            <input type="checkbox" id="terms" required className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-            <label htmlFor="terms" className="text-xs text-gray-500">
+            <input type="checkbox" id="terms" required className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 shrink-0" />
+            <label htmlFor="terms" className="text-xs text-gray-500 break-words min-w-0">
               I agree to the{' '}
               <Link href="/terms" className="text-blue-600 underline hover:text-blue-700">Terms of Service</Link>
               {' '}and{' '}
               <Link href="/privacy" className="text-blue-600 underline hover:text-blue-700">Privacy Policy</Link>
             </label>
           </div>
-          <Button type="submit" disabled={loading} className="w-full gradient-bg h-11">
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : form.plan === 'pro' ? 'Start Pro — 30 days free' : t.auth.createFreeAccount}
+          <Button type="submit" disabled={loading} className="w-full gradient-bg h-auto py-2.5 whitespace-normal text-center leading-tight">
+            {loading ? <Loader2 className="w-4 h-4 animate-spin shrink-0" /> : form.plan === 'pro' ? 'Start Pro — 30 days free' : t.auth.createFreeAccount}
           </Button>
         </form>
-        <p className="text-center text-sm text-gray-500 mt-6">
+        <p className="text-center text-sm text-gray-500 mt-6 break-words">
           {t.auth.alreadyHaveAccount} <Link href="/login" className="text-blue-600 font-medium hover:underline">{t.auth.signIn}</Link>
         </p>
       </div>
