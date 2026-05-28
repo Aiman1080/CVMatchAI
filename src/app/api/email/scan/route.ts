@@ -149,7 +149,7 @@ export async function POST(req: Request) {
             bodyText,
             attachments.map(a => a.name),
           )
-          console.log(`[email/scan] msg ${msg.uid} → AI classified: relevant=${classification.isRelevant} confidence=${classification.confidence}`)
+          console.log(`[email/scan] msg ${msg.uid} → AI: relevant=${classification.isRelevant} confidence=${classification.confidence} intent="${(classification as any).intent || ''}" candidate="${classification.candidateName || ''}" position="${classification.appliedPosition || ''}"`)
 
           // Skip emails already recorded to prevent duplicate candidates on re-scan
           const uidTag = msg.uid ? `::uid=${msg.uid}` : ''
