@@ -571,6 +571,27 @@ export function AdminClient({
                                   Exp. {formatDate(user.subscriptionEnd)}
                                 </div>
                               )}
+                              {/* Quick action buttons for fast plan changes — admin only */}
+                              <div className="flex gap-1 mt-1.5">
+                                {user.subscription !== 'pro' && (
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); updateUser(user.id, { subscription: 'pro' }) }}
+                                    className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900 font-medium"
+                                    title="Manually upgrade to Pro (no payment)"
+                                  >
+                                    ↑ Pro
+                                  </button>
+                                )}
+                                {user.subscription !== 'free' && (
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); updateUser(user.id, { subscription: 'free' }) }}
+                                    className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 font-medium"
+                                    title="Manually downgrade to Free"
+                                  >
+                                    ↓ Free
+                                  </button>
+                                )}
+                              </div>
                             </td>
                             <td className="px-4 py-3.5 hidden xl:table-cell">
                               <span className={`text-xs px-2 py-0.5 rounded-full w-fit ${user.role === 'admin' ? 'bg-purple-100 text-purple-600' : 'bg-gray-100 text-gray-500'}`}>
