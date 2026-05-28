@@ -8,7 +8,7 @@ import prisma from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
 import { parseDocument, saveUploadedFile } from '@/lib/pdf-parser'
 import { analyzeCVAgainstVacancy, detectDocumentType } from '@/lib/ai'
-import { getPlanLimits } from '@/lib/plans'
+import { getPlanLimits, getEffectiveSubscription } from '@/lib/plans'
 import { createNotification } from '@/lib/notifications'
 import { logActivity } from '@/lib/activity'
 import { isDemoAccount } from '@/lib/demo-guard'
@@ -58,8 +58,9 @@ export async function POST(req: Request) {
     if (file.size > maxSize) return NextResponse.json({ error: 'File too large (max 10MB)' }, { status: 400 })
 
     const userId = (session.user as any).id
-    const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { subscription: true } })
-    const limits = getPlanLimits(dbUser?.subscription || 'free')
+    const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { subscription: true, subscriptionEnd: true } })
+    const effectiveSubscription = getEffectiveSubscription(dbUser?.subscription || 'free', dbUser?.subscriptionEnd || null)
+    const limits = getPlanLimits(effectiveSubscription)
     if (limits.maxCandidatesPerMonth !== Infinity) {
       const startOfMonth = new Date(); startOfMonth.setDate(1); startOfMonth.setHours(0, 0, 0, 0)
       const monthCount = await prisma.candidate.count({ where: { userId, createdAt: { gte: startOfMonth } } })
@@ -101,40 +102,61 @@ export async function POST(req: Request) {
     const motivationText = docType === 'motivation' ? text : candidate.motivationText || undefined
 
     if (cvText) {
-      const analysis = await analyzeCVAgainstVacancy(cvText, vacancy.title, vacancy.description, vacancy.requirements, motivationText, vacancy.language)
-      candidate = await prisma.candidate.update({
-        where: { id: candidate.id },
-        data: {
-          // Use AI-extracted name/contact if found; keep placeholders otherwise
-          firstName: analysis.firstName || candidate.firstName,
-          lastName: analysis.lastName || candidate.lastName,
-          email: analysis.email || candidate.email,
-          phone: analysis.phone || candidate.phone,
-          matchScore: analysis.matchScore,
-          summary: analysis.summary,
-          strengths: JSON.stringify(analysis.strengths),
-          weaknesses: JSON.stringify(analysis.weaknesses),
-          skills: JSON.stringify(analysis.skills),
-          experience: analysis.experience,
-          education: analysis.education,
-          recommendation: analysis.recommendation,
-          language: analysis.language,
-          analyzedAt: new Date(),
-          cvContent: docType === 'cv' ? text : candidate.cvContent,
-          motivationText: docType === 'motivation' ? text : candidate.motivationText,
-        },
-      })
-      const candidateName = `${candidate.firstName} ${candidate.lastName}`
-      const score = Math.round(analysis.matchScore ?? 0)
-      await createNotification(
-        userId,
-        'cv_analyzed',
-        `CV analyzed: ${candidateName}`,
-        `${candidateName} scored ${score}% for ${vacancy.title}`
-      )
+      try {
+        const analysis = await analyzeCVAgainstVacancy(cvText, vacancy.title, vacancy.description, vacancy.requirements, motivationText, vacancy.language)
+        candidate = await prisma.candidate.update({
+          where: { id: candidate.id },
+          data: {
+            // Use AI-extracted name/contact if found; keep placeholders otherwise
+            firstName: analysis.firstName || candidate.firstName,
+            lastName: analysis.lastName || candidate.lastName,
+            email: analysis.email || candidate.email,
+            phone: analysis.phone || candidate.phone,
+            matchScore: analysis.matchScore,
+            summary: analysis.summary,
+            strengths: JSON.stringify(analysis.strengths),
+            weaknesses: JSON.stringify(analysis.weaknesses),
+            skills: JSON.stringify(analysis.skills),
+            experience: analysis.experience,
+            education: analysis.education,
+            recommendation: analysis.recommendation,
+            language: analysis.language,
+            analyzedAt: new Date(),
+            cvContent: docType === 'cv' ? text : candidate.cvContent,
+            motivationText: docType === 'motivation' ? text : candidate.motivationText,
+          },
+        })
+        const candidateName = `${candidate.firstName} ${candidate.lastName}`
+        const score = Math.round(analysis.matchScore ?? 0)
+        await createNotification(
+          userId,
+          'cv_analyzed',
+          `CV analyzed: ${candidateName}`,
+          `${candidateName} scored ${score}% for ${vacancy.title}`
+        )
 
-      await logActivity(candidate.id, 'created', 'Candidate created via CV upload')
-      return NextResponse.json({ success: true, candidate, analysis }, { status: 201 })
+        await logActivity(candidate.id, 'created', 'Candidate created via CV upload')
+        return NextResponse.json({ success: true, candidate, analysis }, { status: 201 })
+      } catch (aiError: any) {
+        // AI analysis failed (rate limit / quota / network). Keep the candidate
+        // record but mark them as not yet analyzed so the recruiter can retry
+        // rather than silently storing fabricated demo scores.
+        console.error('[upload] AI analysis failed, saving candidate without scores:', aiError?.message || aiError)
+        candidate = await prisma.candidate.update({
+          where: { id: candidate.id },
+          data: {
+            summary: 'AI analysis failed — please retry. The CV is stored but has not been scored yet.',
+            cvContent: docType === 'cv' ? text : candidate.cvContent,
+            motivationText: docType === 'motivation' ? text : candidate.motivationText,
+          },
+        })
+        await logActivity(candidate.id, 'created', 'Candidate created via CV upload (AI analysis failed)')
+        return NextResponse.json({
+          success: true,
+          candidate,
+          warning: 'AI analysis failed. Candidate was saved without a match score — please retry analysis later.',
+        }, { status: 201 })
+      }
     }
     await logActivity(candidate.id, 'created', 'Candidate created via CV upload')
     return NextResponse.json({ success: true, candidate }, { status: 201 })

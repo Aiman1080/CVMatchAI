@@ -51,6 +51,7 @@ vi.mock('@/lib/plans', () => ({
     maxCandidatesPerMonth: Infinity,
     emailInbox: true,
   }),
+  getEffectiveSubscription: vi.fn((sub: string) => sub),
 }))
 
 // Mock AI

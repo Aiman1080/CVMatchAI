@@ -70,6 +70,15 @@ export async function teamtailorTestConnection(apiKey: string): Promise<{ ok: bo
   }
 }
 
+export async function teamtailorFetchCompanyName(apiKey: string): Promise<string | null> {
+  try {
+    const data = await ttFetch('/company', apiKey)
+    return data.data?.attributes?.name || null
+  } catch {
+    return null
+  }
+}
+
 export async function teamtailorFetchJobs(apiKey: string): Promise<TTJob[]> {
   const jobs: TTJob[] = []
   let url = '/jobs?filter[status]=published&page[size]=50'

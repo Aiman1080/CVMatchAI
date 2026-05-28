@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
-import { getPlanLimits } from '@/lib/plans'
+import { getPlanLimits, getEffectiveSubscription } from '@/lib/plans'
 import { isDemoAccount } from '@/lib/demo-guard'
 
 const VALID_STATUSES = ['new', 'reviewing', 'shortlisted', 'rejected', 'hired']
@@ -64,8 +64,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Demo accounts cannot perform this action' }, { status: 403 })
   }
 
-  const subscription = (session.user as any)?.subscription || 'free'
-  const limits = getPlanLimits(subscription)
+  const userId = (session.user as any).id
+  const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { subscription: true, subscriptionEnd: true } })
+  const effectiveSubscription = getEffectiveSubscription(dbUser?.subscription || 'free', dbUser?.subscriptionEnd || null)
+  const limits = getPlanLimits(effectiveSubscription)
   if (!limits.csvImport) {
     return NextResponse.json({ error: 'CSV import requires Pro plan' }, { status: 403 })
   }
@@ -83,7 +85,6 @@ export async function POST(req: Request) {
     }
 
     // Verify the vacancy belongs to the user
-    const userId = (session.user as any).id
     const vacancy = await prisma.vacancy.findFirst({
       where: { id: vacancyId, userId },
     })

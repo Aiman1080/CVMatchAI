@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
-import { getPlanLimits } from '@/lib/plans'
+import { getPlanLimits, getEffectiveSubscription } from '@/lib/plans'
 import { isDemoAccount } from '@/lib/demo-guard'
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -25,8 +25,9 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     if (!original) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
     // Plan limit check
-    const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { subscription: true } })
-    const limits = getPlanLimits(dbUser?.subscription || 'free')
+    const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { subscription: true, subscriptionEnd: true } })
+    const effectiveSubscription = getEffectiveSubscription(dbUser?.subscription || 'free', dbUser?.subscriptionEnd || null)
+    const limits = getPlanLimits(effectiveSubscription)
     if (limits.maxVacancies !== Infinity) {
       const count = await prisma.vacancy.count({ where: { userId } })
       if (count >= limits.maxVacancies) {

@@ -9,7 +9,7 @@ import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { parseDocument } from '@/lib/pdf-parser'
 import { analyzeCVAgainstVacancy, classifyRecruitmentEmail, detectDocumentType } from '@/lib/ai'
-import { getPlanLimits } from '@/lib/plans'
+import { getPlanLimits, getEffectiveSubscription } from '@/lib/plans'
 import { decrypt } from '@/lib/crypto'
 import { isDemoAccount } from '@/lib/demo-guard'
 
@@ -25,8 +25,9 @@ export async function POST(req: Request) {
 
   const userId = (session.user as any).id
 
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { subscription: true } })
-  const limits = getPlanLimits(user?.subscription || 'free')
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { subscription: true, subscriptionEnd: true } })
+  const effectiveSubscription = getEffectiveSubscription(user?.subscription || 'free', user?.subscriptionEnd || null)
+  const limits = getPlanLimits(effectiveSubscription)
   if (!limits.emailInbox) {
     return NextResponse.json({ error: 'Email scanning requires a Pro plan', upgrade: true }, { status: 403 })
   }

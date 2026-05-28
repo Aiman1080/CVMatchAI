@@ -5,7 +5,9 @@ import { GoogleGenerativeAI, FunctionCallingMode, type FunctionDeclaration, Sche
 import { logAiUsage } from './ai-usage'
 
 const isDemoMode = () =>
-  !process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY.trim() === ''
+  !process.env.GEMINI_API_KEY ||
+  process.env.GEMINI_API_KEY.trim() === '' ||
+  process.env.GEMINI_API_KEY === 'demo'
 
 const getClient = () => new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
@@ -112,19 +114,30 @@ ${cvText.slice(0, 6000)}` +
       logAiUsage('system', 'cv_analysis', usage?.promptTokenCount || 0, usage?.candidatesTokenCount || 0).catch(() => {})
       return call.args as unknown as CVAnalysisResult
     }
+    // API call succeeded but returned no function call — treat as an error so the
+    // caller can decide what to do rather than silently fabricating demo data.
+    throw new Error('AI analysis returned no structured result')
   } catch (error: any) {
     if (error?.status === 429) {
-      console.error('[AI] Rate limit — using demo analysis')
+      console.error('[AI] Rate limit hit on Gemini API:', error?.message)
     } else if (error?.status === 401 || error?.status === 403) {
-      console.error('[AI] Invalid API key — using demo analysis')
+      console.error('[AI] Invalid Gemini API key / permission denied:', error?.message)
     } else if (error?.status === 400) {
-      console.error('[AI] Bad request:', error?.message)
+      console.error('[AI] Bad request to Gemini API:', error?.message)
     } else {
-      console.error('[AI] Analysis error:', error)
+      console.error('[AI] analyzeCVAgainstVacancy error:', error?.message || error)
     }
-  }
 
-  return generateDemoAnalysis(cvText, vacancyTitle)
+    // Only fall back to demo if no API key is configured at all. If the user has
+    // configured a real key but the call failed (rate limit, quota, network…),
+    // bubble the error up so the caller can mark the candidate as not analyzed
+    // instead of silently returning fake hash-based scores.
+    if (isDemoMode()) {
+      console.warn('[AI] Falling back to demo analysis because no GEMINI_API_KEY is configured.')
+      return generateDemoAnalysis(cvText, vacancyTitle)
+    }
+    throw error
+  }
 }
 
 // ── Email classification ──────────────────────────────────────────────────────
@@ -447,20 +460,25 @@ Call submit_interview_questions now.`
     if (call) {
       return call.args as unknown as { questions: Array<{ question: string; category: string; rationale: string; expectedAnswer: string }> }
     }
-  } catch (error) {
-    console.error('[AI] generateInterviewQuestions error:', error)
-  }
+    throw new Error('AI interview-question generator returned no structured result')
+  } catch (error: any) {
+    console.error('[AI] generateInterviewQuestions error:', error?.message || error)
 
-  // Fallback to demo questions
-  return {
-    questions: [
-      { question: 'Can you describe a challenging technical problem you solved recently and how you approached it?', category: 'technical', rationale: 'Assesses problem-solving ability and technical depth relevant to the role.', expectedAnswer: 'A strong answer describes a specific problem, the systematic debugging or design approach taken, and the measurable outcome or lesson learned.' },
-      { question: 'How do you stay current with new technologies and industry trends?', category: 'technical', rationale: 'Evaluates continuous learning mindset important for technical roles.', expectedAnswer: 'Look for concrete habits such as following specific blogs, attending conferences, contributing to open source, or dedicating regular time to side projects and courses.' },
-      { question: 'Tell me about a time you had to work with a difficult team member. How did you handle the situation?', category: 'behavioral', rationale: 'Assesses interpersonal skills and conflict resolution ability.', expectedAnswer: 'A good response shows empathy, direct communication, and a focus on finding common ground or involving a mediator rather than escalating conflict.' },
-      { question: 'Describe a project where you had to meet a tight deadline. What was your approach?', category: 'behavioral', rationale: 'Evaluates time management and performance under pressure.', expectedAnswer: 'Expect mention of prioritization techniques, scope negotiation, clear communication with stakeholders, and delegation where appropriate.' },
-      { question: 'If you were assigned a project using a technology you have never worked with, how would you approach it?', category: 'situational', rationale: 'Tests adaptability and learning strategy in unfamiliar situations.', expectedAnswer: 'Strong candidates mention structured learning (documentation, tutorials), building a small proof-of-concept, and seeking guidance from experienced colleagues.' },
-      { question: 'Imagine a stakeholder changes the requirements midway through a sprint. How would you handle this?', category: 'situational', rationale: 'Assesses flexibility and stakeholder management skills.', expectedAnswer: 'Look for impact assessment, transparent communication about trade-offs, re-prioritization with the product owner, and a pragmatic approach to scope adjustment.' },
-    ],
+    // Only fall back to canned demo questions if no API key is configured.
+    if (isDemoMode()) {
+      console.warn('[AI] Falling back to demo interview questions because no GEMINI_API_KEY is configured.')
+      return {
+        questions: [
+          { question: 'Can you describe a challenging technical problem you solved recently and how you approached it?', category: 'technical', rationale: 'Assesses problem-solving ability and technical depth relevant to the role.', expectedAnswer: 'A strong answer describes a specific problem, the systematic debugging or design approach taken, and the measurable outcome or lesson learned.' },
+          { question: 'How do you stay current with new technologies and industry trends?', category: 'technical', rationale: 'Evaluates continuous learning mindset important for technical roles.', expectedAnswer: 'Look for concrete habits such as following specific blogs, attending conferences, contributing to open source, or dedicating regular time to side projects and courses.' },
+          { question: 'Tell me about a time you had to work with a difficult team member. How did you handle the situation?', category: 'behavioral', rationale: 'Assesses interpersonal skills and conflict resolution ability.', expectedAnswer: 'A good response shows empathy, direct communication, and a focus on finding common ground or involving a mediator rather than escalating conflict.' },
+          { question: 'Describe a project where you had to meet a tight deadline. What was your approach?', category: 'behavioral', rationale: 'Evaluates time management and performance under pressure.', expectedAnswer: 'Expect mention of prioritization techniques, scope negotiation, clear communication with stakeholders, and delegation where appropriate.' },
+          { question: 'If you were assigned a project using a technology you have never worked with, how would you approach it?', category: 'situational', rationale: 'Tests adaptability and learning strategy in unfamiliar situations.', expectedAnswer: 'Strong candidates mention structured learning (documentation, tutorials), building a small proof-of-concept, and seeking guidance from experienced colleagues.' },
+          { question: 'Imagine a stakeholder changes the requirements midway through a sprint. How would you handle this?', category: 'situational', rationale: 'Assesses flexibility and stakeholder management skills.', expectedAnswer: 'Look for impact assessment, transparent communication about trade-offs, re-prioritization with the product owner, and a pragmatic approach to scope adjustment.' },
+        ],
+      }
+    }
+    throw error
   }
 }
 
@@ -522,16 +540,21 @@ Create a compelling description (200-300 words), a clear list of must-have requi
     if (call) {
       return call.args as unknown as { description: string; requirements: string; niceToHave: string }
     }
-  } catch (error) {
-    console.error('[AI] generateJobDescription error:', error)
-  }
+    throw new Error('AI job-description generator returned no structured result')
+  } catch (error: any) {
+    console.error('[AI] generateJobDescription error:', error?.message || error)
 
-  // Fallback to demo
-  const companyLine = company ? ` at ${company}` : ''
-  return {
-    description: `We are looking for a talented ${title}${companyLine}. ${keywords || 'Modern technologies'} experience required. Collaborative team environment with growth opportunities.`,
-    requirements: `- Proven experience as a ${title}\n- Strong knowledge of ${keywords || 'relevant technologies'}\n- Excellent communication skills\n- Problem-solving mindset`,
-    niceToHave: `- Experience with agile methodologies\n- Cloud platform knowledge\n- Multilingual capabilities`,
+    // Only fall back to canned content if no API key is configured.
+    if (isDemoMode()) {
+      console.warn('[AI] Falling back to demo job description because no GEMINI_API_KEY is configured.')
+      const companyLine = company ? ` at ${company}` : ''
+      return {
+        description: `We are looking for a talented ${title}${companyLine}. ${keywords || 'Modern technologies'} experience required. Collaborative team environment with growth opportunities.`,
+        requirements: `- Proven experience as a ${title}\n- Strong knowledge of ${keywords || 'relevant technologies'}\n- Excellent communication skills\n- Problem-solving mindset`,
+        niceToHave: `- Experience with agile methodologies\n- Cloud platform knowledge\n- Multilingual capabilities`,
+      }
+    }
+    throw error
   }
 }
 
@@ -617,18 +640,23 @@ Call submit_ranking now.`
     if (call) {
       return call.args as unknown as { ranking: Array<{ candidateId: string; rank: number; reasoning: string; standoutFactor: string }> }
     }
-  } catch (error) {
-    console.error('[AI] rankCandidates error:', error)
-  }
+    throw new Error('AI ranking returned no structured result')
+  } catch (error: any) {
+    console.error('[AI] rankCandidates error:', error?.message || error)
 
-  // Fallback to demo ranking
-  const fallback = topCandidates.map((c, idx) => ({
-    candidateId: c.id,
-    rank: idx + 1,
-    reasoning: `${c.firstName} ${c.lastName} scored ${c.matchScore}%. ${idx === 0 ? 'Highest match with role requirements.' : 'Solid profile with some gaps relative to top candidate.'}`,
-    standoutFactor: `${c.skills ? c.skills.split(',')[0]?.trim() || 'Relevant expertise' : 'Relevant expertise'} for this role.`,
-  }))
-  return { ranking: fallback }
+    // Only fall back to a deterministic score-based ranking if no API key is configured.
+    if (isDemoMode()) {
+      console.warn('[AI] Falling back to demo ranking because no GEMINI_API_KEY is configured.')
+      const fallback = topCandidates.map((c, idx) => ({
+        candidateId: c.id,
+        rank: idx + 1,
+        reasoning: `${c.firstName} ${c.lastName} scored ${c.matchScore}%. ${idx === 0 ? 'Highest match with role requirements.' : 'Solid profile with some gaps relative to top candidate.'}`,
+        standoutFactor: `${c.skills ? c.skills.split(',')[0]?.trim() || 'Relevant expertise' : 'Relevant expertise'} for this role.`,
+      }))
+      return { ranking: fallback }
+    }
+    throw error
+  }
 }
 
 // ── Hiring Report Generation ─────────────────────────────────────────────────
@@ -791,12 +819,17 @@ Call submit_hiring_report now.`
     if (call) {
       return call.args as unknown as { report: string }
     }
-  } catch (error) {
-    console.error('[AI] generateHiringReport error:', error)
-  }
+    throw new Error('AI hiring report returned no structured result')
+  } catch (error: any) {
+    console.error('[AI] generateHiringReport error:', error?.message || error)
 
-  // Fallback to structured report
-  const recLabel = candidate.recommendation === 'strong_yes' ? 'Strongly Recommended' : candidate.recommendation === 'yes' ? 'Recommended' : candidate.recommendation === 'maybe' ? 'Consider with Reservations' : 'Not Recommended'
-  const scoreLabel = candidate.matchScore >= 80 ? 'Excellent match' : candidate.matchScore >= 65 ? 'Good match' : candidate.matchScore >= 50 ? 'Moderate match' : 'Below expectations'
-  return { report: `# Hiring Report\n\n## Candidate Overview\n- **Name:** ${candidate.firstName} ${candidate.lastName}\n- **Position:** ${vacancyTitle}${candidate.email ? `\n- **Email:** ${candidate.email}` : ''}${candidate.phone ? `\n- **Phone:** ${candidate.phone}` : ''}\n- **Report Date:** ${new Date().toLocaleDateString()}\n\n## Match Score: ${candidate.matchScore}% — ${scoreLabel}\n\n## Professional Summary\n${candidate.summary || 'See CV for details.'}\n\n## Strengths\n${candidate.strengths || '- See CV for details'}\n\n## Areas of Concern\n${candidate.weaknesses || '- See CV for details'}\n\n## Experience\n${candidate.experience || 'See CV for details.'}\n\n## Education\n${candidate.education || 'See CV for details.'}\n\n## Interview Readiness\n${candidate.recommendation === 'strong_yes' || candidate.recommendation === 'yes' ? 'Candidate is ready for a comprehensive interview. Focus on verifying key qualifications and cultural fit.' : 'Consider a preliminary screening call before committing to a full interview.'}\n\n## Salary Considerations\nBased on the ${scoreLabel.toLowerCase()} rating, compensation should be calibrated to the candidate\'s experience level and market benchmarks for this role.\n\n## Final Recommendation: ${recLabel}\n\n## Next Steps\n1. ${candidate.recommendation === 'strong_yes' || candidate.recommendation === 'yes' ? 'Schedule interview within 5-7 business days' : 'Conduct preliminary screening call'}\n2. Prepare targeted interview questions based on areas of concern\n3. Review alongside other candidates in the pipeline\n\n---\n*Generated by DeltaMatch*` }
+    // Only fall back to a structured template report if no API key is configured.
+    if (isDemoMode()) {
+      console.warn('[AI] Falling back to demo hiring report because no GEMINI_API_KEY is configured.')
+      const recLabel = candidate.recommendation === 'strong_yes' ? 'Strongly Recommended' : candidate.recommendation === 'yes' ? 'Recommended' : candidate.recommendation === 'maybe' ? 'Consider with Reservations' : 'Not Recommended'
+      const scoreLabel = candidate.matchScore >= 80 ? 'Excellent match' : candidate.matchScore >= 65 ? 'Good match' : candidate.matchScore >= 50 ? 'Moderate match' : 'Below expectations'
+      return { report: `# Hiring Report\n\n## Candidate Overview\n- **Name:** ${candidate.firstName} ${candidate.lastName}\n- **Position:** ${vacancyTitle}${candidate.email ? `\n- **Email:** ${candidate.email}` : ''}${candidate.phone ? `\n- **Phone:** ${candidate.phone}` : ''}\n- **Report Date:** ${new Date().toLocaleDateString()}\n\n## Match Score: ${candidate.matchScore}% — ${scoreLabel}\n\n## Professional Summary\n${candidate.summary || 'See CV for details.'}\n\n## Strengths\n${candidate.strengths || '- See CV for details'}\n\n## Areas of Concern\n${candidate.weaknesses || '- See CV for details'}\n\n## Experience\n${candidate.experience || 'See CV for details.'}\n\n## Education\n${candidate.education || 'See CV for details.'}\n\n## Interview Readiness\n${candidate.recommendation === 'strong_yes' || candidate.recommendation === 'yes' ? 'Candidate is ready for a comprehensive interview. Focus on verifying key qualifications and cultural fit.' : 'Consider a preliminary screening call before committing to a full interview.'}\n\n## Salary Considerations\nBased on the ${scoreLabel.toLowerCase()} rating, compensation should be calibrated to the candidate\'s experience level and market benchmarks for this role.\n\n## Final Recommendation: ${recLabel}\n\n## Next Steps\n1. ${candidate.recommendation === 'strong_yes' || candidate.recommendation === 'yes' ? 'Schedule interview within 5-7 business days' : 'Conduct preliminary screening call'}\n2. Prepare targeted interview questions based on areas of concern\n3. Review alongside other candidates in the pipeline\n\n---\n*Generated by DeltaMatch*` }
+    }
+    throw error
+  }
 }

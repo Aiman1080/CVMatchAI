@@ -55,6 +55,7 @@ vi.mock('@/lib/plans', () => ({
     csvImport: true,
     export: true,
   }),
+  getEffectiveSubscription: vi.fn((sub: string) => sub),
 }))
 
 // Mock AI
@@ -97,6 +98,7 @@ describe('Vacancy Flow - Create', () => {
       body: JSON.stringify({
         title: 'Senior Developer',
         company: 'Acme',
+        location: 'Brussels',
         description: 'Build great things for us here.',
         requirements: 'Must know React',
       }),
@@ -135,6 +137,7 @@ describe('Vacancy Flow - Create', () => {
       body: JSON.stringify({
         title: 'Senior Developer',
         company: 'Acme',
+        location: 'Brussels',
         description: 'Build great things for us here.',
         requirements: 'Must know React',
       }),

@@ -6,17 +6,17 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { z } from 'zod'
-import { getPlanLimits } from '@/lib/plans'
+import { getPlanLimits, getEffectiveSubscription } from '@/lib/plans'
 import { isDemoAccount } from '@/lib/demo-guard'
 
 const schema = z.object({
-  title: z.string().min(2),
-  company: z.string().min(1),
+  title: z.string().min(3, 'Title must be at least 3 characters'),
+  company: z.string().min(1, 'Company is required'),
   department: z.string().optional(),
-  location: z.string().optional(),
+  location: z.string().min(1, 'Location is required'),
   type: z.enum(['full-time', 'part-time', 'contract', 'internship', 'remote']).default('full-time'),
-  description: z.string().min(10),
-  requirements: z.string().min(5),
+  description: z.string().min(20, 'Description must be at least 20 characters'),
+  requirements: z.string().min(10, 'Requirements must be at least 10 characters'),
   niceToHave: z.string().optional(),
   salary: z.string().optional(),
   language: z.string().default('nl'),
@@ -50,8 +50,9 @@ export async function POST(req: Request) {
     const body = await req.json()
     const data = schema.parse(body)
     const userId = (session.user as any).id
-    const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { subscription: true } })
-    const limits = getPlanLimits(dbUser?.subscription || 'free')
+    const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { subscription: true, subscriptionEnd: true } })
+    const effectiveSubscription = getEffectiveSubscription(dbUser?.subscription || 'free', dbUser?.subscriptionEnd || null)
+    const limits = getPlanLimits(effectiveSubscription)
     if (limits.maxVacancies !== Infinity) {
       const count = await prisma.vacancy.count({ where: { userId } })
       if (count >= limits.maxVacancies) {

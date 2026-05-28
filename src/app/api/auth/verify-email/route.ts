@@ -17,6 +17,13 @@ export async function POST(req: Request) {
     })
 
     if (!verificationToken) {
+      // If the token is gone, the user may have already verified earlier.
+      // Check whether the user record exists and is already verified so we can
+      // return a friendlier message instead of "invalid token".
+      const existingUser = await prisma.user.findUnique({ where: { email }, select: { emailVerified: true } })
+      if (existingUser?.emailVerified) {
+        return NextResponse.json({ success: true, alreadyVerified: true })
+      }
       return NextResponse.json({ error: 'Invalid verification link' }, { status: 400 })
     }
 
@@ -26,6 +33,11 @@ export async function POST(req: Request) {
       await prisma.verificationToken.delete({
         where: { identifier_token: { identifier: email, token } },
       })
+      // If the user is already verified, treat expired token as already-verified
+      const existingUser = await prisma.user.findUnique({ where: { email }, select: { emailVerified: true } })
+      if (existingUser?.emailVerified) {
+        return NextResponse.json({ success: true, alreadyVerified: true })
+      }
       return NextResponse.json({ error: 'Verification link has expired. Please request a new one.' }, { status: 400 })
     }
 

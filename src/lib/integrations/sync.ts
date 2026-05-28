@@ -4,7 +4,7 @@ import { parseDocument } from '@/lib/pdf-parser'
 import { analyzeCVAgainstVacancy } from '@/lib/ai'
 import {
   teamtailorFetchJobs, teamtailorFetchApplications, teamtailorFetchCandidate,
-  teamtailorDownloadCV,
+  teamtailorDownloadCV, teamtailorFetchCompanyName,
 } from './teamtailor'
 import {
   recruiteeFetchOffers, recruiteeFetchCandidates, recruiteeDownloadCV,
@@ -20,7 +20,7 @@ import {
   leverFetchPostings, leverFetchOpportunities,
 } from './lever'
 import {
-  bullhornFetchJobs, bullhornFetchCandidates,
+  bullhornFetchJobs, bullhornFetchCandidates, bullhornFetchJobSubmissions,
 } from './bullhorn'
 import {
   workableFetchJobs, workableFetchCandidates,
@@ -29,7 +29,7 @@ import {
   flatchrFetchJobs, flatchrFetchCandidates, flatchrDownloadCV,
 } from './flatchr'
 import {
-  ashbyFetchJobs, ashbyFetchCandidates,
+  ashbyFetchJobs, ashbyFetchCandidates, ashbyFetchApplications,
 } from './ashby'
 import {
   breezyFetchPositions, breezyFetchCandidates, breezyDownloadCV,
@@ -242,15 +242,21 @@ function mapAtsStatus(atsStatus?: string): string {
 export async function syncTeamtailor(userId: string, apiKey: string, since?: Date): Promise<SyncResult> {
   const result: SyncResult = { imported: 0, updated: 0, skipped: 0, errors: [], duplicatesDetected: 0 }
   try {
-    const [jobs, applications] = await Promise.all([
+    const [jobs, applications, companyName] = await Promise.all([
       teamtailorFetchJobs(apiKey),
       teamtailorFetchApplications(apiKey, since),
+      teamtailorFetchCompanyName(apiKey),
     ])
 
     const jobMap = new Map(jobs.map(j => [j.id, j]))
 
-    // Get company name from first job or fallback
-    const company = jobs[0]?.attributes?.title ? 'Company' : 'Company'
+    // Use the actual company name from Teamtailor's /company endpoint;
+    // fall back to the user's own company on file, or an empty string.
+    let company = companyName || ''
+    if (!company) {
+      const user = await prisma.user.findUnique({ where: { id: userId }, select: { company: true } })
+      company = user?.company || ''
+    }
 
     for (const app of applications) {
       try {
@@ -589,9 +595,10 @@ export async function syncLever(apiKey: string, userId: string, since?: Date): P
 export async function syncBullhorn(apiKey: string, restUrl: string, userId: string, since?: Date): Promise<SyncResult> {
   const result: SyncResult = { imported: 0, updated: 0, skipped: 0, errors: [], duplicatesDetected: 0 }
   try {
-    const [jobs, candidates] = await Promise.all([
+    const [jobs, candidates, submissions] = await Promise.all([
       bullhornFetchJobs(apiKey, restUrl),
       bullhornFetchCandidates(apiKey, restUrl, since),
+      bullhornFetchJobSubmissions(apiKey, restUrl, since),
     ])
 
     // Create vacancies for all open jobs
@@ -608,13 +615,33 @@ export async function syncBullhorn(apiKey: string, restUrl: string, userId: stri
       jobVacancyMap.set(job.id, vacancyId)
     }
 
-    // Use the first job as fallback vacancy if no specific mapping
-    const fallbackVacancyId = jobVacancyMap.values().next().value
+    // Build candidateId -> most recent jobId mapping from submissions
+    // If a candidate has multiple submissions, pick the most recent (highest dateAdded)
+    const candidateJobMap = new Map<number, { jobId: number; dateAdded: number; status?: string }>()
+    for (const sub of submissions) {
+      const candId = sub.candidate?.id
+      const jobId = sub.jobOrder?.id
+      if (!candId || !jobId) continue
+      const existing = candidateJobMap.get(candId)
+      if (!existing || sub.dateAdded > existing.dateAdded) {
+        candidateJobMap.set(candId, { jobId, dateAdded: sub.dateAdded, status: sub.status })
+      }
+    }
 
     for (const candidate of candidates) {
       try {
-        const vacancyId = fallbackVacancyId
-        if (!vacancyId) continue
+        const link = candidateJobMap.get(candidate.id)
+        if (!link) {
+          // No job submission for this candidate — skip rather than incorrectly link to first job
+          result.skipped++
+          continue
+        }
+        const vacancyId = jobVacancyMap.get(link.jobId)
+        if (!vacancyId) {
+          // Candidate's job isn't in our synced list (e.g. closed job) — skip
+          result.skipped++
+          continue
+        }
 
         const status = await upsertCandidate(userId, 'bullhorn', {
           externalId: `${candidate.id}`,
@@ -624,7 +651,7 @@ export async function syncBullhorn(apiKey: string, restUrl: string, userId: stri
           phone: candidate.phone,
           cvBuffer: null,
           vacancyId,
-          atsStatus: candidate.status,
+          atsStatus: link.status || candidate.status,
         })
 
         if (status === 'imported') result.imported++
@@ -760,28 +787,62 @@ export async function syncFlatchr(apiKey: string, userId: string, since?: Date):
 export async function syncAshby(apiKey: string, userId: string, since?: Date): Promise<SyncResult> {
   const result: SyncResult = { imported: 0, updated: 0, skipped: 0, errors: [], duplicatesDetected: 0 }
   try {
-    const [jobs, candidates] = await Promise.all([
+    const [jobs, candidates, applications] = await Promise.all([
       ashbyFetchJobs(apiKey),
       ashbyFetchCandidates(apiKey, since),
+      ashbyFetchApplications(apiKey, since),
     ])
 
     const jobMap = new Map(jobs.map(j => [j.jobId || j.id, j]))
 
+    // Build candidateId -> most recent application mapping
+    const candidateAppMap = new Map<string, { jobId: string; createdAt: number; status: string; stageName?: string }>()
+    for (const app of applications) {
+      if (!app.candidateId || !app.jobId) continue
+      const createdTs = app.createdAt ? new Date(app.createdAt).getTime() : 0
+      const existing = candidateAppMap.get(app.candidateId)
+      if (!existing || createdTs > existing.createdAt) {
+        candidateAppMap.set(app.candidateId, {
+          jobId: app.jobId,
+          createdAt: createdTs,
+          status: app.status,
+          stageName: app.currentInterviewStage?.name,
+        })
+      }
+    }
+
+    // Pre-create vacancies for all referenced jobs to avoid duplicate work
+    const jobVacancyMap = new Map<string, string>()
+
     for (const candidate of candidates) {
       try {
-        // Use the first job as fallback if candidate has no specific job link
-        const firstJob = jobs[0]
-        if (!firstJob) continue
+        const link = candidateAppMap.get(candidate.id)
+        if (!link) {
+          // No application linking this candidate to a job — skip rather than guessing
+          result.skipped++
+          continue
+        }
 
-        const job = firstJob
-        const vacancyResult = await upsertVacancy(userId, job.id, 'ashby', {
-          title: job.title,
-          description: job.content || job.title,
-          requirements: '',
-          company: 'Ashby',
-          location: job.locationName,
-        })
-        const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
+        const job = jobMap.get(link.jobId)
+        if (!job) {
+          // The job for this candidate isn't in our synced list — skip
+          result.skipped++
+          continue
+        }
+
+        let vacancyId = jobVacancyMap.get(job.id)
+        if (!vacancyId) {
+          const vacancyResult = await upsertVacancy(userId, job.id, 'ashby', {
+            title: job.title,
+            description: job.content || job.title,
+            requirements: '',
+            company: 'Ashby',
+            location: job.locationName,
+          })
+          vacancyId = vacancyResult.id
+          if (vacancyResult.similarMatch) result.duplicatesDetected++
+          jobVacancyMap.set(job.id, vacancyId)
+        }
 
         const nameParts = candidate.name?.split(' ') || []
         const firstName = nameParts[0] || 'Unknown'
@@ -799,6 +860,7 @@ export async function syncAshby(apiKey: string, userId: string, since?: Date): P
           linkedIn,
           cvBuffer: null,
           vacancyId,
+          atsStatus: link.stageName || link.status,
         })
 
         if (status === 'imported') result.imported++

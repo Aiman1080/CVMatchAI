@@ -69,6 +69,13 @@ export async function exportCandidatesToExcel(
   ])
 
   const escapeCsv = (val: string) => {
+    if (!val) return ''
+    // CSV injection guard: cells starting with =, +, -, @, tab, or CR can be
+    // interpreted as a formula by Excel / Google Sheets. Prefix with a single
+    // quote to neutralize them.
+    if (/^[=+\-@\t\r]/.test(val)) {
+      val = "'" + val
+    }
     if (val.includes(',') || val.includes('"') || val.includes('\n')) {
       return `"${val.replace(/"/g, '""')}"`
     }

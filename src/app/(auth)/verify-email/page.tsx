@@ -14,7 +14,7 @@ export default function VerifyEmailPage() {
   const email = searchParams.get('email')
   const { t } = useLanguage()
 
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
+  const [status, setStatus] = useState<'loading' | 'success' | 'alreadyVerified' | 'error'>('loading')
   const [errorMessage, setErrorMessage] = useState('')
 
   useEffect(() => {
@@ -33,7 +33,8 @@ export default function VerifyEmailPage() {
         })
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || t.auth.verificationFailed)
-        setStatus('success')
+        if (data.alreadyVerified) setStatus('alreadyVerified')
+        else setStatus('success')
       } catch (err: any) {
         setStatus('error')
         setErrorMessage(err.message || t.auth.verificationError)
@@ -69,6 +70,24 @@ export default function VerifyEmailPage() {
             <Link href="/dashboard">
               <Button className="gradient-bg h-11 px-8">{t.auth.goToDashboard}</Button>
             </Link>
+          </div>
+        )}
+
+        {status === 'alreadyVerified' && (
+          <div className="text-center py-8">
+            <CheckCircle2 className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">{t.auth.alreadyVerified}</h2>
+            <p className="text-gray-500 text-sm mb-6">
+              {t.auth.alreadyVerifiedDesc}
+            </p>
+            <div className="flex gap-3 justify-center">
+              <Link href="/login">
+                <Button variant="outline" className="h-11 px-6">{t.auth.backToLogin}</Button>
+              </Link>
+              <Link href="/dashboard">
+                <Button className="gradient-bg h-11 px-6">{t.auth.goToDashboard}</Button>
+              </Link>
+            </div>
           </div>
         )}
 

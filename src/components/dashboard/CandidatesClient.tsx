@@ -533,7 +533,10 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
             <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
               <Users className="w-8 h-8 text-gray-400" />
             </div>
-            <p className="text-gray-500">{tc.noCandidates}</p>
+            <p className="text-gray-500 mb-4">{tc.noCandidates}</p>
+            <p className="text-gray-400 dark:text-gray-500 text-xs max-w-md mx-auto">
+              {tc.atsHint}
+            </p>
           </div>
         ) : (
           <>

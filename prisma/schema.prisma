@@ -35,21 +35,22 @@ model Session {
 }
 
 model User {
-  id              String          @id @default(cuid())
-  name            String?
-  email           String?         @unique
-  emailVerified   DateTime?
-  image           String?
-  password        String?
-  role            String          @default("recruiter")
-  company         String?
-  emailSignature  String?
-  subscription    String          @default("free")
-  subscriptionEnd DateTime?
-  suspended       Boolean         @default(false)
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  lastSeenAt      DateTime?
+  id               String          @id @default(cuid())
+  name             String?
+  email            String?         @unique
+  emailVerified    DateTime?
+  image            String?
+  password         String?
+  role             String          @default("recruiter")
+  company          String?
+  emailSignature   String?
+  subscription     String          @default("free")
+  subscriptionEnd  DateTime?
+  stripeCustomerId String?         @unique
+  suspended        Boolean         @default(false)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  lastSeenAt       DateTime?
   accounts        Account[]
   sessions        Session[]
   vacancies       Vacancy[]
