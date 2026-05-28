@@ -1,10 +1,11 @@
 import { getServerSession } from 'next-auth'
+import { cookies } from 'next/headers'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { Header } from '@/components/layout/Header'
 import { IntegrationsClient } from '@/components/dashboard/IntegrationsClient'
 import { UpgradePrompt } from '@/components/dashboard/UpgradePrompt'
-import { getPlanLimits } from '@/lib/plans'
+import { getPlanLimits, getEffectiveSubscription } from '@/lib/plans'
 import { isDemoAccount } from '@/lib/demo-guard'
 
 export default async function IntegrationsPage() {
@@ -13,9 +14,10 @@ export default async function IntegrationsPage() {
   const userId = user?.id
 
   const dbUser = userId
-    ? await prisma.user.findUnique({ where: { id: userId }, select: { subscription: true } })
+    ? await prisma.user.findUnique({ where: { id: userId }, select: { subscription: true, subscriptionEnd: true } })
     : null
-  const limits = getPlanLimits(dbUser?.subscription || 'free')
+  const effectiveSubscription = getEffectiveSubscription(dbUser?.subscription || 'free', dbUser?.subscriptionEnd || null)
+  const limits = getPlanLimits(effectiveSubscription)
 
   const integrations = userId && limits.atsIntegrations
     ? await prisma.integration.findMany({
@@ -25,11 +27,29 @@ export default async function IntegrationsPage() {
       }).then(rows => rows.map(r => ({ ...r, apiKey: '••••••••', lastSyncAt: r.lastSyncAt ? r.lastSyncAt.toISOString() : null })))
     : []
 
+  const cookieStore = await cookies()
+  const locale = (cookieStore.get('deltamatch-locale')?.value || 'en') as 'en' | 'nl' | 'fr'
+  const translations = {
+    en: {
+      title: 'ATS Integrations',
+      description: 'Connect your ATS platforms and automatically sync your candidates',
+    },
+    nl: {
+      title: 'ATS Integraties',
+      description: 'Verbind je ATS-platforms en synchroniseer je kandidaten automatisch',
+    },
+    fr: {
+      title: 'Intégrations ATS',
+      description: 'Connectez vos plateformes ATS et synchronisez automatiquement vos candidats',
+    },
+  }
+  const t = translations[locale] || translations.en
+
   return (
     <div>
       <Header
-        title="ATS Integrations"
-        description="Connect your ATS platforms and automatically sync your candidates"
+        title={t.title}
+        description={t.description}
       />
       <div className="p-8">
         {limits.atsIntegrations ? (

@@ -50,13 +50,21 @@ export function SettingsClient({ user, isDemo }: Props) {
     } finally { setSaving(false) }
   }
 
+  // Password strength helpers — match the server-side requirements (min 8, uppercase, number, symbol)
+  const pwHasLength = pwForm.newPassword.length >= 8
+  const pwHasUpper = /[A-Z]/.test(pwForm.newPassword)
+  const pwHasNumber = /[0-9]/.test(pwForm.newPassword)
+  const pwHasSymbol = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwForm.newPassword)
+  const pwIsStrong = pwHasLength && pwHasUpper && pwHasNumber && pwHasSymbol
+  const pwIsMedium = pwHasLength && ((pwHasUpper && pwHasNumber) || (pwHasUpper && pwHasSymbol) || (pwHasNumber && pwHasSymbol))
+
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault()
     if (pwForm.newPassword !== pwForm.confirm) {
       toast({ title: t.dashboard.settingsPassword.noMatch, variant: 'destructive' })
       return
     }
-    if (pwForm.newPassword.length < 8) {
+    if (!pwIsStrong) {
       toast({ title: t.dashboard.settingsPassword.tooShort, variant: 'destructive' })
       return
     }
@@ -181,6 +189,20 @@ export function SettingsClient({ user, isDemo }: Props) {
                     {showNew ? <EyeOff size={15} /> : <Eye size={15} />}
                   </button>
                 </div>
+                {pwForm.newPassword.length > 0 && (
+                  <div className="space-y-1 mt-1">
+                    <p className={`text-xs ${pwIsStrong ? 'text-green-600' : pwIsMedium ? 'text-amber-500' : 'text-red-500'}`}>
+                      {!pwHasLength ? t.auth.tooShort : pwIsStrong ? t.auth.strong : t.auth.weak}
+                    </p>
+                    <div className="flex gap-1 text-xs text-gray-400">
+                      <span className={pwHasUpper ? 'text-green-500' : ''}>ABC</span>
+                      <span>·</span>
+                      <span className={pwHasNumber ? 'text-green-500' : ''}>123</span>
+                      <span>·</span>
+                      <span className={pwHasSymbol ? 'text-green-500' : ''}>!@#</span>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="space-y-1.5">
                 <Label className="text-gray-700 dark:text-gray-300">{t.dashboard.settingsPassword.confirm}</Label>

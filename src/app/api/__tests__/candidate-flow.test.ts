@@ -27,6 +27,9 @@ vi.mock('@/lib/prisma', () => ({
     candidateActivity: {
       create: vi.fn(),
     },
+    user: {
+      findUnique: vi.fn().mockResolvedValue({ subscription: 'pro', subscriptionEnd: null }),
+    },
   },
 }))
 
@@ -40,6 +43,19 @@ vi.mock('next-auth', () => ({
 // Mock @/lib/auth
 vi.mock('@/lib/auth', () => ({
   authOptions: {},
+}))
+
+// Mock @/lib/plans for plan limit checks
+vi.mock('@/lib/plans', () => ({
+  getPlanLimits: vi.fn().mockReturnValue({
+    maxVacancies: Infinity,
+    maxCandidatesPerMonth: Infinity,
+    csvImport: true,
+    interviewQuestions: true,
+    hiringReport: true,
+    export: true,
+  }),
+  getEffectiveSubscription: vi.fn((sub: string) => sub),
 }))
 
 // Mock AI

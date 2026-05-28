@@ -24,6 +24,14 @@ export interface BHCandidate {
   dateAdded: number
 }
 
+export interface BHJobSubmission {
+  id: number
+  candidate?: { id: number }
+  jobOrder?: { id: number }
+  status?: string
+  dateAdded: number
+}
+
 async function bhFetch(url: string, apiKey: string) {
   const res = await fetch(url, {
     headers: {
@@ -81,4 +89,24 @@ export async function bullhornFetchCandidates(apiKey: string, restUrl: string, s
     start += count
   }
   return candidates
+}
+
+// Fetch all job submissions (candidate <-> job links) to properly map candidates to jobs
+export async function bullhornFetchJobSubmissions(apiKey: string, restUrl: string, since?: Date): Promise<BHJobSubmission[]> {
+  const submissions: BHJobSubmission[] = []
+  let start = 0
+  const count = 100
+  const sinceTs = since ? since.getTime() : 0
+  const query = sinceTs ? `dateAdded:[${sinceTs} TO *]` : 'id:>0'
+  while (true) {
+    const data = await bhFetch(
+      `${restUrl}/search/JobSubmission?query=${encodeURIComponent(query)}&fields=id,candidate,jobOrder,status,dateAdded&count=${count}&start=${start}`,
+      apiKey,
+    )
+    const batch: BHJobSubmission[] = data.data || []
+    submissions.push(...batch)
+    if (batch.length < count) break
+    start += count
+  }
+  return submissions
 }

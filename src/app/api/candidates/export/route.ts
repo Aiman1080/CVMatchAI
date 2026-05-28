@@ -3,7 +3,18 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import nodemailer from 'nodemailer'
-import { getPlanLimits } from '@/lib/plans'
+import { getPlanLimits, getEffectiveSubscription } from '@/lib/plans'
+
+function escapeCsvCell(value: any): string {
+  let v = String(value ?? '')
+  // CSV injection guard: cells starting with =, +, -, @, tab, or CR can be
+  // interpreted as a formula by Excel / Google Sheets. Prefix with a single
+  // quote to neutralize them before normal CSV escaping.
+  if (/^[=+\-@\t\r]/.test(v)) {
+    v = "'" + v
+  }
+  return `"${v.replace(/"/g, '""')}"`
+}
 
 function toCSV(candidates: any[]): string {
   const headers = ['Name', 'Email', 'Phone', 'Match Score', 'Status', 'Recommendation', 'Skills', 'Experience', 'Education', 'Summary', 'Vacancy', 'Source', 'Date Added']
@@ -23,17 +34,19 @@ function toCSV(candidates: any[]): string {
       c.vacancy?.title || '',
       c.source,
       new Date(c.createdAt).toLocaleDateString(),
-    ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')
+    ].map(escapeCsvCell).join(',')
   })
-  return [headers.join(','), ...rows].join('\n')
+  return [headers.map(escapeCsvCell).join(','), ...rows].join('\n')
 }
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const subscription = (session.user as any)?.subscription || 'free'
-  const limits = getPlanLimits(subscription)
+  const userId = (session.user as any).id
+  const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { subscription: true, subscriptionEnd: true } })
+  const effectiveSubscription = getEffectiveSubscription(dbUser?.subscription || 'free', dbUser?.subscriptionEnd || null)
+  const limits = getPlanLimits(effectiveSubscription)
   if (!limits.export) {
     return NextResponse.json({ error: 'Export requires Pro plan' }, { status: 403 })
   }
@@ -41,7 +54,6 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const vacancyId = searchParams.get('vacancyId')
   const sendTo = searchParams.get('email')
-  const userId = (session.user as any).id
   const isAdmin = (session.user as any).role === 'admin'
 
   const where: any = isAdmin ? {} : { userId }

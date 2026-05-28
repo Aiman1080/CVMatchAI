@@ -98,3 +98,21 @@ export async function ashbyFetchCandidates(apiKey: string, since?: Date): Promis
   }
   return candidates
 }
+
+// Fetch all applications to map candidates to jobs
+export async function ashbyFetchApplications(apiKey: string, since?: Date): Promise<AshbyApplication[]> {
+  const applications: AshbyApplication[] = []
+  let cursor: string | undefined
+  while (true) {
+    const body: Record<string, any> = {}
+    if (cursor) body.cursor = cursor
+    if (since) body.createdAfter = since.toISOString()
+    const data = await ashbyPost('/application.list', apiKey, body)
+    const batch: AshbyApplication[] = data.results || []
+    applications.push(...batch)
+    if (!data.moreDataAvailable) break
+    cursor = data.nextCursor
+    if (!cursor) break
+  }
+  return applications
+}

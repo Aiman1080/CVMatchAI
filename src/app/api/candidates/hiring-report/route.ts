@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { generateHiringReport } from '@/lib/ai'
-import { getPlanLimits } from '@/lib/plans'
+import { getPlanLimits, getEffectiveSubscription } from '@/lib/plans'
 import { isDemoAccount } from '@/lib/demo-guard'
 
 export async function POST(req: Request) {
@@ -13,13 +13,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Demo accounts cannot perform this action', demo: true }, { status: 403 })
   }
 
-  const subscription = (session.user as any)?.subscription || 'free'
-  const limits = getPlanLimits(subscription)
+  const userId = (session.user as any).id
+  const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { subscription: true, subscriptionEnd: true } })
+  const effectiveSubscription = getEffectiveSubscription(dbUser?.subscription || 'free', dbUser?.subscriptionEnd || null)
+  const limits = getPlanLimits(effectiveSubscription)
   if (!limits.hiringReport) {
     return NextResponse.json({ error: 'Hiring reports require Pro plan' }, { status: 403 })
   }
-
-  const userId = (session.user as any).id
   const { candidateId } = await req.json()
   if (!candidateId) return NextResponse.json({ error: 'candidateId required' }, { status: 400 })
 

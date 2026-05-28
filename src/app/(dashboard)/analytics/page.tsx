@@ -4,7 +4,7 @@ import prisma from '@/lib/prisma'
 import { AnalyticsHeader } from '@/components/dashboard/AnalyticsHeader'
 import { AnalyticsClient } from '@/components/dashboard/AnalyticsClient'
 import { UpgradePrompt } from '@/components/dashboard/UpgradePrompt'
-import { getPlanLimits } from '@/lib/plans'
+import { getPlanLimits, getEffectiveSubscription } from '@/lib/plans'
 
 export default async function AnalyticsPage() {
   const session = await getServerSession(authOptions)
@@ -12,9 +12,10 @@ export default async function AnalyticsPage() {
   const isAdmin = (session?.user as any)?.role === 'admin'
 
   const dbUser = userId
-    ? await prisma.user.findUnique({ where: { id: userId }, select: { subscription: true } })
+    ? await prisma.user.findUnique({ where: { id: userId }, select: { subscription: true, subscriptionEnd: true } })
     : null
-  const limits = getPlanLimits(dbUser?.subscription || 'free')
+  const effectiveSubscription = getEffectiveSubscription(dbUser?.subscription || 'free', dbUser?.subscriptionEnd || null)
+  const limits = getPlanLimits(effectiveSubscription)
 
   if (!limits.analytics) {
     return (

@@ -7,6 +7,7 @@ import { RecentCandidates } from '@/components/dashboard/RecentCandidates'
 import { RecentVacancies } from '@/components/dashboard/RecentVacancies'
 import { AIInsightsPanel } from '@/components/dashboard/AIInsightsPanel'
 import { DashboardClient } from '@/components/dashboard/DashboardClient'
+import { getEffectiveSubscription } from '@/lib/plans'
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions)
@@ -24,6 +25,13 @@ export default async function DashboardPage() {
   }
 
   const where = isAdmin ? {} : { userId }
+
+  // Resolve the user's effective plan (so expired trials are treated as free).
+  const dbUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { subscription: true, subscriptionEnd: true },
+  })
+  const effectiveSubscription = getEffectiveSubscription(dbUser?.subscription || 'free', dbUser?.subscriptionEnd || null)
 
   const [vacancyCount, candidateCount, shortlistedCount, avgScore, inboxCount, vacanciesThisWeek, candidatesThisWeek] = await Promise.all([
     prisma.vacancy.count({ where }),
@@ -61,7 +69,7 @@ export default async function DashboardPage() {
     <div>
       <DashboardGreeting firstName={session?.user?.name?.split(' ')[0] || ''} />
       <div className="p-8 space-y-8">
-        <DashboardClient onboarding={onboarding} subscription={(session?.user as any)?.subscription || 'free'} />
+        <DashboardClient onboarding={onboarding} subscription={effectiveSubscription} />
         <DashboardStats stats={stats} />
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           <div className="xl:col-span-2"><RecentCandidates candidates={recentCandidates} /></div>

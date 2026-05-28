@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { escapeHtml } from '@/lib/utils'
-import { getPlanLimits } from '@/lib/plans'
+import { getPlanLimits, getEffectiveSubscription } from '@/lib/plans'
 
 function e(str: string | null | undefined): string {
   return escapeHtml(str || '')
@@ -175,8 +175,10 @@ export async function GET(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const subscription = (session.user as any)?.subscription || 'free'
-  const limits = getPlanLimits(subscription)
+  const userId = (session.user as any).id
+  const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { subscription: true, subscriptionEnd: true } })
+  const effectiveSubscription = getEffectiveSubscription(dbUser?.subscription || 'free', dbUser?.subscriptionEnd || null)
+  const limits = getPlanLimits(effectiveSubscription)
   if (!limits.export) {
     return NextResponse.json({ error: 'PDF export requires Pro plan' }, { status: 403 })
   }
@@ -184,7 +186,6 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const vacancyId = searchParams.get('vacancyId')
   const candidateId = searchParams.get('candidateId')
-  const userId = (session.user as any).id
   const isAdmin = (session.user as any).role === 'admin'
 
   const where: any = isAdmin ? {} : { userId }

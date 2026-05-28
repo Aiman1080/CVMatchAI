@@ -23,6 +23,14 @@ export default function ResetPasswordPage() {
   const [showPass, setShowPass] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
 
+  // Password strength helpers — match the server-side requirements (min 8, uppercase, number, symbol)
+  const hasLength = password.length >= 8
+  const hasUpper = /[A-Z]/.test(password)
+  const hasNumber = /[0-9]/.test(password)
+  const hasSymbol = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
+  const isStrong = hasLength && hasUpper && hasNumber && hasSymbol
+  const isMedium = hasLength && ((hasUpper && hasNumber) || (hasUpper && hasSymbol) || (hasNumber && hasSymbol))
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -31,7 +39,7 @@ export default function ResetPasswordPage() {
       return
     }
 
-    if (password.length < 8) {
+    if (!isStrong) {
       toast({ title: t.auth.passwordTooShort, variant: 'destructive' })
       return
     }
@@ -109,6 +117,20 @@ export default function ResetPasswordPage() {
                 {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
+            {password.length > 0 && (
+              <div className="space-y-1 mt-1">
+                <p className={`text-xs ${isStrong ? 'text-green-600' : isMedium ? 'text-amber-500' : 'text-red-500'}`}>
+                  {!hasLength ? t.auth.tooShort : isStrong ? t.auth.strong : t.auth.weak}
+                </p>
+                <div className="flex gap-1 text-xs text-gray-400">
+                  <span className={hasUpper ? 'text-green-500' : ''}>ABC</span>
+                  <span>·</span>
+                  <span className={hasNumber ? 'text-green-500' : ''}>123</span>
+                  <span>·</span>
+                  <span className={hasSymbol ? 'text-green-500' : ''}>!@#</span>
+                </div>
+              </div>
+            )}
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="confirm">{t.auth.confirmPassword}</Label>
