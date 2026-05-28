@@ -65,14 +65,6 @@ export default function LoginPage() {
             {t.auth.demoPro}
             <span className="block text-green-400 font-normal" style={{ fontSize: '10px' }}>pro123</span>
           </button>
-          <button
-            onClick={() => fillDemo('admin')}
-            title="admin@cvmatch.ai / admin123"
-            className="flex-1 text-xs bg-purple-50 text-purple-700 px-3 py-2 rounded-lg hover:bg-purple-100 transition-colors font-medium"
-          >
-            {t.auth.demoAdmin}
-            <span className="block text-purple-400 font-normal" style={{ fontSize: '10px' }}>admin123</span>
-          </button>
         </div>
         )}
         <form onSubmit={handleSubmit} className="space-y-4">
