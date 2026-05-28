@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 import prisma from '@/lib/prisma'
 import { sendEmail, isEmailConfigured } from '@/lib/email'
+import { isDemoAccount } from '@/lib/demo-guard'
 
 export async function POST(req: Request) {
   try {
@@ -23,6 +24,10 @@ export async function POST(req: Request) {
 
     const user = await prisma.user.findUnique({ where: { email } })
     if (!user) return successResponse
+
+    if (isDemoAccount(email)) {
+      return NextResponse.json({ error: 'Demo accounts cannot reset password' }, { status: 403 })
+    }
 
     const token = crypto.randomBytes(32).toString('hex')
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours

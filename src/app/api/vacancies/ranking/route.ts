@@ -3,10 +3,17 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { rankCandidates } from '@/lib/ai'
+import { getPlanLimits } from '@/lib/plans'
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const subscription = (session.user as any)?.subscription || 'free'
+  const limits = getPlanLimits(subscription)
+  if (!limits.candidateRanking) {
+    return NextResponse.json({ error: 'Candidate ranking requires Pro plan' }, { status: 403 })
+  }
 
   const userId = (session.user as any).id
   const { vacancyId } = await req.json()

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { CreateVacancyDialog } from './CreateVacancyDialog'
 import { useLanguage } from '@/contexts/LanguageContext'
+import Link from 'next/link'
 
 const DISMISS_KEY = 'deltamatch-onboarding-dismissed'
 
@@ -219,17 +220,17 @@ export function OnboardingChecklist({ hasVacancy, hasCandidate, hasEmail, onVaca
                     <CheckCircle className="shrink-0 w-5 h-5 text-green-500 dark:text-green-400" />
                   ) : blocked ? null : (
                     isProLocked ? (
-                      <a href="/settings" className="shrink-0">
+                      <Link href="/settings" className="shrink-0">
                         <Button size="sm" variant="outline" className="gap-1 text-xs h-8 border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/30">
                           {t.dashboard.upgrade.onboardingAction} <ChevronRight size={12} />
                         </Button>
-                      </a>
+                      </Link>
                     ) : href ? (
-                      <a href={href} className="shrink-0">
+                      <Link href={href} className="shrink-0">
                         <Button size="sm" variant={isCurrent ? 'gradient' : 'outline'} className="gap-1 text-xs h-8">
                           {action} <ChevronRight size={12} />
                         </Button>
-                      </a>
+                      </Link>
                     ) : (
                       <Button size="sm" variant="gradient" className="shrink-0 gap-1 text-xs h-8" onClick={() => setShowCreate(true)}>
                         {action} <ChevronRight size={12} />

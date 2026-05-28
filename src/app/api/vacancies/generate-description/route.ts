@@ -2,10 +2,15 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { generateJobDescription } from '@/lib/ai'
+import { isDemoAccount } from '@/lib/demo-guard'
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  if (isDemoAccount(session.user?.email)) {
+    return NextResponse.json({ error: 'Demo accounts cannot perform this action' }, { status: 403 })
+  }
 
   let body: any
   try { body = await req.json() } catch { return NextResponse.json({ error: 'Invalid request body' }, { status: 400 }) }

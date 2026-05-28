@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { escapeHtml } from '@/lib/utils'
+import { getPlanLimits } from '@/lib/plans'
 
 function e(str: string | null | undefined): string {
   return escapeHtml(str || '')
@@ -173,6 +174,12 @@ function buildPDFHtml(candidates: any[], vacancyTitle: string, generatedBy: stri
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const subscription = (session.user as any)?.subscription || 'free'
+  const limits = getPlanLimits(subscription)
+  if (!limits.export) {
+    return NextResponse.json({ error: 'PDF export requires Pro plan' }, { status: 403 })
+  }
 
   const { searchParams } = new URL(req.url)
   const vacancyId = searchParams.get('vacancyId')

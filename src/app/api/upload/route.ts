@@ -11,10 +11,15 @@ import { analyzeCVAgainstVacancy, detectDocumentType } from '@/lib/ai'
 import { getPlanLimits } from '@/lib/plans'
 import { createNotification } from '@/lib/notifications'
 import { logActivity } from '@/lib/activity'
+import { isDemoAccount } from '@/lib/demo-guard'
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  if (isDemoAccount(session.user?.email)) {
+    return NextResponse.json({ error: 'Demo accounts cannot perform this action' }, { status: 403 })
+  }
 
   let placeholderCandidateId: string | null = null
 
