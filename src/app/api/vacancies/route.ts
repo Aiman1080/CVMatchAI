@@ -28,6 +28,15 @@ export async function GET() {
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const userId = (session.user as any).id
   const isAdmin = (session.user as any).role === 'admin'
+
+  if (!userId) return NextResponse.json({ error: 'Invalid session' }, { status: 401 })
+
+  // Stale-JWT guard: if the user record was deleted, return 401 so the client can re-auth
+  if (!isAdmin) {
+    const userExists = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } }).catch(() => null)
+    if (!userExists) return NextResponse.json({ error: 'Session invalid — please sign in again' }, { status: 401 })
+  }
+
   try {
     const vacancies = await prisma.vacancy.findMany({
       where: isAdmin ? {} : { userId },
@@ -35,7 +44,8 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
     })
     return NextResponse.json(vacancies)
-  } catch {
+  } catch (e: any) {
+    console.error('[API /api/vacancies GET] Failed:', e?.message || e)
     return NextResponse.json({ error: 'Failed to load vacancies' }, { status: 500 })
   }
 }
