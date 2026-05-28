@@ -84,7 +84,7 @@ export function SettingsClient({ user, isDemo }: Props) {
     const all = validateProfile(form)
     if (Object.keys(all).length > 0) {
       setErrors(all)
-      toast({ title: 'Please fix the highlighted fields', description: 'Some required fields are missing or invalid.', variant: 'destructive' })
+      toast({ title: sp?.fixErrors || 'Please fix the highlighted fields', description: sp?.fixErrorsDesc || 'Some required fields are missing or invalid.', variant: 'destructive' })
       return
     }
     setSaving(true)
@@ -117,7 +117,7 @@ export function SettingsClient({ user, isDemo }: Props) {
     if (pwForm.newPassword !== pwForm.confirm) {
       toast({
         title: t.dashboard.settingsPassword.noMatch,
-        description: 'Make sure both new password fields match exactly.',
+        description: (sp as any)?.passwordMismatchDesc || 'Make sure both new password fields match exactly.',
         variant: 'destructive',
       })
       return
@@ -125,7 +125,7 @@ export function SettingsClient({ user, isDemo }: Props) {
     if (!pwIsStrong) {
       toast({
         title: t.dashboard.settingsPassword.tooShort,
-        description: 'Password must be at least 8 characters and include an uppercase letter, a number, and a symbol.',
+        description: (sp as any)?.passwordRequirementsDesc || 'Password must be at least 8 characters and include an uppercase letter, a number, and a symbol.',
         variant: 'destructive',
       })
       return
@@ -172,7 +172,7 @@ export function SettingsClient({ user, isDemo }: Props) {
                   <AvatarFallback className="text-lg gradient-bg text-white font-semibold">{initials}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 space-y-1.5">
-                  <Label className="text-gray-700 dark:text-gray-300 flex items-center gap-1.5"><Camera size={14} /> Profile Photo URL</Label>
+                  <Label className="text-gray-700 dark:text-gray-300 flex items-center gap-1.5"><Camera size={14} /> {(sp as any)?.profilePhotoUrl || 'Profile Photo URL'}</Label>
                   <Input value={form.image} onChange={e => setForm(p => ({ ...p, image: e.target.value }))} placeholder="https://example.com/photo.jpg" />
                 </div>
               </div>
@@ -197,71 +197,78 @@ export function SettingsClient({ user, isDemo }: Props) {
                 <Input value={form.company} onChange={e => setForm(p => ({ ...p, company: e.target.value }))} placeholder={t.dashboard.settingsProfile.companyPlaceholder} />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-gray-700 dark:text-gray-300 flex items-center gap-1.5"><Mail size={14} /> Email Signature (supports HTML for logos)</Label>
+                <Label className="text-gray-700 dark:text-gray-300 flex items-center gap-1.5"><Mail size={14} /> {(sp as any)?.emailSignatureLabel || 'Email Signature (supports HTML for logos)'}</Label>
                 <textarea
                   value={form.emailSignature}
                   onChange={e => setForm(p => ({ ...p, emailSignature: e.target.value }))}
-                  placeholder={"Best regards,\nJohn Doe | Acme Corp\n+32 471 000 000\n<img src=\"https://your-company.com/logo.png\" width=\"150\" alt=\"Company Logo\">"}
+                  placeholder={(sp as any)?.emailSignaturePlaceholder || "Best regards,\nJohn Doe | Acme Corp\n+32 471 000 000\n<img src=\"https://your-company.com/logo.png\" width=\"150\" alt=\"Company Logo\">"}
                   rows={5}
                   className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
                 />
-                <p className="text-xs text-gray-400">{"You can paste HTML with images. Use <img src='...'> for your company logo."}</p>
+                <p className="text-xs text-gray-400">{(sp as any)?.emailSignatureHelp || "You can paste HTML with images. Use <img src='...'> for your company logo."}</p>
               </div>
               <Button type="submit" disabled={saving || isDemo} className="gradient-bg gap-2 h-auto py-2 whitespace-normal text-center leading-tight"><Save size={14} className="shrink-0" />{saving ? t.dashboard.settingsProfile.saving : t.dashboard.settingsProfile.saveChanges}</Button>
-              {isDemo && <p className="text-xs text-amber-600 break-words">Demo accounts cannot modify profile settings.</p>}
+              {isDemo && <p className="text-xs text-amber-600 break-words">{(sp as any)?.demoCannotModify || 'Demo accounts cannot modify profile settings.'}</p>}
             </form>
           </CardContent>
         </Card>
 
         {/* Your personal account — security and personalization */}
-        <Card className="border border-gray-100 dark:border-gray-800 shadow-none max-w-lg">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Shield className="w-4 h-4 text-green-600" /> Your personal workspace
-            </CardTitle>
-            <CardDescription>
-              Your data is fully isolated from other users. Each account has its own unique secure workspace.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <Label className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Your account ID</Label>
-              <div className="mt-1 flex items-center gap-2">
-                <code className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-xs font-mono text-gray-700 dark:text-gray-300 break-all">
-                  {user.id || '—'}
-                </code>
-                {user.id && (
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(user.id!)
-                      toast({ title: 'Copied to clipboard' })
-                    }}
-                    className="px-3 py-2 text-xs bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900 font-medium shrink-0"
-                  >
-                    Copy
-                  </button>
-                )}
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                This is your unique workspace identifier. Other users <strong>cannot</strong> access your vacancies or candidates — every page is protected by your session and personalized to you.
-              </p>
-            </div>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="flex items-center gap-1.5 text-green-700 dark:text-green-400">
-                <span>✓</span> Encrypted data
-              </div>
-              <div className="flex items-center gap-1.5 text-green-700 dark:text-green-400">
-                <span>✓</span> Private workspace
-              </div>
-              <div className="flex items-center gap-1.5 text-green-700 dark:text-green-400">
-                <span>✓</span> Session-protected
-              </div>
-              <div className="flex items-center gap-1.5 text-green-700 dark:text-green-400">
-                <span>✓</span> GDPR compliant
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {(() => {
+          const pw = (t.dashboard as any).personalWorkspace || {}
+          const explanationTemplate = pw.explanation || 'This is your unique workspace identifier. Other users {bold} access your vacancies or candidates — every page is protected by your session and personalized to you.'
+          const explanationParts = explanationTemplate.split('{bold}')
+          return (
+            <Card className="border border-gray-100 dark:border-gray-800 shadow-none max-w-lg">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-green-600" /> {pw.title || 'Your personal workspace'}
+                </CardTitle>
+                <CardDescription>
+                  {pw.description || 'Your data is fully isolated from other users. Each account has its own unique secure workspace.'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <Label className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">{pw.accountIdLabel || 'Your account ID'}</Label>
+                  <div className="mt-1 flex items-center gap-2">
+                    <code className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-xs font-mono text-gray-700 dark:text-gray-300 break-all">
+                      {user.id || '—'}
+                    </code>
+                    {user.id && (
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(user.id!)
+                          toast({ title: pw.copied || 'Copied to clipboard' })
+                        }}
+                        className="px-3 py-2 text-xs bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900 font-medium shrink-0"
+                      >
+                        {pw.copy || 'Copy'}
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    {explanationParts[0]}<strong>{pw.explanationBold || 'cannot'}</strong>{explanationParts[1] ?? ''}
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="flex items-center gap-1.5 text-green-700 dark:text-green-400">
+                    <span>✓</span> {pw.encryptedData || 'Encrypted data'}
+                  </div>
+                  <div className="flex items-center gap-1.5 text-green-700 dark:text-green-400">
+                    <span>✓</span> {pw.privateWorkspace || 'Private workspace'}
+                  </div>
+                  <div className="flex items-center gap-1.5 text-green-700 dark:text-green-400">
+                    <span>✓</span> {pw.sessionProtected || 'Session-protected'}
+                  </div>
+                  <div className="flex items-center gap-1.5 text-green-700 dark:text-green-400">
+                    <span>✓</span> {pw.gdprCompliant || 'GDPR compliant'}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )
+        })()}
 
         {/* Language */}
         <Card className="border border-gray-100 dark:border-gray-800 shadow-none max-w-lg">
@@ -406,7 +413,7 @@ export function SettingsClient({ user, isDemo }: Props) {
                       } catch {
                         toast({
                           title: t.dashboard.settingsPage.exportFailed,
-                          description: 'Please check your connection and try again.',
+                          description: (t.dashboard.settingsPage as any).checkConnectionRetry || 'Please check your connection and try again.',
                           variant: 'destructive',
                         })
                       } finally { setExporting(false) }
@@ -448,14 +455,14 @@ export function SettingsClient({ user, isDemo }: Props) {
             } else {
               toast({
                 title: t.dashboard.settingsPage.deleteFailed,
-                description: data.error || 'Please refresh the page and try again.',
+                description: data.error || (t.dashboard.settingsPage as any).refreshRetry || 'Please refresh the page and try again.',
                 variant: 'destructive',
               })
             }
           } catch {
             toast({
               title: t.dashboard.settingsPage.deleteFailed,
-              description: 'Please check your connection and try again.',
+              description: (t.dashboard.settingsPage as any).checkConnectionRetry || 'Please check your connection and try again.',
               variant: 'destructive',
             })
           } finally { setDeletingAll(false) }

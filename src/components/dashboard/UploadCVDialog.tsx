@@ -69,11 +69,11 @@ export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploa
           onUploaded(data.candidate)
         } else {
           // Use server-provided detailed error if available, else a clear instruction
-          const fallback = `Could not upload ${file.name}. Make sure it is a valid PDF/DOCX under 10MB.`
+          const fallback = ((u as any).uploadErrorFallback || 'Could not upload {name}. Make sure it is a valid PDF/DOCX under 10MB.').replace('{name}', file.name)
           uploaded.push({ file: file.name, success: false, error: data.error || fallback })
         }
       } catch {
-        uploaded.push({ file: file.name, success: false, error: `Network error uploading ${file.name}. Please check your connection and try again.` })
+        uploaded.push({ file: file.name, success: false, error: ((u as any).uploadNetworkError || 'Network error uploading {name}. Please check your connection and try again.').replace('{name}', file.name) })
       }
     }
 
@@ -119,10 +119,13 @@ export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploa
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold text-green-800 dark:text-green-300 break-words">
-                        {successCount} candidate{successCount === 1 ? '' : 's'} added successfully
+                        {(successCount === 1
+                          ? ((u as any).candidatesAdded || '{count} candidate added successfully')
+                          : ((u as any).candidatesAddedPlural || '{count} candidates added successfully')
+                        ).replace('{count}', String(successCount))}
                       </p>
                       <p className="text-xs text-green-700 dark:text-green-400 break-words">
-                        AI analysis complete — view scores and details in the candidates list.
+                        {(u as any).analysisCompleteHelp || 'AI analysis complete — view scores and details in the candidates list.'}
                       </p>
                     </div>
                   </div>
@@ -132,7 +135,10 @@ export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploa
                 <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900 flex items-start gap-2.5">
                   <X className="w-4 h-4 text-red-500 dark:text-red-400 mt-0.5 shrink-0" />
                   <div className="text-xs text-red-700 dark:text-red-400 break-words min-w-0">
-                    {failedCount} file{failedCount === 1 ? '' : 's'} could not be processed. See details below.
+                    {(failedCount === 1
+                      ? ((u as any).filesFailed || '{count} file could not be processed. See details below.')
+                      : ((u as any).filesFailedPlural || '{count} files could not be processed. See details below.')
+                    ).replace('{count}', String(failedCount))}
                   </div>
                 </div>
               )}

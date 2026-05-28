@@ -305,7 +305,20 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
                 </div>
               </div>
               <div className="flex gap-2 items-center flex-wrap">
-                <span className={`text-sm px-3 py-1 rounded-full font-medium break-words ${getStatusColor(vacancy.status)}`}>{vacancy.status}</span>
+                <span className={`text-sm px-3 py-1 rounded-full font-medium break-words ${getStatusColor(vacancy.status)}`}>{
+                  (() => {
+                    const v = vd as any
+                    const map: Record<string, string | undefined> = {
+                      active: v.statusActive,
+                      paused: v.statusPaused,
+                      closed: v.statusClosed,
+                      archived: v.statusArchived,
+                      filled: v.statusFilled,
+                      on_hold: v.statusOnHold,
+                    }
+                    return map[vacancy.status] || vacancy.status
+                  })()
+                }</span>
                 {!vacancy.externalId && (
                   <button
                     onClick={() => setShowLinkAts(true)}
@@ -349,7 +362,7 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
 
             <div className="flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400 mb-4">
               {vacancy.location && <span className="flex items-center gap-1.5 min-w-0 break-words"><MapPin size={14} className="shrink-0" />{vacancy.location}</span>}
-              <span className="flex items-center gap-1.5 min-w-0 break-words"><Briefcase size={14} className="shrink-0" />{vacancy.type}</span>
+              <span className="flex items-center gap-1.5 min-w-0 break-words"><Briefcase size={14} className="shrink-0" />{(vd.contractTypes as any)[vacancy.type] || vacancy.type}</span>
               {vacancy.salary && <span className="flex items-center gap-1.5 min-w-0 break-words"><DollarSign size={14} className="shrink-0" />{vacancy.salary}</span>}
               <span className="flex items-center gap-1.5 min-w-0 break-words"><Clock size={14} className="shrink-0" />{vd.posted} {formatDate(vacancy.createdAt)}</span>
             </div>
@@ -522,7 +535,7 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
                           {c.firstName} {c.lastName}
                         </Link>
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium break-words ${getStatusColor(c.status)}`}>{vd.statusLabels[c.status as keyof typeof vd.statusLabels] || c.status}</span>
-                        {c.source === 'email' && <span className="text-xs text-blue-500 font-medium">via email</span>}
+                        {c.source === 'email' && <span className="text-xs text-blue-500 font-medium">{(vd as any).viaEmail || 'via email'}</span>}
                       </div>
                       {c.email && <p className="text-xs text-gray-400 mb-1.5 break-all">{c.email}</p>}
                       {skills.length > 0 && (
@@ -715,9 +728,9 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">{vd.statusActive}</SelectItem>
-                    <SelectItem value="archived">Archived</SelectItem>
-                    <SelectItem value="filled">Filled</SelectItem>
-                    <SelectItem value="on_hold">On Hold</SelectItem>
+                    <SelectItem value="archived">{(vd as any).statusArchived || 'Archived'}</SelectItem>
+                    <SelectItem value="filled">{(vd as any).statusFilled || 'Filled'}</SelectItem>
+                    <SelectItem value="on_hold">{(vd as any).statusOnHold || 'On Hold'}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

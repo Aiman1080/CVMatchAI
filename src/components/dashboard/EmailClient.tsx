@@ -101,8 +101,8 @@ export function EmailClient() {
     } catch (err: any) {
       // Surface why the connection failed and what to do
       const description = err?.message
-        ? `${err.message} — Double-check your email and app password, then try again.`
-        : 'Could not connect. Verify your email and password, and that IMAP is enabled in your provider.'
+        ? `${err.message} — ${te.connectionErrorTip}`
+        : te.connectionGenericError
       toast({ title: te.connectionFailed, description, variant: 'destructive' })
     } finally { setConnecting(false) }
   }
@@ -121,8 +121,8 @@ export function EmailClient() {
       fetchInboxes()
     } catch (err: any) {
       const description = err?.message
-        ? `${err.message} — Make sure your email credentials are still valid.`
-        : 'Could not scan the inbox. Try reconnecting if the issue persists.'
+        ? `${err.message} — ${te.scanCredentialsTip}`
+        : te.scanGenericError
       toast({ title: te.scanFailed, description, variant: 'destructive' })
     } finally { setScanning(null) }
   }
@@ -167,10 +167,10 @@ export function EmailClient() {
         setInboxes(prev => prev.filter(i => i.id !== inboxId))
         toast({ title: te.inboxRemoved })
       } else {
-        toast({ title: te.removeInboxFailed, description: 'Please refresh the page and try again.', variant: 'destructive' })
+        toast({ title: te.removeInboxFailed, description: te.removeInboxRefresh, variant: 'destructive' })
       }
     } catch {
-      toast({ title: te.removeInboxFailed, description: 'Please check your connection and try again.', variant: 'destructive' })
+      toast({ title: te.removeInboxFailed, description: te.removeInboxConnection, variant: 'destructive' })
     }
   }
 
@@ -258,7 +258,7 @@ export function EmailClient() {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12 gap-2">
               <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-              <p className="text-xs text-gray-400">Loading your inboxes…</p>
+              <p className="text-xs text-gray-400">{te.loadingInboxes}</p>
             </div>
           ) : inboxes.length === 0 ? (
             <div className="text-center py-14">
@@ -421,10 +421,10 @@ export function EmailClient() {
                 <HelpGuide
                   title={te.gmailHelpTitle}
                   steps={[
-                    <>Go to <a href="https://myaccount.google.com/security" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">myaccount.google.com &rarr; Security</a></>,
-                    'Enable 2-Step Verification if not already on',
-                    <>Go to <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">App Passwords</a> &rarr; Create one for &quot;Mail&quot;</>,
-                    'Copy the 16-character password and paste it above',
+                    <>{te.gmailStep1Prefix}<a href="https://myaccount.google.com/security" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">{te.gmailStep1Link}</a></>,
+                    te.gmailStep2,
+                    <>{te.gmailStep3Prefix}<a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">{te.gmailStep3Link}</a>{te.gmailStep3Suffix}</>,
+                    te.gmailStep4,
                   ]}
                 />
               )}
@@ -432,8 +432,8 @@ export function EmailClient() {
                 <HelpGuide
                   title={te.outlookHelpTitle}
                   steps={[
-                    'Use your regular Outlook password',
-                    'If you have 2FA enabled, create an App Password in your Microsoft account security settings',
+                    te.outlookStep1,
+                    te.outlookStep2,
                   ]}
                 />
               )}

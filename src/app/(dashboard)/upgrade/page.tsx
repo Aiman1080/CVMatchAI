@@ -29,10 +29,10 @@ export default function UpgradePage() {
       if (data.url) {
         window.location.href = data.url
       } else {
-        toast({ title: 'Failed to start checkout', description: 'Please try again or contact support', variant: 'destructive' })
+        toast({ title: stripe.checkoutFailed || 'Failed to start checkout', description: stripe.checkoutFailedDesc || 'Please try again or contact support', variant: 'destructive' })
       }
     } catch {
-      toast({ title: 'Failed to start checkout', description: 'Please try again or contact support', variant: 'destructive' })
+      toast({ title: stripe.checkoutFailed || 'Failed to start checkout', description: stripe.checkoutFailedDesc || 'Please try again or contact support', variant: 'destructive' })
     } finally {
       setLoading(false)
     }

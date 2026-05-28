@@ -331,15 +331,15 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
     const now = new Date()
     const date = new Date(dateStr)
     const seconds = Math.floor((now.getTime() - date.getTime()) / 1000)
-    if (seconds < 60) return 'just now'
+    if (seconds < 60) return (cd as any).timeJustNow || 'just now'
     const minutes = Math.floor(seconds / 60)
-    if (minutes < 60) return `${minutes}m ago`
+    if (minutes < 60) return ((cd as any).timeMinutesAgo || '{count}m ago').replace('{count}', String(minutes))
     const hours = Math.floor(minutes / 60)
-    if (hours < 24) return `${hours}h ago`
+    if (hours < 24) return ((cd as any).timeHoursAgo || '{count}h ago').replace('{count}', String(hours))
     const days = Math.floor(hours / 24)
-    if (days < 30) return `${days}d ago`
+    if (days < 30) return ((cd as any).timeDaysAgo || '{count}d ago').replace('{count}', String(days))
     const months = Math.floor(days / 30)
-    return `${months}mo ago`
+    return ((cd as any).timeMonthsAgo || '{count}mo ago').replace('{count}', String(months))
   }
 
   const scoreColor = score >= 75 ? 'text-green-600' : score >= 50 ? 'text-amber-600' : 'text-red-500'
@@ -372,7 +372,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                       AI: {RECOMMENDATION_LABELS[candidate.recommendation] || candidate.recommendation}
                     </span>
                   )}
-                  {hasEmailSource && <span className="text-xs bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-full font-medium flex items-center gap-1 break-words"><Mail size={10} className="shrink-0" /> via email</span>}
+                  {hasEmailSource && <span className="text-xs bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-full font-medium flex items-center gap-1 break-words"><Mail size={10} className="shrink-0" /> {(cd as any).viaEmail || 'via email'}</span>}
                   {candidate.language && <span className="text-xs bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 px-2 py-1 rounded-full font-medium uppercase">{candidate.language}</span>}
                 </div>
               </div>
@@ -762,7 +762,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                           {/* Recruiter's answer field — saved automatically to localStorage */}
                           <div className="pt-2">
                             <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">
-                              Candidate&apos;s answer
+                              {(cd as any).candidateAnswerLabel || "Candidate's answer"}
                             </label>
                             <textarea
                               value={questionAnswers[i] || ''}
@@ -771,12 +771,12 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                                 setQuestionAnswers(next)
                                 saveAnswersToDb(next)
                               }}
-                              placeholder="Type the candidate's answer here..."
+                              placeholder={(cd as any).candidateAnswerPlaceholder || "Type the candidate's answer here..."}
                               rows={3}
                               className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                             />
                             {questionAnswers[i] && (
-                              <p className="text-[10px] text-gray-400 mt-1">✓ Auto-saved</p>
+                              <p className="text-[10px] text-gray-400 mt-1">✓ {(cd as any).autoSaved || 'Auto-saved'}</p>
                             )}
                           </div>
                           {q.expectedAnswer && (
@@ -984,10 +984,10 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
             <div className="space-y-2">
               <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm">
                 <Mail size={14} className="text-gray-400" />
-                <span className="text-gray-600 dark:text-gray-300">To: <strong>{candidate.email}</strong></span>
+                <span className="text-gray-600 dark:text-gray-300">{(cd as any).toLabel || 'To'}: <strong>{candidate.email}</strong></span>
               </div>
               <div>
-                <Label className="text-xs text-gray-500 mb-1">From (your email)</Label>
+                <Label className="text-xs text-gray-500 mb-1">{(cd as any).fromYourEmail || 'From (your email)'}</Label>
                 <Input
                   value={emailFrom}
                   onChange={e => setEmailFrom(e.target.value)}
@@ -1002,7 +1002,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                 { type: 'interview', label: `📅 ${cd.interview}`, color: 'border-blue-300 text-blue-700 bg-blue-50' },
                 { type: 'rejection', label: `❌ ${cd.rejection}`, color: 'border-red-300 text-red-700 bg-red-50' },
                 { type: 'followup', label: `📩 ${cd.followup}`, color: 'border-gray-300 text-gray-700 bg-gray-50' },
-                { type: 'custom', label: `✉️ Email libre`, color: 'border-purple-300 text-purple-700 bg-purple-50' },
+                { type: 'custom', label: `✉️ ${(cd as any).customEmail || 'Free-form email'}`, color: 'border-purple-300 text-purple-700 bg-purple-50' },
               ].map(opt => (
                 <button
                   key={opt.type}

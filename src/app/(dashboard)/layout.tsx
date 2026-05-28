@@ -13,11 +13,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if ((session.user as any)?.role === 'admin') redirect('/admin')
   const userId = (session.user as any)?.id
   const email = (session.user as any)?.email || ''
-  // Check actual DB for emailVerified (JWT only updates on login, so verifying email
-  // wouldn't dismiss the banner until next login otherwise)
+  // Always check DB for suspension AND emailVerified (JWT data is stale).
+  // A suspended user must be kicked out immediately even with a valid session.
   const dbUser = userId
-    ? await prisma.user.findUnique({ where: { id: userId }, select: { emailVerified: true } }).catch(() => null)
+    ? await prisma.user.findUnique({ where: { id: userId }, select: { emailVerified: true, suspended: true } }).catch(() => null)
     : null
+  if (dbUser?.suspended) redirect('/api/auth/signout?callbackUrl=/login?suspended=1')
   const emailVerified = dbUser?.emailVerified ?? (session.user as any)?.emailVerified
   const isDemoAccount = ['demo@cvmatch.ai', 'pro@cvmatch.ai', 'free@cvmatch.ai'].includes(email)
   return (
