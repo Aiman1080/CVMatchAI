@@ -37,7 +37,7 @@ export default async function EmailPage() {
   return (
     <div>
       <Header title={t.title} description={t.description} />
-      <div className="p-8">
+      <div className="p-4 sm:p-8">
         {limits.emailInbox ? (
           <EmailClient />
         ) : (

@@ -72,6 +72,8 @@
   .gradient-bg { @apply bg-gradient-to-br from-blue-600 to-indigo-700; }
   .glass { @apply bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border border-white/20; }
   .card-hover { @apply transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
 }
 
 /* Force browser autofill to use light background regardless of OS dark mode */

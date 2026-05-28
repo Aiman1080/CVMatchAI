@@ -13,7 +13,7 @@ export function UpgradePrompt({ feature, description }: Props) {
   const { t } = useLanguage()
   const tu = t.dashboard.upgrade
   return (
-    <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-8">
+    <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-4 sm:p-8">
       <div className="w-16 h-16 bg-amber-50 dark:bg-amber-950/30 rounded-2xl flex items-center justify-center mb-4">
         <Lock className="w-8 h-8 text-amber-500" />
       </div>

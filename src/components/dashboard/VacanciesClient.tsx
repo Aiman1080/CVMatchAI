@@ -122,8 +122,8 @@ export function VacanciesClient({ initialVacancies, isDemo }: { initialVacancies
 
   return (
     <>
-      <div className="flex items-center gap-3 mb-6">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-6">
+        <div className="relative flex-1 sm:max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input
             placeholder={tv.searchPlaceholder}
@@ -132,7 +132,7 @@ export function VacanciesClient({ initialVacancies, isDemo }: { initialVacancies
             className="pl-9"
           />
         </div>
-        <Button onClick={() => setShowCreate(true)} disabled={isDemo} className="gap-2 gradient-bg">
+        <Button onClick={() => setShowCreate(true)} disabled={isDemo} className="gap-2 gradient-bg w-full sm:w-auto">
           <Plus size={16} /> {tv.newVacancy}
         </Button>
       </div>
@@ -160,28 +160,28 @@ export function VacanciesClient({ initialVacancies, isDemo }: { initialVacancies
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map(v => (
             <Link key={v.id} href={`/vacancies/${v.id}`}>
               <Card className="border border-gray-200 dark:border-gray-800 shadow-sm card-hover cursor-pointer h-full">
-                <CardContent className="p-5">
-                  <div className="flex items-start justify-between mb-3">
+                <CardContent className="p-4 sm:p-5">
+                  <div className="flex items-start justify-between mb-3 gap-2">
                     <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center shrink-0">
                       <Briefcase className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                     </div>
-                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${getStatusColor(v.status)}`}>
+                    <span className={`text-xs px-2 py-1 rounded-full font-medium shrink-0 ${getStatusColor(v.status)}`}>
                       {v.status}
                     </span>
                   </div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-1">{v.title}</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{v.company}</p>
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-1 break-words">{v.title}</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 break-words">{v.company}</p>
                   <div className="flex flex-wrap gap-2 mb-4">
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${typeColors[v.type] || 'bg-gray-50 text-gray-600'}`}>
                       {v.type}
                     </span>
                     {v.location && (
-                      <span className="text-xs flex items-center gap-1 text-gray-400">
-                        <MapPin size={10} /> {v.location}
+                      <span className="text-xs flex items-center gap-1 text-gray-400 break-words">
+                        <MapPin size={10} className="shrink-0" /> {v.location}
                       </span>
                     )}
                   </div>

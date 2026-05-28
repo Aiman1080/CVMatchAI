@@ -291,20 +291,20 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
   return (
     <div className="space-y-6">
       {/* Vacancy Info */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         <Card className="lg:col-span-2 border border-gray-200 dark:border-gray-800 shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl gradient-bg flex items-center justify-center">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex items-start justify-between mb-4 gap-2 flex-wrap">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="w-12 h-12 rounded-xl gradient-bg flex items-center justify-center shrink-0">
                   <Briefcase className="w-6 h-6 text-white" />
                 </div>
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">{vacancy.title}</h2>
-                  <p className="text-gray-500 dark:text-gray-400">{vacancy.company} · {vacancy.department}</p>
+                <div className="min-w-0">
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white break-words">{vacancy.title}</h2>
+                  <p className="text-gray-500 dark:text-gray-400 break-words text-sm">{vacancy.company} · {vacancy.department}</p>
                 </div>
               </div>
-              <div className="flex gap-2 items-center">
+              <div className="flex gap-2 items-center flex-wrap">
                 <span className={`text-sm px-3 py-1 rounded-full font-medium ${getStatusColor(vacancy.status)}`}>{vacancy.status}</span>
                 {!vacancy.externalId && (
                   <button
@@ -377,9 +377,9 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
 
         <div className="space-y-4">
           <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
-            <CardContent className="p-5">
+            <CardContent className="p-4 sm:p-5">
               <div className="text-center mb-4">
-                <div className="text-4xl font-bold text-gray-900 dark:text-white">{vacancy.candidates.length}</div>
+                <div className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">{vacancy.candidates.length}</div>
                 <div className="text-sm text-gray-500 dark:text-gray-400">{vd.totalCandidates}</div>
               </div>
               <div className="space-y-2 text-sm">
@@ -404,12 +404,12 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
 
       {/* Candidate Rankings */}
       <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
-        <CardHeader className="pb-3 flex flex-row items-center justify-between">
+        <CardHeader className="pb-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Star className="w-4 h-4 text-amber-500" />
             {vd.candidateRankings}
           </CardTitle>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             {shortlistedCount > 0 && (
               <Button
                 size="sm"
@@ -507,7 +507,7 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
                 const skills = parseJsonSafe<string[]>(c.skills, [])
 
                 return (
-                  <div key={c.id} className="flex items-center gap-4 p-4 border border-gray-100 dark:border-gray-800 rounded-xl hover:border-blue-200 dark:hover:border-blue-800 transition-colors">
+                  <div key={c.id} className="flex flex-wrap items-center gap-3 sm:gap-4 p-3 sm:p-4 border border-gray-100 dark:border-gray-800 rounded-xl hover:border-blue-200 dark:hover:border-blue-800 transition-colors">
                     <div className="flex items-center gap-1 shrink-0 w-6 text-center">
                       <span className={`text-sm font-bold ${globalIndex === 0 ? 'text-amber-500' : globalIndex === 1 ? 'text-gray-400' : globalIndex === 2 ? 'text-orange-500' : 'text-gray-300'}`}>
                         #{globalIndex + 1}
@@ -517,14 +517,14 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
                       <AvatarFallback className="text-xs gradient-bg text-white font-semibold">{initials}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Link href={`/candidates/${c.id}`} className="font-semibold text-gray-900 dark:text-white text-sm hover:text-blue-600">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <Link href={`/candidates/${c.id}`} className="font-semibold text-gray-900 dark:text-white text-sm hover:text-blue-600 truncate">
                           {c.firstName} {c.lastName}
                         </Link>
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getStatusColor(c.status)}`}>{vd.statusLabels[c.status as keyof typeof vd.statusLabels] || c.status}</span>
                         {c.source === 'email' && <span className="text-xs text-blue-500 font-medium">via email</span>}
                       </div>
-                      {c.email && <p className="text-xs text-gray-400 mb-1.5">{c.email}</p>}
+                      {c.email && <p className="text-xs text-gray-400 mb-1.5 break-all">{c.email}</p>}
                       {skills.length > 0 && (
                         <div className="flex gap-1 flex-wrap">
                           {skills.slice(0, 4).map((s, j) => (
@@ -533,12 +533,12 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 shrink-0">
+                    <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-auto">
                       <div className="text-right">
                         <div className={`text-lg font-bold ${score >= 75 ? 'text-green-600' : score >= 50 ? 'text-amber-600' : 'text-red-500'}`}>
                           {score.toFixed(0)}%
                         </div>
-                        <Progress value={score} className="w-16 h-1.5 mt-1" />
+                        <Progress value={score} className="w-12 sm:w-16 h-1.5 mt-1" />
                       </div>
                       <div className="flex gap-1">
                         <button
@@ -677,7 +677,7 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
             <DialogTitle>{vd.editTitle}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 mt-2">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label>{vd.editJobTitle}</Label>
                 <Input value={editForm.title} onChange={e => setEditForm(p => ({ ...p, title: e.target.value }))} placeholder={cv.jobTitlePlaceholder} />
@@ -687,7 +687,7 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
                 <Input value={editForm.company} onChange={e => setEditForm(p => ({ ...p, company: e.target.value }))} placeholder={cv.companyPlaceholder} />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label>{vd.editDepartment}</Label>
                 <Input value={editForm.department} onChange={e => setEditForm(p => ({ ...p, department: e.target.value }))} placeholder={cv.departmentPlaceholder} />
@@ -697,7 +697,7 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
                 <Input value={editForm.location} onChange={e => setEditForm(p => ({ ...p, location: e.target.value }))} placeholder={cv.locationPlaceholder} />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label>{vd.editContractType}</Label>
                 <Select value={editForm.type} onValueChange={v => setEditForm(p => ({ ...p, type: v }))}>

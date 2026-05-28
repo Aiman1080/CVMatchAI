@@ -12,7 +12,7 @@ function hashScore(cv: string, title: string): number {
 }
 
 async function main() {
-  const adminPassword = await bcrypt.hash('admin123', 12)
+  const adminPassword = await bcrypt.hash('Wachtwoord_2201', 12)
   const recruiterPassword = await bcrypt.hash('recruiter123', 12)
   const proPassword = await bcrypt.hash('pro123', 12)
 

@@ -187,11 +187,11 @@ export function EmailClient() {
       </div>
 
       {/* Demo scan — only visible for demo accounts */}
-      {isDemo && <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border border-indigo-100 dark:border-indigo-900 flex items-center gap-4">
+      {isDemo && <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border border-indigo-100 dark:border-indigo-900 flex flex-wrap items-center gap-4">
         <div className="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center shrink-0">
           <Zap className="w-5 h-5 text-white" />
         </div>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-indigo-800 dark:text-indigo-300">{te.demoTitle}</p>
           <p className="text-sm text-indigo-600 dark:text-indigo-400">
             {te.demoDesc}
@@ -208,11 +208,11 @@ export function EmailClient() {
       </div>}
 
       {/* One-click duplicate cleanup — fixes databases that accumulated duplicates before the dedup fix */}
-      <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950 border border-amber-100 dark:border-amber-900 flex items-center gap-4">
+      <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950 border border-amber-100 dark:border-amber-900 flex flex-wrap items-center gap-4">
         <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center shrink-0">
           <Eraser className="w-5 h-5 text-white" />
         </div>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-amber-800">{te.cleanTitle}</p>
           <p className="text-sm text-amber-700">
             {te.cleanDesc}
@@ -229,7 +229,7 @@ export function EmailClient() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
           { icon: Mail, title: te.connectInboxTitle, desc: te.connectInboxDesc },
           { icon: Scan, title: te.aiScansTitle, desc: te.aiScansDesc },
@@ -248,9 +248,9 @@ export function EmailClient() {
       </div>
 
       <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
-        <CardHeader className="flex flex-row items-center justify-between pb-3">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-3 gap-2">
           <CardTitle className="text-base">{te.connectedInboxes}</CardTitle>
-          <Button onClick={openConnectDialog} size="sm" className="gradient-bg gap-1.5">
+          <Button onClick={openConnectDialog} size="sm" className="gradient-bg gap-1.5 w-full sm:w-auto">
             <Plus size={14} /> {te.connectInbox}
           </Button>
         </CardHeader>
@@ -274,17 +274,17 @@ export function EmailClient() {
           ) : (
             <div className="space-y-3">
               {inboxes.map(inbox => (
-                <div key={inbox.id} className="flex items-center gap-4 p-4 border border-gray-100 dark:border-gray-800 rounded-xl">
+                <div key={inbox.id} className="flex flex-wrap items-center gap-3 sm:gap-4 p-3 sm:p-4 border border-gray-100 dark:border-gray-800 rounded-xl">
                   <div className="w-10 h-10 bg-blue-50 dark:bg-blue-950 rounded-xl flex items-center justify-center shrink-0">
                     <Mail className="w-5 h-5 text-blue-600" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-gray-900 dark:text-white text-sm truncate">{inbox.email}</p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-400 truncate">
                       {inbox.provider} · {te.lastScan} {inbox.lastScan ? formatRelativeTime(new Date(inbox.lastScan)) : te.never}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap ml-auto">
                     <span className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30 px-2 py-1 rounded-full">
                       <CheckCircle size={11} /> {te.active}
                     </span>
@@ -440,7 +440,7 @@ export function EmailClient() {
 
               {/* Manual IMAP fields for "Other" */}
               {selectedProvider === 'other' && (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label>{te.imapHost}</Label>
                     <Input placeholder="imap.example.com" value={form.host} onChange={e => setForm(p => ({ ...p, host: e.target.value }))} required />

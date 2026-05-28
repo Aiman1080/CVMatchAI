@@ -174,13 +174,13 @@ export default function PrivacyPage() {
     <div className="min-h-screen bg-white dark:bg-gray-950">
       {/* Nav */}
       <nav className="sticky top-0 z-50 bg-white/80 dark:bg-gray-950/80 backdrop-blur border-b border-gray-100 dark:border-gray-800">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <Logo size={32} />
             <span className="font-bold text-gray-900 dark:text-white">DeltaMatch</span>
           </Link>
           <div className="flex items-center gap-4">
-            
+
             <Link href="/" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
               <ArrowLeft size={15} />
               {locale === 'nl' ? 'Terug' : locale === 'en' ? 'Back' : 'Retour'}
@@ -190,27 +190,27 @@ export default function PrivacyPage() {
       </nav>
 
       {/* Hero */}
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-900 py-16 px-6 text-center border-b border-gray-100 dark:border-gray-800">
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-900 py-10 sm:py-16 px-4 sm:px-6 text-center border-b border-gray-100 dark:border-gray-800">
         <div className="w-14 h-14 rounded-2xl gradient-bg flex items-center justify-center mx-auto mb-4">
           <Shield className="w-7 h-7 text-white" />
         </div>
-        <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-3">{c.title}</h1>
-        <p className="text-lg text-gray-500 dark:text-gray-400 mb-2">{c.subtitle}</p>
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white mb-3">{c.title}</h1>
+        <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400 mb-2">{c.subtitle}</p>
         <span className="text-xs text-gray-400 dark:text-gray-500">{c.lastUpdated}</span>
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-6 py-16 space-y-10">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-16 space-y-8 sm:space-y-10">
         {c.sections.map((section, i) => {
           const Icon = section.icon
           return (
-            <div key={i} className="flex gap-5">
+            <div key={i} className="flex gap-3 sm:gap-5">
               <div className="shrink-0 w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center mt-0.5">
                 <Icon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
-              <div>
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{section.title}</h2>
-                <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-sm">{section.text}</p>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-2">{section.title}</h2>
+                <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-sm break-words">{section.text}</p>
               </div>
             </div>
           )
@@ -218,7 +218,7 @@ export default function PrivacyPage() {
       </div>
 
       {/* Footer */}
-      <footer className="border-t border-gray-100 dark:border-gray-800 py-8 px-6">
+      <footer className="border-t border-gray-100 dark:border-gray-800 py-8 px-4 sm:px-6">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-400">
           <span>© {new Date().getFullYear()} DeltaMatch</span>
           <div className="flex gap-6">

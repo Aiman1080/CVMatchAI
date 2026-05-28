@@ -407,13 +407,13 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
     <>
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6 flex-wrap">
-        <div className="relative flex-1 min-w-40">
+        <div className="relative flex-1 min-w-0 sm:min-w-40 w-full sm:w-auto">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input placeholder={tc.search} value={search} onChange={e => handleSearchChange(e.target.value)} className="pl-9" />
         </div>
         {vacancies.length > 0 && (
           <Select value={vacancyFilter} onValueChange={handleVacancyFilterChange}>
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="w-full sm:w-48">
               <SelectValue placeholder="All vacancies" />
             </SelectTrigger>
             <SelectContent>
@@ -424,45 +424,47 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
             </SelectContent>
           </Select>
         )}
-        <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
-          <SelectTrigger className="w-36">
-            <SelectValue placeholder={tc.status} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{tc.all}</SelectItem>
-            <SelectItem value="new">{tc.new}</SelectItem>
-            <SelectItem value="reviewing">{tc.reviewing}</SelectItem>
-            <SelectItem value="shortlisted">{tc.shortlisted}</SelectItem>
-            <SelectItem value="rejected">{tc.rejected}</SelectItem>
-            <SelectItem value="hired">{tc.hired}</SelectItem>
-            <SelectItem value="liked">{tc.liked}</SelectItem>
-            <SelectItem value="priority">{tc.priority}</SelectItem>
-            <SelectItem value="pool">{tc.pool}</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={scoreFilter} onValueChange={handleScoreFilterChange}>
-          <SelectTrigger className="w-36">
-            <SelectValue placeholder="Score" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{tc.all}</SelectItem>
-            <SelectItem value="high">75+ Strong</SelectItem>
-            <SelectItem value="medium">50-74 Medium</SelectItem>
-            <SelectItem value="low">0-49 Low</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={sortBy} onValueChange={handleSortChange}>
-          <SelectTrigger className="w-36">
-            <SelectValue placeholder={tc.sortBy} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="score">{tc.score} (desc)</SelectItem>
-            <SelectItem value="name">{tc.name} (A-Z)</SelectItem>
-            <SelectItem value="date">{tc.date} (newest)</SelectItem>
-            <SelectItem value="date_oldest">{tc.date} (oldest)</SelectItem>
-          </SelectContent>
-        </Select>
-        <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+        <div className="grid grid-cols-3 gap-2 sm:contents">
+          <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+            <SelectTrigger className="w-full sm:w-36">
+              <SelectValue placeholder={tc.status} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{tc.all}</SelectItem>
+              <SelectItem value="new">{tc.new}</SelectItem>
+              <SelectItem value="reviewing">{tc.reviewing}</SelectItem>
+              <SelectItem value="shortlisted">{tc.shortlisted}</SelectItem>
+              <SelectItem value="rejected">{tc.rejected}</SelectItem>
+              <SelectItem value="hired">{tc.hired}</SelectItem>
+              <SelectItem value="liked">{tc.liked}</SelectItem>
+              <SelectItem value="priority">{tc.priority}</SelectItem>
+              <SelectItem value="pool">{tc.pool}</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={scoreFilter} onValueChange={handleScoreFilterChange}>
+            <SelectTrigger className="w-full sm:w-36">
+              <SelectValue placeholder="Score" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{tc.all}</SelectItem>
+              <SelectItem value="high">75+ Strong</SelectItem>
+              <SelectItem value="medium">50-74 Medium</SelectItem>
+              <SelectItem value="low">0-49 Low</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={sortBy} onValueChange={handleSortChange}>
+            <SelectTrigger className="w-full sm:w-36">
+              <SelectValue placeholder={tc.sortBy} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="score">{tc.score} (desc)</SelectItem>
+              <SelectItem value="name">{tc.name} (A-Z)</SelectItem>
+              <SelectItem value="date">{tc.date} (newest)</SelectItem>
+              <SelectItem value="date_oldest">{tc.date} (oldest)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center justify-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 self-start sm:self-auto">
           <button onClick={() => setView('grid')} className={`p-1.5 rounded-md transition-colors ${view === 'grid' ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-800 dark:text-gray-200' : 'text-gray-400 hover:text-gray-600'}`} title="Grid view">
             <LayoutGrid size={16} />
           </button>
@@ -470,64 +472,66 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
             <Columns size={16} />
           </button>
         </div>
-        <Button size="sm" onClick={() => setShowUploadCV(true)} className="gap-1.5 h-9 gradient-bg">
-          <Upload size={15} /> Upload CV
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => setShowImportCSV(true)} className="gap-1.5 h-9">
-          <FileText size={15} /> Import CSV
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => setShowExport(true)} className="gap-1.5 h-9">
-          <Download size={15} /> {tc.exportCsv}
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={exportingExcel || !isPro}
-          title={!isPro ? 'Pro feature' : undefined}
-          onClick={async () => {
-            setExportingExcel(true)
-            try {
-              await exportCandidatesToExcel(filtered)
-              toast({ title: 'Excel export downloaded!' })
-            } catch { toast({ title: (tc as any).exportFailed || 'Export failed', description: 'Could not generate the Excel file. Please try again.', variant: 'destructive' }) }
-            finally { setExportingExcel(false) }
-          }}
-          className="gap-1.5 h-9"
-        >
-          <Download size={15} /> {exportingExcel ? 'Exporting...' : 'Export Excel'}
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={exportingPdf || !isPro}
-          title={!isPro ? 'Pro feature' : undefined}
-          onClick={async () => {
-            setExportingPdf(true)
-            try {
-              await exportCandidatesToPDF(filtered)
-              toast({ title: 'PDF export downloaded!' })
-            } catch { toast({ title: (tc as any).exportFailed || 'Export failed', description: 'Could not generate the PDF file. Please try again.', variant: 'destructive' }) }
-            finally { setExportingPdf(false) }
-          }}
-          className="gap-1.5 h-9"
-        >
-          <Download size={15} /> {exportingPdf ? 'Exporting...' : 'Export PDF'}
-        </Button>
+        <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2 sm:contents">
+          <Button size="sm" onClick={() => setShowUploadCV(true)} className="gap-1.5 h-9 gradient-bg">
+            <Upload size={15} /> Upload CV
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setShowImportCSV(true)} className="gap-1.5 h-9">
+            <FileText size={15} /> Import CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setShowExport(true)} className="gap-1.5 h-9">
+            <Download size={15} /> {tc.exportCsv}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={exportingExcel || !isPro}
+            title={!isPro ? 'Pro feature' : undefined}
+            onClick={async () => {
+              setExportingExcel(true)
+              try {
+                await exportCandidatesToExcel(filtered)
+                toast({ title: 'Excel export downloaded!' })
+              } catch { toast({ title: (tc as any).exportFailed || 'Export failed', description: 'Could not generate the Excel file. Please try again.', variant: 'destructive' }) }
+              finally { setExportingExcel(false) }
+            }}
+            className="gap-1.5 h-9"
+          >
+            <Download size={15} /> {exportingExcel ? 'Exporting...' : 'Export Excel'}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={exportingPdf || !isPro}
+            title={!isPro ? 'Pro feature' : undefined}
+            onClick={async () => {
+              setExportingPdf(true)
+              try {
+                await exportCandidatesToPDF(filtered)
+                toast({ title: 'PDF export downloaded!' })
+              } catch { toast({ title: (tc as any).exportFailed || 'Export failed', description: 'Could not generate the PDF file. Please try again.', variant: 'destructive' }) }
+              finally { setExportingPdf(false) }
+            }}
+            className="gap-1.5 h-9"
+          >
+            <Download size={15} /> {exportingPdf ? 'Exporting...' : 'Export PDF'}
+          </Button>
+        </div>
       </div>
 
       {/* Bulk action bar */}
       {selectedIds.size > 0 && view === 'grid' && (
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
-          <div className="flex items-center gap-2">
-            <CheckCheck size={16} className="text-blue-600 dark:text-blue-400" />
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 w-full">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <CheckCheck size={16} className="text-blue-600 dark:text-blue-400 shrink-0" />
             <span className="text-sm font-medium text-blue-700 dark:text-blue-300">{selectedIds.size} selected</span>
             <button onClick={() => setSelectedIds(new Set())} className="p-0.5 rounded hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-500" title="Clear selection">
               <X size={14} />
             </button>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             <Select onValueChange={handleBulkStatusChange} value="">
-              <SelectTrigger className="w-44 h-8 text-xs">
+              <SelectTrigger className="w-full sm:w-44 h-8 text-xs">
                 <SelectValue placeholder="Change status to..." />
               </SelectTrigger>
               <SelectContent>
@@ -642,7 +646,7 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
               {allFilteredSelected ? 'Deselect all' : 'Select all'} ({filtered.length})
             </span>
           </div>
-          <div className={`grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 transition-opacity ${loadingPage ? 'opacity-50 pointer-events-none' : ''}`}>
+          <div className={`grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 transition-opacity ${loadingPage ? 'opacity-50 pointer-events-none' : ''}`}>
             {filtered.map((c, i) => {
               const firstInitial = c.firstName?.trim()?.[0] ?? '?'
               const lastInitial = c.lastName?.trim()?.[0] ?? ''

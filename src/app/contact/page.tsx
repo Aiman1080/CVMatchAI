@@ -95,13 +95,13 @@ export default function ContactPage() {
     <div className="min-h-screen bg-white dark:bg-gray-950">
       {/* Nav */}
       <nav className="sticky top-0 z-50 bg-white/80 dark:bg-gray-950/80 backdrop-blur border-b border-gray-100 dark:border-gray-800">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <Logo size={32} />
             <span className="font-bold text-gray-900 dark:text-white">DeltaMatch</span>
           </Link>
           <div className="flex items-center gap-4">
-            
+
             <Link href="/" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
               <ArrowLeft size={15} />
               {locale === 'nl' ? 'Terug' : locale === 'en' ? 'Back' : 'Retour'}
@@ -111,17 +111,17 @@ export default function ContactPage() {
       </nav>
 
       {/* Hero */}
-      <div className="bg-gradient-to-br from-green-50 to-teal-50 dark:from-gray-900 dark:to-gray-900 py-16 px-6 text-center border-b border-gray-100 dark:border-gray-800">
+      <div className="bg-gradient-to-br from-green-50 to-teal-50 dark:from-gray-900 dark:to-gray-900 py-10 sm:py-16 px-4 sm:px-6 text-center border-b border-gray-100 dark:border-gray-800">
         <div className="w-14 h-14 rounded-2xl gradient-bg flex items-center justify-center mx-auto mb-4">
           <MessageSquare className="w-7 h-7 text-white" />
         </div>
-        <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-3">{c.title}</h1>
-        <p className="text-lg text-gray-500 dark:text-gray-400">{c.subtitle}</p>
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white mb-3">{c.title}</h1>
+        <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400">{c.subtitle}</p>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 py-16">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
         {/* Info cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-14">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-10 sm:mb-14">
           {c.cards.map((card, i) => {
             const Icon = card.icon
             return (

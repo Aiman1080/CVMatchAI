@@ -47,10 +47,10 @@ export default function VerifyEmailPage() {
 
   return (
     <div className="relative z-10 w-full max-w-md">
-      <div className="bg-white text-gray-900 rounded-2xl shadow-2xl p-8">
-        <div className="text-center mb-8">
+      <div className="bg-white text-gray-900 rounded-2xl shadow-2xl p-6 sm:p-8">
+        <div className="text-center mb-6 sm:mb-8">
           <div className="mx-auto mb-4 w-fit"><Logo size={48} /></div>
-          <h1 className="text-2xl font-bold text-gray-900">{t.auth.emailVerification}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{t.auth.emailVerification}</h1>
         </div>
 
         {status === 'loading' && (
@@ -80,12 +80,12 @@ export default function VerifyEmailPage() {
             <p className="text-gray-500 text-sm mb-6">
               {t.auth.alreadyVerifiedDesc}
             </p>
-            <div className="flex gap-3 justify-center">
-              <Link href="/login">
-                <Button variant="outline" className="h-11 px-6">{t.auth.backToLogin}</Button>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link href="/login" className="w-full sm:w-auto">
+                <Button variant="outline" className="h-11 px-6 w-full sm:w-auto">{t.auth.backToLogin}</Button>
               </Link>
-              <Link href="/dashboard">
-                <Button className="gradient-bg h-11 px-6">{t.auth.goToDashboard}</Button>
+              <Link href="/dashboard" className="w-full sm:w-auto">
+                <Button className="gradient-bg h-11 px-6 w-full sm:w-auto">{t.auth.goToDashboard}</Button>
               </Link>
             </div>
           </div>
@@ -96,12 +96,12 @@ export default function VerifyEmailPage() {
             <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
             <h2 className="text-lg font-semibold text-gray-900 mb-2">{t.auth.verificationFailed}</h2>
             <p className="text-gray-500 text-sm mb-6">{errorMessage}</p>
-            <div className="flex gap-3 justify-center">
-              <Link href="/login">
-                <Button variant="outline" className="h-11 px-6">{t.auth.backToLogin}</Button>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link href="/login" className="w-full sm:w-auto">
+                <Button variant="outline" className="h-11 px-6 w-full sm:w-auto">{t.auth.backToLogin}</Button>
               </Link>
-              <Link href="/dashboard">
-                <Button className="gradient-bg h-11 px-6">{t.auth.goToDashboard}</Button>
+              <Link href="/dashboard" className="w-full sm:w-auto">
+                <Button className="gradient-bg h-11 px-6 w-full sm:w-auto">{t.auth.goToDashboard}</Button>
               </Link>
             </div>
           </div>

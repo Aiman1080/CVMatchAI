@@ -25,12 +25,12 @@ export function RecentVacancies({ vacancies }: { vacancies: Vacancy[] }) {
             {vacancies.map(v => (
               <Link key={v.id} href={`/vacancies/${v.id}`}>
                 <div className="p-4 border border-gray-100 dark:border-gray-800 rounded-xl hover:border-blue-200 dark:hover:border-blue-800 hover:bg-blue-50/30 dark:hover:bg-blue-950/20 transition-all cursor-pointer">
-                  <div className="flex items-start justify-between mb-2">
-                    <div><h3 className="font-semibold text-gray-900 dark:text-white text-sm">{v.title}</h3><p className="text-xs text-gray-500 dark:text-gray-400">{v.company}</p></div>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getStatusColor(v.status)}`}>{v.status}</span>
+                  <div className="flex items-start justify-between mb-2 gap-2">
+                    <div className="min-w-0 flex-1"><h3 className="font-semibold text-gray-900 dark:text-white text-sm truncate">{v.title}</h3><p className="text-xs text-gray-500 dark:text-gray-400 truncate">{v.company}</p></div>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${getStatusColor(v.status)}`}>{v.status}</span>
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-gray-400">
-                    {v.location && <span className="flex items-center gap-1"><MapPin size={11} />{v.location}</span>}
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-400">
+                    {v.location && <span className="flex items-center gap-1 truncate"><MapPin size={11} className="shrink-0" />{v.location}</span>}
                     <span className="flex items-center gap-1"><Users size={11} />{v._count.candidates}</span>
                     <span className="flex items-center gap-1"><Clock size={11} />{formatRelativeTime(v.createdAt)}</span>
                   </div>

@@ -1,17 +1,17 @@
 export default function DashboardLoading() {
   return (
-    <div className="p-6 space-y-6 animate-pulse">
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 animate-pulse">
       {/* Header skeleton */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pl-12 md:pl-0">
         <div>
-          <div className="h-7 w-48 bg-gray-200 dark:bg-gray-800 rounded-lg" />
-          <div className="h-4 w-32 bg-gray-100 dark:bg-gray-800/60 rounded mt-2" />
+          <div className="h-7 w-40 sm:w-48 bg-gray-200 dark:bg-gray-800 rounded-lg" />
+          <div className="h-4 w-28 sm:w-32 bg-gray-100 dark:bg-gray-800/60 rounded mt-2" />
         </div>
-        <div className="h-10 w-36 bg-gray-200 dark:bg-gray-800 rounded-lg" />
+        <div className="h-10 w-24 sm:w-36 bg-gray-200 dark:bg-gray-800 rounded-lg" />
       </div>
 
       {/* Stat cards skeleton */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {[...Array(4)].map((_, i) => (
           <div key={i} className="p-5 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800">
             <div className="h-4 w-24 bg-gray-100 dark:bg-gray-800 rounded mb-3" />

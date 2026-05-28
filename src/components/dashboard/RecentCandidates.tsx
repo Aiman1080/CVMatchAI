@@ -32,11 +32,11 @@ export function RecentCandidates({ candidates }: { candidates: Candidate[] }) {
               const score = c.matchScore || 0
               return (
                 <Link key={c.id} href={`/candidates/${c.id}`}>
-                  <div className="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
-                    <Avatar className="w-10 h-10 shrink-0"><AvatarFallback className="text-sm gradient-bg text-white font-semibold">{initials}</AvatarFallback></Avatar>
+                  <div className="flex items-center gap-3 sm:gap-4 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+                    <Avatar className="w-9 h-9 sm:w-10 sm:h-10 shrink-0"><AvatarFallback className="text-sm gradient-bg text-white font-semibold">{initials}</AvatarFallback></Avatar>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{c.firstName} {c.lastName}</p>
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{c.firstName} {c.lastName}</p>
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getStatusColor(c.status)}`}>{c.status}</span>
                       </div>
                       <p className="text-xs text-gray-500 truncate">{c.vacancy?.title || rc.noVacancy}</p>
@@ -45,7 +45,7 @@ export function RecentCandidates({ candidates }: { candidates: Candidate[] }) {
                         <span className={`text-xs font-bold ${score >= 75 ? 'text-green-600' : score >= 50 ? 'text-amber-600' : 'text-red-500'}`}>{score.toFixed(0)}%</span>
                       </div>
                     </div>
-                    <span className="text-xs text-gray-400 shrink-0">{formatRelativeTime(c.createdAt)}</span>
+                    <span className="text-xs text-gray-400 shrink-0 hidden sm:inline">{formatRelativeTime(c.createdAt)}</span>
                   </div>
                 </Link>
               )

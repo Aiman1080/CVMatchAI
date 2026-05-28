@@ -27,11 +27,11 @@ export function EmailVerificationBanner() {
   }
 
   return (
-    <div className="bg-amber-50 dark:bg-amber-950/50 border-b border-amber-200 dark:border-amber-800 px-4 py-3">
-      <div className="flex items-center justify-between gap-4 max-w-screen-xl mx-auto">
-        <div className="flex items-center gap-2 min-w-0">
+    <div className="bg-amber-50 dark:bg-amber-950/50 border-b border-amber-200 dark:border-amber-800 pl-16 md:pl-4 pr-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-4 max-w-screen-xl mx-auto">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
-          <p className="text-sm text-amber-800 dark:text-amber-200">
+          <p className="text-xs sm:text-sm text-amber-800 dark:text-amber-200">
             {v.bannerMessage}
           </p>
         </div>

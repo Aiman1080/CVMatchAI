@@ -47,7 +47,7 @@ export default async function VacanciesPage() {
   return (
     <div>
       <Header title={t.title} description={t.description(totalVacancies)} />
-      <div className="p-8"><VacanciesClient initialVacancies={vacancies} isDemo={isDemoAccount(session?.user?.email)} /></div>
+      <div className="p-4 sm:p-8"><VacanciesClient initialVacancies={vacancies} isDemo={isDemoAccount(session?.user?.email)} /></div>
     </div>
   )
 }

@@ -23,7 +23,7 @@ export default async function SettingsPage() {
   return (
     <div>
       <Header title={user?.name ? `${user.name}` : t.title} description={user?.email || ''} />
-      <div className="p-8">
+      <div className="p-4 sm:p-8">
         <SettingsClient
           user={{ name: user?.name, email: user?.email, company: user?.company, subscription: user?.subscription, image: user?.image, emailSignature: user?.emailSignature }}
           isDemo={isDemoAccount(user?.email)}

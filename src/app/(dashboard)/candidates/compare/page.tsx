@@ -39,7 +39,7 @@ export default async function ComparePage({
         title="Compare Candidates"
         description={`Side-by-side comparison of ${ordered.length} candidates`}
       />
-      <div className="p-8">
+      <div className="p-4 sm:p-8">
         <CompareClient candidates={ordered} />
       </div>
     </div>

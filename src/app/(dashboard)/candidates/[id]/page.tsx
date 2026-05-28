@@ -15,7 +15,7 @@ export default async function CandidateDetailPage({ params }: { params: Promise<
   return (
     <div>
       <Header title={`${candidate.firstName} ${candidate.lastName}`} description={candidate.vacancy?.title || 'Candidate Profile'} />
-      <div className="p-8"><CandidateDetailClient candidate={candidate} /></div>
+      <div className="p-4 sm:p-8"><CandidateDetailClient candidate={candidate} /></div>
     </div>
   )
 }

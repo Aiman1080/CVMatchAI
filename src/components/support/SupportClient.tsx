@@ -93,11 +93,11 @@ export function SupportClient() {
       <AISupportChat onCreateTicket={handleChatCreateTicket} />
 
       {/* SLA banner */}
-      <div className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl">
+      <div className="flex flex-wrap items-center gap-3 p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl">
         <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-xl flex items-center justify-center flex-shrink-0">
           <LifeBuoy className="w-5 h-5 text-blue-600 dark:text-blue-400" />
         </div>
-        <div>
+        <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">{ts.slaBanner}</p>
           <p className="text-xs text-blue-600 dark:text-blue-400">{ts.slaDesc}</p>
         </div>
@@ -139,7 +139,7 @@ export function SupportClient() {
               />
               <p className="text-xs text-gray-400 text-right mt-1">{form.message.length} characters</p>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
               <div className="flex-1">
                 <label className="text-xs font-medium text-gray-600 dark:text-gray-300 block mb-1.5">{ts.priority}</label>
                 <Select value={form.priority} onValueChange={v => setForm(f => ({ ...f, priority: v }))}>
@@ -154,9 +154,9 @@ export function SupportClient() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex gap-2 mt-5">
-                <Button variant="outline" size="sm" onClick={() => setShowForm(false)}>{ts.cancel}</Button>
-                <Button size="sm" onClick={submit} disabled={submitting} className="gap-2">
+              <div className="flex gap-2 sm:mt-5">
+                <Button variant="outline" size="sm" onClick={() => setShowForm(false)} className="flex-1 sm:flex-none">{ts.cancel}</Button>
+                <Button size="sm" onClick={submit} disabled={submitting} className="gap-2 flex-1 sm:flex-none">
                   <Send size={14} /> {submitting ? ts.sending : ts.submitTicket}
                 </Button>
               </div>

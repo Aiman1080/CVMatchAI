@@ -49,7 +49,7 @@ export default async function CandidatesPage() {
   return (
     <div>
       <Header title={t.title} description={t.description(total)} />
-      <div className="p-8"><CandidatesClient initialCandidates={candidates} initialTotal={total} isPro={isPro} /></div>
+      <div className="p-4 sm:p-8"><CandidatesClient initialCandidates={candidates} initialTotal={total} isPro={isPro} /></div>
     </div>
   )
 }
