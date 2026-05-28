@@ -119,14 +119,14 @@ export function OnboardingChecklist({ hasVacancy, hasCandidate, hasEmail, onVaca
           </button>
 
           {/* Header section */}
-          <div className="mb-6">
+          <div className="mb-6 pr-8">
             <div className="flex items-center gap-2 mb-1">
-              <Sparkles className="w-5 h-5 text-indigo-500" />
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+              <Sparkles className="w-5 h-5 text-indigo-500 shrink-0" />
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white break-words min-w-0">
                 {t.dashboard.onboarding.welcomeTitle}
               </h3>
             </div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 break-words">
               {t.dashboard.onboarding.welcomeSubtitle}
             </p>
 
@@ -138,7 +138,7 @@ export function OnboardingChecklist({ hasVacancy, hasCandidate, hasEmail, onVaca
                   style={{ width: `${progressPct}%` }}
                 />
               </div>
-              <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 whitespace-nowrap">
+              <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 shrink-0 text-right break-words">
                 {completed}/{total} {t.dashboard.onboarding.progress}
               </span>
             </div>
@@ -191,7 +191,7 @@ export function OnboardingChecklist({ hasVacancy, hasCandidate, hasEmail, onVaca
                   {/* Text content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className={`text-sm font-medium transition-colors ${
+                      <p className={`text-sm font-medium transition-colors break-words min-w-0 ${
                         done
                           ? 'line-through text-gray-400 dark:text-gray-500'
                           : blocked
@@ -201,12 +201,12 @@ export function OnboardingChecklist({ hasVacancy, hasCandidate, hasEmail, onVaca
                         {title}
                       </p>
                       {badge && (
-                        <span className="text-[10px] uppercase tracking-wider font-bold bg-gradient-to-r from-blue-500 to-purple-500 text-white px-1.5 py-0.5 rounded">
+                        <span className="text-[10px] uppercase tracking-wider font-bold bg-gradient-to-r from-blue-500 to-purple-500 text-white px-1.5 py-0.5 rounded shrink-0 break-words">
                           {badge}
                         </span>
                       )}
                     </div>
-                    <p className={`text-xs hidden sm:block ${
+                    <p className={`text-xs hidden sm:block break-words ${
                       blocked
                         ? 'text-gray-300 dark:text-gray-600'
                         : 'text-gray-400 dark:text-gray-500'
@@ -221,19 +221,19 @@ export function OnboardingChecklist({ hasVacancy, hasCandidate, hasEmail, onVaca
                   ) : blocked ? null : (
                     isProLocked ? (
                       <Link href="/settings" className="shrink-0">
-                        <Button size="sm" variant="outline" className="gap-1 text-xs h-8 border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/30">
-                          {t.dashboard.upgrade.onboardingAction} <ChevronRight size={12} />
+                        <Button size="sm" variant="outline" className="gap-1 text-xs h-auto py-1.5 border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 whitespace-normal text-center leading-tight">
+                          {t.dashboard.upgrade.onboardingAction} <ChevronRight size={12} className="shrink-0" />
                         </Button>
                       </Link>
                     ) : href ? (
                       <Link href={href} className="shrink-0">
-                        <Button size="sm" variant={isCurrent ? 'gradient' : 'outline'} className="gap-1 text-xs h-8">
-                          {action} <ChevronRight size={12} />
+                        <Button size="sm" variant={isCurrent ? 'gradient' : 'outline'} className="gap-1 text-xs h-auto py-1.5 whitespace-normal text-center leading-tight">
+                          {action} <ChevronRight size={12} className="shrink-0" />
                         </Button>
                       </Link>
                     ) : (
-                      <Button size="sm" variant="gradient" className="shrink-0 gap-1 text-xs h-8" onClick={() => setShowCreate(true)}>
-                        {action} <ChevronRight size={12} />
+                      <Button size="sm" variant="gradient" className="shrink-0 gap-1 text-xs h-auto py-1.5 whitespace-normal text-center leading-tight" onClick={() => setShowCreate(true)}>
+                        {action} <ChevronRight size={12} className="shrink-0" />
                       </Button>
                     )
                   )}
@@ -243,21 +243,21 @@ export function OnboardingChecklist({ hasVacancy, hasCandidate, hasEmail, onVaca
           </div>
 
           {/* Plan badge footer */}
-          <div className="mt-4 flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          <div className="mt-4 flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2 min-w-0">
               {isPro ? (
-                <span className="text-xs bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 px-2.5 py-1 rounded-full font-medium">
+                <span className="text-xs bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 px-2.5 py-1 rounded-full font-medium break-words">
                   {t.dashboard.upgrade.planPro}
                 </span>
               ) : (
-                <span className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 px-2.5 py-1 rounded-full font-medium">
+                <span className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 px-2.5 py-1 rounded-full font-medium break-words">
                   {t.dashboard.upgrade.planFree}
                 </span>
               )}
             </div>
             <button
               onClick={handleDismiss}
-              className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors break-words shrink-0"
             >
               {t.dashboard.onboarding.dismiss}
             </button>

@@ -430,7 +430,7 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
       {!atsTipDismissed && (
         <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 flex gap-3 items-start">
           <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-          <p className="text-sm text-blue-700 dark:text-blue-300 flex-1">{ti.atsTip}</p>
+          <p className="text-sm text-blue-700 dark:text-blue-300 flex-1 min-w-0 break-words">{ti.atsTip}</p>
           <button
             onClick={dismissAtsTip}
             className="p-1 text-blue-400 hover:text-blue-600 rounded transition-colors shrink-0"
@@ -443,9 +443,9 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
       {/* Explainer banner */}
       <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 flex gap-3">
         <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-        <div>
-          <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">{ti.bannerTitle}</p>
-          <p className="text-sm text-blue-600 dark:text-blue-400 mt-0.5">{ti.bannerDesc}</p>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-blue-800 dark:text-blue-300 break-words">{ti.bannerTitle}</p>
+          <p className="text-sm text-blue-600 dark:text-blue-400 mt-0.5 break-words">{ti.bannerDesc}</p>
         </div>
       </div>
 
@@ -455,10 +455,10 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
           <div className="w-12 h-12 mx-auto rounded-xl bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/40 dark:to-purple-950/40 flex items-center justify-center mb-3">
             <Plug className="w-6 h-6 text-blue-500 dark:text-blue-400" />
           </div>
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1 break-words">
             {(ti as any).noIntegrations || 'No ATS connected yet'}
           </h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+          <p className="text-xs text-gray-500 dark:text-gray-400 max-w-md mx-auto break-words">
             {(ti as any).noIntegrationsDesc || 'Choose a platform below to import your candidates and vacancies in seconds.'}
           </p>
         </div>
@@ -472,10 +472,10 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-sm font-semibold text-indigo-800 dark:text-indigo-300">{ti.syncAll}</p>
+              <p className="text-sm font-semibold text-indigo-800 dark:text-indigo-300 break-words">{ti.syncAll}</p>
               <InfoTooltip text={ti.syncAllTooltip} />
             </div>
-            <p className="text-sm text-indigo-600 dark:text-indigo-400">
+            <p className="text-sm text-indigo-600 dark:text-indigo-400 break-words">
               {ti.atsConnectedLabel.replace('{count}', String(connectedCount))}
             </p>
           </div>
@@ -483,11 +483,11 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
             onClick={handleSyncAll}
             disabled={syncAll || !!syncing || isDemo}
             size="sm"
-            className="gradient-bg shrink-0 gap-1.5"
+            className="gradient-bg shrink-0 gap-1.5 h-auto py-2 whitespace-normal text-center leading-tight"
           >
             {syncAll
-              ? <><Loader2 size={13} className="animate-spin" /> {ti.syncing}</>
-              : <><RefreshCw size={13} /> {ti.syncAllBtn}</>}
+              ? <><Loader2 size={13} className="animate-spin shrink-0" /> {ti.syncing}</>
+              : <><RefreshCw size={13} className="shrink-0" /> {ti.syncAllBtn}</>}
           </Button>
         </div>
       )}
@@ -504,8 +504,8 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
               <div className="w-8 h-8 rounded-lg gradient-bg flex items-center justify-center mb-3">
                 <item.icon className="w-4 h-4 text-white" />
               </div>
-              <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-1">{item.title}</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{item.desc}</p>
+              <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-1 break-words">{item.title}</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed break-words">{item.desc}</p>
             </CardContent>
           </Card>
         ))}
@@ -514,12 +514,12 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
       {/* Platform cards */}
       <Card className="border-0 shadow-sm dark:bg-gray-900">
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Plug className="w-4 h-4 text-blue-500" /> {ti.platformsTitle}
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <CardTitle className="text-base flex items-center gap-2 min-w-0">
+              <Plug className="w-4 h-4 text-blue-500 shrink-0" /> <span className="break-words min-w-0">{ti.platformsTitle}</span>
             </CardTitle>
             {connectedCount > 0 && (
-              <span className="text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950 px-2 py-1 rounded-full font-medium">
+              <span className="text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950 px-2 py-1 rounded-full font-medium shrink-0 break-words">
                 {ti.connectedCount.replace('{count}', String(connectedCount))}
               </span>
             )}
@@ -557,27 +557,27 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-sm text-gray-900 dark:text-white">{platform.name}</span>
+                      <span className="font-semibold text-sm text-gray-900 dark:text-white break-words">{platform.name}</span>
                       {connected ? (
                         <TooltipProvider delayDuration={100}>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400 font-medium cursor-default">
-                                <CheckCircle size={11} /> {ti.connectedStatus}
+                              <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400 font-medium cursor-default break-words">
+                                <CheckCircle size={11} className="shrink-0" /> {ti.connectedStatus}
                               </span>
                             </TooltipTrigger>
                             <TooltipContent>{ti.activeConnection}</TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
                       ) : (
-                        <span className="text-xs text-gray-400">{ti.notConnected}</span>
+                        <span className="text-xs text-gray-400 break-words">{ti.notConnected}</span>
                       )}
                       {connected?.status === 'error' && (
                         <TooltipProvider delayDuration={100}>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <span className="flex items-center gap-1 text-xs text-red-500 font-medium cursor-default">
-                                <XCircle size={11} /> {ti.errorStatus}
+                              <span className="flex items-center gap-1 text-xs text-red-500 font-medium cursor-default break-words">
+                                <XCircle size={11} className="shrink-0" /> {ti.errorStatus}
                               </span>
                             </TooltipTrigger>
                             <TooltipContent>{ti.errorTooltip}</TooltipContent>
@@ -585,17 +585,17 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
                         </TooltipProvider>
                       )}
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{pt.tagline}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 break-words">{pt.tagline}</p>
                     {connected && (
-                      <p className="text-xs text-gray-400 mt-0.5">
+                      <p className="text-xs text-gray-400 mt-0.5 break-words">
                         {connected.lastSyncAt
                           ? ti.syncCountLabel.replace('{time}', formatRelativeTime(new Date(connected.lastSyncAt))).replace('{count}', String(connected.syncCount))
                           : ti.neverSynced}
                       </p>
                     )}
                     {isJustConnected && (
-                      <p className="mt-1.5 inline-flex items-center gap-1 text-xs text-green-700 dark:text-green-400 font-medium">
-                        <CheckCircle size={11} /> Connected! Click <span className="font-semibold">Sync</span> to import your candidates.
+                      <p className="mt-1.5 inline-flex items-center gap-1 text-xs text-green-700 dark:text-green-400 font-medium break-words">
+                        <CheckCircle size={11} className="shrink-0" /> Connected! Click <span className="font-semibold">Sync</span> to import your candidates.
                       </p>
                     )}
                   </div>
@@ -627,11 +627,11 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
                                 variant="outline"
                                 onClick={() => handleSync(connected.id, platform.id)}
                                 disabled={!!syncing || syncAll || isDemo}
-                                className="gap-1.5 h-8 text-xs"
+                                className="gap-1.5 h-auto py-1.5 text-xs whitespace-normal text-center leading-tight"
                               >
                                 {isSyncing
-                                  ? <><Loader2 size={12} className="animate-spin" /> {ti.inProgressBtn}</>
-                                  : <><RefreshCw size={12} /> {ti.syncBtn}</>}
+                                  ? <><Loader2 size={12} className="animate-spin shrink-0" /> {ti.inProgressBtn}</>
+                                  : <><RefreshCw size={12} className="shrink-0" /> {ti.syncBtn}</>}
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
@@ -664,11 +664,11 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
                         size="sm"
                         onClick={() => setExpanded(isExpanded ? null : platform.id)}
                         disabled={isDemo}
-                        className="gap-1.5 h-8 text-xs gradient-bg"
+                        className="gap-1.5 h-auto py-1.5 text-xs gradient-bg whitespace-normal text-center leading-tight"
                       >
-                        <Link2 size={12} />
+                        <Link2 size={12} className="shrink-0" />
                         {isDemo ? 'View only' : ti.connectBtn}
-                        {!isDemo && (isExpanded ? <ChevronUp size={11} /> : <ChevronDown size={11} />)}
+                        {!isDemo && (isExpanded ? <ChevronUp size={11} className="shrink-0" /> : <ChevronDown size={11} className="shrink-0" />)}
                       </Button>
                     )}
                   </div>
@@ -714,19 +714,19 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
                       <p className="text-xs text-amber-700 dark:text-amber-400">{ti.securityNote}</p>
                     </div>
 
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setExpanded(null)} className="text-xs h-8">
+                    <div className="flex gap-2 flex-wrap">
+                      <Button variant="outline" size="sm" onClick={() => setExpanded(null)} className="text-xs h-auto py-1.5 whitespace-normal text-center leading-tight">
                         {ti.cancelBtn}
                       </Button>
                       <Button
                         size="sm"
                         onClick={() => handleConnect(platform.id)}
                         disabled={connecting === platform.id || !f.apiKey.trim()}
-                        className="text-xs h-8 gradient-bg gap-1.5"
+                        className="text-xs h-auto py-1.5 gradient-bg gap-1.5 whitespace-normal text-center leading-tight"
                       >
                         {connecting === platform.id
-                          ? <><Loader2 size={12} className="animate-spin" /> {ti.testingBtn}</>
-                          : <><CheckCircle size={12} /> {ti.connectTestBtn}</>}
+                          ? <><Loader2 size={12} className="animate-spin shrink-0" /> {ti.testingBtn}</>
+                          : <><CheckCircle size={12} className="shrink-0" /> {ti.connectTestBtn}</>}
                       </Button>
                     </div>
                   </div>

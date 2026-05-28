@@ -154,16 +154,16 @@ export function SettingsClient({ user, isDemo }: Props) {
 
   return (
     <Tabs defaultValue="profile" className="space-y-6">
-      <TabsList className="dark:bg-gray-800">
-        <TabsTrigger value="profile">{t.dashboard.settingsTabs.profile}</TabsTrigger>
-        <TabsTrigger value="subscription">{t.dashboard.settingsTabs.subscription}</TabsTrigger>
-        <TabsTrigger value="privacy">{t.dashboard.settingsTabs.privacy}</TabsTrigger>
+      <TabsList className="dark:bg-gray-800 flex-wrap h-auto gap-1">
+        <TabsTrigger value="profile" className="whitespace-normal text-center leading-tight h-auto py-1.5">{t.dashboard.settingsTabs.profile}</TabsTrigger>
+        <TabsTrigger value="subscription" className="whitespace-normal text-center leading-tight h-auto py-1.5">{t.dashboard.settingsTabs.subscription}</TabsTrigger>
+        <TabsTrigger value="privacy" className="whitespace-normal text-center leading-tight h-auto py-1.5">{t.dashboard.settingsTabs.privacy}</TabsTrigger>
       </TabsList>
 
       <TabsContent value="profile" className="space-y-6">
         {/* Profile info */}
         <Card className="border-0 shadow-sm max-w-lg">
-          <CardHeader><CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white"><User className="w-4 h-4" />{t.dashboard.settingsProfile.title}</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white min-w-0"><User className="w-4 h-4 shrink-0" /><span className="break-words min-w-0">{t.dashboard.settingsProfile.title}</span></CardTitle></CardHeader>
           <CardContent>
             <form onSubmit={handleSave} className="space-y-4">
               <div className="flex items-center gap-4">
@@ -207,8 +207,8 @@ export function SettingsClient({ user, isDemo }: Props) {
                 />
                 <p className="text-xs text-gray-400">{"You can paste HTML with images. Use <img src='...'> for your company logo."}</p>
               </div>
-              <Button type="submit" disabled={saving || isDemo} className="gradient-bg gap-2"><Save size={14} />{saving ? t.dashboard.settingsProfile.saving : t.dashboard.settingsProfile.saveChanges}</Button>
-              {isDemo && <p className="text-xs text-amber-600">Demo accounts cannot modify profile settings.</p>}
+              <Button type="submit" disabled={saving || isDemo} className="gradient-bg gap-2 h-auto py-2 whitespace-normal text-center leading-tight"><Save size={14} className="shrink-0" />{saving ? t.dashboard.settingsProfile.saving : t.dashboard.settingsProfile.saveChanges}</Button>
+              {isDemo && <p className="text-xs text-amber-600 break-words">Demo accounts cannot modify profile settings.</p>}
             </form>
           </CardContent>
         </Card>
@@ -229,8 +229,8 @@ export function SettingsClient({ user, isDemo }: Props) {
         {/* Password change — hidden for demo accounts */}
         {!isDemo && <Card className="border-0 shadow-sm max-w-lg">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base text-gray-900 dark:text-white">
-              <Lock className="w-4 h-4" /> {t.dashboard.settingsPassword.title}
+            <CardTitle className="flex items-center gap-2 text-base text-gray-900 dark:text-white min-w-0">
+              <Lock className="w-4 h-4 shrink-0" /> <span className="break-words min-w-0">{t.dashboard.settingsPassword.title}</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -286,8 +286,8 @@ export function SettingsClient({ user, isDemo }: Props) {
                   placeholder={t.dashboard.settingsPassword.confirmPlaceholder}
                 />
               </div>
-              <Button type="submit" variant="outline" disabled={pwSaving || !pwForm.currentPassword || !pwForm.newPassword || !pwForm.confirm} className="gap-2 dark:border-gray-700 dark:text-gray-300">
-                <Lock size={14} />{pwSaving ? t.dashboard.settingsPassword.updating : t.dashboard.settingsPassword.update}
+              <Button type="submit" variant="outline" disabled={pwSaving || !pwForm.currentPassword || !pwForm.newPassword || !pwForm.confirm} className="gap-2 dark:border-gray-700 dark:text-gray-300 h-auto py-2 whitespace-normal text-center leading-tight">
+                <Lock size={14} className="shrink-0" />{pwSaving ? t.dashboard.settingsPassword.updating : t.dashboard.settingsPassword.update}
               </Button>
             </form>
           </CardContent>
@@ -296,15 +296,15 @@ export function SettingsClient({ user, isDemo }: Props) {
 
       <TabsContent value="subscription">
         <div>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{t.dashboard.settingsPage.currentPlan} <span className="font-semibold text-blue-600 capitalize">{user.subscription || 'free'}</span></p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 break-words">{t.dashboard.settingsPage.currentPlan} <span className="font-semibold text-blue-600 capitalize">{user.subscription || 'free'}</span></p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {PLANS.map(plan => (
               <Card key={plan.id} className={`border-0 shadow-sm ${(plan as any).popular ? 'ring-2 ring-blue-500' : ''} ${user.subscription === plan.id ? 'bg-blue-50 dark:bg-blue-950/30' : ''}`}>
                 <CardContent className="p-5">
-                  <h3 className="font-bold text-gray-900 dark:text-white">{plan.name}</h3>
-                  <p className="text-2xl font-bold text-blue-600 mt-1">{plan.price}</p>
-                  <ul className="space-y-2 my-4">{plan.features.map((f, i) => <li key={i} className="text-sm text-gray-600 dark:text-gray-300 flex items-center gap-2"><span className="text-green-500">✓</span>{f}</li>)}</ul>
-                  {user.subscription === plan.id ? <Button variant="outline" className="w-full dark:border-gray-700" disabled>{t.dashboard.settingsPage.currentPlanBtn}</Button> : <Link href="/upgrade"><Button className="w-full gradient-bg">{t.dashboard.settingsPage.upgradeBtn}</Button></Link>}
+                  <h3 className="font-bold text-gray-900 dark:text-white break-words">{plan.name}</h3>
+                  <p className="text-2xl font-bold text-blue-600 mt-1 break-words">{plan.price}</p>
+                  <ul className="space-y-2 my-4">{plan.features.map((f, i) => <li key={i} className="text-sm text-gray-600 dark:text-gray-300 flex items-start gap-2 break-words"><span className="text-green-500 shrink-0">✓</span><span className="min-w-0">{f}</span></li>)}</ul>
+                  {user.subscription === plan.id ? <Button variant="outline" className="w-full dark:border-gray-700 h-auto py-2 whitespace-normal text-center leading-tight" disabled>{t.dashboard.settingsPage.currentPlanBtn}</Button> : <Link href="/upgrade"><Button className="w-full gradient-bg h-auto py-2 whitespace-normal text-center leading-tight">{t.dashboard.settingsPage.upgradeBtn}</Button></Link>}
                 </CardContent>
               </Card>
             ))}
@@ -316,32 +316,32 @@ export function SettingsClient({ user, isDemo }: Props) {
         <div className="max-w-2xl space-y-4">
           <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base text-gray-900 dark:text-white"><Shield className="w-4 h-4" />{t.dashboard.settingsPage.gdprTitle}</CardTitle>
-              <CardDescription>{t.dashboard.settingsPage.gdprDesc}</CardDescription>
+              <CardTitle className="flex items-center gap-2 text-base text-gray-900 dark:text-white min-w-0"><Shield className="w-4 h-4 shrink-0" /><span className="break-words min-w-0">{t.dashboard.settingsPage.gdprTitle}</span></CardTitle>
+              <CardDescription className="break-words">{t.dashboard.settingsPage.gdprDesc}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="p-4 bg-green-50 dark:bg-green-950/30 rounded-lg">
-                <p className="text-sm font-semibold text-green-800 dark:text-green-300 mb-1">{t.dashboard.settingsPage.gdprCompliance}</p>
-                <p className="text-sm text-green-700 dark:text-green-400">{t.dashboard.settingsPage.gdprComplianceDesc}</p>
+                <p className="text-sm font-semibold text-green-800 dark:text-green-300 mb-1 break-words">{t.dashboard.settingsPage.gdprCompliance}</p>
+                <p className="text-sm text-green-700 dark:text-green-400 break-words">{t.dashboard.settingsPage.gdprComplianceDesc}</p>
               </div>
               <Separator />
               <div>
-                <h4 className="font-medium text-gray-900 dark:text-white text-sm mb-2">{t.dashboard.settingsPage.dataRetention}</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white text-sm mb-2 break-words">{t.dashboard.settingsPage.dataRetention}</h4>
                 <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                  <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800"><span>{t.dashboard.settingsPage.cvFiles}</span><span className="font-medium">{t.dashboard.settingsPage.cvFilesRetention}</span></div>
-                  <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800"><span>{t.dashboard.settingsPage.contactData}</span><span className="font-medium">{t.dashboard.settingsPage.contactDataRetention}</span></div>
-                  <div className="flex justify-between py-2"><span>{t.dashboard.settingsPage.aiResults}</span><span className="font-medium">{t.dashboard.settingsPage.aiResultsRetention}</span></div>
+                  <div className="flex justify-between gap-2 py-2 border-b border-gray-100 dark:border-gray-800"><span className="min-w-0 break-words">{t.dashboard.settingsPage.cvFiles}</span><span className="font-medium shrink-0 break-words">{t.dashboard.settingsPage.cvFilesRetention}</span></div>
+                  <div className="flex justify-between gap-2 py-2 border-b border-gray-100 dark:border-gray-800"><span className="min-w-0 break-words">{t.dashboard.settingsPage.contactData}</span><span className="font-medium shrink-0 break-words">{t.dashboard.settingsPage.contactDataRetention}</span></div>
+                  <div className="flex justify-between gap-2 py-2"><span className="min-w-0 break-words">{t.dashboard.settingsPage.aiResults}</span><span className="font-medium shrink-0 break-words">{t.dashboard.settingsPage.aiResultsRetention}</span></div>
                 </div>
               </div>
               <Separator />
               <div>
-                <h4 className="font-medium text-gray-900 dark:text-white text-sm mb-2">{t.dashboard.settingsPage.dataRights}</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white text-sm mb-2 break-words">{t.dashboard.settingsPage.dataRights}</h4>
                 <div className="space-y-2">
                   <Button
                     variant="outline"
                     size="sm"
                     disabled={exporting}
-                    className="w-full justify-start dark:border-gray-700 dark:text-gray-300"
+                    className="w-full justify-start dark:border-gray-700 dark:text-gray-300 h-auto py-2 whitespace-normal text-left leading-tight"
                     onClick={async () => {
                       setExporting(true)
                       try {
@@ -368,10 +368,10 @@ export function SettingsClient({ user, isDemo }: Props) {
                     variant="outline"
                     size="sm"
                     disabled={deletingAll}
-                    className="w-full justify-start text-red-600 hover:text-red-700 hover:border-red-300 dark:border-gray-700"
+                    className="w-full justify-start text-red-600 hover:text-red-700 hover:border-red-300 dark:border-gray-700 h-auto py-2 whitespace-normal text-left leading-tight"
                     onClick={() => setDeleteAllDialog(true)}
                   >
-                    <Trash2 size={14} className="mr-2" />
+                    <Trash2 size={14} className="mr-2 shrink-0" />
                     {deletingAll ? t.dashboard.settingsPage.deletingData : t.dashboard.settingsPage.deleteAllData}
                   </Button>
                 </div>

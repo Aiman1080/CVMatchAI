@@ -109,8 +109,8 @@ export function Sidebar() {
                 : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900'
             )}
           >
-            <ShieldCheck size={18} className="text-gray-400 dark:text-gray-600" />
-            {t.dashboard.nav.admin}
+            <ShieldCheck size={18} className="text-gray-400 dark:text-gray-600 shrink-0" />
+            <span className="truncate flex-1 min-w-0">{t.dashboard.nav.admin}</span>
           </Link>
         )}
       </nav>
@@ -119,12 +119,12 @@ export function Sidebar() {
       <div className="px-4 pb-2">
         <button
           onClick={() => setTheme(isDark ? 'light' : 'dark')}
-          className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-900 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+          className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-900 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
         >
-          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+          <span className="text-xs font-medium text-gray-600 dark:text-gray-400 truncate min-w-0 text-left">
             {isDark ? t.dashboard.nav.darkMode : t.dashboard.nav.lightMode}
           </span>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 shrink-0">
             <Sun size={13} className={isDark ? 'text-gray-500' : 'text-amber-500'} />
             <div className={cn('w-8 h-4 rounded-full transition-colors relative', isDark ? 'bg-blue-600' : 'bg-gray-300')}>
               <div className={cn('absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-all', isDark ? 'left-4' : 'left-0.5')} />
@@ -136,29 +136,29 @@ export function Sidebar() {
 
       {isFree && (
         <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800">
-          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">{t.dashboard.upgrade.planFree}</p>
+          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 break-words">{t.dashboard.upgrade.planFree}</p>
           <div className="p-3 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/40 dark:to-purple-950/40 rounded-xl border border-blue-100 dark:border-blue-900">
-            <p className="text-xs font-bold text-blue-800 dark:text-blue-300 mb-1">{t.dashboard.nav.upgradeTitle}</p>
-            <p className="text-xs text-blue-600 dark:text-blue-400 mb-2">{t.dashboard.nav.upgradeDesc}</p>
-            <a href="/upgrade" onClick={() => setMobileOpen(false)} className="block text-center text-xs bg-blue-600 text-white rounded-lg py-1.5 font-semibold hover:bg-blue-700 transition-colors">{t.dashboard.nav.upgradeArrow}</a>
+            <p className="text-xs font-bold text-blue-800 dark:text-blue-300 mb-1 break-words">{t.dashboard.nav.upgradeTitle}</p>
+            <p className="text-xs text-blue-600 dark:text-blue-400 mb-2 break-words">{t.dashboard.nav.upgradeDesc}</p>
+            <a href="/upgrade" onClick={() => setMobileOpen(false)} className="block text-center text-xs bg-blue-600 text-white rounded-lg py-1.5 font-semibold hover:bg-blue-700 transition-colors break-words">{t.dashboard.nav.upgradeArrow}</a>
           </div>
         </div>
       )}
 
       <div className="p-4 border-t border-gray-100 dark:border-gray-800">
         <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
-          <Avatar className="w-8 h-8">
+          <Avatar className="w-8 h-8 shrink-0">
             <AvatarFallback className="text-xs gradient-bg text-white font-semibold">{initials}</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{user?.name || t.dashboard.nav.userFallback}</p>
-            <span className={cn('text-xs px-1.5 py-0.5 rounded-full font-medium capitalize', planColors[user?.subscription || 'free'])}>
+            <span className={cn('text-xs px-1.5 py-0.5 rounded-full font-medium capitalize inline-block max-w-full truncate', planColors[user?.subscription || 'free'])}>
               {user?.subscription || 'free'}
             </span>
           </div>
           <button
             onClick={() => setShowLogoutConfirm(true)}
-            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded transition-colors"
+            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded transition-colors shrink-0"
             title={t.dashboard.nav.signOut}
           >
             <LogOut size={15} />
@@ -174,12 +174,12 @@ export function Sidebar() {
       <Dialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>{t.dashboard.nav.signOutConfirmTitle}</DialogTitle>
-            <DialogDescription>{t.dashboard.nav.signOutConfirmDesc}</DialogDescription>
+            <DialogTitle className="break-words">{t.dashboard.nav.signOutConfirmTitle}</DialogTitle>
+            <DialogDescription className="break-words">{t.dashboard.nav.signOutConfirmDesc}</DialogDescription>
           </DialogHeader>
-          <DialogFooter className="flex gap-2 sm:justify-end">
-            <Button variant="outline" onClick={() => setShowLogoutConfirm(false)}>{t.dashboard.nav.cancel}</Button>
-            <Button variant="destructive" onClick={() => signOut({ callbackUrl: '/' })}>{t.dashboard.nav.signOutConfirm}</Button>
+          <DialogFooter className="flex gap-2 sm:justify-end flex-wrap">
+            <Button variant="outline" onClick={() => setShowLogoutConfirm(false)} className="h-auto py-2 whitespace-normal text-center leading-tight">{t.dashboard.nav.cancel}</Button>
+            <Button variant="destructive" onClick={() => signOut({ callbackUrl: '/' })} className="h-auto py-2 whitespace-normal text-center leading-tight">{t.dashboard.nav.signOutConfirm}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

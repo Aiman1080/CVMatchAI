@@ -125,7 +125,7 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{cv.title}</DialogTitle>
+          <DialogTitle className="break-words">{cv.title}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -214,9 +214,9 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
               } catch { toast({ title: cv.genFailed, variant: 'destructive' }) }
               finally { setGenerating(false) }
             }}
-            className="w-full gap-2 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-400"
+            className="w-full gap-2 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-400 h-auto py-2 whitespace-normal text-center leading-tight"
           >
-            {generating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+            {generating ? <Loader2 size={14} className="animate-spin shrink-0" /> : <Sparkles size={14} className="shrink-0" />}
             {generating ? cv.generatingAIBtn : cv.generateAIBtn}
           </Button>
           <div className="space-y-1.5">
@@ -269,9 +269,9 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
             />
           </div>
           <div className="flex gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">{cv.cancel}</Button>
-            <Button type="submit" disabled={loading} className="flex-1 gradient-bg">
-              {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            <Button type="button" variant="outline" onClick={onClose} className="flex-1 h-auto py-2 whitespace-normal text-center leading-tight">{cv.cancel}</Button>
+            <Button type="submit" disabled={loading} className="flex-1 gradient-bg h-auto py-2 whitespace-normal text-center leading-tight">
+              {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin shrink-0" />}
               {loading ? cv.creating : cv.create}
             </Button>
           </div>

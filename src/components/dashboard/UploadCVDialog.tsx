@@ -101,8 +101,8 @@ export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploa
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{u.dialogTitle}</DialogTitle>
-          <DialogDescription>{u.forVacancy} <strong>{vacancyTitle}</strong></DialogDescription>
+          <DialogTitle className="break-words">{u.dialogTitle}</DialogTitle>
+          <DialogDescription className="break-words">{u.forVacancy} <strong>{vacancyTitle}</strong></DialogDescription>
         </DialogHeader>
 
         {results.length > 0 ? (() => {
@@ -117,11 +117,11 @@ export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploa
                     <div className="w-9 h-9 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center shrink-0">
                       <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold text-green-800 dark:text-green-300">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-green-800 dark:text-green-300 break-words">
                         {successCount} candidate{successCount === 1 ? '' : 's'} added successfully
                       </p>
-                      <p className="text-xs text-green-700 dark:text-green-400">
+                      <p className="text-xs text-green-700 dark:text-green-400 break-words">
                         AI analysis complete — view scores and details in the candidates list.
                       </p>
                     </div>
@@ -131,25 +131,25 @@ export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploa
               {failedCount > 0 && (
                 <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900 flex items-start gap-2.5">
                   <X className="w-4 h-4 text-red-500 dark:text-red-400 mt-0.5 shrink-0" />
-                  <div className="text-xs text-red-700 dark:text-red-400">
+                  <div className="text-xs text-red-700 dark:text-red-400 break-words min-w-0">
                     {failedCount} file{failedCount === 1 ? '' : 's'} could not be processed. See details below.
                   </div>
                 </div>
               )}
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{u.analysisComplete}</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 break-words">{u.analysisComplete}</p>
               {results.map((r, i) => (
                 <div key={i} className={`flex items-center gap-3 p-3 rounded-lg ${r.success ? 'bg-green-50 dark:bg-green-950/30' : 'bg-red-50 dark:bg-red-950/30'}`}>
                   {r.success ? <CheckCircle className="w-4 h-4 text-green-600 shrink-0" /> : <X className="w-4 h-4 text-red-500 shrink-0" />}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{r.file}</p>
                     {r.success && r.score && (
-                      <p className="text-xs text-gray-500">{u.matchScore} <strong>{r.score.toFixed(0)}%</strong></p>
+                      <p className="text-xs text-gray-500 break-words">{u.matchScore} <strong>{r.score.toFixed(0)}%</strong></p>
                     )}
-                    {!r.success && <p className="text-xs text-red-600">{r.error}</p>}
+                    {!r.success && <p className="text-xs text-red-600 break-words">{r.error}</p>}
                   </div>
                 </div>
               ))}
-              <Button onClick={handleClose} className="w-full gradient-bg">{u.done}</Button>
+              <Button onClick={handleClose} className="w-full gradient-bg h-auto py-2 whitespace-normal text-center leading-tight">{u.done}</Button>
             </div>
           )
         })() : (
@@ -160,10 +160,10 @@ export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploa
             >
               <input {...getInputProps()} />
               <Upload className={`w-8 h-8 mx-auto mb-3 ${isDragActive ? 'text-blue-500' : 'text-gray-400'}`} />
-              <p className="text-sm font-medium text-gray-700">
+              <p className="text-sm font-medium text-gray-700 break-words">
                 {isDragActive ? u.dropFiles : u.dragDrop}
               </p>
-              <p className="text-xs text-gray-400 mt-1">{u.fileFormats}</p>
+              <p className="text-xs text-gray-400 mt-1 break-words">{u.fileFormats}</p>
             </div>
 
             {files.length > 0 && (
@@ -171,9 +171,9 @@ export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploa
                 {files.map((f, i) => (
                   <div key={i} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
                     <FileText className="w-4 h-4 text-blue-500 shrink-0" />
-                    <span className="text-xs text-gray-700 dark:text-gray-300 flex-1 truncate">{f.name}</span>
-                    <span className="text-xs text-gray-400">{(f.size / 1024).toFixed(0)}KB</span>
-                    <button onClick={() => setFiles(prev => prev.filter((_, j) => j !== i))} className="text-gray-400 hover:text-red-500">
+                    <span className="text-xs text-gray-700 dark:text-gray-300 flex-1 truncate min-w-0">{f.name}</span>
+                    <span className="text-xs text-gray-400 shrink-0">{(f.size / 1024).toFixed(0)}KB</span>
+                    <button onClick={() => setFiles(prev => prev.filter((_, j) => j !== i))} className="text-gray-400 hover:text-red-500 shrink-0">
                       <X size={13} />
                     </button>
                   </div>
@@ -183,9 +183,9 @@ export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploa
 
             {uploading && (
               <div className="space-y-1">
-                <div className="flex justify-between text-xs text-gray-500">
-                  <span>{u.processingAI}</span>
-                  <span>{progress}%</span>
+                <div className="flex justify-between gap-2 text-xs text-gray-500">
+                  <span className="min-w-0 break-words">{u.processingAI}</span>
+                  <span className="shrink-0">{progress}%</span>
                 </div>
                 <Progress value={progress} />
               </div>
@@ -198,24 +198,24 @@ export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploa
                 id="gdpr"
                 checked={gdprConsent}
                 onChange={e => setGdprConsent(e.target.checked)}
-                className="mt-0.5 rounded"
+                className="mt-0.5 rounded shrink-0"
               />
-              <label htmlFor="gdpr" className="text-xs text-gray-600 dark:text-gray-300 cursor-pointer">
+              <label htmlFor="gdpr" className="text-xs text-gray-600 dark:text-gray-300 cursor-pointer break-words min-w-0">
                 {u.gdprConsent}
               </label>
             </div>
 
             <div className="flex gap-3">
-              <Button variant="outline" onClick={handleClose} className="flex-1">{u.cancelBtn}</Button>
+              <Button variant="outline" onClick={handleClose} className="flex-1 h-auto py-2 whitespace-normal text-center leading-tight">{u.cancelBtn}</Button>
               <Button
                 onClick={handleUpload}
                 disabled={files.length === 0 || uploading || !gdprConsent}
-                className="flex-1 gradient-bg"
+                className="flex-1 gradient-bg h-auto py-2 whitespace-normal text-center leading-tight"
               >
                 {uploading ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {u.analyzing}</>
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin shrink-0" /> {u.analyzing}</>
                 ) : (
-                  <><Upload className="w-4 h-4 mr-2" /> {u.uploadAnalyze}</>
+                  <><Upload className="w-4 h-4 mr-2 shrink-0" /> {u.uploadAnalyze}</>
                 )}
               </Button>
             </div>

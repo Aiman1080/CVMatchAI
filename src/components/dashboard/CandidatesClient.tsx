@@ -550,19 +550,19 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
                   const ids = Array.from(selectedIds).join(',')
                   router.push(`/candidates/compare?ids=${ids}`)
                 }}
-                className="gap-1 h-8 text-xs border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-400 dark:hover:bg-indigo-950"
+                className="gap-1 h-auto py-1.5 text-xs border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-400 dark:hover:bg-indigo-950 whitespace-normal text-center leading-tight"
               >
-                <GitCompareArrows size={13} /> Compare ({selectedIds.size})
+                <GitCompareArrows size={13} className="shrink-0" /> Compare ({selectedIds.size})
               </Button>
             )}
-            <Button variant="outline" size="sm" disabled={exportingExcel || bulkUpdating} onClick={handleBulkExportExcel} className="gap-1 h-8 text-xs">
-              <Download size={13} /> Excel
+            <Button variant="outline" size="sm" disabled={exportingExcel || bulkUpdating} onClick={handleBulkExportExcel} className="gap-1 h-auto py-1.5 text-xs whitespace-normal text-center leading-tight">
+              <Download size={13} className="shrink-0" /> Excel
             </Button>
-            <Button variant="outline" size="sm" disabled={exportingPdf || bulkUpdating} onClick={handleBulkExportPdf} className="gap-1 h-8 text-xs">
-              <Download size={13} /> PDF
+            <Button variant="outline" size="sm" disabled={exportingPdf || bulkUpdating} onClick={handleBulkExportPdf} className="gap-1 h-auto py-1.5 text-xs whitespace-normal text-center leading-tight">
+              <Download size={13} className="shrink-0" /> PDF
             </Button>
-            <Button variant="destructive" size="sm" disabled={bulkUpdating} onClick={handleBulkDelete} className="gap-1 h-8 text-xs">
-              <Trash2 size={13} /> Delete
+            <Button variant="destructive" size="sm" disabled={bulkUpdating} onClick={handleBulkDelete} className="gap-1 h-auto py-1.5 text-xs whitespace-normal text-center leading-tight">
+              <Trash2 size={13} className="shrink-0" /> Delete
             </Button>
           </div>
           {bulkUpdating && <Loader2 size={14} className="animate-spin text-blue-500" />}

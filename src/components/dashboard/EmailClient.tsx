@@ -178,9 +178,9 @@ export function EmailClient() {
     <div className="space-y-6">
       <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950 border border-blue-100 dark:border-blue-900 flex gap-3">
         <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-        <div className="flex-1">
-          <p className="text-sm font-semibold text-blue-800">{te.bannerTitle}</p>
-          <p className="text-sm text-blue-600 mt-0.5">
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-blue-800 break-words">{te.bannerTitle}</p>
+          <p className="text-sm text-blue-600 mt-0.5 break-words">
             {te.bannerDesc}
           </p>
         </div>
@@ -192,8 +192,8 @@ export function EmailClient() {
           <Zap className="w-5 h-5 text-white" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-indigo-800 dark:text-indigo-300">{te.demoTitle}</p>
-          <p className="text-sm text-indigo-600 dark:text-indigo-400">
+          <p className="text-sm font-semibold text-indigo-800 dark:text-indigo-300 break-words">{te.demoTitle}</p>
+          <p className="text-sm text-indigo-600 dark:text-indigo-400 break-words">
             {te.demoDesc}
           </p>
         </div>
@@ -201,9 +201,9 @@ export function EmailClient() {
           onClick={runDemoScan}
           disabled={demoScanning}
           size="sm"
-          className="gradient-bg shrink-0 gap-1.5"
+          className="gradient-bg shrink-0 gap-1.5 h-auto py-2 whitespace-normal text-center leading-tight"
         >
-          {demoScanning ? <><Loader2 size={13} className="animate-spin" /> {te.scanning}</> : <><Scan size={13} /> {te.runDemoScan}</>}
+          {demoScanning ? <><Loader2 size={13} className="animate-spin shrink-0" /> {te.scanning}</> : <><Scan size={13} className="shrink-0" /> {te.runDemoScan}</>}
         </Button>
       </div>}
 
@@ -213,8 +213,8 @@ export function EmailClient() {
           <Eraser className="w-5 h-5 text-white" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-amber-800">{te.cleanTitle}</p>
-          <p className="text-sm text-amber-700">
+          <p className="text-sm font-semibold text-amber-800 break-words">{te.cleanTitle}</p>
+          <p className="text-sm text-amber-700 break-words">
             {te.cleanDesc}
           </p>
         </div>
@@ -223,9 +223,9 @@ export function EmailClient() {
           disabled={cleaning}
           size="sm"
           variant="outline"
-          className="border-amber-300 text-amber-700 hover:bg-amber-100 shrink-0 gap-1.5"
+          className="border-amber-300 text-amber-700 hover:bg-amber-100 shrink-0 gap-1.5 h-auto py-2 whitespace-normal text-center leading-tight"
         >
-          {cleaning ? <><Loader2 size={13} className="animate-spin" /> {te.cleaning}</> : <><Eraser size={13} /> {te.cleanDuplicates}</>}
+          {cleaning ? <><Loader2 size={13} className="animate-spin shrink-0" /> {te.cleaning}</> : <><Eraser size={13} className="shrink-0" /> {te.cleanDuplicates}</>}
         </Button>
       </div>
 
@@ -240,8 +240,8 @@ export function EmailClient() {
               <div className="w-8 h-8 rounded-lg gradient-bg flex items-center justify-center mb-3">
                 <item.icon className="w-4 h-4 text-white" />
               </div>
-              <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-1">{item.title}</h3>
-              <p className="text-xs text-gray-500 leading-relaxed">{item.desc}</p>
+              <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-1 break-words">{item.title}</h3>
+              <p className="text-xs text-gray-500 leading-relaxed break-words">{item.desc}</p>
             </CardContent>
           </Card>
         ))}
@@ -249,9 +249,9 @@ export function EmailClient() {
 
       <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
         <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-3 gap-2">
-          <CardTitle className="text-base">{te.connectedInboxes}</CardTitle>
-          <Button onClick={openConnectDialog} size="sm" className="gradient-bg gap-1.5 w-full sm:w-auto">
-            <Plus size={14} /> {te.connectInbox}
+          <CardTitle className="text-base break-words min-w-0">{te.connectedInboxes}</CardTitle>
+          <Button onClick={openConnectDialog} size="sm" className="gradient-bg gap-1.5 w-full sm:w-auto h-auto py-2 whitespace-normal text-center leading-tight">
+            <Plus size={14} className="shrink-0" /> {te.connectInbox}
           </Button>
         </CardHeader>
         <CardContent>
@@ -265,10 +265,10 @@ export function EmailClient() {
               <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/40 dark:to-purple-950/40 flex items-center justify-center mx-auto mb-3">
                 <Mail className="w-7 h-7 text-blue-500 dark:text-blue-400" />
               </div>
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">{te.noInboxes}</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-4">{te.noInboxesDesc}</p>
-              <Button onClick={openConnectDialog} size="sm" className="gradient-bg gap-1.5">
-                <Plus size={14} /> {(te as any).connectFirstInbox || te.connectInbox}
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1 break-words">{te.noInboxes}</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-4 break-words">{te.noInboxesDesc}</p>
+              <Button onClick={openConnectDialog} size="sm" className="gradient-bg gap-1.5 h-auto py-2 whitespace-normal text-center leading-tight">
+                <Plus size={14} className="shrink-0" /> {(te as any).connectFirstInbox || te.connectInbox}
               </Button>
             </div>
           ) : (
@@ -285,13 +285,13 @@ export function EmailClient() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap ml-auto">
-                    <span className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30 px-2 py-1 rounded-full">
-                      <CheckCircle size={11} /> {te.active}
+                    <span className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30 px-2 py-1 rounded-full break-words">
+                      <CheckCircle size={11} className="shrink-0" /> {te.active}
                     </span>
-                    <Button size="sm" variant="outline" onClick={() => handleScan(inbox.id)} disabled={scanning === inbox.id} className="gap-1.5 text-xs h-8">
-                      {scanning === inbox.id ? <><Loader2 size={12} className="animate-spin" /> {te.scanning}</> : <><RefreshCw size={12} /> {te.scanNow}</>}
+                    <Button size="sm" variant="outline" onClick={() => handleScan(inbox.id)} disabled={scanning === inbox.id} className="gap-1.5 text-xs h-auto py-1.5 whitespace-normal text-center leading-tight">
+                      {scanning === inbox.id ? <><Loader2 size={12} className="animate-spin shrink-0" /> {te.scanning}</> : <><RefreshCw size={12} className="shrink-0" /> {te.scanNow}</>}
                     </Button>
-                    <button onClick={() => handleDelete(inbox.id)} className="p-1.5 text-gray-400 hover:text-red-500 rounded transition-colors">
+                    <button onClick={() => handleDelete(inbox.id)} className="p-1.5 text-gray-400 hover:text-red-500 rounded transition-colors shrink-0">
                       <Trash2 size={15} />
                     </button>
                   </div>
@@ -322,9 +322,9 @@ export function EmailClient() {
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shrink-0">
                     <span className="text-white font-bold text-lg">G</span>
                   </div>
-                  <div>
-                    <p className="font-semibold text-gray-900 dark:text-white">Gmail</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{te.gmailDesc}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-gray-900 dark:text-white break-words">Gmail</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 break-words">{te.gmailDesc}</p>
                   </div>
                 </button>
 
@@ -337,9 +337,9 @@ export function EmailClient() {
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shrink-0">
                     <span className="text-white font-bold text-lg">O</span>
                   </div>
-                  <div>
-                    <p className="font-semibold text-gray-900 dark:text-white">Outlook / Office 365</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{te.outlookDesc}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-gray-900 dark:text-white break-words">Outlook / Office 365</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 break-words">{te.outlookDesc}</p>
                   </div>
                 </button>
 
@@ -352,9 +352,9 @@ export function EmailClient() {
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gray-400 to-gray-500 flex items-center justify-center shrink-0">
                     <Mail className="w-5 h-5 text-white" />
                   </div>
-                  <div>
-                    <p className="font-semibold text-gray-900 dark:text-white">{te.otherLabel}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{te.otherDesc}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-gray-900 dark:text-white break-words">{te.otherLabel}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 break-words">{te.otherDesc}</p>
                   </div>
                 </button>
               </div>
