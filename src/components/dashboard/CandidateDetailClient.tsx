@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import {
   Mail, Phone, Linkedin, CheckCircle, XCircle, Clock, Star,
   TrendingUp, TrendingDown, Loader2, RefreshCw, FileText, User, Briefcase,
@@ -71,6 +71,8 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
   const [sendingEmail, setSendingEmail] = useState(false)
   const [generatingEmail, setGeneratingEmail] = useState(false)
   const [interviewQuestions, setInterviewQuestions] = useState<Array<{ question: string; category: string; rationale: string; expectedAnswer: string }> | null>(null)
+  // Recruiter's actual answers per question — saved to localStorage so they persist across page reloads
+  const [questionAnswers, setQuestionAnswers] = useState<Record<number, string>>({})
   const [visibleAnswers, setVisibleAnswers] = useState<Set<number>>(new Set())
   const [loadingQuestions, setLoadingQuestions] = useState(false)
   const [hiringReport, setHiringReport] = useState<string | null>(null)
@@ -80,6 +82,14 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
   const [loadingActivities, setLoadingActivities] = useState(false)
   const [activitiesLoaded, setActivitiesLoaded] = useState(false)
   const notesTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Restore saved interview answers from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`deltamatch-answers-${candidate.id}`)
+      if (saved) setQuestionAnswers(JSON.parse(saved))
+    } catch {}
+  }, [candidate.id])
 
   const score = candidate.matchScore || 0
   const strengths = parseJsonSafe<string[]>(candidate.strengths, [])
@@ -738,6 +748,23 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                             }`}>{ci.categories[q.category as keyof typeof ci.categories] || q.category}</span>
                           </div>
                           <p className="text-xs text-gray-500 dark:text-gray-400 italic">{q.rationale}</p>
+                          {/* Recruiter's answer field — saved automatically to localStorage */}
+                          <div className="pt-2">
+                            <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">
+                              Candidate&apos;s answer
+                            </label>
+                            <textarea
+                              value={questionAnswers[i] || ''}
+                              onChange={(e) => {
+                                const next = { ...questionAnswers, [i]: e.target.value }
+                                setQuestionAnswers(next)
+                                try { localStorage.setItem(`deltamatch-answers-${candidate.id}`, JSON.stringify(next)) } catch {}
+                              }}
+                              placeholder="Type the candidate's answer here..."
+                              rows={3}
+                              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                            />
+                          </div>
                           {q.expectedAnswer && (
                             <div className="pt-1">
                               <button
@@ -795,10 +822,19 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                             onClick={async () => {
                               setDownloadingReportPdf(true)
                               try {
+                                // Build Q&A list — only include questions that have a typed answer
+                                const interviewQA = interviewQuestions
+                                  ? interviewQuestions.map((q, i) => ({
+                                      question: q.question,
+                                      category: q.category,
+                                      answer: questionAnswers[i] || '',
+                                    }))
+                                  : []
                                 await exportHiringReportPDF(
                                   hiringReport,
                                   `${candidate.firstName} ${candidate.lastName}`,
-                                  candidate.vacancy?.title
+                                  candidate.vacancy?.title,
+                                  interviewQA
                                 )
                                 toast({ title: ci.pdfDownloaded })
                               } catch {
