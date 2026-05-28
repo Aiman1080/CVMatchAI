@@ -8,10 +8,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const session = await getServerSession(authOptions)
   if (!session || (session.user as any).role !== 'admin') redirect('/dashboard')
   const userId = (session.user as any)?.id
-  // Verify the admin still exists (handles stale JWT after DB reset)
+  // Only log out if DB explicitly returns null (user deleted); ignore transient errors.
   if (userId) {
-    const userExists = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } }).catch(() => null)
-    if (!userExists) redirect('/api/auth/signout?callbackUrl=/login')
+    let userCheck: { id: string } | null | undefined
+    try {
+      userCheck = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } })
+    } catch {
+      userCheck = undefined
+    }
+    if (userCheck === null) redirect('/api/auth/signout?callbackUrl=/login')
   }
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex">
