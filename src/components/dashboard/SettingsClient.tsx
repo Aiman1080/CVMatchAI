@@ -15,7 +15,7 @@ import { useLanguage } from '@/contexts/LanguageContext'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
 interface Props {
-  user: { name?: string; email?: string; company?: string; subscription?: string; image?: string; emailSignature?: string }
+  user: { id?: string; name?: string; email?: string; company?: string; subscription?: string; image?: string; emailSignature?: string }
   isDemo?: boolean
 }
 
@@ -210,6 +210,56 @@ export function SettingsClient({ user, isDemo }: Props) {
               <Button type="submit" disabled={saving || isDemo} className="gradient-bg gap-2 h-auto py-2 whitespace-normal text-center leading-tight"><Save size={14} className="shrink-0" />{saving ? t.dashboard.settingsProfile.saving : t.dashboard.settingsProfile.saveChanges}</Button>
               {isDemo && <p className="text-xs text-amber-600 break-words">Demo accounts cannot modify profile settings.</p>}
             </form>
+          </CardContent>
+        </Card>
+
+        {/* Your personal account — security and personalization */}
+        <Card className="border border-gray-100 dark:border-gray-800 shadow-none max-w-lg">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Shield className="w-4 h-4 text-green-600" /> Your personal workspace
+            </CardTitle>
+            <CardDescription>
+              Your data is fully isolated from other users. Each account has its own unique secure workspace.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div>
+              <Label className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Your account ID</Label>
+              <div className="mt-1 flex items-center gap-2">
+                <code className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-xs font-mono text-gray-700 dark:text-gray-300 break-all">
+                  {user.id || '—'}
+                </code>
+                {user.id && (
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(user.id!)
+                      toast({ title: 'Copied to clipboard' })
+                    }}
+                    className="px-3 py-2 text-xs bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900 font-medium shrink-0"
+                  >
+                    Copy
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                This is your unique workspace identifier. Other users <strong>cannot</strong> access your vacancies or candidates — every page is protected by your session and personalized to you.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="flex items-center gap-1.5 text-green-700 dark:text-green-400">
+                <span>✓</span> Encrypted data
+              </div>
+              <div className="flex items-center gap-1.5 text-green-700 dark:text-green-400">
+                <span>✓</span> Private workspace
+              </div>
+              <div className="flex items-center gap-1.5 text-green-700 dark:text-green-400">
+                <span>✓</span> Session-protected
+              </div>
+              <div className="flex items-center gap-1.5 text-green-700 dark:text-green-400">
+                <span>✓</span> GDPR compliant
+              </div>
+            </div>
           </CardContent>
         </Card>
 
