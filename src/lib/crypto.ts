@@ -2,7 +2,8 @@ import crypto from 'crypto'
 
 const ALGORITHM = 'aes-256-gcm'
 const SECRET = process.env.NEXTAUTH_SECRET || 'fallback-secret-key-change-me'
-const KEY = crypto.scryptSync(SECRET, 'salt', 32)
+const SALT = crypto.createHash('sha256').update(SECRET + '-salt').digest()
+const KEY = crypto.scryptSync(SECRET, SALT, 32)
 
 export function encrypt(text: string): string {
   const iv = crypto.randomBytes(16)

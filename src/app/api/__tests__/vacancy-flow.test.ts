@@ -49,6 +49,11 @@ vi.mock('@/lib/plans', () => ({
     maxCandidatesPerMonth: Infinity,
     aiAnalysis: true,
     emailInbox: true,
+    candidateRanking: true,
+    interviewQuestions: true,
+    hiringReport: true,
+    csvImport: true,
+    export: true,
   }),
 }))
 
@@ -324,6 +329,12 @@ describe('Vacancy Flow - Ranking', () => {
     vi.clearAllMocks()
     ;(getServerSession as any).mockResolvedValue({
       user: { id: 'user-1', name: 'Test User', email: 'test@test.com', role: 'recruiter', subscription: 'pro' },
+    })
+    const { getPlanLimits } = await import('@/lib/plans')
+    ;(getPlanLimits as any).mockReturnValue({
+      maxVacancies: Infinity, maxCandidatesPerMonth: Infinity, aiAnalysis: true,
+      emailInbox: true, candidateRanking: true, interviewQuestions: true,
+      hiringReport: true, csvImport: true, export: true,
     })
     const mod = await import('../vacancies/ranking/route')
     POST = mod.POST

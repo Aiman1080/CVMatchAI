@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { isDemoAccount } from '@/lib/demo-guard'
 
 const USER_SELECT = {
   id: true, name: true, email: true, role: true,
@@ -33,6 +34,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if ((session.user as any).role !== 'admin')
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (isDemoAccount(session.user?.email))
+    return NextResponse.json({ error: 'Demo accounts cannot perform this action' }, { status: 403 })
 
   const { id } = await params
   try {
@@ -57,6 +60,8 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if ((session.user as any).role !== 'admin')
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (isDemoAccount(session.user?.email))
+    return NextResponse.json({ error: 'Demo accounts cannot perform this action' }, { status: 403 })
 
   const { id } = await params
   const adminId = (session.user as any).id

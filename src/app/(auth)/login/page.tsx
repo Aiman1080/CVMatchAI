@@ -19,7 +19,6 @@ export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' })
   const [loading, setLoading] = useState(false)
   const [showPass, setShowPass] = useState(false)
-  const [rememberMe, setRememberMe] = useState(true)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -84,15 +83,6 @@ export default function LoginPage() {
               <Link href="/forgot-password" className="text-xs text-blue-600 hover:underline">{t.auth.forgotPassword}</Link>
             </div>
           </div>
-          <label className="flex items-center gap-2 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={rememberMe}
-              onChange={e => setRememberMe(e.target.checked)}
-              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
-            <span className="text-sm text-gray-600">Remember me</span>
-          </label>
           <Button type="submit" disabled={loading} className="w-full gradient-bg h-11">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : t.auth.signIn}
           </Button>

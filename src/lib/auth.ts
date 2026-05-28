@@ -26,10 +26,12 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null
-        const user = await prisma.user.findUnique({ where: { email: credentials.email } })
+        const email = credentials.email.toLowerCase()
+        const user = await prisma.user.findUnique({ where: { email } })
         if (!user || !user.password) return null
         const isValid = await bcrypt.compare(credentials.password, user.password)
         if (!isValid) return null
+        if (user.suspended) return null
         // Return only safe fields — never expose password hash to session
         return {
           id: user.id, email: user.email, name: user.name,

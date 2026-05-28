@@ -47,7 +47,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const initialLocale: Locale = (['en', 'nl', 'fr'].includes(localeCookie as string) ? localeCookie : 'fr') as Locale
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={initialLocale} suppressHydrationWarning>
       <body className={inter.className}>
         <Providers initialLocale={initialLocale}>
           {children}

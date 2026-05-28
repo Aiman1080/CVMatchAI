@@ -5,6 +5,8 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { getPlanLimits } from '@/lib/plans'
+import { isDemoAccount } from '@/lib/demo-guard'
 
 const VALID_STATUSES = ['new', 'reviewing', 'shortlisted', 'rejected', 'hired']
 
@@ -56,6 +58,16 @@ export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  if (isDemoAccount(session.user?.email)) {
+    return NextResponse.json({ error: 'Demo accounts cannot perform this action' }, { status: 403 })
+  }
+
+  const subscription = (session.user as any)?.subscription || 'free'
+  const limits = getPlanLimits(subscription)
+  if (!limits.csvImport) {
+    return NextResponse.json({ error: 'CSV import requires Pro plan' }, { status: 403 })
   }
 
   try {

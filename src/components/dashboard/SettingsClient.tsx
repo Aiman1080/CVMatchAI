@@ -202,7 +202,7 @@ export function SettingsClient({ user, isDemo }: Props) {
       <TabsContent value="subscription">
         <div>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{t.dashboard.settingsPage.currentPlan} <span className="font-semibold text-blue-600 capitalize">{user.subscription || 'free'}</span></p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {PLANS.map(plan => (
               <Card key={plan.id} className={`border-0 shadow-sm ${(plan as any).popular ? 'ring-2 ring-blue-500' : ''} ${user.subscription === plan.id ? 'bg-blue-50 dark:bg-blue-950/30' : ''}`}>
                 <CardContent className="p-5">

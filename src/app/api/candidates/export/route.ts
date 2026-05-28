@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import nodemailer from 'nodemailer'
+import { getPlanLimits } from '@/lib/plans'
 
 function toCSV(candidates: any[]): string {
   const headers = ['Name', 'Email', 'Phone', 'Match Score', 'Status', 'Recommendation', 'Skills', 'Experience', 'Education', 'Summary', 'Vacancy', 'Source', 'Date Added']
@@ -30,6 +31,12 @@ function toCSV(candidates: any[]): string {
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const subscription = (session.user as any)?.subscription || 'free'
+  const limits = getPlanLimits(subscription)
+  if (!limits.export) {
+    return NextResponse.json({ error: 'Export requires Pro plan' }, { status: 403 })
+  }
 
   const { searchParams } = new URL(req.url)
   const vacancyId = searchParams.get('vacancyId')

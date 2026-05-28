@@ -22,9 +22,10 @@ export async function POST(req: Request) {
   try {
     const body = await req.json()
     const { name, email, password, company, plan } = schema.parse(body)
+    const normalizedEmail = email.toLowerCase()
 
     // Prevent duplicate accounts before hashing — hashing is expensive (bcrypt cost 12)
-    const existing = await prisma.user.findUnique({ where: { email } })
+    const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } })
     if (existing) return NextResponse.json({ error: 'Email already registered' }, { status: 400 })
 
     const hashed = await bcrypt.hash(password, 12)
@@ -34,7 +35,7 @@ export async function POST(req: Request) {
     const user = await prisma.user.create({
       data: {
         name,
-        email,
+        email: normalizedEmail,
         password: hashed,
         company,
         role: 'recruiter',
@@ -50,14 +51,14 @@ export async function POST(req: Request) {
         const expires = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
 
         await prisma.verificationToken.create({
-          data: { identifier: email, token, expires },
+          data: { identifier: normalizedEmail, token, expires },
         })
 
         const appUrl = process.env.APP_URL || process.env.NEXTAUTH_URL || 'http://localhost:3000'
-        const verifyUrl = `${appUrl}/verify-email?token=${token}&email=${encodeURIComponent(email)}`
+        const verifyUrl = `${appUrl}/verify-email?token=${token}&email=${encodeURIComponent(normalizedEmail)}`
 
         await sendEmail(
-          email,
+          normalizedEmail,
           'Verify your email — DeltaMatch',
           `Hi ${name},\n\nPlease verify your email address by clicking the link below:\n\n${verifyUrl}\n\nThis link expires in 24 hours.\n\nIf you didn't create this account, you can safely ignore this email.`
         )

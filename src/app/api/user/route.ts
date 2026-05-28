@@ -3,7 +3,10 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import { z } from 'zod'
 import { isDemoAccount } from '@/lib/demo-guard'
+
+const passwordSchema = z.string().min(8).regex(/[A-Z]/).regex(/[0-9]/).regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/)
 
 // Returns the current user's stats and subscription tier — used by the dashboard header
 export async function GET() {
@@ -41,6 +44,13 @@ export async function PATCH(req: Request) {
 
     if (body.newPassword) {
       if (!body.currentPassword) return NextResponse.json({ error: 'Current password required' }, { status: 400 })
+      try {
+        passwordSchema.parse(body.newPassword)
+      } catch (e) {
+        if (e instanceof z.ZodError) {
+          return NextResponse.json({ error: 'Password must be at least 8 characters and contain an uppercase letter, a number, and a special character' }, { status: 400 })
+        }
+      }
       const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { password: true } })
       const valid = dbUser?.password && await bcrypt.compare(body.currentPassword, dbUser.password)
       if (!valid) return NextResponse.json({ error: 'Current password is incorrect' }, { status: 401 })

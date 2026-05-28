@@ -167,7 +167,7 @@ export function AdminClient({
       const params = new URLSearchParams(window.location.search)
       const tab = params.get('tab') || 'accounts'
       if (tab !== activeTab) setActiveTab(tab)
-    }, 300)
+    }, 2000)
     return () => { window.removeEventListener('popstate', handleUrlChange); clearInterval(interval) }
   }, [activeTab])
 
