@@ -74,15 +74,15 @@ export default function UpgradePage() {
   return (
     <div>
       <Header title={t.upgrade.title} description={t.upgrade.description} />
-      <div className="p-8">
+      <div className="p-4 sm:p-8">
         <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{t.upgrade.unlockTitle}</h2>
+          <div className="text-center mb-8 sm:mb-10">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">{t.upgrade.unlockTitle}</h2>
             <p className="text-gray-500 dark:text-gray-400">{t.upgrade.unlockDesc}</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
             {plans.map(plan => (
-              <div key={plan.name} className={`relative rounded-2xl border-2 p-8 ${plan.color} bg-white dark:bg-gray-800`}>
+              <div key={plan.name} className={`relative rounded-2xl border-2 p-6 sm:p-8 ${plan.color} bg-white dark:bg-gray-800`}>
                 {(plan as any).popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 flex gap-2">
                     <span className="gradient-bg text-white text-xs px-3 py-1 rounded-full font-semibold">{t.upgrade.mostPopular}</span>
@@ -95,8 +95,8 @@ export default function UpgradePage() {
                 )}
                 <div className={`w-10 h-10 rounded-xl ${plan.iconColor} flex items-center justify-center mb-4`}><plan.icon className="w-5 h-5" /></div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">{plan.name}</h3>
-                <div className="flex items-baseline gap-1 mb-6">
-                  <span className="text-4xl font-extrabold text-gray-900 dark:text-white">{plan.price}</span>
+                <div className="flex items-baseline gap-1 mb-6 flex-wrap">
+                  <span className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white">{plan.price}</span>
                   <span className="text-gray-400 dark:text-gray-500 text-sm">{plan.period}</span>
                 </div>
                 <ul className="space-y-3 mb-8">

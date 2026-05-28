@@ -327,18 +327,18 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
   const hasMotivationText = !!candidate.motivationText
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Profile Header */}
       <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
-        <CardContent className="p-6">
-          <div className="flex flex-col lg:flex-row items-start gap-6">
-            <div className="flex items-center gap-4 flex-1">
-              <Avatar className="w-16 h-16 shrink-0">
-                <AvatarFallback className="text-xl gradient-bg text-white font-bold">{initials}</AvatarFallback>
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex flex-col lg:flex-row items-start gap-4 sm:gap-6">
+            <div className="flex items-center gap-3 sm:gap-4 flex-1 w-full min-w-0">
+              <Avatar className="w-14 h-14 sm:w-16 sm:h-16 shrink-0">
+                <AvatarFallback className="text-lg sm:text-xl gradient-bg text-white font-bold">{initials}</AvatarFallback>
               </Avatar>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{candidate.firstName} {candidate.lastName}</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white break-words">{candidate.firstName} {candidate.lastName}</h2>
                   {candidate.liked && <Star className="w-5 h-5 text-amber-500" fill="currentColor" />}
                   {candidate.priority && <Flag className="w-5 h-5 text-red-500" />}
                   {candidate.savedToPool && <span className="text-xs bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 px-2 py-1 rounded-full font-medium border border-amber-200 dark:border-amber-800">{cd.savedToPool}</span>}
@@ -357,17 +357,17 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 sm:gap-4 w-full lg:w-auto">
               {/* Score circle */}
-              <div className={`w-20 h-20 rounded-full bg-gradient-to-br ${scoreBg} flex flex-col items-center justify-center shadow-lg shrink-0`}>
-                <span className="text-xl font-bold text-white">{score > 0 ? `${score.toFixed(0)}%` : '—'}</span>
-                <span className="text-xs text-white/80">{cd.match}</span>
+              <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br ${scoreBg} flex flex-col items-center justify-center shadow-lg shrink-0`}>
+                <span className="text-base sm:text-xl font-bold text-white">{score > 0 ? `${score.toFixed(0)}%` : '—'}</span>
+                <span className="text-[10px] sm:text-xs text-white/80">{cd.match}</span>
               </div>
 
               {/* Actions */}
-              <div className="space-y-2">
+              <div className="space-y-2 flex-1 min-w-0">
                 <Select value={candidate.status} onValueChange={handleStatusChange}>
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-full sm:w-40">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -435,7 +435,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Left column */}
         <div className="space-y-4">
           <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
@@ -446,9 +446,9 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               {candidate.email && (
-                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300 min-w-0">
                   <Mail size={14} className="text-gray-400 shrink-0" />
-                  <a href={`mailto:${candidate.email}`} className="hover:text-blue-600 truncate">{candidate.email}</a>
+                  <a href={`mailto:${candidate.email}`} className="hover:text-blue-600 truncate min-w-0">{candidate.email}</a>
                 </div>
               )}
               {candidate.phone && (
@@ -947,7 +947,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
               </div>
             </div>
 
-            <div className="flex gap-2 flex-wrap">
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
               {[
                 { type: 'interview', label: `📅 ${cd.interview}`, color: 'border-blue-300 text-blue-700 bg-blue-50' },
                 { type: 'rejection', label: `❌ ${cd.rejection}`, color: 'border-red-300 text-red-700 bg-red-50' },
@@ -966,7 +966,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                       setEmailBody('')
                     }
                   }}
-                  className={`flex-1 text-xs py-1.5 px-2 rounded-lg border font-medium transition-all ${emailType === opt.type ? opt.color : 'border-gray-200 text-gray-400'}`}
+                  className={`sm:flex-1 text-xs py-1.5 px-2 rounded-lg border font-medium transition-all ${emailType === opt.type ? opt.color : 'border-gray-200 text-gray-400'}`}
                 >
                   {opt.label}
                 </button>

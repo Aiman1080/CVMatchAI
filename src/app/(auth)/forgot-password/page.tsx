@@ -56,10 +56,10 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="relative z-10 w-full max-w-md">
-      <div className="bg-white text-gray-900 rounded-2xl shadow-2xl p-8 [&_input]:bg-white [&_input]:border-gray-300 [&_input]:text-gray-900 [&_label]:text-gray-700">
-        <div className="text-center mb-8">
+      <div className="bg-white text-gray-900 rounded-2xl shadow-2xl p-6 sm:p-8 [&_input]:bg-white [&_input]:border-gray-300 [&_input]:text-gray-900 [&_label]:text-gray-700">
+        <div className="text-center mb-6 sm:mb-8">
           <div className="mx-auto mb-4 w-fit"><Logo size={48} /></div>
-          <h1 className="text-2xl font-bold text-gray-900">{t.auth.resetYourPassword}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{t.auth.resetYourPassword}</h1>
           <p className="text-gray-500 text-sm mt-1">
             {t.auth.enterEmailForReset}
           </p>

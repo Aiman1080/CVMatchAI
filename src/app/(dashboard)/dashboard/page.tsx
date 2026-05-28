@@ -68,10 +68,10 @@ export default async function DashboardPage() {
   return (
     <div>
       <DashboardGreeting firstName={session?.user?.name?.split(' ')[0] || ''} />
-      <div className="p-8 space-y-8">
+      <div className="p-4 sm:p-8 space-y-6 sm:space-y-8">
         <DashboardClient onboarding={onboarding} subscription={effectiveSubscription} />
         <DashboardStats stats={stats} />
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
           <div className="xl:col-span-2"><RecentCandidates candidates={recentCandidates} /></div>
           <div><AIInsightsPanel candidates={recentCandidates.map(c => ({ name: `${c.firstName} ${c.lastName}`, matchScore: c.matchScore || 0, vacancyTitle: c.vacancy?.title || '' }))} totalCandidates={candidateCount} avgScore={stats.avgScore} /></div>
         </div>

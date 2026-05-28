@@ -108,7 +108,7 @@ export function OnboardingChecklist({ hasVacancy, hasCandidate, hasEmail, onVaca
         <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-gradient-to-br from-blue-200/30 to-purple-200/30 dark:from-blue-800/10 dark:to-purple-800/10 blur-2xl" />
         <div className="absolute -bottom-12 -left-12 w-36 h-36 rounded-full bg-gradient-to-tr from-indigo-200/20 to-blue-200/20 dark:from-indigo-800/10 dark:to-blue-800/10 blur-xl" />
 
-        <CardContent className="p-6 relative z-10">
+        <CardContent className="p-4 sm:p-6 relative z-10">
           {/* Dismiss button */}
           <button
             onClick={handleDismiss}
@@ -155,7 +155,7 @@ export function OnboardingChecklist({ hasVacancy, hasCandidate, hasEmail, onVaca
               return (
                 <div
                   key={key}
-                  className={`flex items-center gap-4 p-3.5 rounded-xl transition-all duration-300 ${
+                  className={`flex items-center gap-3 sm:gap-4 p-3 sm:p-3.5 rounded-xl transition-all duration-300 ${
                     isJustCompleted
                       ? 'bg-green-50 dark:bg-green-950/30 ring-2 ring-green-300 dark:ring-green-700 scale-[1.01]'
                       : done
@@ -168,7 +168,7 @@ export function OnboardingChecklist({ hasVacancy, hasCandidate, hasEmail, onVaca
                   }`}
                 >
                   {/* Step number / icon */}
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors duration-300 ${
+                  <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors duration-300 ${
                     isJustCompleted
                       ? 'bg-green-100 dark:bg-green-900/40'
                       : done
@@ -190,7 +190,7 @@ export function OnboardingChecklist({ hasVacancy, hasCandidate, hasEmail, onVaca
 
                   {/* Text content */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <p className={`text-sm font-medium transition-colors ${
                         done
                           ? 'line-through text-gray-400 dark:text-gray-500'
@@ -206,7 +206,7 @@ export function OnboardingChecklist({ hasVacancy, hasCandidate, hasEmail, onVaca
                         </span>
                       )}
                     </div>
-                    <p className={`text-xs ${
+                    <p className={`text-xs hidden sm:block ${
                       blocked
                         ? 'text-gray-300 dark:text-gray-600'
                         : 'text-gray-400 dark:text-gray-500'

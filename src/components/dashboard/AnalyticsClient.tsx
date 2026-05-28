@@ -46,7 +46,7 @@ export function AnalyticsClient({ candidates, vacancies, candidatesOverTime }: P
   return (
     <div className="space-y-6">
       {/* KPI cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {[
           { label: ta.totalCandidates, value: candidates.length, suffix: '', decimals: 0, color: 'text-blue-600' },
           { label: ta.avgMatchScore, value: avgScore, suffix: '%', decimals: 1, color: 'text-green-600' },
@@ -54,8 +54,8 @@ export function AnalyticsClient({ candidates, vacancies, candidatesOverTime }: P
           { label: ta.activeVacancies, value: vacancies.length, suffix: '', decimals: 0, color: 'text-amber-600' },
         ].map(kpi => (
           <Card key={kpi.label} className="border border-gray-200 shadow-sm dark:border-gray-800">
-            <CardContent className="p-5 text-center">
-              <div className={`text-3xl font-bold ${kpi.color}`}>
+            <CardContent className="p-3 sm:p-5 text-center">
+              <div className={`text-2xl sm:text-3xl font-bold ${kpi.color}`}>
                 <AnimatedCounter target={kpi.value} suffix={kpi.suffix} decimals={kpi.decimals} />
               </div>
               <div className="text-xs text-gray-500 mt-1">{kpi.label}</div>
@@ -98,7 +98,7 @@ export function AnalyticsClient({ candidates, vacancies, candidatesOverTime }: P
       </Card>
 
       {/* Score distribution + pipeline status */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
           <CardHeader className="pb-3"><CardTitle className="text-base">{ta.scoreDistribution}</CardTitle></CardHeader>
           <CardContent>
@@ -131,7 +131,7 @@ export function AnalyticsClient({ candidates, vacancies, candidatesOverTime }: P
       </div>
 
       {/* Candidates per vacancy + sources pie */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
           <CardHeader className="pb-3"><CardTitle className="text-base">{ta.byVacancy}</CardTitle></CardHeader>
           <CardContent>

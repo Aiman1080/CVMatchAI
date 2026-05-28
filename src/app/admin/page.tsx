@@ -128,7 +128,7 @@ export default async function AdminPage() {
   return (
     <div>
       <Header title="Admin Panel" description="Platform management & monitoring" />
-      <div className="p-8">
+      <div className="p-4 sm:p-8">
         <AdminClient
           users={users as any}
           tickets={tickets as any}

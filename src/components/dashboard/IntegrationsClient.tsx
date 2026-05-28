@@ -466,12 +466,12 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
 
       {/* Sync All button — only shown when at least 1 is connected */}
       {connectedCount > 0 && (
-        <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border border-indigo-100 dark:border-indigo-900 flex items-center gap-4">
+        <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border border-indigo-100 dark:border-indigo-900 flex flex-wrap items-center gap-4">
           <div className="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center shrink-0">
             <RefreshCw className="w-5 h-5 text-white" />
           </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
               <p className="text-sm font-semibold text-indigo-800 dark:text-indigo-300">{ti.syncAll}</p>
               <InfoTooltip text={ti.syncAllTooltip} />
             </div>
@@ -493,7 +493,7 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
       )}
 
       {/* How it works cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
           { icon: Link2, title: ti.howItWorksConnect, desc: ti.howItWorksConnectDesc },
           { icon: Users, title: ti.howItWorksImport, desc: ti.howItWorksImportDesc },
@@ -548,7 +548,7 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
                 }`}
               >
                 {/* Platform row */}
-                <div className="flex items-center gap-3 p-4">
+                <div className="flex flex-wrap items-center gap-3 p-4">
                   {/* Logo */}
                   <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${platform.color} flex items-center justify-center text-white font-bold text-sm shrink-0`}>
                     {platform.name[0]}
@@ -601,7 +601,7 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0 ml-auto flex-wrap">
                     {connected ? (
                       <>
                         {/* Auto-sync indicator */}
