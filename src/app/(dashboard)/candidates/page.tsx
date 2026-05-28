@@ -12,21 +12,31 @@ export default async function CandidatesPage() {
   const session = await getServerSession(authOptions)
   const userId = (session?.user as any)?.id
   const isAdmin = (session?.user as any)?.role === 'admin'
+
   const dbUser = userId
-    ? await prisma.user.findUnique({ where: { id: userId }, select: { subscription: true, subscriptionEnd: true } })
+    ? await prisma.user.findUnique({ where: { id: userId }, select: { subscription: true, subscriptionEnd: true } }).catch(() => null)
     : null
   const effectiveSubscription = getEffectiveSubscription(dbUser?.subscription || 'free', dbUser?.subscriptionEnd || null)
   const isPro = effectiveSubscription === 'pro' || effectiveSubscription === 'demo_pro' || isAdmin
   const where = isAdmin ? {} : { userId }
-  const [candidates, total] = await Promise.all([
-    prisma.candidate.findMany({
-      where,
-      include: { vacancy: { select: { title: true, company: true } } },
-      orderBy: [{ priority: 'desc' }, { liked: 'desc' }, { matchScore: 'desc' }, { createdAt: 'desc' }],
-      take: PAGE_SIZE,
-    }),
-    prisma.candidate.count({ where }),
-  ])
+
+  let candidates: any[] = []
+  let total = 0
+  try {
+    const [c, t] = await Promise.all([
+      prisma.candidate.findMany({
+        where,
+        include: { vacancy: { select: { title: true, company: true } } },
+        orderBy: [{ priority: 'desc' }, { liked: 'desc' }, { matchScore: 'desc' }, { createdAt: 'desc' }],
+        take: PAGE_SIZE,
+      }),
+      prisma.candidate.count({ where }),
+    ])
+    candidates = c
+    total = t
+  } catch (e: any) {
+    console.error('[CandidatesPage] DB error:', e?.message || e)
+  }
 
   const cookieStore = await cookies()
   const locale = (cookieStore.get('deltamatch-locale')?.value || 'en') as 'en' | 'nl' | 'fr'
