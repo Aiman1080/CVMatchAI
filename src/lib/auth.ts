@@ -17,17 +17,39 @@ const providers: NextAuthOptions['providers'] = [
       password: { label: 'Password', type: 'password' },
     },
     async authorize(credentials) {
-      if (!credentials?.email || !credentials?.password) return null
-      const email = credentials.email.toLowerCase()
-      const user = await prisma.user.findUnique({ where: { email } })
-      if (!user || !user.password) return null
-      const isValid = await bcrypt.compare(credentials.password, user.password)
-      if (!isValid) return null
-      if (user.suspended) return null
-      return {
-        id: user.id, email: user.email, name: user.name,
-        role: user.role, subscription: user.subscription, company: user.company,
-        emailVerified: user.emailVerified, emailSignature: (user as any).emailSignature,
+      try {
+        if (!credentials?.email || !credentials?.password) {
+          console.warn('[Auth] Missing credentials')
+          return null
+        }
+        const email = credentials.email.toLowerCase()
+        const user = await prisma.user.findUnique({ where: { email } })
+        if (!user) {
+          console.warn(`[Auth] No user found for email: ${email}`)
+          return null
+        }
+        if (!user.password) {
+          console.warn(`[Auth] User ${email} has no password set (likely SSO-only)`)
+          return null
+        }
+        const isValid = await bcrypt.compare(credentials.password, user.password)
+        if (!isValid) {
+          console.warn(`[Auth] Invalid password for ${email}`)
+          return null
+        }
+        if (user.suspended) {
+          console.warn(`[Auth] Suspended user tried to log in: ${email}`)
+          return null
+        }
+        console.log(`[Auth] Successful login: ${email} (role=${user.role}, plan=${user.subscription})`)
+        return {
+          id: user.id, email: user.email, name: user.name,
+          role: user.role, subscription: user.subscription, company: user.company,
+          emailVerified: user.emailVerified, emailSignature: (user as any).emailSignature,
+        }
+      } catch (e: any) {
+        console.error('[Auth] authorize() threw:', e?.message || e)
+        return null
       }
     },
   }),

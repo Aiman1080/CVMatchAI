@@ -6,6 +6,15 @@ import { Header } from '@/components/layout/Header'
 import { AdminClient } from '@/components/admin/AdminClient'
 import { getAiUsageStats } from '@/lib/ai-usage'
 
+const safe = async <T,>(p: Promise<T>, fallback: T, label: string): Promise<T> => {
+  try {
+    return await p
+  } catch (e: any) {
+    console.error(`[AdminPage] ${label} failed:`, e?.message || e)
+    return fallback
+  }
+}
+
 export default async function AdminPage() {
   const session = await getServerSession(authOptions)
   if (!session || (session.user as any).role !== 'admin') redirect('/dashboard')
@@ -13,24 +22,14 @@ export default async function AdminPage() {
   const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
 
-  // Weekly signup counts for growth chart (last 4 weeks)
   const weekBoundaries = Array.from({ length: 4 }, (_, i) => {
     const end = new Date(Date.now() - i * 7 * 24 * 60 * 60 * 1000)
     const start = new Date(end.getTime() - 7 * 24 * 60 * 60 * 1000)
     return { start, end, label: `W-${i}` }
   }).reverse()
 
-  const [
-    users, tickets, subscriptions, counts,
-    aiAnalysesCount, integrationsCount, emailInboxesCount,
-    candidateStatusDist, latestVacancies,
-    newUsersThisWeek, candidatesThisWeek, candidatesToday,
-    integrationsByPlatform, candidatesBySource,
-    activeVacanciesCount,
-    activeToday,
-    weeklySignups,
-    recentActivity,
-  ] = await Promise.all([
+  // Each query individually wrapped — a single Prisma error no longer crashes the whole admin page
+  const users = await safe(
     prisma.user.findMany({
       orderBy: { createdAt: 'desc' },
       select: {
@@ -40,43 +39,70 @@ export default async function AdminPage() {
         _count: { select: { vacancies: true, candidates: true, supportTickets: true } },
       },
     }),
+    [] as any[],
+    'users'
+  )
+
+  const tickets = await safe(
     prisma.supportTicket.findMany({
       orderBy: { createdAt: 'desc' },
       take: 50,
       include: { user: { select: { name: true, email: true, company: true, subscription: true } } },
     }),
+    [] as any[],
+    'tickets'
+  )
+
+  const subscriptions = await safe(
     prisma.user.groupBy({ by: ['subscription'], _count: true }),
+    [] as any[],
+    'subscriptions'
+  )
+
+  const counts = await safe(
     Promise.all([
       prisma.user.count(),
       prisma.vacancy.count(),
       prisma.candidate.count(),
       prisma.supportTicket.count({ where: { status: { in: ['open', 'in_progress'] } } }),
     ]).then(([u, v, c, t]) => ({ users: u, vacancies: v, candidates: c, openTickets: t })),
-    prisma.candidate.count({ where: { analyzedAt: { not: null } } }),
-    prisma.integration.count(),
-    prisma.emailInbox.count(),
-    prisma.candidate.groupBy({ by: ['status'], _count: true }),
+    { users: 0, vacancies: 0, candidates: 0, openTickets: 0 },
+    'counts'
+  )
+
+  const aiAnalysesCount = await safe(prisma.candidate.count({ where: { analyzedAt: { not: null } } }), 0, 'aiAnalysesCount')
+  const integrationsCount = await safe(prisma.integration.count(), 0, 'integrationsCount')
+  const emailInboxesCount = await safe(prisma.emailInbox.count(), 0, 'emailInboxesCount')
+  const candidateStatusDist = await safe(prisma.candidate.groupBy({ by: ['status'], _count: true }), [] as any[], 'candidateStatusDist')
+  const latestVacancies = await safe(
     prisma.vacancy.findMany({
       orderBy: { createdAt: 'desc' },
       take: 5,
       select: { title: true, createdAt: true, _count: { select: { candidates: true } } },
     }),
-    prisma.user.count({ where: { createdAt: { gte: oneWeekAgo } } }),
-    prisma.candidate.count({ where: { createdAt: { gte: oneWeekAgo } } }),
-    prisma.candidate.count({ where: { createdAt: { gte: oneDayAgo } } }),
-    prisma.integration.groupBy({ by: ['platform'], _count: true }),
-    prisma.candidate.groupBy({ by: ['source'], _count: true }),
-    prisma.vacancy.count({ where: { status: 'active' } }),
-    // Active today: users seen in last 24h
-    prisma.user.count({ where: { lastSeenAt: { gte: oneDayAgo } } }),
-    // Weekly signups for growth chart
+    [] as any[],
+    'latestVacancies'
+  )
+  const newUsersThisWeek = await safe(prisma.user.count({ where: { createdAt: { gte: oneWeekAgo } } }), 0, 'newUsersThisWeek')
+  const candidatesThisWeek = await safe(prisma.candidate.count({ where: { createdAt: { gte: oneWeekAgo } } }), 0, 'candidatesThisWeek')
+  const candidatesToday = await safe(prisma.candidate.count({ where: { createdAt: { gte: oneDayAgo } } }), 0, 'candidatesToday')
+  const integrationsByPlatform = await safe(prisma.integration.groupBy({ by: ['platform'], _count: true }), [] as any[], 'integrationsByPlatform')
+  const candidatesBySource = await safe(prisma.candidate.groupBy({ by: ['source'], _count: true }), [] as any[], 'candidatesBySource')
+  const activeVacanciesCount = await safe(prisma.vacancy.count({ where: { status: 'active' } }), 0, 'activeVacanciesCount')
+  const activeToday = await safe(prisma.user.count({ where: { lastSeenAt: { gte: oneDayAgo } } }), 0, 'activeToday')
+
+  const weeklySignups = await safe(
     Promise.all(
       weekBoundaries.map(w =>
         prisma.user.count({ where: { createdAt: { gte: w.start, lt: w.end } } })
           .then(count => ({ label: w.label, start: w.start.toISOString(), end: w.end.toISOString(), count }))
       )
     ),
-    // Recent activity: last 10 events across new users, new vacancies, and new analyses
+    [] as any[],
+    'weeklySignups'
+  )
+
+  const recentActivity = await safe(
     Promise.all([
       prisma.user.findMany({
         orderBy: { createdAt: 'desc' }, take: 5,
@@ -106,21 +132,27 @@ export default async function AdminPage() {
     ]).then(([u, v, a]) =>
       [...u, ...v, ...a].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 10)
     ),
-  ])
+    [] as any[],
+    'recentActivity'
+  )
 
-  const aiUsageStats = await getAiUsageStats().catch(() => null)
+  const aiUsageStats = await getAiUsageStats().catch((e: any) => {
+    console.error('[AdminPage] aiUsageStats failed:', e?.message || e)
+    return null
+  })
 
-  // Database size estimation (row counts)
-  let aiLogCount = 0
-  try { aiLogCount = await (prisma as any).aiUsageLog.count() } catch {}
+  const aiLogCount = await safe((prisma as any).aiUsageLog.count(), 0, 'aiLogCount')
+  const notifCount = await safe(prisma.notification.count(), 0, 'notifCount')
+  const activityCount = await safe(prisma.candidateActivity.count(), 0, 'activityCount')
+  const scanCount = await safe(prisma.emailScan.count(), 0, 'scanCount')
 
   const dbStats = {
     users: counts.users,
     vacancies: counts.vacancies,
     candidates: counts.candidates,
-    notifications: await prisma.notification.count().catch(() => 0),
-    activities: await prisma.candidateActivity.count().catch(() => 0),
-    emailScans: await prisma.emailScan.count().catch(() => 0),
+    notifications: notifCount,
+    activities: activityCount,
+    emailScans: scanCount,
     aiLogs: aiLogCount,
   }
   const totalRows = Object.values(dbStats).reduce((a, b) => a + b, 0)
