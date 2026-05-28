@@ -172,7 +172,9 @@ export async function exportCandidatesToPDF(
 export async function exportHiringReportPDF(
   reportMarkdown: string,
   candidateName: string,
-  vacancyTitle?: string
+  vacancyTitle?: string,
+  // Optional Q&A section appended at the bottom — only includes questions with non-empty answers
+  interviewQA?: Array<{ question: string; category: string; answer: string }>
 ): Promise<void> {
   const { jsPDF } = await import('jspdf')
 
@@ -225,6 +227,60 @@ export async function exportHiringReportPDF(
       doc.text(line, margin, y)
     }
     y += 5
+  }
+
+  // Append Q&A section — only include questions that have an actual answer typed
+  const answeredQA = (interviewQA || []).filter(qa => qa.answer && qa.answer.trim().length > 0)
+  if (answeredQA.length > 0) {
+    // Always start the Q&A on a new page for clarity
+    doc.addPage()
+    y = margin
+
+    doc.setFontSize(16)
+    doc.setTextColor(37, 99, 235)
+    doc.setFont('helvetica', 'bold')
+    doc.text('Interview answers', margin, y)
+    y += 6
+    doc.setDrawColor(200, 200, 200)
+    doc.line(margin, y, pageWidth - margin, y)
+    y += 8
+
+    doc.setFontSize(9)
+    doc.setTextColor(120, 120, 120)
+    doc.setFont('helvetica', 'italic')
+    doc.text(`${answeredQA.length} answered question${answeredQA.length > 1 ? 's' : ''}`, margin, y)
+    y += 8
+    doc.setFont('helvetica', 'normal')
+
+    answeredQA.forEach((qa, idx) => {
+      // Question
+      doc.setFontSize(10)
+      doc.setTextColor(37, 99, 235)
+      doc.setFont('helvetica', 'bold')
+      const qLines = doc.splitTextToSize(`Q${idx + 1}. ${qa.question}`, maxWidth) as string[]
+      for (const line of qLines) {
+        if (y + 5 > pageHeight - bottomMargin) { doc.addPage(); y = margin }
+        doc.text(line, margin, y)
+        y += 5
+      }
+      // Category badge
+      doc.setFontSize(8)
+      doc.setTextColor(120, 120, 120)
+      doc.setFont('helvetica', 'italic')
+      doc.text(`Category: ${qa.category}`, margin, y)
+      y += 6
+      // Answer
+      doc.setFontSize(10)
+      doc.setTextColor(50, 50, 50)
+      doc.setFont('helvetica', 'normal')
+      const aLines = doc.splitTextToSize(`A. ${qa.answer}`, maxWidth) as string[]
+      for (const line of aLines) {
+        if (y + 5 > pageHeight - bottomMargin) { doc.addPage(); y = margin }
+        doc.text(line, margin, y)
+        y += 5
+      }
+      y += 4
+    })
   }
 
   // Footer
