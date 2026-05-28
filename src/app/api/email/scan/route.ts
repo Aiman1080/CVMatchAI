@@ -94,56 +94,41 @@ export async function POST(req: Request) {
           const sender = msg.envelope?.from?.[0]?.address || ''
           const receivedAt = msg.envelope?.date || new Date()
 
-          // Walk the MIME tree and collect EVERY non-text attachment. We are
-          // intentionally permissive — recruitment emails from many web platforms
-          // (LinkedIn, Indeed, careers portals) wrap CVs in unusual MIME types.
-          // Better to attempt to parse and skip if no text comes out than to
-          // pre-filter and miss real applications.
-          const attachments: Array<{ name: string; mimeType: string; path: string }> = []
+          // SIMPLE & ROBUST detection: walk the entire MIME tree and collect EVERY
+          // leaf part. We don't filter by mime/filename anymore — we just try to
+          // download and parse everything. If a buffer parses as PDF or DOCX with
+          // real text, it's a CV. This is bulletproof against weird structures.
+          const allParts: Array<{ path: string; type: string; subtype: string; name: string }> = []
           const bodyStructure = msg.bodyStructure
 
-          const collectParts = (part: any, path: string = '1') => {
+          const collectAllParts = (part: any, path: string = '1') => {
             if (!part) return
+            const filename = part.parameters?.name || part.dispositionParameters?.filename || ''
             const subtype = (part.subtype || '').toLowerCase()
             const type = (part.type || '').toLowerCase()
-            const filename = part.parameters?.name || part.dispositionParameters?.filename || ''
-            const disposition = (part.disposition || '').toLowerCase()
-
-            // Accept: any explicit attachment, any non-text/multipart part with a filename,
-            // any PDF/DOCX/Word regardless of disposition
-            const isText = type === 'text' && !filename
-            const isMultipart = type === 'multipart'
-            const isExplicitAttachment = disposition === 'attachment'
-            const isLikelyDoc = subtype.includes('pdf') ||
-              subtype.includes('msword') ||
-              subtype.includes('wordprocessingml') ||
-              subtype.includes('officedocument') ||
-              filename.toLowerCase().match(/\.(pdf|docx?|odt|rtf|txt)$/)
-
-            if (!isText && !isMultipart && (isExplicitAttachment || filename || isLikelyDoc)) {
-              attachments.push({
-                name: filename || `attachment.${subtype || 'bin'}`,
-                mimeType: `${type}/${subtype}`,
+            // Record every leaf (anything not multipart) regardless of filename/type
+            if (type !== 'multipart') {
+              allParts.push({
                 path: part.part || path,
+                type,
+                subtype,
+                name: filename,
               })
             }
             if (part.childNodes) {
-              part.childNodes.forEach((child: any, idx: number) => collectParts(child, `${path}.${idx + 1}`))
+              part.childNodes.forEach((child: any, idx: number) => collectAllParts(child, `${path}.${idx + 1}`))
             }
           }
-          collectParts(bodyStructure)
-          if (attachments.length === 0 && bodyStructure) {
-            // Log the MIME structure so we can debug why no attachments were detected
-            const summarize = (p: any, depth = 0): string => {
-              if (!p) return ''
-              const prefix = '  '.repeat(depth)
-              const name = p.parameters?.name || p.dispositionParameters?.filename || ''
-              const line = `${prefix}- ${p.type}/${p.subtype}${name ? ` "${name}"` : ''}${p.part ? ` [${p.part}]` : ''}`
-              const children = (p.childNodes || []).map((c: any) => summarize(c, depth + 1)).join('\n')
-              return children ? `${line}\n${children}` : line
-            }
-            console.log(`[email/scan] msg ${msg.uid}: NO ATTACHMENTS detected. MIME tree:\n${summarize(bodyStructure)}`)
-          }
+          collectAllParts(bodyStructure)
+
+          // Build a list of attachments based on filename ending in known doc extensions
+          // OR explicit attachment disposition. Still keep ALL parts for fallback download.
+          const attachments = allParts.filter(p => {
+            const isText = p.type === 'text'
+            const isDoc = p.subtype.match(/pdf|docx?|word|officedocument|wordprocessingml/) ||
+              p.name.toLowerCase().match(/\.(pdf|docx?|odt|rtf)$/)
+            return !isText && isDoc
+          })
 
           // Download just the text body part (part 1) for classification preview
           let bodyText = ''
@@ -254,26 +239,35 @@ export async function POST(req: Request) {
             }
           }
 
-          // BRUTE-FORCE FALLBACK: if no CV found yet, try downloading every plausible
-          // MIME part path. Webmail providers sometimes hide attachments under unusual
-          // paths that our bodyStructure walk misses. We try a depth-2 grid of paths.
+          // FALLBACK: if no CV found via known attachments, try downloading EVERY
+          // non-text leaf part discovered in the MIME tree. We don't care about
+          // declared mime type — we just try to parse each buffer as PDF/DOCX/text
+          // and use whichever yields real content. This catches CVs hidden under
+          // any non-standard structure.
           if (!cvText) {
-            console.log(`[email/scan] msg ${msg.uid}: no CV found via bodyStructure, attempting brute-force part download`)
-            const candidatePaths = ['1', '2', '3', '4', '5', '1.1', '1.2', '1.3', '2.1', '2.2', '2.3', '3.1', '3.2']
-            for (const path of candidatePaths) {
+            console.log(`[email/scan] msg ${msg.uid}: no CV from known attachments, trying every non-text part (${allParts.length} candidates)`)
+            for (const p of allParts) {
               if (cvText) break
+              if (p.type === 'text') continue // skip text/html bodies
               try {
-                const dl = await client.download(msg.uid.toString(), path, { uid: true }) as any
+                const dl = await client.download(msg.uid.toString(), p.path, { uid: true }) as any
                 if (!dl?.content) continue
                 const chunks: Buffer[] = []
                 for await (const chunk of dl.content) chunks.push(chunk)
                 const buffer = Buffer.concat(chunks)
-                if (buffer.length < 500) continue  // probably not a CV
-                const { text, docType } = await tryParseBuffer(buffer, `msg ${msg.uid} brute-path ${path}`)
+                if (buffer.length < 500) continue
+                // Check magic bytes to identify file type before parsing
+                const head = buffer.slice(0, 4).toString('hex')
+                const isPDF = buffer.slice(0, 4).toString('utf-8') === '%PDF'
+                const isZIP = head.startsWith('504b0304') // PK\x03\x04 = ZIP (DOCX)
+                console.log(`[email/scan] msg ${msg.uid} path ${p.path}: ${buffer.length} bytes, head=${head}, isPDF=${isPDF}, isZIP=${isZIP}`)
+                const { text, docType } = await tryParseBuffer(buffer, `msg ${msg.uid} path ${p.path} ${p.name || p.subtype}`)
                 if (!text) continue
                 if (docType === 'motivation' && !motivationText) motivationText = text
                 if (!cvText && text.length > 200) cvText = text
-              } catch { /* path doesn't exist, try next */ }
+              } catch (e: any) {
+                console.log(`[email/scan] msg ${msg.uid} path ${p.path}: download failed (${e?.message?.slice(0, 60)})`)
+              }
             }
           }
 
