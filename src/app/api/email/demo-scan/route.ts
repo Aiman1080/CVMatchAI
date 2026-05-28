@@ -7,6 +7,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { analyzeCVAgainstVacancy } from '@/lib/ai'
+import { isDemoAccount } from '@/lib/demo-guard'
 
 // 4 demo emails × ~30-60s per Opus analysis = up to 4 min — allow the full run
 export const maxDuration = 300
@@ -171,6 +172,9 @@ function scoreVacancyForCV(
 export async function POST() {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (isDemoAccount(session.user?.email)) {
+    return NextResponse.json({ error: 'Demo accounts cannot perform this action', demo: true }, { status: 403 })
+  }
 
   const userId = (session.user as any).id
 

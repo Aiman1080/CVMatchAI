@@ -11,6 +11,7 @@ import { parseDocument } from '@/lib/pdf-parser'
 import { analyzeCVAgainstVacancy, classifyRecruitmentEmail, detectDocumentType } from '@/lib/ai'
 import { getPlanLimits } from '@/lib/plans'
 import { decrypt } from '@/lib/crypto'
+import { isDemoAccount } from '@/lib/demo-guard'
 
 // Allow up to 5 minutes — IMAP + multiple AI calls can easily take 2–3 min
 export const maxDuration = 300
@@ -18,6 +19,9 @@ export const maxDuration = 300
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (isDemoAccount(session.user?.email)) {
+    return NextResponse.json({ error: 'Demo accounts cannot perform this action', demo: true }, { status: 403 })
+  }
 
   const userId = (session.user as any).id
 

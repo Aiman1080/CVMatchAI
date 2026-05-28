@@ -5,6 +5,7 @@ import { Header } from '@/components/layout/Header'
 import { IntegrationsClient } from '@/components/dashboard/IntegrationsClient'
 import { UpgradePrompt } from '@/components/dashboard/UpgradePrompt'
 import { getPlanLimits } from '@/lib/plans'
+import { isDemoAccount } from '@/lib/demo-guard'
 
 export default async function IntegrationsPage() {
   const session = await getServerSession(authOptions)
@@ -32,7 +33,7 @@ export default async function IntegrationsPage() {
       />
       <div className="p-8">
         {limits.atsIntegrations ? (
-          <IntegrationsClient initialIntegrations={integrations} />
+          <IntegrationsClient initialIntegrations={integrations} isDemo={isDemoAccount(user?.email)} />
         ) : (
           <UpgradePrompt
             feature="ATS Integrations — Pro Feature"

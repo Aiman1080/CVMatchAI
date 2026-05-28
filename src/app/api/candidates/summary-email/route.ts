@@ -5,6 +5,7 @@ import prisma from '@/lib/prisma'
 import { sendEmail } from '@/lib/email'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { logAiUsage } from '@/lib/ai-usage'
+import { isDemoAccount } from '@/lib/demo-guard'
 
 const isDemoMode = () =>
   !process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY.trim() === ''
@@ -19,6 +20,9 @@ const LOCALE_LANGUAGE: Record<string, string> = {
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (isDemoAccount(session.user?.email)) {
+    return NextResponse.json({ error: 'Demo accounts cannot perform this action', demo: true }, { status: 403 })
+  }
 
   const userId = (session.user as any).id
 

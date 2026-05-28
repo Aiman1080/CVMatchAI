@@ -241,7 +241,7 @@ function InfoTooltip({ text }: { text: string }) {
   )
 }
 
-export function IntegrationsClient({ initialIntegrations }: { initialIntegrations: Integration[] }) {
+export function IntegrationsClient({ initialIntegrations, isDemo }: { initialIntegrations: Integration[]; isDemo?: boolean }) {
   const [integrations, setIntegrations] = useState<Integration[]>(initialIntegrations)
   const [connecting, setConnecting] = useState<string | null>(null)
   const [syncing, setSyncing] = useState<string | null>(null)
@@ -434,7 +434,7 @@ export function IntegrationsClient({ initialIntegrations }: { initialIntegration
           </div>
           <Button
             onClick={handleSyncAll}
-            disabled={syncAll || !!syncing}
+            disabled={syncAll || !!syncing || isDemo}
             size="sm"
             className="gradient-bg shrink-0 gap-1.5"
           >
@@ -571,7 +571,7 @@ export function IntegrationsClient({ initialIntegrations }: { initialIntegration
                                 size="sm"
                                 variant="outline"
                                 onClick={() => handleSync(connected.id, platform.id)}
-                                disabled={!!syncing || syncAll}
+                                disabled={!!syncing || syncAll || isDemo}
                                 className="gap-1.5 h-8 text-xs"
                               >
                                 {isSyncing
@@ -590,8 +590,8 @@ export function IntegrationsClient({ initialIntegrations }: { initialIntegration
                             <TooltipTrigger asChild>
                               <button
                                 onClick={() => handleDisconnect(connected.id, platform.id)}
-                                disabled={deleting === connected.id}
-                                className="p-1.5 text-gray-400 hover:text-red-500 rounded-lg transition-colors"
+                                disabled={deleting === connected.id || isDemo}
+                                className={`p-1.5 rounded-lg transition-colors ${isDemo ? 'text-gray-300 cursor-not-allowed' : 'text-gray-400 hover:text-red-500'}`}
                               >
                                 {deleting === connected.id
                                   ? <Loader2 size={14} className="animate-spin" />
@@ -608,11 +608,12 @@ export function IntegrationsClient({ initialIntegrations }: { initialIntegration
                       <Button
                         size="sm"
                         onClick={() => setExpanded(isExpanded ? null : platform.id)}
+                        disabled={isDemo}
                         className="gap-1.5 h-8 text-xs gradient-bg"
                       >
                         <Link2 size={12} />
-                        {ti.connectBtn}
-                        {isExpanded ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+                        {isDemo ? 'View only' : ti.connectBtn}
+                        {!isDemo && (isExpanded ? <ChevronUp size={11} /> : <ChevronDown size={11} />)}
                       </Button>
                     )}
                   </div>
