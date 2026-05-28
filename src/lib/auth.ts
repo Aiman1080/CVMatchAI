@@ -1,59 +1,116 @@
 // NextAuth configuration — email/password login with bcrypt, JWT session strategy.
-// Attaches userId, role and subscription to every JWT so API routes can call
-// getServerSession(authOptions) to identify the caller without a DB lookup.
+// Also supports Google and Microsoft SSO when client credentials are configured.
 import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
+import GoogleProvider from 'next-auth/providers/google'
+import AzureADProvider from 'next-auth/providers/azure-ad'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import bcrypt from 'bcryptjs'
 import prisma from './prisma'
 
+// Build the providers list dynamically — SSO providers only load when env vars are set
+const providers: NextAuthOptions['providers'] = [
+  CredentialsProvider({
+    name: 'credentials',
+    credentials: {
+      email: { label: 'Email', type: 'email' },
+      password: { label: 'Password', type: 'password' },
+    },
+    async authorize(credentials) {
+      if (!credentials?.email || !credentials?.password) return null
+      const email = credentials.email.toLowerCase()
+      const user = await prisma.user.findUnique({ where: { email } })
+      if (!user || !user.password) return null
+      const isValid = await bcrypt.compare(credentials.password, user.password)
+      if (!isValid) return null
+      if (user.suspended) return null
+      return {
+        id: user.id, email: user.email, name: user.name,
+        role: user.role, subscription: user.subscription, company: user.company,
+        emailVerified: user.emailVerified, emailSignature: (user as any).emailSignature,
+      }
+    },
+  }),
+]
+
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  providers.push(GoogleProvider({
+    clientId: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    allowDangerousEmailAccountLinking: true,
+  }))
+}
+
+if (process.env.MICROSOFT_CLIENT_ID && process.env.MICROSOFT_CLIENT_SECRET) {
+  providers.push(AzureADProvider({
+    clientId: process.env.MICROSOFT_CLIENT_ID,
+    clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
+    tenantId: process.env.MICROSOFT_TENANT_ID || 'common',
+    allowDangerousEmailAccountLinking: true,
+  }))
+}
+
 export const authOptions: NextAuthOptions = {
-  // `as any` cast needed because @auth/prisma-adapter v2 types don't exactly match NextAuth v4 Adapter interface
   adapter: PrismaAdapter(prisma) as any,
-  // JWT strategy keeps sessions stateless — no DB session table needed
   session: { strategy: 'jwt' },
   pages: {
     signIn: '/login',
     signOut: '/',
     error: '/login',
   },
-  providers: [
-    CredentialsProvider({
-      name: 'credentials',
-      credentials: {
-        email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' },
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null
-        const email = credentials.email.toLowerCase()
-        const user = await prisma.user.findUnique({ where: { email } })
-        if (!user || !user.password) return null
-        const isValid = await bcrypt.compare(credentials.password, user.password)
-        if (!isValid) return null
-        if (user.suspended) return null
-        // Return only safe fields — never expose password hash to session
-        return {
-          id: user.id, email: user.email, name: user.name,
-          role: user.role, subscription: user.subscription, company: user.company,
-          emailVerified: user.emailVerified, emailSignature: (user as any).emailSignature,
-        }
-      },
-    }),
-  ],
+  providers,
   callbacks: {
-    // Persist extra fields into the JWT token on first sign-in
-    async jwt({ token, user }) {
+    // SSO sign-in: create or update the user record with proper defaults
+    async signIn({ user, account }) {
+      if (account?.provider === 'google' || account?.provider === 'azure-ad') {
+        if (!user.email) return false
+        const email = user.email.toLowerCase()
+        const existing = await prisma.user.findUnique({ where: { email } })
+        if (!existing) {
+          // First-time SSO user — create with Free plan and emailVerified set
+          await prisma.user.create({
+            data: {
+              email,
+              name: user.name || email.split('@')[0],
+              role: 'recruiter',
+              subscription: 'free',
+              emailVerified: new Date(),
+              image: user.image || null,
+            },
+          })
+        } else if (!existing.emailVerified) {
+          // Existing user with unverified email — mark as verified via SSO
+          await prisma.user.update({
+            where: { id: existing.id },
+            data: { emailVerified: new Date() },
+          })
+        }
+      }
+      return true
+    },
+    // Persist extra fields into the JWT token on sign-in
+    async jwt({ token, user, account }) {
       if (user) {
-        token.id = user.id
-        token.role = (user as any).role
-        token.subscription = (user as any).subscription
-        token.company = (user as any).company
-        token.emailVerified = (user as any).emailVerified
+        // For SSO logins, fetch the DB user to get the role/subscription
+        if (account?.provider === 'google' || account?.provider === 'azure-ad') {
+          const dbUser = await prisma.user.findUnique({ where: { email: user.email!.toLowerCase() } })
+          if (dbUser) {
+            token.id = dbUser.id
+            token.role = dbUser.role
+            token.subscription = dbUser.subscription
+            token.company = dbUser.company
+            token.emailVerified = dbUser.emailVerified
+          }
+        } else {
+          token.id = user.id
+          token.role = (user as any).role
+          token.subscription = (user as any).subscription
+          token.company = (user as any).company
+          token.emailVerified = (user as any).emailVerified
+        }
       }
       return token
     },
-    // Copy JWT fields to the session object so client components can read them
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).id = token.id

@@ -80,35 +80,202 @@ async function main() {
     })
   }
 
-  // ── Demo Pro: vacancies 3-5, different candidates ─────────────────────────
+  // ── Demo Pro: rich impression — looks like an active recruitment agency ────
 
-  const proVacancies = VACANCIES.slice(3, 6)
+  // 6 vacancies across different industries (Tech, Marketing, Finance, etc.)
+  const proVacancies = VACANCIES.slice(3, 9)
   const proVacancyIds: string[] = []
-  for (const v of proVacancies) {
+  for (let i = 0; i < proVacancies.length; i++) {
+    const v = proVacancies[i]
+    // Spread creation dates over the last 60 days
+    const daysAgo = [5, 12, 20, 28, 40, 55][i] || 30
     const vacancy = await prisma.vacancy.create({
-      data: { ...v, userId: proUser.id },
+      data: {
+        ...v,
+        userId: proUser.id,
+        createdAt: new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000),
+        updatedAt: new Date(Date.now() - Math.floor(daysAgo / 2) * 24 * 60 * 60 * 1000),
+      },
     })
     proVacancyIds.push(vacancy.id)
   }
 
-  const proCandidates = ALL_CANDIDATES.filter(c => c.vacancyIndex >= 3 && c.vacancyIndex < 6).slice(0, 10)
-  for (const c of proCandidates) {
+  // Realistic status distribution — like a real agency in action
+  const STATUS_DISTRIBUTION = [
+    'new', 'new', 'new', 'new', 'new',                          // 5 new
+    'reviewing', 'reviewing', 'reviewing', 'reviewing', 'reviewing', 'reviewing', 'reviewing', 'reviewing', // 8 reviewing
+    'shortlisted', 'shortlisted', 'shortlisted', 'shortlisted', 'shortlisted', 'shortlisted', // 6 shortlisted
+    'interviewing', 'interviewing', 'interviewing', 'interviewing', // 4 interviewing
+    'hired', 'hired', 'hired',                                   // 3 hired
+    'rejected', 'rejected', 'rejected', 'rejected',              // 4 rejected
+  ]
+
+  // Realistic notes used by recruiters
+  const NOTES_POOL = [
+    'Strong candidate — schedule technical interview next week.',
+    'Excellent communication skills. Good cultural fit.',
+    'Lacking required experience in React, but eager learner.',
+    'Top profile, fast-track to final round.',
+    'Asked about salary expectations — within range.',
+    'Recommend to hiring manager for second interview.',
+    'Available immediately. References checked, all positive.',
+    'Not a match for this role — consider for senior position later.',
+    'Strong technical background but weak in soft skills.',
+    'Outstanding portfolio. Move to offer stage.',
+    null, null, null,  // some candidates have no notes
+  ]
+
+  const RECOMMENDATIONS = ['strong_yes', 'strong_yes', 'yes', 'yes', 'yes', 'maybe', 'maybe', 'no']
+
+  // Build 30 candidates from the seed pool (cycle through if not enough)
+  const proCandidatesSource = ALL_CANDIDATES.filter(c => c.vacancyIndex >= 3 && c.vacancyIndex < 9)
+  const targetCount = 30
+
+  let realCandidatesCount = 0
+  for (let i = 0; i < targetCount; i++) {
+    const sourceIdx = i % proCandidatesSource.length
+    const c = proCandidatesSource[sourceIdx]
+    if (!c) continue
     const { vacancyIndex, strengths, weaknesses, skills, ...rest } = c
     const proIndex = vacancyIndex - 3
     const vacancyId = proVacancyIds[proIndex]
+    if (!vacancyId) continue
     const vacancyTitle = proVacancies[proIndex].title
-    await prisma.candidate.create({
+
+    const status = STATUS_DISTRIBUTION[i % STATUS_DISTRIBUTION.length]
+    const note = NOTES_POOL[i % NOTES_POOL.length]
+    const recommendation = RECOMMENDATIONS[i % RECOMMENDATIONS.length]
+
+    // Mix of scores: extremes are more interesting than always 60-95
+    let matchScore: number
+    if (status === 'hired' || status === 'shortlisted') matchScore = 80 + Math.floor(Math.random() * 18) // 80-97
+    else if (status === 'rejected') matchScore = 25 + Math.floor(Math.random() * 25) // 25-50
+    else if (status === 'interviewing') matchScore = 75 + Math.floor(Math.random() * 15) // 75-90
+    else matchScore = hashScore(rest.cvContent + i, vacancyTitle) // pseudo-random for new/reviewing
+
+    // Spread createdAt over last 45 days
+    const daysAgo = Math.floor(Math.random() * 45)
+    const createdAt = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000)
+
+    // Make some candidates "liked" or "priority"
+    const liked = Math.random() < 0.25
+    const priority = (status === 'shortlisted' || status === 'interviewing') && Math.random() < 0.4
+    const savedToPool = Math.random() < 0.15
+
+    // Vary the source to look diverse
+    const sources = ['upload', 'upload', 'email_scan', 'ats', 'ats', 'manual']
+    const source = sources[i % sources.length]
+
+    const candidate = await prisma.candidate.create({
       data: {
         ...rest,
+        // Append index to avoid email collisions when cycling through pool
+        email: rest.email ? rest.email.replace('@', `+pro${i}@`) : null,
         vacancyId,
         userId: proUser.id,
         strengths: JSON.stringify(strengths),
         weaknesses: JSON.stringify(weaknesses),
         skills: JSON.stringify(skills),
-        matchScore: hashScore(rest.cvContent, vacancyTitle),
-        analyzedAt: new Date(),
+        matchScore,
+        status,
+        recommendation,
+        notes: note,
+        liked,
+        priority,
+        savedToPool,
+        source,
+        analyzedAt: createdAt,
+        createdAt,
+        updatedAt: createdAt,
         gdprConsent: true,
-        gdprConsentDate: new Date(),
+        gdprConsentDate: createdAt,
+      },
+    })
+    realCandidatesCount++
+
+    // Create activity timeline for active candidates
+    if (status !== 'new') {
+      await prisma.candidateActivity.create({
+        data: {
+          candidateId: candidate.id,
+          type: 'created',
+          description: 'Candidate created via CV upload',
+          createdAt,
+        },
+      })
+      if (status === 'reviewing' || status === 'shortlisted' || status === 'interviewing' || status === 'hired') {
+        await prisma.candidateActivity.create({
+          data: {
+            candidateId: candidate.id,
+            type: 'status_change',
+            description: `Status changed: new → ${status === 'reviewing' ? 'reviewing' : 'shortlisted'}`,
+            createdAt: new Date(createdAt.getTime() + 2 * 24 * 60 * 60 * 1000),
+          },
+        })
+      }
+      if (note) {
+        await prisma.candidateActivity.create({
+          data: {
+            candidateId: candidate.id,
+            type: 'note_added',
+            description: 'Note added by recruiter',
+            createdAt: new Date(createdAt.getTime() + 3 * 24 * 60 * 60 * 1000),
+          },
+        })
+      }
+      if (status === 'interviewing' || status === 'hired') {
+        await prisma.candidateActivity.create({
+          data: {
+            candidateId: candidate.id,
+            type: 'email_sent',
+            description: 'Interview invitation sent',
+            createdAt: new Date(createdAt.getTime() + 5 * 24 * 60 * 60 * 1000),
+          },
+        })
+      }
+      if (status === 'hired') {
+        await prisma.candidateActivity.create({
+          data: {
+            candidateId: candidate.id,
+            type: 'status_change',
+            description: 'Status changed: interviewing → hired',
+            createdAt: new Date(createdAt.getTime() + 14 * 24 * 60 * 60 * 1000),
+          },
+        })
+      }
+    }
+  }
+
+  // Create a fake-connected ATS integration (Teamtailor) for the Pro demo
+  await prisma.integration.create({
+    data: {
+      userId: proUser.id,
+      platform: 'teamtailor',
+      apiKey: 'demo_tt_key_encrypted_xxxx',
+      status: 'active',
+      lastSyncAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+      syncCount: 18,
+      createdAt: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000),
+    },
+  })
+
+  // Create a few notifications for the Pro demo
+  const notifications = [
+    { type: 'cv_analyzed', title: 'New candidate analyzed', message: 'Sophie Martin scored 94% for Senior Backend Developer', daysAgo: 0 },
+    { type: 'cv_analyzed', title: 'New candidate analyzed', message: 'Lucas Bernard scored 87% for Product Manager', daysAgo: 0 },
+    { type: 'ats_sync', title: 'ATS sync complete', message: 'Teamtailor imported 5 new candidates', daysAgo: 0 },
+    { type: 'email_scan', title: 'Email scan complete', message: '3 CVs detected in inbox', daysAgo: 1 },
+    { type: 'cv_analyzed', title: 'New candidate analyzed', message: 'Anna Dubois scored 91% for Marketing Manager', daysAgo: 1 },
+  ]
+  for (const n of notifications) {
+    await prisma.notification.create({
+      data: {
+        userId: proUser.id,
+        type: n.type,
+        title: n.title,
+        message: n.message,
+        read: false,
+        createdAt: new Date(Date.now() - n.daysAgo * 24 * 60 * 60 * 1000 - Math.random() * 6 * 60 * 60 * 1000),
       },
     })
   }
@@ -117,8 +284,8 @@ async function main() {
   console.log('👤 Admin:       admin@cvmatch.ai / Wachtwoord_2201 (pro)')
   console.log('👤 Demo Free:   demo@cvmatch.ai / recruiter123')
   console.log('👤 Demo Pro:    pro@cvmatch.ai / pro123')
-  console.log(`📋 Demo: 3 vacancies, ${demoCandidates.length} candidates`)
-  console.log(`📋 Pro:  3 vacancies, ${proCandidates.length} candidates`)
+  console.log(`📋 Demo Free: 3 vacancies, ${demoCandidates.length} candidates`)
+  console.log(`📋 Demo Pro:  6 vacancies, ${realCandidatesCount} candidates, 1 ATS connected, ${notifications.length} notifications`)
 }
 
 main().catch(console.error).finally(() => prisma.$disconnect())
