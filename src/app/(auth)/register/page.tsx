@@ -101,8 +101,11 @@ export default function RegisterPage() {
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 break-words">{t.auth.startForFree}</h1>
           <p className="text-gray-500 text-sm mt-1 break-words">{t.auth.createYourAccount}</p>
         </div>
-        {/* SSO buttons */}
+        {/* SSO buttons — only when configured */}
+        {(process.env.NEXT_PUBLIC_HAS_GOOGLE_SSO === 'true' || process.env.NEXT_PUBLIC_HAS_MICROSOFT_SSO === 'true') && (
+        <>
         <div className="flex flex-col gap-2 mb-4">
+          {process.env.NEXT_PUBLIC_HAS_GOOGLE_SSO === 'true' && (
           <button
             onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
             type="button"
@@ -116,6 +119,8 @@ export default function RegisterPage() {
             </svg>
             Sign up with Google
           </button>
+          )}
+          {process.env.NEXT_PUBLIC_HAS_MICROSOFT_SSO === 'true' && (
           <button
             onClick={() => signIn('azure-ad', { callbackUrl: '/dashboard' })}
             type="button"
@@ -129,11 +134,14 @@ export default function RegisterPage() {
             </svg>
             Sign up with Microsoft
           </button>
+          )}
         </div>
         <div className="relative my-4">
           <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200" /></div>
           <div className="relative flex justify-center text-xs"><span className="bg-white px-2 text-gray-400 uppercase">or</span></div>
         </div>
+        </>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">

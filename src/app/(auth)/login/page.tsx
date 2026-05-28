@@ -47,10 +47,11 @@ export default function LoginPage() {
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{t.auth.welcomeBack}</h1>
           <p className="text-gray-500 text-sm mt-1">{t.auth.signInTo}</p>
         </div>
-        {/* SSO buttons — only show on normal login (not demo flow) */}
-        {!showDemo && (
+        {/* SSO buttons — only show when env vars are configured AND not demo flow */}
+        {!showDemo && (process.env.NEXT_PUBLIC_HAS_GOOGLE_SSO === 'true' || process.env.NEXT_PUBLIC_HAS_MICROSOFT_SSO === 'true') && (
           <>
             <div className="flex flex-col gap-2 mb-4">
+              {process.env.NEXT_PUBLIC_HAS_GOOGLE_SSO === 'true' && (
               <button
                 onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
                 type="button"
@@ -64,6 +65,8 @@ export default function LoginPage() {
                 </svg>
                 Continue with Google
               </button>
+              )}
+              {process.env.NEXT_PUBLIC_HAS_MICROSOFT_SSO === 'true' && (
               <button
                 onClick={() => signIn('azure-ad', { callbackUrl: '/dashboard' })}
                 type="button"
@@ -77,6 +80,7 @@ export default function LoginPage() {
                 </svg>
                 Continue with Microsoft
               </button>
+              )}
             </div>
             <div className="relative my-4">
               <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200" /></div>
