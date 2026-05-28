@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Upload, Loader2, Briefcase } from 'lucide-react'
+import Link from 'next/link'
+import { Upload, Loader2, Briefcase, Plus } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -76,9 +77,15 @@ export function UploadWithVacancyDialog({ open, onClose, onUploaded }: Props) {
                 <Loader2 className="w-4 h-4 animate-spin" /> {t.dashboard.upload.loadingVacancies}
               </div>
             ) : vacancies.length === 0 ? (
-              <div className="p-4 text-center bg-gray-50 dark:bg-gray-800 rounded-xl">
-                <Briefcase className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">{t.dashboard.vacancies.createFirst}</p>
+              <div className="p-5 text-center bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl">
+                <Briefcase className="w-10 h-10 text-amber-500 mx-auto mb-3" />
+                <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">{t.dashboard.upload.createFirstVacancy || 'Create a vacancy first'}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">{t.dashboard.vacancies.createFirstDesc}</p>
+                <Link href="/vacancies" onClick={handleClose}>
+                  <Button className="gradient-bg gap-2" size="sm">
+                    <Plus size={14} /> {t.dashboard.vacancies.createVacancy}
+                  </Button>
+                </Link>
               </div>
             ) : (
               <Select value={selectedVacancy} onValueChange={setSelectedVacancy}>
