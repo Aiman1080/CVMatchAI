@@ -9,12 +9,23 @@ export default async function CandidateDetailPage({ params }: { params: Promise<
   const session = await getServerSession(authOptions)
   if (!session?.user) redirect('/login')
   const userId = (session.user as any).id
+  const isAdmin = (session.user as any).role === 'admin'
+  if (!userId) redirect('/login')
+
   const { id } = await params
-  const candidate = await prisma.candidate.findFirst({ where: { id, userId }, include: { vacancy: true, emailSource: true } })
+
+  // Admins can see all candidates; recruiters only their own.
+  const candidate = await prisma.candidate.findFirst({
+    where: isAdmin ? { id } : { id, userId },
+    include: { vacancy: true, emailSource: true },
+  }).catch(() => null)
+
   if (!candidate) notFound()
+
+  const fullName = `${candidate.firstName || ''} ${candidate.lastName || ''}`.trim() || 'Candidate'
   return (
     <div>
-      <Header title={`${candidate.firstName} ${candidate.lastName}`} description={candidate.vacancy?.title || 'Candidate Profile'} />
+      <Header title={fullName} description={candidate.vacancy?.title || 'Candidate Profile'} />
       <div className="p-4 sm:p-8"><CandidateDetailClient candidate={candidate} /></div>
     </div>
   )
