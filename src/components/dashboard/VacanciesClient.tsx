@@ -139,13 +139,18 @@ export function VacanciesClient({ initialVacancies }: { initialVacancies: Vacanc
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
             {search ? tv.noResults : tv.createFirst}
           </h3>
-          <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">
+          <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
             {search ? tv.noResultsDesc : tv.createFirstDesc}
           </p>
           {!search && (
-            <Button onClick={() => setShowCreate(true)} className="gradient-bg gap-2">
-              <Plus size={16} /> {tv.createVacancy}
-            </Button>
+            <>
+              <Button onClick={() => setShowCreate(true)} className="gradient-bg gap-2 mb-4">
+                <Plus size={16} /> {tv.createVacancy}
+              </Button>
+              <p className="text-gray-400 dark:text-gray-500 text-xs">
+                {tv.atsHint}
+              </p>
+            </>
           )}
         </div>
       ) : (
