@@ -9,14 +9,37 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useLanguage } from '@/contexts/LanguageContext'
 
+// Lightweight RFC 5322-ish check — good enough for UX feedback, server validates strictly
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 export default function ForgotPasswordPage() {
   const { t } = useLanguage()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [emailError, setEmailError] = useState<string | null>(null)
+  const [emailTouched, setEmailTouched] = useState(false)
+
+  const tAuth: any = (t as any).auth
+  const requiredMsg = tAuth?.emailRequired || 'Please enter your email'
+  const invalidMsg = tAuth?.invalidEmail || 'Please enter a valid email address'
+
+  const validateEmail = (value: string): string | null => {
+    if (!value.trim()) return requiredMsg
+    if (!EMAIL_REGEX.test(value)) return invalidMsg
+    return null
+  }
+
+  const onEmailChange = (value: string) => {
+    setEmail(value)
+    if (emailTouched) setEmailError(validateEmail(value))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setEmailTouched(true)
+    const err = validateEmail(email)
+    if (err) { setEmailError(err); return }
     setLoading(true)
     try {
       await fetch('/api/auth/forgot-password', {
@@ -53,7 +76,7 @@ export default function ForgotPasswordPage() {
           </div>
         ) : (
           <>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
               <div className="space-y-1.5">
                 <Label htmlFor="email">{t.auth.email}</Label>
                 <Input
@@ -61,10 +84,13 @@ export default function ForgotPasswordPage() {
                   type="email"
                   placeholder="you@company.com"
                   value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  required
+                  onChange={e => onEmailChange(e.target.value)}
+                  onBlur={() => { setEmailTouched(true); setEmailError(validateEmail(email)) }}
+                  aria-invalid={!!emailError}
+                  className={emailError ? 'border-red-500 focus-visible:ring-red-500' : ''}
                   autoComplete="email"
                 />
+                {emailError && <p className="text-xs text-red-500" role="alert">{emailError}</p>}
               </div>
               <Button type="submit" disabled={loading} className="w-full gradient-bg h-11">
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : t.auth.sendResetLink}

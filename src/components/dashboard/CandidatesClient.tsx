@@ -230,13 +230,18 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
         )
       )
       const successCount = results.filter(r => r.status === 'fulfilled').length
+      const failureCount = results.length - successCount
       setCandidates(prev =>
         prev.map(c => selectedIds.has(c.id) ? { ...c, status: newStatus } : c)
       )
       setSelectedIds(new Set())
-      toast({ title: `${successCount} candidate(s) updated to "${newStatus}"` })
+      if (failureCount > 0) {
+        toast({ title: `${successCount} of ${results.length} candidates updated`, description: `${failureCount} could not be updated. Please retry those candidates individually.`, variant: 'destructive' })
+      } else {
+        toast({ title: `${successCount} candidate(s) updated to "${newStatus}"` })
+      }
     } catch {
-      toast({ title: tc.updateError, variant: 'destructive' })
+      toast({ title: (tc as any).bulkUpdateError || tc.updateError, variant: 'destructive' })
     } finally {
       setBulkUpdating(false)
     }
@@ -269,12 +274,17 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
           setCandidates(prev => prev.filter(c => !deletedIds.has(c.id)))
           setTotal(prev => prev - deletedIds.size)
           setSelectedIds(new Set())
-          toast({ title: `${deletedIds.size} candidate(s) deleted` })
+          const failed = ids.length - deletedIds.size
+          if (failed > 0) {
+            toast({ title: `${deletedIds.size} of ${ids.length} deleted`, description: `${failed} could not be deleted. Please retry those candidates individually.`, variant: 'destructive' })
+          } else {
+            toast({ title: `${deletedIds.size} candidate(s) deleted` })
+          }
           if (candidates.length === deletedIds.size && page > 1) {
             fetchPage(page - 1)
           }
         } catch {
-          toast({ title: tc.deleteError, variant: 'destructive' })
+          toast({ title: (tc as any).bulkDeleteError || tc.deleteError, variant: 'destructive' })
         } finally {
           setBulkUpdating(false)
         }
@@ -290,7 +300,7 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
       await exportCandidatesToExcel(selected)
       toast({ title: `Excel export of ${selected.length} candidate(s) downloaded!` })
     } catch {
-      toast({ title: 'Export failed', variant: 'destructive' })
+      toast({ title: (tc as any).exportFailed || 'Export failed', description: 'Could not generate the Excel file. Please try again.', variant: 'destructive' })
     } finally {
       setExportingExcel(false)
     }
@@ -304,7 +314,7 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
       await exportCandidatesToPDF(selected)
       toast({ title: `PDF export of ${selected.length} candidate(s) downloaded!` })
     } catch {
-      toast({ title: 'Export failed', variant: 'destructive' })
+      toast({ title: (tc as any).exportFailed || 'Export failed', description: 'Could not generate the PDF file. Please try again.', variant: 'destructive' })
     } finally {
       setExportingPdf(false)
     }
@@ -360,11 +370,15 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
           toast({ title: 'Email sent!', description: `Export sent to ${exportEmail}` })
           setShowExport(false)
         } else {
-          toast({ title: data.error || 'Error', variant: 'destructive' })
+          toast({ title: 'Email could not be sent', description: data.error || 'Please check the email address and try again.', variant: 'destructive' })
         }
       } else if (sendEmail === false) {
         // CSV download
         const res = await fetch('/api/candidates/export')
+        if (!res.ok) {
+          toast({ title: (tc as any).exportFailed || 'Export failed', description: 'Could not generate the CSV. Please try again.', variant: 'destructive' })
+          return
+        }
         const blob = await res.blob()
         const a = document.createElement('a')
         a.href = URL.createObjectURL(blob)
@@ -378,6 +392,8 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
         toast({ title: 'PDF report opened', description: 'Use Ctrl+P to save as PDF.' })
         setShowExport(false)
       }
+    } catch {
+      toast({ title: (tc as any).exportFailed || 'Export failed', description: 'Please check your connection and try again.', variant: 'destructive' })
     } finally { setExporting(false) }
   }
 
@@ -473,7 +489,7 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
             try {
               await exportCandidatesToExcel(filtered)
               toast({ title: 'Excel export downloaded!' })
-            } catch { toast({ title: 'Export failed', variant: 'destructive' }) }
+            } catch { toast({ title: (tc as any).exportFailed || 'Export failed', description: 'Could not generate the Excel file. Please try again.', variant: 'destructive' }) }
             finally { setExportingExcel(false) }
           }}
           className="gap-1.5 h-9"
@@ -490,7 +506,7 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
             try {
               await exportCandidatesToPDF(filtered)
               toast({ title: 'PDF export downloaded!' })
-            } catch { toast({ title: 'Export failed', variant: 'destructive' }) }
+            } catch { toast({ title: (tc as any).exportFailed || 'Export failed', description: 'Could not generate the PDF file. Please try again.', variant: 'destructive' }) }
             finally { setExportingPdf(false) }
           }}
           className="gap-1.5 h-9"
@@ -556,17 +572,58 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
 
       {/* Grid view */}
       {view === 'grid' && (
-        filtered.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
-              <Users className="w-8 h-8 text-gray-400" />
+        filtered.length === 0 ? (() => {
+          const hasActiveFilters = !!search.trim() || vacancyFilter !== 'all' || statusFilter !== 'all' || scoreFilter !== 'all'
+          return (
+            <div className="text-center py-20">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/40 dark:to-purple-950/40 flex items-center justify-center mx-auto mb-4">
+                <Users className="w-8 h-8 text-blue-500 dark:text-blue-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                {hasActiveFilters ? (tc as any).noCandidatesFiltered : tc.noCandidates}
+              </h3>
+              <p className="text-gray-500 dark:text-gray-400 text-sm max-w-md mx-auto mb-5">
+                {hasActiveFilters ? (tc as any).noCandidatesFilteredDesc : (tc as any).noCandidatesDesc}
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mb-4">
+                {hasActiveFilters ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSearch('')
+                      setVacancyFilter('all')
+                      setStatusFilter('all')
+                      setScoreFilter('all')
+                      setPage(1)
+                      setSelectedIds(new Set())
+                      fetchPage(1, { vacancyId: 'all', search: '', status: 'all', scoreFilter: 'all' })
+                    }}
+                    className="gap-1.5"
+                  >
+                    <X size={14} /> {(tc as any).clearFilters}
+                  </Button>
+                ) : (
+                  <>
+                    <Button size="sm" onClick={() => setShowUploadCV(true)} className="gap-1.5 gradient-bg">
+                      <Upload size={14} /> {(tc as any).uploadFirstCv}
+                    </Button>
+                    <Link href="/integrations">
+                      <Button variant="outline" size="sm" className="gap-1.5">
+                        <FileText size={14} /> {t.dashboard.nav.integrations}
+                      </Button>
+                    </Link>
+                  </>
+                )}
+              </div>
+              {!hasActiveFilters && (
+                <p className="text-gray-400 dark:text-gray-500 text-xs max-w-md mx-auto">
+                  {tc.atsHint}
+                </p>
+              )}
             </div>
-            <p className="text-gray-500 mb-4">{tc.noCandidates}</p>
-            <p className="text-gray-400 dark:text-gray-500 text-xs max-w-md mx-auto">
-              {tc.atsHint}
-            </p>
-          </div>
-        ) : (
+          )
+        })() : (
           <>
           {/* Select all header */}
           <div className="flex items-center gap-2 mb-2 px-1">
@@ -585,7 +642,7 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
               {allFilteredSelected ? 'Deselect all' : 'Select all'} ({filtered.length})
             </span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+          <div className={`grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 transition-opacity ${loadingPage ? 'opacity-50 pointer-events-none' : ''}`}>
             {filtered.map((c, i) => {
               const firstInitial = c.firstName?.trim()?.[0] ?? '?'
               const lastInitial = c.lastName?.trim()?.[0] ?? ''

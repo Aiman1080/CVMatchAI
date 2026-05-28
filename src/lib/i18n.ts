@@ -516,6 +516,13 @@ export const translations = {
         descGenerated: 'Description generated with AI',
         genFailed: 'Generation failed',
         isNowLive: 'is now live.',
+        validation: {
+          titleRequired: 'Job title is required',
+          companyRequired: 'Company name is required',
+          descriptionRequired: 'Please add a job description',
+          descriptionTooShort: 'Description should be at least 30 characters',
+          requirementsRequired: 'Please list the requirements',
+        },
       },
       vacancyDetail: {
         descriptionTab: 'Description',
@@ -618,6 +625,8 @@ export const translations = {
         saving: 'Saving...',
         saveChanges: 'Save Changes',
         saved: 'Settings saved!',
+        nameRequired: 'Please enter your name',
+        nameTooShort: 'Name must be at least 2 characters',
       },
       settingsPassword: {
         title: 'Change Password',
@@ -1681,6 +1690,13 @@ export const translations = {
         descGenerated: 'Beschrijving gegenereerd met AI',
         genFailed: 'Genereren mislukt',
         isNowLive: 'is nu actief.',
+        validation: {
+          titleRequired: 'Functietitel is vereist',
+          companyRequired: 'Bedrijfsnaam is vereist',
+          descriptionRequired: 'Voeg een functiebeschrijving toe',
+          descriptionTooShort: 'De beschrijving moet minimaal 30 tekens bevatten',
+          requirementsRequired: 'Geef de vereisten op',
+        },
       },
       vacancyDetail: {
         descriptionTab: 'Beschrijving',
@@ -1783,6 +1799,8 @@ export const translations = {
         saving: 'Opslaan...',
         saveChanges: 'Wijzigingen opslaan',
         saved: 'Instellingen opgeslagen!',
+        nameRequired: 'Voer uw naam in',
+        nameTooShort: 'Naam moet minimaal 2 tekens bevatten',
       },
       settingsPassword: {
         title: 'Wachtwoord wijzigen',
@@ -2846,6 +2864,13 @@ export const translations = {
         descGenerated: "Description générée avec l'IA",
         genFailed: 'Génération échouée',
         isNowLive: 'est maintenant en ligne.',
+        validation: {
+          titleRequired: 'Le titre du poste est requis',
+          companyRequired: "Le nom de l'entreprise est requis",
+          descriptionRequired: 'Veuillez ajouter une description du poste',
+          descriptionTooShort: 'La description doit comporter au moins 30 caractères',
+          requirementsRequired: 'Veuillez lister les exigences',
+        },
       },
       vacancyDetail: {
         descriptionTab: 'Description',
@@ -3008,6 +3033,8 @@ export const translations = {
         saving: 'Enregistrement...',
         saveChanges: 'Enregistrer',
         saved: 'Paramètres enregistrés !',
+        nameRequired: 'Veuillez entrer votre nom',
+        nameTooShort: 'Le nom doit comporter au moins 2 caractères',
       },
       settingsPassword: {
         title: 'Modifier le mot de passe',

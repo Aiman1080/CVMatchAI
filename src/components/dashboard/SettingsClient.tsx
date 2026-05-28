@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from '@/components/ui/use-toast'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import Link from 'next/link'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
@@ -34,19 +35,72 @@ export function SettingsClient({ user, isDemo }: Props) {
   const [showNew, setShowNew] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [deletingAll, setDeletingAll] = useState(false)
+  // Confirm dialog for the destructive "delete all candidates" action
+  const [deleteAllDialog, setDeleteAllDialog] = useState(false)
+
+  // Inline validation for the profile form — keeps users from losing context on errors
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [touched, setTouched] = useState<Record<string, boolean>>({})
+
+  const sp = (t.dashboard as any).settingsProfile
+  const nameRequiredMsg = sp?.nameRequired || 'Please enter your name'
+  const nameTooShortMsg = sp?.nameTooShort || 'Name must be at least 2 characters'
+
+  const validateProfile = (f: typeof form): Record<string, string> => {
+    const next: Record<string, string> = {}
+    if (!f.name.trim()) next.name = nameRequiredMsg
+    else if (f.name.trim().length < 2) next.name = nameTooShortMsg
+    return next
+  }
+
+  const setProfileField = (key: keyof typeof form, value: string) => {
+    const next = { ...form, [key]: value }
+    setForm(next)
+    if (touched[key]) {
+      const all = validateProfile(next)
+      setErrors(prev => {
+        const n = { ...prev }
+        if (all[key]) n[key] = all[key]
+        else delete n[key]
+        return n
+      })
+    }
+  }
+
+  const markProfileTouched = (key: string) => {
+    setTouched(prev => ({ ...prev, [key]: true }))
+    const all = validateProfile(form)
+    setErrors(prev => {
+      const n = { ...prev }
+      if (all[key]) n[key] = all[key]
+      else delete n[key]
+      return n
+    })
+  }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
+    setTouched({ name: true })
+    const all = validateProfile(form)
+    if (Object.keys(all).length > 0) {
+      setErrors(all)
+      toast({ title: 'Please fix the highlighted fields', description: 'Some required fields are missing or invalid.', variant: 'destructive' })
+      return
+    }
     setSaving(true)
     try {
       const res = await fetch('/api/user', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data.error || 'Save failed')
+        throw new Error(data.error || t.dashboard.settingsPage.errorSaving)
       }
       toast({ title: t.dashboard.settingsProfile.saved })
     } catch (err: any) {
-      toast({ title: err.message || t.dashboard.settingsPage.errorSaving, variant: 'destructive' })
+      toast({
+        title: t.dashboard.settingsPage.errorSaving,
+        description: err.message && err.message !== t.dashboard.settingsPage.errorSaving ? err.message : undefined,
+        variant: 'destructive',
+      })
     } finally { setSaving(false) }
   }
 
@@ -61,11 +115,19 @@ export function SettingsClient({ user, isDemo }: Props) {
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault()
     if (pwForm.newPassword !== pwForm.confirm) {
-      toast({ title: t.dashboard.settingsPassword.noMatch, variant: 'destructive' })
+      toast({
+        title: t.dashboard.settingsPassword.noMatch,
+        description: 'Make sure both new password fields match exactly.',
+        variant: 'destructive',
+      })
       return
     }
     if (!pwIsStrong) {
-      toast({ title: t.dashboard.settingsPassword.tooShort, variant: 'destructive' })
+      toast({
+        title: t.dashboard.settingsPassword.tooShort,
+        description: 'Password must be at least 8 characters and include an uppercase letter, a number, and a symbol.',
+        variant: 'destructive',
+      })
       return
     }
     setPwSaving(true)
@@ -77,12 +139,16 @@ export function SettingsClient({ user, isDemo }: Props) {
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data.error || 'Password change failed')
+        throw new Error(data.error || t.dashboard.settingsPage.errorChangingPassword)
       }
       toast({ title: t.dashboard.settingsPassword.updated })
       setPwForm({ currentPassword: '', newPassword: '', confirm: '' })
     } catch (err: any) {
-      toast({ title: err.message || t.dashboard.settingsPage.errorChangingPassword, variant: 'destructive' })
+      toast({
+        title: t.dashboard.settingsPage.errorChangingPassword,
+        description: err.message && err.message !== t.dashboard.settingsPage.errorChangingPassword ? err.message : undefined,
+        variant: 'destructive',
+      })
     } finally { setPwSaving(false) }
   }
 
@@ -112,7 +178,14 @@ export function SettingsClient({ user, isDemo }: Props) {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-gray-700 dark:text-gray-300">{t.dashboard.settingsProfile.fullName}</Label>
-                <Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />
+                <Input
+                  value={form.name}
+                  onChange={e => setProfileField('name', e.target.value)}
+                  onBlur={() => markProfileTouched('name')}
+                  aria-invalid={!!errors.name}
+                  className={errors.name ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                />
+                {errors.name && <p className="text-xs text-red-500" role="alert">{errors.name}</p>}
               </div>
               <div className="space-y-1.5">
                 <Label className="text-gray-700 dark:text-gray-300">{t.dashboard.settingsProfile.email}</Label>
@@ -281,7 +354,11 @@ export function SettingsClient({ user, isDemo }: Props) {
                         a.click()
                         toast({ title: t.dashboard.settingsPage.dataExported })
                       } catch {
-                        toast({ title: t.dashboard.settingsPage.exportFailed, variant: 'destructive' })
+                        toast({
+                          title: t.dashboard.settingsPage.exportFailed,
+                          description: 'Please check your connection and try again.',
+                          variant: 'destructive',
+                        })
                       } finally { setExporting(false) }
                     }}
                   >
@@ -292,21 +369,7 @@ export function SettingsClient({ user, isDemo }: Props) {
                     size="sm"
                     disabled={deletingAll}
                     className="w-full justify-start text-red-600 hover:text-red-700 hover:border-red-300 dark:border-gray-700"
-                    onClick={async () => {
-                      if (!confirm(t.dashboard.settingsPage.deleteConfirm)) return
-                      setDeletingAll(true)
-                      try {
-                        const res = await fetch('/api/candidates/delete-all', { method: 'DELETE' })
-                        const data = await res.json()
-                        if (res.ok) {
-                          toast({ title: t.dashboard.settingsPage.candidatesDeletedDesc.replace('{count}', String(data.deleted)), description: t.dashboard.settingsPage.allDataRemoved })
-                        } else {
-                          toast({ title: data.error || t.dashboard.settingsPage.deleteFailed, variant: 'destructive' })
-                        }
-                      } catch {
-                        toast({ title: t.dashboard.settingsPage.deleteFailed, variant: 'destructive' })
-                      } finally { setDeletingAll(false) }
-                    }}
+                    onClick={() => setDeleteAllDialog(true)}
                   >
                     <Trash2 size={14} className="mr-2" />
                     {deletingAll ? t.dashboard.settingsPage.deletingData : t.dashboard.settingsPage.deleteAllData}
@@ -317,6 +380,42 @@ export function SettingsClient({ user, isDemo }: Props) {
           </Card>
         </div>
       </TabsContent>
+
+      {/* Confirm dialog for the destructive "delete all candidates" action */}
+      <ConfirmDialog
+        open={deleteAllDialog}
+        onConfirm={async () => {
+          setDeleteAllDialog(false)
+          setDeletingAll(true)
+          try {
+            const res = await fetch('/api/candidates/delete-all', { method: 'DELETE' })
+            const data = await res.json().catch(() => ({}))
+            if (res.ok) {
+              toast({
+                title: t.dashboard.settingsPage.candidatesDeletedDesc.replace('{count}', String(data.deleted)),
+                description: t.dashboard.settingsPage.allDataRemoved,
+              })
+            } else {
+              toast({
+                title: t.dashboard.settingsPage.deleteFailed,
+                description: data.error || 'Please refresh the page and try again.',
+                variant: 'destructive',
+              })
+            }
+          } catch {
+            toast({
+              title: t.dashboard.settingsPage.deleteFailed,
+              description: 'Please check your connection and try again.',
+              variant: 'destructive',
+            })
+          } finally { setDeletingAll(false) }
+        }}
+        onCancel={() => setDeleteAllDialog(false)}
+        title={(t.dashboard.settingsPage as any).deleteAllTitle || 'Delete all candidate data?'}
+        description={(t.dashboard.settingsPage as any).deleteAllDescription || t.dashboard.settingsPage.deleteConfirm}
+        confirmText={(t.dashboard.settingsPage as any).deleteAllConfirm || 'Delete all data'}
+        variant="destructive"
+      />
     </Tabs>
   )
 }

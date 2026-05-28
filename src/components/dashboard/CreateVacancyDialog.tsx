@@ -20,16 +20,70 @@ interface Props {
 export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
   const { t } = useLanguage()
   const cv = t.dashboard.createVacancy
+  // Validation strings; fallback in case translations are not loaded yet (during tests)
+  const vmsg = (cv as any).validation || {
+    titleRequired: 'Job title is required',
+    companyRequired: 'Company name is required',
+    descriptionRequired: 'Please add a job description',
+    descriptionTooShort: 'Description should be at least 30 characters',
+    requirementsRequired: 'Please list the requirements',
+  }
   const [loading, setLoading] = useState(false)
   const [generating, setGenerating] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [touched, setTouched] = useState<Record<string, boolean>>({})
   const [form, setForm] = useState({
     title: '', company: '', department: '', location: '',
     type: 'full-time', description: '', requirements: '',
     niceToHave: '', salary: '', language: 'en',
   })
 
+  // Pure validator — returns the full error map for a given form
+  const validate = (f: typeof form): Record<string, string> => {
+    const next: Record<string, string> = {}
+    if (!f.title.trim()) next.title = vmsg.titleRequired
+    if (!f.company.trim()) next.company = vmsg.companyRequired
+    if (!f.description.trim()) next.description = vmsg.descriptionRequired
+    else if (f.description.trim().length < 30) next.description = vmsg.descriptionTooShort
+    if (!f.requirements.trim()) next.requirements = vmsg.requirementsRequired
+    return next
+  }
+
+  // Re-validate just the fields the user has interacted with — avoids shouting errors at first paint
+  const validateOnChange = (next: typeof form) => {
+    const allErrors = validate(next)
+    setErrors(prev => {
+      const filtered: Record<string, string> = {}
+      Object.keys(allErrors).forEach(k => { if (touched[k]) filtered[k] = allErrors[k] })
+      // Preserve fields that are still invalid even if not yet touched on submit
+      Object.keys(prev).forEach(k => { if (allErrors[k]) filtered[k] = allErrors[k] })
+      return filtered
+    })
+  }
+
+  const setField = (key: keyof typeof form, value: any) => {
+    const next = { ...form, [key]: value }
+    setForm(next)
+    if (touched[key]) validateOnChange(next)
+  }
+
+  const markTouched = (key: string) => {
+    setTouched(prev => ({ ...prev, [key]: true }))
+    const allErrors = validate(form)
+    if (allErrors[key]) setErrors(prev => ({ ...prev, [key]: allErrors[key] }))
+    else setErrors(prev => { const n = { ...prev }; delete n[key]; return n })
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    // Mark every required field as touched so the user sees all errors at once
+    setTouched({ title: true, company: true, description: true, requirements: true })
+    const allErrors = validate(form)
+    if (Object.keys(allErrors).length > 0) {
+      setErrors(allErrors)
+      toast({ title: 'Please fix the highlighted fields', description: 'Some required fields are missing or invalid.', variant: 'destructive' })
+      return
+    }
     setLoading(true)
     try {
       const res = await fetch('/api/vacancies', {
@@ -46,7 +100,11 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
             variant: 'destructive',
           })
         } else {
-          toast({ title: cv.createError, variant: 'destructive' })
+          toast({
+            title: cv.createError,
+            description: data.error || 'Could not create the vacancy. Please check the fields and try again.',
+            variant: 'destructive',
+          })
         }
         return
       }
@@ -54,8 +112,10 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
       onCreated(vacancy)
       toast({ title: cv.created, description: `"${vacancy.title}" ${cv.isNowLive}`, variant: 'default' })
       setForm({ title: '', company: '', department: '', location: '', type: 'full-time', description: '', requirements: '', niceToHave: '', salary: '', language: 'en' })
+      setErrors({})
+      setTouched({})
     } catch {
-      toast({ title: cv.createError, variant: 'destructive' })
+      toast({ title: cv.createError, description: 'Network error. Please check your connection and try again.', variant: 'destructive' })
     } finally {
       setLoading(false)
     }
@@ -71,11 +131,27 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>{cv.jobTitle} <span className="text-red-500">*</span></Label>
-              <Input placeholder={cv.jobTitlePlaceholder} value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} required />
+              <Input
+                placeholder={cv.jobTitlePlaceholder}
+                value={form.title}
+                onChange={e => setField('title', e.target.value)}
+                onBlur={() => markTouched('title')}
+                aria-invalid={!!errors.title}
+                className={errors.title ? 'border-red-500 focus-visible:ring-red-500' : ''}
+              />
+              {errors.title && <p className="text-xs text-red-500" role="alert">{errors.title}</p>}
             </div>
             <div className="space-y-1.5">
               <Label>{cv.company} <span className="text-red-500">*</span></Label>
-              <Input placeholder={cv.companyPlaceholder} value={form.company} onChange={e => setForm(p => ({ ...p, company: e.target.value }))} required />
+              <Input
+                placeholder={cv.companyPlaceholder}
+                value={form.company}
+                onChange={e => setField('company', e.target.value)}
+                onBlur={() => markTouched('company')}
+                aria-invalid={!!errors.company}
+                className={errors.company ? 'border-red-500 focus-visible:ring-red-500' : ''}
+              />
+              {errors.company && <p className="text-xs text-red-500" role="alert">{errors.company}</p>}
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -148,22 +224,40 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
             <Textarea
               placeholder={cv.descriptionPlaceholder}
               value={form.description}
-              onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
+              onChange={e => setField('description', e.target.value)}
+              onBlur={() => markTouched('description')}
+              aria-invalid={!!errors.description}
               rows={4}
-              required
+              className={errors.description ? 'border-red-500 focus-visible:ring-red-500' : ''}
             />
-            <p className="text-xs text-gray-400 text-right">{form.description.length} characters</p>
+            <div className="flex items-center justify-between">
+              {errors.description ? (
+                <p className="text-xs text-red-500" role="alert">{errors.description}</p>
+              ) : (
+                <span />
+              )}
+              <p className="text-xs text-gray-400 text-right">{form.description.length} characters</p>
+            </div>
           </div>
           <div className="space-y-1.5">
             <Label>{cv.requirements} <span className="text-red-500">*</span></Label>
             <Textarea
               placeholder={cv.requirementsPlaceholder}
               value={form.requirements}
-              onChange={e => setForm(p => ({ ...p, requirements: e.target.value }))}
+              onChange={e => setField('requirements', e.target.value)}
+              onBlur={() => markTouched('requirements')}
+              aria-invalid={!!errors.requirements}
               rows={3}
-              required
+              className={errors.requirements ? 'border-red-500 focus-visible:ring-red-500' : ''}
             />
-            <p className="text-xs text-gray-400 text-right">{form.requirements.length} characters</p>
+            <div className="flex items-center justify-between">
+              {errors.requirements ? (
+                <p className="text-xs text-red-500" role="alert">{errors.requirements}</p>
+              ) : (
+                <span />
+              )}
+              <p className="text-xs text-gray-400 text-right">{form.requirements.length} characters</p>
+            </div>
           </div>
           <div className="space-y-1.5">
             <Label>{cv.niceToHave}</Label>

@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { toast } from '@/components/ui/use-toast'
 import { formatRelativeTime } from '@/lib/utils'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -250,6 +251,12 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
   const [form, setForm] = useState<Record<string, { apiKey: string; companySlug: string }>>({})
   const [syncAll, setSyncAll] = useState(false)
   const [atsTipDismissed, setAtsTipDismissed] = useState(true) // default true to avoid flash
+  // Confirm dialog state for destructive disconnect action
+  const [disconnectDialog, setDisconnectDialog] = useState<{ open: boolean; integrationId: string; platformId: string; platformName: string }>(
+    { open: false, integrationId: '', platformId: '', platformName: '' }
+  )
+  // Highlight a just-connected integration so users see the "Click Sync" cue
+  const [justConnected, setJustConnected] = useState<string | null>(null)
 
   useEffect(() => {
     setAtsTipDismissed(localStorage.getItem('deltamatch-ats-tip-dismissed') === 'true')
@@ -280,7 +287,7 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
 
   const handleConnect = async (platformId: string) => {
     const f = form[platformId] || { apiKey: '', companySlug: '' }
-    if (!f.apiKey.trim()) { toast({ title: ti.apiKeyRequired, variant: 'destructive' }); return }
+    if (!f.apiKey.trim()) { toast({ title: ti.apiKeyRequired, description: 'Paste an API key from your ATS settings to continue.', variant: 'destructive' }); return }
     setConnecting(platformId)
     try {
       const res = await fetch('/api/integrations', {
@@ -294,13 +301,24 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
         setForm(prev => ({ ...prev, [platformId]: { apiKey: '', companySlug: '' } }))
         setExpanded(null)
         const p = PLATFORM_STATIC.find(p => p.id === platformId)
+        // Highlight this integration so the user notices the Sync button
+        setJustConnected(data.id)
+        setTimeout(() => setJustConnected(prev => (prev === data.id ? null : prev)), 8000)
         toast({
-          title: `${p?.name} ${ti.connected}`,
-          description: data.company ? `${ti.companyFound}${data.company}` : ti.connectionSuccess,
+          title: (ti as any).connectSuccessTitle?.replace('{name}', p?.name ?? '') || `${p?.name} ${ti.connected}`,
+          description: data.company
+            ? `${ti.companyFound}${data.company} — ${(ti as any).connectSuccessDesc?.replace('{name}', p?.name ?? '') || 'Click Sync to import candidates.'}`
+            : (ti as any).connectSuccessDesc?.replace('{name}', p?.name ?? '') || ti.connectionSuccess,
         })
       } else {
-        toast({ title: ti.connectionFailed, description: data.error, variant: 'destructive' })
+        // Provide actionable error description
+        const errorDesc = data.error
+          ? `${data.error} — Double-check the API key in your ATS settings and try again.`
+          : 'Could not reach the ATS. Please verify your API key has the right permissions and try again.'
+        toast({ title: ti.connectionFailed, description: errorDesc, variant: 'destructive' })
       }
+    } catch {
+      toast({ title: ti.connectionFailed, description: 'Network error. Please check your connection and try again.', variant: 'destructive' })
     } finally { setConnecting(null) }
   }
 
@@ -331,15 +349,23 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
       } else {
         if (data.apiKeyExpired) {
           toast({
-            title: '🔑 API Key Expired',
-            description: `Your ${PLATFORM_STATIC.find(p => p.id === platformId)?.name} API key has expired or is invalid. Please disconnect and reconnect with a new key.`,
+            title: 'API Key Expired',
+            description: `Your ${PLATFORM_STATIC.find(p => p.id === platformId)?.name} API key is expired or invalid. Disconnect and reconnect with a new key from your ATS settings.`,
             variant: 'destructive',
           })
           setIntegrations(prev => prev.map(i => i.id === integrationId ? { ...i, status: 'error' } : i))
         } else {
-          toast({ title: ti.syncError, description: data.error, variant: 'destructive' })
+          toast({
+            title: ti.syncError,
+            description: data.error
+              ? `${data.error} — Verify your ATS connection and try again.`
+              : 'Could not sync. Check your network and the ATS status, then retry.',
+            variant: 'destructive',
+          })
         }
       }
+    } catch {
+      toast({ title: ti.syncError, description: 'Network error. Please check your connection and try again.', variant: 'destructive' })
     } finally { setSyncing(null) }
   }
 
@@ -374,20 +400,26 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
     }
   }
 
-  const handleDisconnect = async (integrationId: string, platformId: string) => {
+  // Opens the confirm dialog — actual deletion happens in performDisconnect
+  const handleDisconnect = (integrationId: string, platformId: string) => {
     const p = PLATFORM_STATIC.find(p => p.id === platformId)
-    if (!confirm(ti.disconnectConfirm.replace('{name}', p?.name ?? ''))) return
+    setDisconnectDialog({ open: true, integrationId, platformId, platformName: p?.name ?? '' })
+  }
+
+  const performDisconnect = async () => {
+    const { integrationId, platformId, platformName } = disconnectDialog
+    setDisconnectDialog(prev => ({ ...prev, open: false }))
     setDeleting(integrationId)
     try {
       const res = await fetch(`/api/integrations/${integrationId}`, { method: 'DELETE' })
       if (res.ok) {
         setIntegrations(prev => prev.filter(i => i.id !== integrationId))
-        toast({ title: `${p?.name} ${ti.disconnected}`, description: ti.candidatesKept })
+        toast({ title: `${platformName} ${ti.disconnected}`, description: ti.candidatesKept })
       } else {
-        toast({ title: 'Disconnect failed', variant: 'destructive' })
+        toast({ title: 'Disconnect failed', description: (ti as any).disconnectFailed || 'Please refresh the page and try again.', variant: 'destructive' })
       }
     } catch {
-      toast({ title: 'Disconnect failed', variant: 'destructive' })
+      toast({ title: 'Disconnect failed', description: (ti as any).disconnectFailed || 'Please check your connection and try again.', variant: 'destructive' })
     } finally { setDeleting(null) }
   }
 
@@ -416,6 +448,21 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
           <p className="text-sm text-blue-600 dark:text-blue-400 mt-0.5">{ti.bannerDesc}</p>
         </div>
       </div>
+
+      {/* Empty state — when no ATS is connected, give a friendly nudge */}
+      {connectedCount === 0 && (
+        <div className="p-6 rounded-xl bg-white dark:bg-gray-900 border border-dashed border-gray-200 dark:border-gray-700 text-center">
+          <div className="w-12 h-12 mx-auto rounded-xl bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/40 dark:to-purple-950/40 flex items-center justify-center mb-3">
+            <Plug className="w-6 h-6 text-blue-500 dark:text-blue-400" />
+          </div>
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
+            {(ti as any).noIntegrations || 'No ATS connected yet'}
+          </h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+            {(ti as any).noIntegrationsDesc || 'Choose a platform below to import your candidates and vacancies in seconds.'}
+          </p>
+        </div>
+      )}
 
       {/* Sync All button — only shown when at least 1 is connected */}
       {connectedCount > 0 && (
@@ -488,13 +535,16 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
             const slugLabel = pt.slugLabel || ti.slugLabel
             const slugTooltip = pt.slugTooltip || ti.slugTooltip
 
+            const isJustConnected = connected && justConnected === connected.id
             return (
               <div
                 key={platform.id}
                 className={`rounded-xl border transition-all ${
-                  connected
-                    ? `${platform.borderColor} ${platform.bgColor}`
-                    : 'border-gray-100 dark:border-gray-800'
+                  isJustConnected
+                    ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-950/30 ring-2 ring-green-200 dark:ring-green-800'
+                    : connected
+                      ? `${platform.borderColor} ${platform.bgColor}`
+                      : 'border-gray-100 dark:border-gray-800'
                 }`}
               >
                 {/* Platform row */}
@@ -541,6 +591,11 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
                         {connected.lastSyncAt
                           ? ti.syncCountLabel.replace('{time}', formatRelativeTime(new Date(connected.lastSyncAt))).replace('{count}', String(connected.syncCount))
                           : ti.neverSynced}
+                      </p>
+                    )}
+                    {isJustConnected && (
+                      <p className="mt-1.5 inline-flex items-center gap-1 text-xs text-green-700 dark:text-green-400 font-medium">
+                        <CheckCircle size={11} /> Connected! Click <span className="font-semibold">Sync</span> to import your candidates.
                       </p>
                     )}
                   </div>
@@ -684,6 +739,17 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
 
       {/* Footer note */}
       <p className="text-xs text-gray-400 dark:text-gray-600 text-center">{ti.footerNote}</p>
+
+      {/* Confirmation dialog for the destructive disconnect action */}
+      <ConfirmDialog
+        open={disconnectDialog.open}
+        onConfirm={performDisconnect}
+        onCancel={() => setDisconnectDialog(prev => ({ ...prev, open: false }))}
+        title={(ti as any).disconnectTitle?.replace('{name}', disconnectDialog.platformName) || `Disconnect ${disconnectDialog.platformName}?`}
+        description={(ti as any).disconnectDescription || ti.candidatesKept}
+        confirmText={(ti as any).disconnectConfirmBtn || 'Disconnect'}
+        variant="destructive"
+      />
     </div>
   )
 }
