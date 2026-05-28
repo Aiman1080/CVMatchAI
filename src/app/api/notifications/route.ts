@@ -10,6 +10,11 @@ export async function GET() {
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const userId = (session.user as any).id
+  if (!userId) return NextResponse.json({ notifications: [], unreadCount: 0 })
+
+  // Stale-JWT guard
+  const userExists = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } }).catch(() => null)
+  if (!userExists) return NextResponse.json({ notifications: [], unreadCount: 0 })
 
   try {
     const notifications = await prisma.notification.findMany({
@@ -23,8 +28,9 @@ export async function GET() {
     })
 
     return NextResponse.json({ notifications, unreadCount })
-  } catch {
-    return NextResponse.json({ notifications: [], unreadCount: 0 }, { status: 500 })
+  } catch (e: any) {
+    console.error('[API /api/notifications GET] Failed:', e?.message || e)
+    return NextResponse.json({ notifications: [], unreadCount: 0 })
   }
 }
 
