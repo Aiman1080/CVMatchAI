@@ -3,6 +3,7 @@ import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { Header } from '@/components/layout/Header'
 import { VacanciesClient } from '@/components/dashboard/VacanciesClient'
+import { isDemoAccount } from '@/lib/demo-guard'
 
 export default async function VacanciesPage() {
   const session = await getServerSession(authOptions)
@@ -16,7 +17,7 @@ export default async function VacanciesPage() {
   return (
     <div>
       <Header title="Vacancies" description={`${vacancies.length} job posting${vacancies.length !== 1 ? 's' : ''}`} />
-      <div className="p-8"><VacanciesClient initialVacancies={vacancies} /></div>
+      <div className="p-8"><VacanciesClient initialVacancies={vacancies} isDemo={isDemoAccount(session?.user?.email)} /></div>
     </div>
   )
 }

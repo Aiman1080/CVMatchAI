@@ -24,7 +24,7 @@ interface Vacancy {
 }
 
 // Client component: manages optimistic vacancy list — new vacancies are prepended without a page reload
-export function VacanciesClient({ initialVacancies }: { initialVacancies: Vacancy[] }) {
+export function VacanciesClient({ initialVacancies, isDemo }: { initialVacancies: Vacancy[]; isDemo?: boolean }) {
   const { t } = useLanguage()
   const tv = t.dashboard.vacancies
   const [vacancies, setVacancies] = useState(initialVacancies)
@@ -126,7 +126,7 @@ export function VacanciesClient({ initialVacancies }: { initialVacancies: Vacanc
             className="pl-9"
           />
         </div>
-        <Button onClick={() => setShowCreate(true)} className="gap-2 gradient-bg">
+        <Button onClick={() => setShowCreate(true)} disabled={isDemo} className="gap-2 gradient-bg">
           <Plus size={16} /> {tv.newVacancy}
         </Button>
       </div>
@@ -144,7 +144,7 @@ export function VacanciesClient({ initialVacancies }: { initialVacancies: Vacanc
           </p>
           {!search && (
             <>
-              <Button onClick={() => setShowCreate(true)} className="gradient-bg gap-2 mb-4">
+              <Button onClick={() => setShowCreate(true)} disabled={isDemo} className="gradient-bg gap-2 mb-4">
                 <Plus size={16} /> {tv.createVacancy}
               </Button>
               <p className="text-gray-400 dark:text-gray-500 text-xs">
@@ -187,22 +187,26 @@ export function VacanciesClient({ initialVacancies }: { initialVacancies: Vacanc
                       <span className="flex items-center gap-1">
                         <Clock size={11} /> {formatRelativeTime(v.createdAt)}
                       </span>
-                      <button
-                        onClick={e => handleDuplicate(e, v.id)}
-                        disabled={duplicating === v.id}
-                        className="p-1 text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="Duplicate vacancy"
-                      >
-                        <Copy size={13} />
-                      </button>
-                      <button
-                        onClick={e => handleDelete(e, v.id, v.title)}
-                        disabled={deleting === v.id}
-                        className="p-1 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Delete vacancy"
-                      >
-                        <Trash2 size={13} />
-                      </button>
+                      {!isDemo && (
+                        <button
+                          onClick={e => handleDuplicate(e, v.id)}
+                          disabled={duplicating === v.id}
+                          className="p-1 text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Duplicate vacancy"
+                        >
+                          <Copy size={13} />
+                        </button>
+                      )}
+                      {!isDemo && (
+                        <button
+                          onClick={e => handleDelete(e, v.id, v.title)}
+                          disabled={deleting === v.id}
+                          className="p-1 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Delete vacancy"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </CardContent>
