@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { EmailVerificationBanner } from '@/components/dashboard/EmailVerificationBanner'
 import { TabGuide } from '@/components/dashboard/TabGuide'
+import { FeedbackButton } from '@/components/FeedbackButton'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions)
@@ -20,6 +21,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <TabGuide />
         {children}
       </main>
+      <FeedbackButton />
     </div>
   )
 }
