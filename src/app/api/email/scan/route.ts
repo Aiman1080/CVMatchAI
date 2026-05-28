@@ -95,10 +95,11 @@ export async function POST(req: Request) {
           const sender = msg.envelope?.from?.[0]?.address || ''
           const receivedAt = msg.envelope?.date || new Date()
 
-          // Walk the MIME tree to find PDF/DOCX attachments AND their actual IMAP part paths.
-          // The previous version just stored attachment names without paths — meaning we had to
-          // GUESS the path (1, 2, 3... 10) when downloading, which fails for most real emails
-          // because real MIME structures use hierarchical paths like '1.2', '2.1', '3.1.1'.
+          // Walk the MIME tree and collect EVERY non-text attachment. We are
+          // intentionally permissive — recruitment emails from many web platforms
+          // (LinkedIn, Indeed, careers portals) wrap CVs in unusual MIME types.
+          // Better to attempt to parse and skip if no text comes out than to
+          // pre-filter and miss real applications.
           const attachments: Array<{ name: string; mimeType: string; path: string }> = []
           const bodyStructure = msg.bodyStructure
 
@@ -106,16 +107,23 @@ export async function POST(req: Request) {
             if (!part) return
             const subtype = (part.subtype || '').toLowerCase()
             const type = (part.type || '').toLowerCase()
-            const isPdf = subtype.includes('pdf')
-            const isDocx = subtype.includes('wordprocessingml.document') || subtype === 'msword'
-            const isOctet = subtype.includes('octet-stream')
             const filename = part.parameters?.name || part.dispositionParameters?.filename || ''
-            const filenameLower = filename.toLowerCase()
-            const looksLikeDoc = filenameLower.endsWith('.pdf') || filenameLower.endsWith('.docx') || filenameLower.endsWith('.doc')
+            const disposition = (part.disposition || '').toLowerCase()
 
-            if (isPdf || isDocx || (isOctet && looksLikeDoc)) {
+            // Accept: any explicit attachment, any non-text/multipart part with a filename,
+            // any PDF/DOCX/Word regardless of disposition
+            const isText = type === 'text' && !filename
+            const isMultipart = type === 'multipart'
+            const isExplicitAttachment = disposition === 'attachment'
+            const isLikelyDoc = subtype.includes('pdf') ||
+              subtype.includes('msword') ||
+              subtype.includes('wordprocessingml') ||
+              subtype.includes('officedocument') ||
+              filename.toLowerCase().match(/\.(pdf|docx?|odt|rtf|txt)$/)
+
+            if (!isText && !isMultipart && (isExplicitAttachment || filename || isLikelyDoc)) {
               attachments.push({
-                name: filename || `attachment.${subtype}`,
+                name: filename || `attachment.${subtype || 'bin'}`,
                 mimeType: `${type}/${subtype}`,
                 path: part.part || path,
               })
@@ -125,6 +133,18 @@ export async function POST(req: Request) {
             }
           }
           collectParts(bodyStructure)
+          if (attachments.length === 0 && bodyStructure) {
+            // Log the MIME structure so we can debug why no attachments were detected
+            const summarize = (p: any, depth = 0): string => {
+              if (!p) return ''
+              const prefix = '  '.repeat(depth)
+              const name = p.parameters?.name || p.dispositionParameters?.filename || ''
+              const line = `${prefix}- ${p.type}/${p.subtype}${name ? ` "${name}"` : ''}${p.part ? ` [${p.part}]` : ''}`
+              const children = (p.childNodes || []).map((c: any) => summarize(c, depth + 1)).join('\n')
+              return children ? `${line}\n${children}` : line
+            }
+            console.log(`[email/scan] msg ${msg.uid}: NO ATTACHMENTS detected. MIME tree:\n${summarize(bodyStructure)}`)
+          }
 
           // Download just the text body part (part 1) for classification preview
           let bodyText = ''
@@ -137,11 +157,15 @@ export async function POST(req: Request) {
             }
           } catch { /* no text part — attachment-only emails are still classified via filename */ }
 
+          // Log every email being analyzed — makes debugging easy from Vercel logs
+          console.log(`[email/scan] msg ${msg.uid} from ${sender} | subject="${subject.slice(0, 80)}" | attachments=[${attachments.map(a => a.name).join(', ')}] | bodyLen=${bodyText.length}`)
+
           const classification = await classifyRecruitmentEmail(
             subject,
             bodyText,
             attachments.map(a => a.name),
           )
+          console.log(`[email/scan] msg ${msg.uid} → AI classified: relevant=${classification.isRelevant} confidence=${classification.confidence}`)
 
           // Skip emails already recorded to prevent duplicate candidates on re-scan
           const uidTag = msg.uid ? `::uid=${msg.uid}` : ''
@@ -168,14 +192,28 @@ export async function POST(req: Request) {
             },
           })
 
-          // Be permissive: even low-confidence classifications get processed if there's a
-          // CV-like attachment. Recruiters lose candidates when AI is too strict.
-          const hasDocAttachment = attachments.length > 0
-          const skip = !classification.isRelevant && !hasDocAttachment
+          // Be VERY permissive: process any email where we suspect there's CV content.
+          // Recruiters were losing real applications because the AI judges by language
+          // patterns that don't match all applications (e.g. CVs sent via web forms,
+          // automated tracking emails from career portals, multi-language applications).
+          const hasAttachment = attachments.length > 0
+          const haystack = `${subject} ${bodyText}`.toLowerCase()
+          const applicationKeywords = [
+            'cv', 'resume', 'résumé', 'curriculum',
+            'application', 'candidature', 'sollicit',
+            'apply', 'postul', 'kandidaat', 'bewerb',
+            'job', 'position', 'role', 'fonction', 'poste',
+            'motivat', 'cover letter', 'lettre',
+            'experience', 'opportunit',
+          ]
+          const hasApplicationKeyword = applicationKeywords.some(k => haystack.includes(k))
+
+          const skip = !classification.isRelevant && !hasAttachment && !hasApplicationKeyword
           if (skip) {
-            console.log(`[email/scan] msg ${msg.uid} from ${sender}: skipped (not relevant, no attachments)`)
+            console.log(`[email/scan] msg ${msg.uid}: SKIPPED (no attachments, no keywords, AI says not relevant)`)
             continue
           }
+          console.log(`[email/scan] msg ${msg.uid}: PROCESSING (attachments=${attachments.length}, keywords=${hasApplicationKeyword}, AI=${classification.isRelevant})`)
           results.relevant++
 
           let cvText = ''
