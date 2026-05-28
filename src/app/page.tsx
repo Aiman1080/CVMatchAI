@@ -224,33 +224,54 @@ export default function LandingPage() {
     <div className="min-h-screen bg-white dark:bg-gray-950">
       {/* Nav */}
       <nav className="sticky top-0 z-50 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
-          <Link href="/" className="flex items-center gap-2 shrink-0">
-            <Logo size={28} />
-            <span className="font-bold text-gray-900 dark:text-white text-base sm:text-lg">DeltaMatch</span>
-          </Link>
-          <div className="hidden md:flex items-center gap-8 text-sm text-gray-500 dark:text-gray-400">
-            <a href="#ai-features" onClick={handleNavClick} className="hover:text-gray-900 dark:hover:text-white transition-colors">{t.landing.navAiFeatures}</a>
-            <a href="#platform" onClick={handleNavClick} className="hover:text-gray-900 dark:hover:text-white transition-colors">{t.landing.navPlatform}</a>
-            <a href="#pricing" onClick={handleNavClick} className="hover:text-gray-900 dark:hover:text-white transition-colors">{t.nav.pricing}</a>
-          </div>
-          <div className="flex items-center gap-1 sm:gap-3">
-            {mounted ? (
-              <button
-                onClick={() => setTheme(isDark ? 'light' : 'dark')}
-                className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                aria-label="Toggle theme"
-              >
-                {isDark ? <Sun size={18} /> : <Moon size={18} />}
-              </button>
-            ) : null}
-            <LanguageSwitcher />
-            <Link href="/login">
-              <Button variant="ghost" size="sm" className="h-auto py-2 px-2 sm:px-3 whitespace-normal text-center leading-tight text-xs sm:text-sm">{t.nav.signIn}</Button>
-            </Link>
-            <Link href="/register">
-              <Button size="sm" className="gradient-bg h-auto py-2 whitespace-normal text-center leading-tight">{t.nav.startFree}</Button>
-            </Link>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-2 sm:py-0 sm:h-16">
+          {/* Mobile: 2 rows. Desktop: 1 row. */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 sm:h-full">
+            {/* Row 1 (mobile): logo + theme/language icons */}
+            <div className="flex items-center justify-between gap-2 sm:gap-4 sm:flex-1">
+              <Link href="/" className="flex items-center gap-2 shrink-0">
+                <Logo size={28} />
+                <span className="font-bold text-gray-900 dark:text-white text-base sm:text-lg">DeltaMatch</span>
+              </Link>
+              <div className="hidden md:flex items-center gap-8 text-sm text-gray-500 dark:text-gray-400">
+                <a href="#ai-features" onClick={handleNavClick} className="hover:text-gray-900 dark:hover:text-white transition-colors">{t.landing.navAiFeatures}</a>
+                <a href="#platform" onClick={handleNavClick} className="hover:text-gray-900 dark:hover:text-white transition-colors">{t.landing.navPlatform}</a>
+                <a href="#pricing" onClick={handleNavClick} className="hover:text-gray-900 dark:hover:text-white transition-colors">{t.nav.pricing}</a>
+              </div>
+              <div className="flex items-center gap-1 sm:hidden">
+                {mounted ? (
+                  <button
+                    onClick={() => setTheme(isDark ? 'light' : 'dark')}
+                    className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    aria-label="Toggle theme"
+                  >
+                    {isDark ? <Sun size={18} /> : <Moon size={18} />}
+                  </button>
+                ) : null}
+                <LanguageSwitcher />
+              </div>
+            </div>
+            {/* Row 2 (mobile): sign in + start free buttons full width */}
+            <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+              <div className="hidden sm:flex items-center gap-2">
+                {mounted ? (
+                  <button
+                    onClick={() => setTheme(isDark ? 'light' : 'dark')}
+                    className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    aria-label="Toggle theme"
+                  >
+                    {isDark ? <Sun size={18} /> : <Moon size={18} />}
+                  </button>
+                ) : null}
+                <LanguageSwitcher />
+              </div>
+              <Link href="/login" className="flex-1 sm:flex-none">
+                <Button variant="ghost" size="sm" className="w-full sm:w-auto h-auto py-2 px-3 whitespace-normal text-center leading-tight text-xs sm:text-sm">{t.nav.signIn}</Button>
+              </Link>
+              <Link href="/register" className="flex-1 sm:flex-none">
+                <Button size="sm" className="w-full sm:w-auto gradient-bg h-auto py-2 px-3 whitespace-normal text-center leading-tight text-xs sm:text-sm">{t.nav.startFree}</Button>
+              </Link>
+            </div>
           </div>
         </div>
       </nav>
