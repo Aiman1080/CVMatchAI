@@ -11,6 +11,7 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push --accept-data-loss",
     "db:check": "prisma migrate diff --from-url \"$DATABASE_URL\" --to-schema-datamodel prisma/schema.prisma --exit-code",
+    "db:migrate-cv": "tsx prisma/migrate-cv-to-storage.ts",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "db:setup": "prisma generate && prisma db push --accept-data-loss && tsx prisma/seed.ts",

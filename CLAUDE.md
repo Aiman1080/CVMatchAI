@@ -50,6 +50,7 @@ npm run dev          # dev server (next dev)
 npm run build        # prod build (prisma generate && next build)
 npm run db:push      # apply schema.prisma to the DB (prisma db push --accept-data-loss)
 npm run db:check     # detect schema<->DB drift before deploy (non-zero exit if db:push is needed)
+npm run db:migrate-cv # backfill legacy bytea CVs into Supabase Storage (one-off)
 npm run db:studio    # Prisma Studio
 npm run db:seed      # seed demo data (tsx prisma/seed.ts)
 npx vitest run       # tests (249 currently, all passing)
@@ -176,8 +177,14 @@ input, $0.60/1M output**; aggregates total / last-30d / per-operation / per-mont
 
 - `pdf-parser.ts`: `parseDocument(buffer, mime)` → pdf-parse (PDF) / mammoth
   (DOCX) / utf-8 (txt). **No OCR** — image-only/scanned PDFs yield little/no text.
-- **No files on disk** (Vercel FS is read-only). Raw CV bytes live in Postgres
-  `Candidate.cvFile` (bytea); parsed text in `cvContent`.
+- **No files on disk** (Vercel FS is read-only). CV/motivation binaries go to
+  **Supabase Storage** (bucket `cv-files`) when `SUPABASE_URL` +
+  `SUPABASE_SERVICE_ROLE_KEY` are set — the object path lives in
+  `Candidate.cvStoragePath`/`motivationStoragePath`. **Backward-compatible:** if
+  Storage is unconfigured or an upload fails, bytes fall back to the legacy
+  Postgres bytea columns (`cvFile`/`motivationFile`); reads (`src/lib/storage.ts`,
+  used by `/api/candidates/[id]/file`) try Storage first, then bytea. Parsed text
+  always in `cvContent`. Backfill legacy bytea rows with `npm run db:migrate-cv`.
 - **SSR binary stripping:** `candidates/[id]/page.tsx` removes the bytea fields
   from the SSR payload (avoids base64 bloat), passes `hasCvFile`/`hasMotivationFile`
   booleans; the client lazy-fetches via `/api/candidates/[id]/file?type=cv|motivation`.
@@ -229,15 +236,16 @@ ranking) 10/h; email/scan 5/h.
 Today everything sits on free tiers (€0 fixed). Usage-based: Gemini (cents,
 tracked) + Stripe (~1.5% +€0.25/EU charge). **Two real cost traps:**
 1. **Vercel Hobby is non-commercial** → a paid SaaS technically needs Pro ($20/mo).
-2. **Supabase 500MB free fills fast** because CVs are stored in Postgres bytea
-   (~2-4k CVs) → Supabase Pro ($25/mo) or migrate CV binaries to Supabase Storage.
+2. **Supabase 500MB free fills fast** if CV binaries fall back to Postgres bytea.
+   They now go to **Supabase Storage** when `SUPABASE_*` is set (see Documents);
+   run `db:migrate-cv` to move legacy bytea CVs over. Else → Supabase Pro ($25/mo).
 
 The Admin System tab detects each service via env vars (●=configured, ○=inactive)
 and links to its billing page.
 
 ---
 
-## Environment variables (31)
+## Environment variables (33)
 
 - **Required:** `DATABASE_URL`, `DIRECT_URL`, `NEXTAUTH_SECRET` (≥32 chars).
 - **Strongly recommended:** `NEXTAUTH_URL`, `APP_URL`, `GEMINI_API_KEY`
@@ -248,7 +256,8 @@ and links to its billing page.
   `STRIPE_WEBHOOK_SECRET`/`NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`,
   `UPSTASH_REDIS_REST_URL`/`_TOKEN`, `SENTRY_DSN`/`NEXT_PUBLIC_SENTRY_DSN`
   (+ `SENTRY_ORG/PROJECT/AUTH_TOKEN`), `NEXT_PUBLIC_GA_ID`, `CONTACT_EMAIL`,
-  `MAX_FILE_SIZE` (default 10MB), `LOG_LEVEL`.
+  `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` (CV binaries → Supabase Storage
+  bucket `cv-files`; else bytea fallback), `MAX_FILE_SIZE` (default 10MB), `LOG_LEVEL`.
 
 ---
 

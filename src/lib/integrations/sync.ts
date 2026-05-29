@@ -1,6 +1,7 @@
 // Core sync engine — pulls candidates from an ATS and creates/updates them in DeltaMatch
 import prisma from '@/lib/prisma'
 import { parseDocument } from '@/lib/pdf-parser'
+import { persistDocument } from '@/lib/storage'
 import { analyzeCVAgainstVacancy } from '@/lib/ai'
 import {
   teamtailorFetchJobs, teamtailorFetchApplications, teamtailorFetchCandidate,
@@ -165,6 +166,10 @@ async function upsertCandidate(userId: string, platform: string, data: {
     }
   }
 
+  const cvDoc = data.cvBuffer
+    ? await persistDocument(data.cvBuffer, cvMimeType || 'application/octet-stream', 'cv')
+    : null
+
   const candidate = await prisma.candidate.create({
     data: {
       firstName: data.firstName || 'Unknown',
@@ -178,7 +183,8 @@ async function upsertCandidate(userId: string, platform: string, data: {
       // PDF/DOCX in the candidate detail page — not just the extracted text.
       // ATS adapters that don't download the file (cvBuffer null) fall back to
       // text-only view, with the amber notice shown by DocumentViewer.
-      cvFile: data.cvBuffer || undefined,
+      cvFile: cvDoc?.fileBytes ?? undefined,
+      cvStoragePath: cvDoc?.storagePath ?? undefined,
       cvMimeType: data.cvBuffer ? (cvMimeType || 'application/octet-stream') : undefined,
       motivationText: data.motivationText || null,
       status: mapAtsStatus(data.atsStatus),

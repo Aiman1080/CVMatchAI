@@ -13,6 +13,7 @@ import { getPlanLimits, getEffectiveSubscription } from '@/lib/plans'
 import { decrypt } from '@/lib/crypto'
 import { isDemoAccount } from '@/lib/demo-guard'
 import { createLogger } from '@/lib/logger'
+import { persistDocument } from '@/lib/storage'
 
 const log = createLogger('email/scan')
 
@@ -349,6 +350,10 @@ export async function POST(req: Request) {
             cvText, vacancy.title, vacancy.description, vacancy.requirements, motivationText || undefined, (vacancy as any).language,
           )
 
+          // Persist binaries to Storage (bytea fallback) before creating the record.
+          const cvDoc = cvBuffer ? await persistDocument(cvBuffer, cvMime || 'application/octet-stream', 'cv') : null
+          const motivDoc = motivBuffer ? await persistDocument(motivBuffer, motivMime || 'application/octet-stream', 'motivation') : null
+
           const candidate = await prisma.candidate.create({
             data: {
               firstName: analysis.firstName || classification.candidateName?.split(' ')[0] || 'Unknown',
@@ -356,10 +361,12 @@ export async function POST(req: Request) {
               email: analysis.email || sender,
               cvContent: cvText,
               cvFileName: cvFileName || undefined,
-              cvFile: cvBuffer || undefined,
+              cvFile: cvDoc?.fileBytes ?? undefined,
+              cvStoragePath: cvDoc?.storagePath ?? undefined,
               cvMimeType: cvMime || undefined,
               motivationText: motivationText || undefined,
-              motivationFile: motivBuffer || undefined,
+              motivationFile: motivDoc?.fileBytes ?? undefined,
+              motivationStoragePath: motivDoc?.storagePath ?? undefined,
               motivationMimeType: motivMime || undefined,
               matchScore: analysis.matchScore,
               summary: analysis.summary,
