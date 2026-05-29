@@ -328,6 +328,13 @@ export function EmailClient() {
             <Plus size={14} className="shrink-0" /> {te.connectInbox}
           </Button>
         </CardHeader>
+        {inboxes.length > 0 && (
+          <div className="px-6 pb-3 -mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed break-words">
+              ℹ️ {(te as any).scanInfo || 'Each scan reads the 25 most recent emails. Detected candidates are assigned to the active vacancy with the highest AI fit score.'}
+            </p>
+          </div>
+        )}
         <CardContent>
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12 gap-2">
