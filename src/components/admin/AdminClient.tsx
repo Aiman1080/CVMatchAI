@@ -11,7 +11,7 @@ import {
   Building2, Cpu, Network, GitBranch, ToggleLeft, ToggleRight,
   AlertCircle, CheckCircle2, Clock, RefreshCw,
   Search, Download, Bell, Eye,
-  Megaphone, Table2, Filter,
+  Megaphone, Table2, Filter, CreditCard,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -127,6 +127,10 @@ interface Props {
   counts: { users: number; vacancies: number; candidates: number; openTickets: number }
   hasAiKey: boolean
   hasSmtp: boolean
+  hasSentry: boolean
+  hasUpstash: boolean
+  hasStripe: boolean
+  hasGa: boolean
   aiAnalysesCount: number
   integrationsCount: number
   emailInboxesCount: number
@@ -162,6 +166,7 @@ interface Props {
 
 export function AdminClient({
   users: initialUsers, tickets: initialTickets, subscriptions, counts, hasAiKey, hasSmtp,
+  hasSentry, hasUpstash, hasStripe, hasGa,
   aiAnalysesCount, integrationsCount, emailInboxesCount, candidateStatusDist,
   latestVacancies, newUsersThisWeek, candidatesThisWeek, candidatesToday,
   integrationsByPlatform, candidatesBySource, activeVacanciesCount,
@@ -1807,6 +1812,111 @@ export function AdminClient({
                   </a>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* ── External services & costs ── */}
+          <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <CreditCard className="w-5 h-5 text-emerald-500" /> External services & costs
+              </CardTitle>
+              <CardDescription>Every account this app depends on, its free-tier limit, and when it starts costing money</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Cost summary */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="p-3 rounded-lg border bg-green-50 border-green-200 text-green-800 dark:bg-green-950/40 dark:border-green-800 dark:text-green-300">
+                  <p className="text-xs uppercase font-semibold opacity-70">Fixed cost today</p>
+                  <p className="text-2xl font-bold">€0 / mo</p>
+                  <p className="text-xs mt-1">Everything sits on a free tier. Usage-based services (Gemini, Stripe) only bill on real usage.</p>
+                </div>
+                <div className="p-3 rounded-lg border bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-950/40 dark:border-amber-800 dark:text-amber-300">
+                  <p className="text-xs uppercase font-semibold opacity-70">Next likely cost</p>
+                  <p className="text-2xl font-bold">~$45 / mo</p>
+                  <p className="text-xs mt-1">Vercel Pro ($20, once commercial) + Supabase Pro ($25, when the DB fills up).</p>
+                </div>
+              </div>
+
+              {/* Per-service breakdown */}
+              <div className="space-y-2">
+                {[
+                  {
+                    name: 'Vercel', purpose: 'Hosting & deploys', active: true,
+                    tier: 'Hobby (Free)', limit: '100 GB bandwidth/mo', paid: 'Pro $20/mo per member',
+                    warn: 'Hobby is non-commercial use. A paid SaaS technically needs Pro.',
+                    url: 'https://vercel.com/account/billing',
+                  },
+                  {
+                    name: 'Supabase', purpose: 'Postgres database', active: true,
+                    tier: 'Free', limit: '500 MB DB · 5 GB bandwidth', paid: 'Pro $25/mo',
+                    warn: 'CVs are stored as binary in Postgres — 500 MB fills fast (~2-4k CVs). Plan to move to Supabase Storage.',
+                    url: 'https://supabase.com/dashboard/project/rlvxyzudngineksyftqv/settings/billing',
+                  },
+                  {
+                    name: 'Google Gemini', purpose: 'AI analysis & matching', active: hasAiKey,
+                    tier: 'Pay-as-you-go', limit: 'Free tier has rate limits', paid: '~$0.30 / 1M tokens (2.5 Flash) — see AI Usage tab',
+                    warn: '', url: 'https://aistudio.google.com/app/apikey',
+                  },
+                  {
+                    name: 'Sentry', purpose: 'Error monitoring', active: hasSentry,
+                    tier: 'Developer (Free)', limit: '5,000 errors/mo · 1 user', paid: 'Team ~$26/mo',
+                    warn: '', url: 'https://sentry.io/settings/billing/',
+                  },
+                  {
+                    name: 'Upstash', purpose: 'Rate limiting (Redis)', active: hasUpstash,
+                    tier: 'Free', limit: '10,000 commands/day · 256 MB', paid: 'Pay-as-you-go beyond — rate limiting barely touches it',
+                    warn: '', url: 'https://console.upstash.com/',
+                  },
+                  {
+                    name: 'Stripe', purpose: 'Payments (Pro plan)', active: hasStripe,
+                    tier: 'Pay-per-sale', limit: 'No monthly fee', paid: '~1.5% + €0.25 per EU card charge',
+                    warn: '', url: 'https://dashboard.stripe.com/',
+                  },
+                  {
+                    name: 'SMTP email', purpose: 'Sending to candidates', active: hasSmtp,
+                    tier: 'Provider-dependent', limit: 'Varies', paid: 'Free with Gmail; paid SMTP varies',
+                    warn: '', url: '',
+                  },
+                  {
+                    name: 'Google Analytics', purpose: 'Traffic stats', active: hasGa,
+                    tier: 'Free', limit: 'Unlimited (standard)', paid: '€0',
+                    warn: '', url: 'https://analytics.google.com/',
+                  },
+                ].map(s => (
+                  <div key={s.name} className="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className={s.active ? 'text-green-500' : 'text-gray-400'} title={s.active ? 'Configured' : 'Not configured'}>
+                          {s.active ? '●' : '○'}
+                        </span>
+                        <span className="font-semibold text-sm text-gray-900 dark:text-white">{s.name}</span>
+                        <span className="text-xs text-gray-500">{s.purpose}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono px-2 py-0.5 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">{s.tier}</span>
+                        {s.url ? (
+                          <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-xs px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900 font-medium border border-blue-200 dark:border-blue-800">
+                            Manage →
+                          </a>
+                        ) : null}
+                      </div>
+                    </div>
+                    <div className="mt-1.5 ml-6 text-xs text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">Free:</span> {s.limit} · <span className="font-medium">Then:</span> {s.paid}
+                    </div>
+                    {s.warn ? (
+                      <div className="mt-1 ml-6 text-xs text-amber-700 dark:text-amber-400 flex items-start gap-1">
+                        <span className="mt-0.5">⚠</span><span>{s.warn}</span>
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+
+              <p className="text-[11px] text-gray-400 dark:text-gray-500">
+                ● configured (env vars set) · ○ inactive. Prices are indicative (early 2026) — always confirm on each billing page. This panel links out to billing dashboards; it cannot change external plans for you.
+              </p>
             </CardContent>
           </Card>
 

@@ -193,6 +193,10 @@ export default async function AdminPage() {
           counts={counts}
           hasAiKey={!!process.env.GEMINI_API_KEY}
           hasSmtp={!!(process.env.SMTP_HOST && process.env.SMTP_USER)}
+          hasSentry={!!(process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN)}
+          hasUpstash={!!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)}
+          hasStripe={!!process.env.STRIPE_SECRET_KEY}
+          hasGa={!!process.env.NEXT_PUBLIC_GA_ID}
           aiAnalysesCount={aiAnalysesCount}
           integrationsCount={integrationsCount}
           emailInboxesCount={emailInboxesCount}
