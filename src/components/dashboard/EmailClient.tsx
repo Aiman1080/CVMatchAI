@@ -11,6 +11,7 @@ import { toast } from '@/components/ui/use-toast'
 import { useDemoMode } from '@/hooks/useDemoGuard'
 import { formatRelativeTime } from '@/lib/utils'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { EmailDiagnoseDialog } from './EmailDiagnoseDialog'
 
 // Preset IMAP settings for common providers
 const PROVIDER_PRESETS = {
@@ -48,6 +49,8 @@ export function EmailClient() {
   const [cleaning, setCleaning] = useState(false)
   const [inboxes, setInboxes] = useState<Inbox[]>([])
   const [loading, setLoading] = useState(true)
+  const [showDiagnose, setShowDiagnose] = useState(false)
+  const [diagnoseInboxId, setDiagnoseInboxId] = useState<string>('')
 
   // Load connected inboxes on mount — no auto demo scan (user triggers manually)
   useEffect(() => { fetchInboxes() }, [])
@@ -362,6 +365,9 @@ export function EmailClient() {
                     <Button size="sm" variant="outline" onClick={() => handleScan(inbox.id)} disabled={scanning === inbox.id} className="gap-1.5 text-xs h-auto py-1.5 whitespace-normal text-center leading-tight">
                       {scanning === inbox.id ? <><Loader2 size={12} className="animate-spin shrink-0" /> {te.scanning}</> : <><RefreshCw size={12} className="shrink-0" /> {te.scanNow}</>}
                     </Button>
+                    <Button size="sm" variant="outline" onClick={() => { setDiagnoseInboxId(inbox.id); setShowDiagnose(true) }} className="gap-1.5 text-xs h-auto py-1.5 whitespace-normal text-center leading-tight">
+                      🔍 Diagnose
+                    </Button>
                     <button onClick={() => handleDelete(inbox.id)} className="p-1.5 text-gray-400 hover:text-red-500 rounded transition-colors shrink-0">
                       <Trash2 size={15} />
                     </button>
@@ -540,6 +546,13 @@ export function EmailClient() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Email scan diagnostic — debug why a specific email isn't picked up */}
+      <EmailDiagnoseDialog
+        open={showDiagnose}
+        onClose={() => setShowDiagnose(false)}
+        inboxId={diagnoseInboxId}
+      />
     </div>
   )
 }
