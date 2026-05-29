@@ -49,7 +49,8 @@ export async function POST(req: Request) {
       where: { userId, status: 'active' },
       select: { id: true, title: true, description: true, requirements: true },
     })
-  } catch {
+  } catch (e: any) {
+    log.error(`Failed to load inbox/vacancies for inbox ${inboxId}`, { message: e?.message, code: e?.code })
     return NextResponse.json({ error: 'Failed to load inbox or vacancies' }, { status: 500 })
   }
 
@@ -166,7 +167,9 @@ export async function POST(req: Request) {
                 if (textPart.type === 'text/html') raw = stripHtml(raw)
                 bodyText = raw.slice(0, 5000)
               }
-            } catch {}
+            } catch (e: any) {
+              log.debug(`PASS1 msg ${msg.uid}: body download failed`, { message: e?.message?.slice(0, 60) })
+            }
           }
 
           // List the attachment-looking parts (skip text bodies)
@@ -384,6 +387,7 @@ export async function POST(req: Request) {
           })
           results.processed++
         } catch (msgError: any) {
+          log.error(`PASS2 msg ${msg.uid} failed`, { message: msgError?.message })
           results.errors.push(msgError.message)
         }
       }
