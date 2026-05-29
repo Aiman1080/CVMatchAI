@@ -49,6 +49,7 @@ Postgres**. UI in EN/NL/FR. €55/mo Pro plan via Stripe.
 npm run dev          # dev server (next dev)
 npm run build        # prod build (prisma generate && next build)
 npm run db:push      # apply schema.prisma to the DB (prisma db push --accept-data-loss)
+npm run db:check     # detect schema<->DB drift before deploy (non-zero exit if db:push is needed)
 npm run db:studio    # Prisma Studio
 npm run db:seed      # seed demo data (tsx prisma/seed.ts)
 npx vitest run       # tests (249 currently, all passing)
@@ -255,7 +256,8 @@ and links to its billing page.
 
 - `logger.ts`: namespaced structured logger (`[level][namespace] msg`), level via
   `LOG_LEVEL` (prod default `info`), auto-redacts PII (passwords/tokens/emails).
-  Caught errors → console → **Vercel Runtime Logs** (NOT auto-forwarded to Sentry).
+  Caught errors → console → **Vercel Runtime Logs**; `log.error` also forwards to
+  **Sentry** (`captureException`/`captureMessage`, no-op without `SENTRY_DSN`).
 - Sentry (`sentry.*.config.ts` + `instrumentation.ts`): no-op unless `SENTRY_DSN`
   set; prod tracesSampleRate 0.1, `sendDefaultPii:false`, captures unhandled
   errors via `onRequestError`.

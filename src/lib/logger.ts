@@ -9,6 +9,8 @@
 // - Filters sensitive fields (passwords, emails, tokens) by default so
 //   accidental logging doesn't leak PII to Vercel / log aggregators
 
+import * as Sentry from '@sentry/nextjs'
+
 type Level = 'debug' | 'info' | 'warn' | 'error'
 
 const LEVEL_ORDER: Record<Level, number> = { debug: 0, info: 1, warn: 2, error: 3 }
@@ -38,12 +40,35 @@ function redact(obj: any, depth = 0): any {
 
 function emit(level: Level, namespace: string, message: string, data?: unknown) {
   if (LEVEL_ORDER[level] < LEVEL_ORDER[ACTIVE_LEVEL]) return
-  const payload = data === undefined ? '' : ' ' + JSON.stringify(redact(data))
+  const safeData = data === undefined ? undefined : redact(data)
+  const payload = safeData === undefined ? '' : ' ' + JSON.stringify(safeData)
   const line = `[${level}][${namespace}] ${message}${payload}`
   // Use the matching console method so Vercel groups them correctly in the UI
   if (level === 'error') console.error(line)
   else if (level === 'warn') console.warn(line)
   else console.log(line)
+
+  // Forward errors to Sentry too. Caught errors never reach Sentry's automatic
+  // instrumentation (onRequestError only fires for UNHANDLED errors), so without
+  // this every log-and-handle error is invisible in the Sentry dashboard. No-op
+  // when SENTRY_DSN is unset; PII is already stripped via `safeData`.
+  if (level === 'error') {
+    try {
+      const err =
+        data instanceof Error
+          ? data
+          : data && typeof data === 'object' && (data as any).error instanceof Error
+            ? (data as any).error
+            : null
+      if (err) {
+        Sentry.captureException(err, { tags: { namespace }, extra: { message, data: safeData } })
+      } else {
+        Sentry.captureMessage(`[${namespace}] ${message}`, { level: 'error', extra: { data: safeData } })
+      }
+    } catch {
+      // Telemetry must never break the app
+    }
+  }
 }
 
 export function createLogger(namespace: string) {
