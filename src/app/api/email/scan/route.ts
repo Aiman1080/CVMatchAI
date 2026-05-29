@@ -176,109 +176,85 @@ export async function POST(req: Request) {
             },
           })
 
-          // Be VERY permissive: process any email where we suspect there's CV content.
-          // Recruiters were losing real applications because the AI judges by language
-          // patterns that don't match all applications (e.g. CVs sent via web forms,
-          // automated tracking emails from career portals, multi-language applications).
-          const hasAttachment = attachments.length > 0
-          const haystack = `${subject} ${bodyText}`.toLowerCase()
-          const applicationKeywords = [
-            'cv', 'resume', 'résumé', 'curriculum',
-            'application', 'candidature', 'sollicit',
-            'apply', 'postul', 'kandidaat', 'bewerb',
-            'job', 'position', 'role', 'fonction', 'poste',
-            'motivat', 'cover letter', 'lettre',
-            'experience', 'opportunit',
-          ]
-          const hasApplicationKeyword = applicationKeywords.some(k => haystack.includes(k))
-
-          const skip = !classification.isRelevant && !hasAttachment && !hasApplicationKeyword
-          if (skip) {
-            console.log(`[email/scan] msg ${msg.uid}: SKIPPED (no attachments, no keywords, AI says not relevant)`)
+          // STRICT processing rule: only process emails that have at least one
+          // real PDF/DOCX attachment (verified by magic bytes below). This avoids
+          // creating garbage candidates from newsletters, transactional emails,
+          // and HTML marketing content.
+          //
+          // The AI classification is now used as a SECOND signal, not the primary one.
+          // If there are no attachments at all, skip immediately — recruiters don't
+          // get applications without CVs.
+          if (allParts.filter(p => p.type !== 'text').length === 0) {
+            console.log(`[email/scan] msg ${msg.uid}: SKIPPED (no non-text parts at all — clearly not an application)`)
             continue
           }
-          console.log(`[email/scan] msg ${msg.uid}: PROCESSING (attachments=${attachments.length}, keywords=${hasApplicationKeyword}, AI=${classification.isRelevant})`)
           results.relevant++
 
           let cvText = ''
           let motivationText = ''
 
-          // Helper: try to parse a downloaded buffer as a CV/motivation document.
-          // Returns the parsed text and detected type, or empty strings on failure.
+          // Strict parser: ONLY accept buffers that start with PDF or ZIP (DOCX) magic
+          // bytes. Reject HTML, text, images. This is the key change — previously we
+          // were treating HTML newsletter bodies as 'CVs' because they parsed as text.
           const tryParseBuffer = async (buffer: Buffer, hint: string): Promise<{ text: string; docType: string }> => {
-            if (buffer.length < 100) return { text: '', docType: 'unknown' }
-            // Try PDF first, then DOCX, then plain text
-            for (const mime of ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain']) {
-              try {
-                const text = await parseDocument(buffer, mime)
-                if (text.length >= 100) {
-                  const docType = await detectDocumentType(text)
-                  console.log(`[email/scan] ${hint}: parsed ${text.length} chars as ${mime}, detected as ${docType}`)
-                  return { text, docType }
-                }
-              } catch {}
+            if (buffer.length < 500) return { text: '', docType: 'unknown' }
+            const head4 = buffer.slice(0, 4)
+            const headStr = head4.toString('utf-8')
+            const headHex = head4.toString('hex').toLowerCase()
+            const isPDF = headStr === '%PDF'
+            const isZIP = headHex.startsWith('504b0304') // PK\x03\x04 = ZIP (DOCX is zip)
+
+            if (!isPDF && !isZIP) {
+              return { text: '', docType: 'unknown' }
             }
-            return { text: '', docType: 'unknown' }
+
+            const mime = isPDF
+              ? 'application/pdf'
+              : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            try {
+              const text = await parseDocument(buffer, mime)
+              if (text.length < 100) {
+                console.log(`[email/scan] ${hint}: parsed too short (${text.length} chars), skipping`)
+                return { text: '', docType: 'unknown' }
+              }
+              const docType = await detectDocumentType(text)
+              console.log(`[email/scan] ${hint}: parsed ${text.length} chars as ${mime}, detected as ${docType}`)
+              return { text, docType }
+            } catch (e: any) {
+              console.log(`[email/scan] ${hint}: parse failed (${e?.message?.slice(0, 60)})`)
+              return { text: '', docType: 'unknown' }
+            }
           }
 
-          // Download each attachment using its ACTUAL MIME part path
-          for (const att of attachments) {
+          // Download each MIME part and try to parse it. Magic-byte check ensures
+          // only real PDF/DOCX files become candidates.
+          for (const p of allParts) {
+            if (cvText && motivationText) break
+            if (p.type === 'text') continue // skip text/html bodies — never a CV
             try {
-              const dl = await client.download(msg.uid.toString(), att.path, { uid: true }) as any
+              const dl = await client.download(msg.uid.toString(), p.path, { uid: true }) as any
               if (!dl?.content) continue
               const chunks: Buffer[] = []
               for await (const chunk of dl.content) chunks.push(chunk)
               const buffer = Buffer.concat(chunks)
-              const { text, docType } = await tryParseBuffer(buffer, `msg ${msg.uid} att ${att.name}`)
+              if (buffer.length < 500) continue
+
+              const { text, docType } = await tryParseBuffer(buffer, `msg ${msg.uid} path ${p.path} ${p.name || p.subtype}`)
               if (!text) continue
               if (docType === 'cv' && !cvText) cvText = text
               else if (docType === 'motivation' && !motivationText) motivationText = text
-              else if (!cvText) cvText = text
+              else if (!cvText) cvText = text  // unclassified: assume CV (it's a real PDF/DOCX)
             } catch (e: any) {
-              console.error(`[email/scan] msg ${msg.uid}: failed to download attachment ${att.name} at path ${att.path}:`, e?.message)
+              console.log(`[email/scan] msg ${msg.uid} path ${p.path}: download failed (${e?.message?.slice(0, 60)})`)
             }
           }
 
-          // FALLBACK: if no CV found via known attachments, try downloading EVERY
-          // non-text leaf part discovered in the MIME tree. We don't care about
-          // declared mime type — we just try to parse each buffer as PDF/DOCX/text
-          // and use whichever yields real content. This catches CVs hidden under
-          // any non-standard structure.
-          if (!cvText) {
-            console.log(`[email/scan] msg ${msg.uid}: no CV from known attachments, trying every non-text part (${allParts.length} candidates)`)
-            for (const p of allParts) {
-              if (cvText) break
-              if (p.type === 'text') continue // skip text/html bodies
-              try {
-                const dl = await client.download(msg.uid.toString(), p.path, { uid: true }) as any
-                if (!dl?.content) continue
-                const chunks: Buffer[] = []
-                for await (const chunk of dl.content) chunks.push(chunk)
-                const buffer = Buffer.concat(chunks)
-                if (buffer.length < 500) continue
-                // Check magic bytes to identify file type before parsing
-                const head = buffer.slice(0, 4).toString('hex')
-                const isPDF = buffer.slice(0, 4).toString('utf-8') === '%PDF'
-                const isZIP = head.startsWith('504b0304') // PK\x03\x04 = ZIP (DOCX)
-                console.log(`[email/scan] msg ${msg.uid} path ${p.path}: ${buffer.length} bytes, head=${head}, isPDF=${isPDF}, isZIP=${isZIP}`)
-                const { text, docType } = await tryParseBuffer(buffer, `msg ${msg.uid} path ${p.path} ${p.name || p.subtype}`)
-                if (!text) continue
-                if (docType === 'motivation' && !motivationText) motivationText = text
-                if (!cvText && text.length > 200) cvText = text
-              } catch (e: any) {
-                console.log(`[email/scan] msg ${msg.uid} path ${p.path}: download failed (${e?.message?.slice(0, 60)})`)
-              }
-            }
-          }
-
-          // Fallback: treat the email body itself as a CV if no attachments were parsed
-          if (!cvText && bodyText.length > 200) {
-            console.log(`[email/scan] msg ${msg.uid}: using email body as CV (${bodyText.length} chars)`)
-            cvText = bodyText
-          }
-          if (cvText.length < 50) {
-            console.log(`[email/scan] msg ${msg.uid}: no usable CV content found`)
+          // NO MORE FALLBACK to email body or HTML — those were creating garbage
+          // candidates. If we don't have a real PDF/DOCX, this isn't a candidate.
+          if (!cvText || cvText.length < 200) {
+            console.log(`[email/scan] msg ${msg.uid}: no real CV file found (cvText len=${cvText.length}), skipping`)
             await prisma.emailScan.update({ where: { id: scan.id }, data: { processed: true } })
+            results.relevant--  // wasn't actually relevant after all
             continue
           }
 
