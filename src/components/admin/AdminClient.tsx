@@ -238,8 +238,38 @@ export function AdminClient({
     ? new Date(Math.min(...realProUsers.filter(u => u.subscriptionEnd).map(u => new Date(u.subscriptionEnd!).getTime()))).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
     : 'No active subscriptions'
 
-  const openCount = tickets.filter((t: any) => t.status === 'open').length
+  // Tickets that still need attention (drives the alerts counter in the sidebar
+  // and the "Open Tickets" cards). Includes both `open` AND `in_progress` so
+  // the badge stays raised until the admin actually resolves the work.
+  const activeTickets = tickets.filter((t: any) => t.status === 'open' || t.status === 'in_progress')
+  const openCount = activeTickets.length
   const proCount = realProUsers.length
+  const [resolvingAll, setResolvingAll] = useState(false)
+
+  const handleResolveAll = async () => {
+    if (resolvingAll || openCount === 0) return
+    if (!confirm((ta.resolveAllConfirm || 'Mark all {count} open/in-progress tickets as resolved?').replace('{count}', String(openCount)))) return
+    setResolvingAll(true)
+    try {
+      const res = await fetch('/api/admin/support/resolve-all', { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok) {
+        // Sync local state so the counter drops to 0 immediately without a reload
+        setTickets((prev: any[]) => prev.map(t =>
+          t.status === 'open' || t.status === 'in_progress'
+            ? { ...t, status: 'resolved', repliedAt: new Date().toISOString() }
+            : t
+        ))
+        toast({ title: (ta.resolveAllDone || '{count} tickets resolved').replace('{count}', String(data.resolved ?? openCount)) })
+      } else {
+        toast({ title: data.error || ta.resolveAllFailed || 'Failed to resolve tickets', variant: 'destructive' })
+      }
+    } catch {
+      toast({ title: ta.resolveAllFailed || 'Failed to resolve tickets', variant: 'destructive' })
+    } finally {
+      setResolvingAll(false)
+    }
+  }
 
   const filteredEmailUsers = realUsers.filter(u => {
     if (emailFilter === 'free') return u.subscription === 'free'
@@ -456,7 +486,7 @@ export function AdminClient({
           { label: 'MRR', value: `€${mrr}`, icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950' },
           { label: 'AI Analyses', value: aiAnalysesCount, icon: Brain, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-950' },
           { label: 'New users 7d', value: newUsersThisWeek, icon: UserPlus, color: 'text-cyan-600', bg: 'bg-cyan-50 dark:bg-cyan-950' },
-          { label: 'Open tickets', value: counts.openTickets, icon: MessageSquare, color: counts.openTickets > 0 ? 'text-red-600' : 'text-gray-400', bg: counts.openTickets > 0 ? 'bg-red-50 dark:bg-red-950' : 'bg-gray-50 dark:bg-gray-800' },
+          { label: 'Open tickets', value: openCount, icon: MessageSquare, color: openCount > 0 ? 'text-red-600' : 'text-gray-400', bg: openCount > 0 ? 'bg-red-50 dark:bg-red-950' : 'bg-gray-50 dark:bg-gray-800' },
         ].map(s => (
           <Card key={s.label} className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <CardContent className="p-3 flex items-center gap-2">
@@ -834,7 +864,22 @@ export function AdminClient({
                 <SelectItem value="urgent">Urgent</SelectItem>
               </SelectContent>
             </Select>
-            <span className="text-xs text-gray-400 ml-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleResolveAll}
+              disabled={resolvingAll || openCount === 0}
+              className="h-8 gap-1.5 text-xs ml-auto whitespace-normal text-center leading-tight"
+              title={ta.resolveAllTooltip || 'Mark every open/in-progress ticket as resolved'}
+            >
+              {resolvingAll ? <Loader2 size={12} className="animate-spin shrink-0" /> : <CheckCircle2 size={12} className="shrink-0" />}
+              {resolvingAll
+                ? (ta.resolveAllResolving || 'Resolving...')
+                : openCount > 0
+                  ? (ta.resolveAllBtn || 'Mark all {count} resolved').replace('{count}', String(openCount))
+                  : (ta.resolveAllDoneAll || 'All resolved')}
+            </Button>
+            <span className="text-xs text-gray-400">
               {filteredTickets.length} of {tickets.length} tickets
             </span>
           </div>
@@ -1067,7 +1112,7 @@ export function AdminClient({
                   { label: 'Database', status: 'Connected', ok: true, icon: Database },
                   { label: 'AI API Key', status: hasAiKey ? 'Configured' : 'Missing', ok: hasAiKey, icon: Brain },
                   { label: 'SMTP Email', status: hasSmtp ? 'Configured' : 'Not configured', ok: hasSmtp, icon: Mail },
-                  { label: 'Open Tickets', status: `${counts.openTickets} pending`, ok: counts.openTickets === 0, icon: MessageSquare },
+                  { label: 'Open Tickets', status: `${openCount} pending`, ok: openCount === 0, icon: MessageSquare },
                 ].map(item => (
                   <div key={item.label} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -1715,7 +1760,7 @@ export function AdminClient({
                   { label: 'Active vacancies', value: activeVacanciesCount, icon: Briefcase },
                   { label: 'ATS integrations', value: integrationsCount, icon: Link2 },
                   { label: 'Inboxes', value: emailInboxesCount, icon: Inbox },
-                  { label: 'Support tickets', value: counts.openTickets, icon: MessageSquare },
+                  { label: 'Support tickets', value: openCount, icon: MessageSquare },
                 ].map(item => (
                   <div key={item.label} className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
