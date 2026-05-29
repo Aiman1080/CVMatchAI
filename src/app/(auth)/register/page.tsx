@@ -37,7 +37,7 @@ export default function RegisterPage() {
     else if (!EMAIL_REGEX.test(f.email)) next.email = invalidEmailMsg
     if (!f.password) next.password = t.auth.tooShort
     else if (f.password.length < 8) next.password = t.auth.tooShort
-    if (f.confirmPassword !== f.password) next.confirmPassword = 'Passwords do not match'
+    if (f.confirmPassword !== f.password) next.confirmPassword = t.auth.passwordsDoNotMatch || 'Passwords do not match'
     return next
   }
 
@@ -72,7 +72,7 @@ export default function RegisterPage() {
     const all = validate(form)
     if (Object.keys(all).length > 0) {
       setErrors(all)
-      toast({ title: 'Please fix the highlighted fields', description: 'Some required fields are missing or invalid.', variant: 'destructive' })
+      toast({ title: (t.dashboard as any).settingsProfile?.fixErrors || 'Please fix the highlighted fields', description: (t.dashboard as any).settingsProfile?.fixErrorsDesc || 'Some required fields are missing or invalid.', variant: 'destructive' })
       return
     }
     setLoading(true)

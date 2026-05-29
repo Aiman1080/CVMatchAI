@@ -22,6 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog'
 import { toast } from '@/components/ui/use-toast'
 import { formatDate, cn } from '@/lib/utils'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -145,6 +146,8 @@ export function AdminClient({
   activeToday, weeklySignups, recentActivity,
   aiUsageStats, dbStats,
 }: Props) {
+  const { t } = useLanguage()
+  const ta = (t.dashboard as any).admin || {}
   // Tab state is driven by the sidebar's `admin-tab-change` custom event so tab
   // switches are purely client-side (no server re-render, no extra DB queries).
   // We still seed the initial value from the URL on first mount.
@@ -201,12 +204,12 @@ export function AdminClient({
       })
       if (res.ok) {
         setEmailSent(true)
-        toast({ title: `Email sent to ${filteredEmailUsers.length} user(s)` })
+        toast({ title: (ta.emailSentTo || 'Email sent to {count} user(s)').replace('{count}', String(filteredEmailUsers.length)) })
       } else {
-        toast({ title: 'Failed to send emails', variant: 'destructive' })
+        toast({ title: ta.failedSendEmails || 'Failed to send emails', variant: 'destructive' })
       }
     } catch {
-      toast({ title: 'Failed to send emails', variant: 'destructive' })
+      toast({ title: ta.failedSendEmails || 'Failed to send emails', variant: 'destructive' })
     } finally {
       setSendingEmail(false)
     }
@@ -275,29 +278,29 @@ export function AdminClient({
       })
       if (res.ok) {
         setUsers(prev => prev.map(u => u.id === id ? { ...u, ...data } : u))
-        toast({ title: 'Account updated' })  // Admin-only
+        toast({ title: ta.accountUpdated || 'Account updated' })  // Admin-only
       } else {
         const err = await res.json().catch(() => ({}))
-        toast({ title: err.error || 'Update failed', variant: 'destructive' })
+        toast({ title: err.error || ta.updateFailed || 'Update failed', variant: 'destructive' })
       }
     } catch {
-      toast({ title: 'Update failed', variant: 'destructive' })
+      toast({ title: ta.updateFailed || 'Update failed', variant: 'destructive' })
     }
   }
 
   const deleteUser = async (id: string) => {
-    if (!confirm('Permanently delete this account? All associated data will be lost. This action is irreversible.')) return
+    if (!confirm(ta.deleteAccountConfirm || 'Permanently delete this account? All associated data will be lost. This action is irreversible.')) return
     try {
       const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' })
       if (res.ok) {
         setUsers(prev => prev.filter(u => u.id !== id))
-        toast({ title: 'Account permanently deleted' })
+        toast({ title: ta.accountDeleted || 'Account permanently deleted' })
       } else {
         const err = await res.json().catch(() => ({}))
-        toast({ title: err.error || 'Delete failed', variant: 'destructive' })
+        toast({ title: err.error || ta.deleteFailed || 'Delete failed', variant: 'destructive' })
       }
     } catch {
-      toast({ title: 'Delete failed', variant: 'destructive' })
+      toast({ title: ta.deleteFailed || 'Delete failed', variant: 'destructive' })
     }
   }
 
@@ -308,12 +311,12 @@ export function AdminClient({
       if (res.ok) {
         const { tempPassword } = await res.json()
         setTempPasswords(p => ({ ...p, [id]: tempPassword }))
-        toast({ title: 'Temporary password generated' })
+        toast({ title: ta.tempPasswordGenerated || 'Temporary password generated' })
       } else {
-        toast({ title: 'Reset failed', variant: 'destructive' })
+        toast({ title: ta.resetFailed || 'Reset failed', variant: 'destructive' })
       }
     } catch {
-      toast({ title: 'Reset failed', variant: 'destructive' })
+      toast({ title: ta.resetFailed || 'Reset failed', variant: 'destructive' })
     } finally {
       setLoading(p => ({ ...p, [id]: false }))
     }
@@ -335,12 +338,12 @@ export function AdminClient({
         const updated = await res.json()
         setTickets((prev: any[]) => prev.map(t => t.id === id ? { ...t, ...updated } : t))
         if (data.adminReply) setReplyText(p => ({ ...p, [id]: '' }))
-        toast({ title: 'Ticket updated' })
+        toast({ title: ta.ticketUpdated || 'Ticket updated' })
       } else {
-        toast({ title: 'Update failed', variant: 'destructive' })
+        toast({ title: ta.updateFailed || 'Update failed', variant: 'destructive' })
       }
     } catch {
-      toast({ title: 'Update failed', variant: 'destructive' })
+      toast({ title: ta.updateFailed || 'Update failed', variant: 'destructive' })
     }
   }
 
@@ -357,9 +360,9 @@ export function AdminClient({
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
-      toast({ title: 'Users exported successfully' })
+      toast({ title: ta.usersExported || 'Users exported successfully' })
     } catch {
-      toast({ title: 'Export failed', variant: 'destructive' })
+      toast({ title: ta.exportFailed || 'Export failed', variant: 'destructive' })
     }
   }
 
@@ -374,16 +377,16 @@ export function AdminClient({
       })
       if (res.ok) {
         const { sent } = await res.json()
-        toast({ title: `Broadcast sent to ${sent} users` })
+        toast({ title: (ta.broadcastSent || 'Broadcast sent to {count} users').replace('{count}', String(sent)) })
         setBroadcastOpen(false)
         setBroadcastTitle('')
         setBroadcastMessage('')
       } else {
         const err = await res.json().catch(() => ({}))
-        toast({ title: err.error || 'Broadcast failed', variant: 'destructive' })
+        toast({ title: err.error || ta.broadcastFailed || 'Broadcast failed', variant: 'destructive' })
       }
     } catch {
-      toast({ title: 'Broadcast failed', variant: 'destructive' })
+      toast({ title: ta.broadcastFailed || 'Broadcast failed', variant: 'destructive' })
     } finally {
       setBroadcastSending(false)
     }
@@ -1090,7 +1093,7 @@ export function AdminClient({
             </CardHeader>
             <CardContent className="p-0">
               {recentActivity.length === 0 ? (
-                <p className="text-xs text-gray-400 px-5 py-4">No recent activity</p>
+                <p className="text-xs text-gray-400 px-5 py-4">{ta.noRecentActivity || 'No recent activity'}</p>
               ) : (
                 <div className="divide-y divide-gray-50 dark:divide-gray-800">
                   {recentActivity.map((item, i) => {
@@ -1249,7 +1252,7 @@ export function AdminClient({
               </CardHeader>
               <CardContent className="space-y-2">
                 {candidateStatusDist.length === 0 ? (
-                  <p className="text-xs text-gray-400">No candidates</p>
+                  <p className="text-xs text-gray-400">{ta.noCandidates || 'No candidates'}</p>
                 ) : candidateStatusDist.map(s => {
                   const total = candidateStatusDist.reduce((acc, x) => acc + x._count, 0)
                   const pct = total > 0 ? Math.round((s._count / total) * 100) : 0
@@ -1277,7 +1280,7 @@ export function AdminClient({
               </CardHeader>
               <CardContent className="space-y-2">
                 {candidatesBySource.length === 0 ? (
-                  <p className="text-xs text-gray-400">No data</p>
+                  <p className="text-xs text-gray-400">{ta.noData || 'No data'}</p>
                 ) : candidatesBySource.map(s => {
                   const total = candidatesBySource.reduce((acc, x) => acc + x._count, 0)
                   const pct = total > 0 ? Math.round((s._count / total) * 100) : 0
@@ -1873,7 +1876,7 @@ export function AdminClient({
             </CardHeader>
             <CardContent className="p-0">
               {latestVacancies.length === 0 ? (
-                <p className="text-xs text-gray-400 px-5 py-4">No vacancies</p>
+                <p className="text-xs text-gray-400 px-5 py-4">{ta.noVacancies || 'No vacancies'}</p>
               ) : (
                 <div className="divide-y divide-gray-50 dark:divide-gray-800">
                   {latestVacancies.map((v, i) => (
@@ -1900,25 +1903,25 @@ export function AdminClient({
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Megaphone className="w-5 h-5 text-orange-500" /> Broadcast Notification
+              <Megaphone className="w-5 h-5 text-orange-500" /> {ta.broadcastTitle || 'Broadcast Notification'}
             </DialogTitle>
             <DialogDescription>
-              This notification will be sent to all active (non-suspended) users on the platform.
+              {ta.broadcastDesc || 'This notification will be sent to all active (non-suspended) users on the platform.'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">Title</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">{ta.broadcastTitleLabel || 'Title'}</label>
               <Input
-                placeholder="e.g., Platform Update"
+                placeholder={ta.broadcastTitlePlaceholder || 'e.g., Platform Update'}
                 value={broadcastTitle}
                 onChange={e => setBroadcastTitle(e.target.value)}
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">Message</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">{ta.broadcastMessageLabel || 'Message'}</label>
               <Textarea
-                placeholder="Write your message to all users..."
+                placeholder={ta.broadcastMessagePlaceholder || 'Write your message to all users...'}
                 value={broadcastMessage}
                 onChange={e => setBroadcastMessage(e.target.value)}
                 rows={4}
@@ -1927,7 +1930,7 @@ export function AdminClient({
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
+              <Button variant="outline">{ta.cancel || 'Cancel'}</Button>
             </DialogClose>
             <Button
               className="gradient-bg gap-2"

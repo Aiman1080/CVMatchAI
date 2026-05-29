@@ -70,7 +70,7 @@ export function EmailClient() {
   }
 
   const handleSaveSignature = async () => {
-    if (isDemo) { toast({ title: 'Demo mode — cannot save', variant: 'destructive' }); return }
+    if (isDemo) { toast({ title: (te as any).demoCannotSave || 'Demo mode — cannot save', variant: 'destructive' }); return }
     setSavingSignature(true)
     try {
       const res = await fetch('/api/user', {
@@ -83,7 +83,7 @@ export function EmailClient() {
         toast({ title: (te as any).signatureSaved || 'Email signature saved' })
       } else {
         const data = await res.json().catch(() => ({}))
-        toast({ title: data.error || 'Save failed', variant: 'destructive' })
+        toast({ title: data.error || (te as any).saveFailed || 'Save failed', variant: 'destructive' })
       }
     } finally {
       setSavingSignature(false)

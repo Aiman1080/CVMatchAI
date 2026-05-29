@@ -32,6 +32,8 @@ export default function ContactPage() {
       ],
       successTitle: 'Message received!',
       successText: 'Thank you for reaching out. We will get back to you within 24 hours.',
+      errorTitle: 'Error',
+      errorText: 'Failed to send message. Please try again.',
     },
     nl: {
       title: 'Contacteer ons',
@@ -49,6 +51,8 @@ export default function ContactPage() {
       ],
       successTitle: 'Bericht ontvangen!',
       successText: 'Bedankt voor uw bericht. We nemen binnen 24 uur contact met u op.',
+      errorTitle: 'Fout',
+      errorText: 'Versturen van het bericht is mislukt. Probeer opnieuw.',
     },
     fr: {
       title: 'Contactez-nous',
@@ -66,6 +70,8 @@ export default function ContactPage() {
       ],
       successTitle: 'Message reçu !',
       successText: 'Merci de nous avoir contactés. Nous vous répondrons dans les 24 heures.',
+      errorTitle: 'Erreur',
+      errorText: "L'envoi du message a échoué. Veuillez réessayer.",
     },
   }
 
@@ -85,7 +91,7 @@ export default function ContactPage() {
       setSent(true)
       toast({ title: c.successTitle, description: c.successText })
     } catch {
-      toast({ title: 'Error', description: 'Failed to send message. Please try again.', variant: 'destructive' })
+      toast({ title: c.errorTitle, description: c.errorText, variant: 'destructive' })
     } finally {
       setSending(false)
     }
