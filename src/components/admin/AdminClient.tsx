@@ -23,6 +23,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { toast } from '@/components/ui/use-toast'
 import { formatDate, cn } from '@/lib/utils'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { BroadcastDialog } from './BroadcastDialog'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -99,9 +100,29 @@ interface RecentActivityItem {
   createdAt: string
 }
 
+// Admin sees the full ticket including the requester user's identity fields.
+interface AdminTicket {
+  id: string
+  userId: string
+  subject: string
+  message: string
+  status: 'open' | 'in_progress' | 'resolved' | 'closed' | string
+  priority: 'low' | 'normal' | 'high' | 'urgent' | string
+  adminReply: string | null
+  repliedAt: string | Date | null
+  createdAt: string | Date
+  updatedAt: string | Date
+  user: {
+    name: string | null
+    email: string | null
+    company: string | null
+    subscription: string | null
+  }
+}
+
 interface Props {
   users: UserRow[]
-  tickets: any[]
+  tickets: AdminTicket[]
   subscriptions: Array<{ subscription: string; _count: number }>
   counts: { users: number; vacancies: number; candidates: number; openTickets: number }
   hasAiKey: boolean
@@ -243,7 +264,7 @@ export function AdminClient({
   // Tickets that still need attention (drives the alerts counter in the sidebar
   // and the "Open Tickets" cards). Includes both `open` AND `in_progress` so
   // the badge stays raised until the admin actually resolves the work.
-  const activeTickets = tickets.filter((t: any) => t.status === 'open' || t.status === 'in_progress')
+  const activeTickets = tickets.filter((t: AdminTicket) => t.status === 'open' || t.status === 'in_progress')
   const openCount = activeTickets.length
   const proCount = realProUsers.length
   const [resolvingAll, setResolvingAll] = useState(false)
@@ -257,7 +278,7 @@ export function AdminClient({
       const data = await res.json().catch(() => ({}))
       if (res.ok) {
         // Sync local state so the counter drops to 0 immediately without a reload
-        setTickets((prev: any[]) => prev.map(t =>
+        setTickets((prev: AdminTicket[]) => prev.map(t =>
           t.status === 'open' || t.status === 'in_progress'
             ? { ...t, status: 'resolved', repliedAt: new Date().toISOString() }
             : t
@@ -300,7 +321,7 @@ export function AdminClient({
 
   // Filtered tickets
   const filteredTickets = useMemo(() => {
-    return tickets.filter((t: any) => {
+    return tickets.filter((t: AdminTicket) => {
       if (ticketStatusFilter !== 'all' && t.status !== ticketStatusFilter) return false
       if (ticketPriorityFilter !== 'all' && t.priority !== ticketPriorityFilter) return false
       return true
@@ -376,7 +397,7 @@ export function AdminClient({
       })
       if (res.ok) {
         const updated = await res.json()
-        setTickets((prev: any[]) => prev.map(t => t.id === id ? { ...t, ...updated } : t))
+        setTickets((prev: AdminTicket[]) => prev.map(t => t.id === id ? { ...t, ...updated } : t))
         if (data.adminReply) setReplyText(p => ({ ...p, [id]: '' }))
         toast({ title: ta.ticketUpdated || 'Ticket updated' })
       } else {
@@ -937,7 +958,7 @@ export function AdminClient({
                 </p>
               </CardContent>
             </Card>
-          ) : filteredTickets.map((ticket: any) => (
+          ) : filteredTickets.map((ticket: AdminTicket) => (
             <Card
               key={ticket.id}
               className={cn('border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900 transition-all cursor-pointer hover:shadow-md',
@@ -2017,51 +2038,17 @@ export function AdminClient({
         </TabsContent>
       </Tabs>
 
-      {/* ── Broadcast Dialog ── */}
-      <Dialog open={broadcastOpen} onOpenChange={setBroadcastOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Megaphone className="w-5 h-5 text-orange-500" /> {ta.broadcastTitle || 'Broadcast Notification'}
-            </DialogTitle>
-            <DialogDescription>
-              {ta.broadcastDesc || 'This notification will be sent to all active (non-suspended) users on the platform.'}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">{ta.broadcastTitleLabel || 'Title'}</label>
-              <Input
-                placeholder={ta.broadcastTitlePlaceholder || 'e.g., Platform Update'}
-                value={broadcastTitle}
-                onChange={e => setBroadcastTitle(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">{ta.broadcastMessageLabel || 'Message'}</label>
-              <Textarea
-                placeholder={ta.broadcastMessagePlaceholder || 'Write your message to all users...'}
-                value={broadcastMessage}
-                onChange={e => setBroadcastMessage(e.target.value)}
-                rows={4}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">{ta.cancel || 'Cancel'}</Button>
-            </DialogClose>
-            <Button
-              className="gradient-bg gap-2"
-              onClick={sendBroadcast}
-              disabled={broadcastSending || !broadcastTitle.trim() || !broadcastMessage.trim()}
-            >
-              <Send size={14} />
-              {broadcastSending ? 'Sending...' : 'Send to all users'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <BroadcastDialog
+        open={broadcastOpen}
+        onOpenChange={setBroadcastOpen}
+        title={broadcastTitle}
+        message={broadcastMessage}
+        sending={broadcastSending}
+        onTitleChange={setBroadcastTitle}
+        onMessageChange={setBroadcastMessage}
+        onSend={sendBroadcast}
+        labels={ta}
+      />
     </div>
   )
 }
