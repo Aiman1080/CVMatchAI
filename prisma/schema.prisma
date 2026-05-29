@@ -116,8 +116,15 @@ model Candidate {
   cvFileName      String?
   cvUrl           String?
   cvContent       String?
+  // Raw original document (PDF or DOCX bytes) so the recruiter can view the
+  // real file — not just the extracted text — in the candidate detail page.
+  // Stored in Postgres bytea; large but bounded (CVs typically 100-300 KB).
+  cvFile          Bytes?
+  cvMimeType      String?
   motivationText  String?
   motivationUrl   String?
+  motivationFile  Bytes?
+  motivationMimeType String?
   language        String     @default("nl")
   matchScore      Float?
   summary         String?

@@ -15,12 +15,23 @@ export default async function CandidateDetailPage({ params }: { params: Promise<
   const { id } = await params
 
   // Admins can see all candidates; recruiters only their own.
-  const candidate = await prisma.candidate.findFirst({
+  const raw = await prisma.candidate.findFirst({
     where: isAdmin ? { id } : { id, userId },
     include: { vacancy: true, emailSource: true },
   }).catch(() => null)
 
-  if (!candidate) notFound()
+  if (!raw) notFound()
+
+  // The raw binary fields (cvFile, motivationFile) would otherwise get
+  // base64-serialized into the SSR HTML — bloating the page by 100s of KB.
+  // Strip them out and pass booleans the client uses to render the PDF
+  // viewer (which fetches the binary via /api/candidates/[id]/file on demand).
+  const { cvFile, motivationFile, ...metadata } = raw
+  const candidate = {
+    ...metadata,
+    hasCvFile: !!cvFile,
+    hasMotivationFile: !!motivationFile,
+  }
 
   const fullName = `${candidate.firstName || ''} ${candidate.lastName || ''}`.trim() || 'Candidate'
   return (

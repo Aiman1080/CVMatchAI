@@ -85,13 +85,21 @@ export async function POST(req: Request) {
     // Detect whether this file is a CV or a motivation letter before creating the record
     const docType = await detectDocumentType(text)
 
-    // Create a placeholder candidate first so we have an ID for the analysis update
+    // Create a placeholder candidate first so we have an ID for the analysis update.
+    // Store the raw binary too so the recruiter can preview the original PDF/DOCX
+    // (not just the extracted text) in the candidate detail page.
+    const cvBytes = docType === 'cv' ? buffer : undefined
+    const motivBytes = docType === 'motivation' ? buffer : undefined
     let candidate = await prisma.candidate.create({
       data: {
         firstName: 'Unknown', lastName: 'Candidate',
         cvFileName: fileName,
         cvContent: docType === 'cv' ? text : undefined,
+        cvFile: cvBytes,
+        cvMimeType: cvBytes ? file.type : undefined,
         motivationText: docType === 'motivation' ? text : undefined,
+        motivationFile: motivBytes,
+        motivationMimeType: motivBytes ? file.type : undefined,
         status: 'new', source: 'upload',
         gdprConsent: true, gdprConsentDate: new Date(),
         vacancyId, userId,

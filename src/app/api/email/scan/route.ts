@@ -266,6 +266,20 @@ export async function POST(req: Request) {
 
           let cvText = ''
           let motivationText = ''
+          // Also keep the raw bytes + filename so we can store the original PDF/DOCX
+          // and let the recruiter preview it in the candidate detail page.
+          let cvBuffer: Buffer | null = null
+          let cvFileName = ''
+          let cvMime = ''
+          let motivBuffer: Buffer | null = null
+          let motivFileName = ''
+          let motivMime = ''
+          const inferMime = (buf: Buffer): string => {
+            const head4 = buf.slice(0, 4)
+            if (head4.toString('utf-8') === '%PDF') return 'application/pdf'
+            if (head4.toString('hex').toLowerCase().startsWith('504b0304')) return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            return 'application/octet-stream'
+          }
           for (const p of orderedParts) {
             if (cvText && motivationText) break
             try {
@@ -279,10 +293,12 @@ export async function POST(req: Request) {
 
               const looksLikeCV = matchByName(p.name, cvHint || '') || docType === 'cv'
               const looksLikeMotivation = matchByName(p.name, motivHint || '') || docType === 'motivation'
-              if (looksLikeCV && !cvText) cvText = text
-              else if (looksLikeMotivation && !motivationText) motivationText = text
-              else if (!cvText) cvText = text
-              else if (!motivationText) motivationText = text
+              const mime = inferMime(buffer)
+              const name = p.name || `document.${mime === 'application/pdf' ? 'pdf' : 'docx'}`
+              if (looksLikeCV && !cvText) { cvText = text; cvBuffer = buffer; cvFileName = name; cvMime = mime }
+              else if (looksLikeMotivation && !motivationText) { motivationText = text; motivBuffer = buffer; motivFileName = name; motivMime = mime }
+              else if (!cvText) { cvText = text; cvBuffer = buffer; cvFileName = name; cvMime = mime }
+              else if (!motivationText) { motivationText = text; motivBuffer = buffer; motivFileName = name; motivMime = mime }
             } catch (e: any) {
               console.log(`[email/scan] PASS2 msg ${msg.uid} path ${p.path}: download failed (${e?.message?.slice(0, 60)})`)
             }
@@ -333,7 +349,12 @@ export async function POST(req: Request) {
               lastName: analysis.lastName || classification.candidateName?.split(' ').slice(1).join(' ') || 'Candidate',
               email: analysis.email || sender,
               cvContent: cvText,
+              cvFileName: cvFileName || undefined,
+              cvFile: cvBuffer || undefined,
+              cvMimeType: cvMime || undefined,
               motivationText: motivationText || undefined,
+              motivationFile: motivBuffer || undefined,
+              motivationMimeType: motivMime || undefined,
               matchScore: analysis.matchScore,
               summary: analysis.summary,
               strengths: JSON.stringify(analysis.strengths),

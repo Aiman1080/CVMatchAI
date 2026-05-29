@@ -6,7 +6,7 @@ import {
   TrendingUp, TrendingDown, Loader2, RefreshCw, FileText, User, Briefcase,
   GraduationCap, Languages, Award, Flag, Archive, Send, X, Video,
   MessageSquareText, ClipboardList, Sparkles, Copy, Download,
-  History, ArrowRight, Brain, Plus, Eye, EyeOff
+  History, ArrowRight, Brain, Plus, Eye, EyeOff, Maximize2, Minimize2,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -950,39 +950,31 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
 
             {/* ── CV tab ── */}
             <TabsContent value="cv" className="mt-4">
-              <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-gray-400" /> CV
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {candidate.cvContent ? (
-                    <pre className="text-xs text-gray-600 dark:text-gray-300 whitespace-pre-wrap font-sans leading-relaxed max-h-96 overflow-y-auto">
-                      {candidate.cvContent}
-                    </pre>
-                  ) : (
-                    <p className="text-gray-400 text-sm text-center py-8">{ci.noCvText}</p>
-                  )}
-                </CardContent>
-              </Card>
+              <DocumentViewer
+                candidateId={candidate.id}
+                type="cv"
+                hasFile={!!candidate.hasCvFile}
+                fallbackText={candidate.cvContent}
+                noTextLabel={ci.noCvText}
+                titleIcon={<FileText className="w-4 h-4 text-gray-400" />}
+                titleLabel="CV"
+                labels={cd as any}
+              />
             </TabsContent>
 
             {/* ── Motivation tab ── */}
             {hasMotivationText && (
               <TabsContent value="motivation" className="mt-4">
-                <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-indigo-400" /> Motivation
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <pre className="text-xs text-gray-600 dark:text-gray-300 whitespace-pre-wrap font-sans leading-relaxed max-h-96 overflow-y-auto">
-                      {candidate.motivationText}
-                    </pre>
-                  </CardContent>
-                </Card>
+                <DocumentViewer
+                  candidateId={candidate.id}
+                  type="motivation"
+                  hasFile={!!candidate.hasMotivationFile}
+                  fallbackText={candidate.motivationText}
+                  noTextLabel={ci.noCvText}
+                  titleIcon={<FileText className="w-4 h-4 text-indigo-400" />}
+                  titleLabel="Motivation"
+                  labels={cd as any}
+                />
               </TabsContent>
             )}
           </Tabs>
@@ -1096,5 +1088,157 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
         </DialogContent>
       </Dialog>
     </div>
+  )
+}
+
+// PDF/DOCX viewer with a fullscreen toggle and download button. Falls back to
+// the extracted text when no original file is stored (e.g. older candidates
+// imported before the binary-storage migration).
+interface DocumentViewerProps {
+  candidateId: string
+  type: 'cv' | 'motivation'
+  hasFile: boolean
+  fallbackText?: string | null
+  noTextLabel: string
+  titleIcon: React.ReactNode
+  titleLabel: string
+  labels: Record<string, string>
+}
+
+function DocumentViewer({ candidateId, type, hasFile, fallbackText, noTextLabel, titleIcon, titleLabel, labels }: DocumentViewerProps) {
+  const [fullscreen, setFullscreen] = useState(false)
+  const fileSrc = `/api/candidates/${candidateId}/file?type=${type}`
+  const downloadSrc = `${fileSrc}&download=1`
+
+  // Close fullscreen with Esc
+  useEffect(() => {
+    if (!fullscreen) return
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setFullscreen(false) }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [fullscreen])
+
+  if (!hasFile && !fallbackText) {
+    return (
+      <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm flex items-center gap-2">{titleIcon} {titleLabel}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-400 text-sm text-center py-8">{noTextLabel}</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Has the original file → render in iframe with fullscreen + download controls
+  if (hasFile) {
+    return (
+      <>
+        <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between gap-2">
+            <CardTitle className="text-sm flex items-center gap-2 min-w-0">{titleIcon} <span className="truncate">{titleLabel}</span></CardTitle>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setFullscreen(true)}
+                className="gap-1.5 h-7 text-xs whitespace-normal text-center leading-tight"
+                title={(labels as any).viewFullscreen || 'View fullscreen'}
+              >
+                <Maximize2 size={12} className="shrink-0" /> {(labels as any).fullscreen || 'Fullscreen'}
+              </Button>
+              <a
+                href={downloadSrc}
+                className="inline-flex items-center gap-1.5 h-7 px-2 text-xs border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 whitespace-normal text-center leading-tight"
+                title={(labels as any).downloadFile || 'Download'}
+              >
+                <Download size={12} className="shrink-0" /> {(labels as any).download || 'Download'}
+              </a>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <iframe
+              src={fileSrc}
+              className="w-full h-[600px] border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900"
+              title={titleLabel}
+            />
+          </CardContent>
+        </Card>
+
+        {fullscreen && (
+          <div className="fixed inset-0 z-[100] bg-black/90 flex flex-col">
+            <div className="flex items-center justify-between p-3 bg-gray-900 text-white">
+              <span className="text-sm font-medium truncate flex items-center gap-2 min-w-0">
+                {titleIcon}<span className="truncate">{titleLabel}</span>
+              </span>
+              <div className="flex items-center gap-2 shrink-0">
+                <a
+                  href={downloadSrc}
+                  className="inline-flex items-center gap-1.5 h-8 px-3 text-xs bg-gray-800 hover:bg-gray-700 rounded-md whitespace-normal text-center leading-tight"
+                  title={(labels as any).downloadFile || 'Download'}
+                >
+                  <Download size={14} className="shrink-0" /> {(labels as any).download || 'Download'}
+                </a>
+                <button
+                  onClick={() => setFullscreen(false)}
+                  className="inline-flex items-center gap-1.5 h-8 px-3 text-xs bg-gray-800 hover:bg-gray-700 rounded-md whitespace-normal text-center leading-tight"
+                  title={(labels as any).closeFullscreen || 'Close fullscreen (Esc)'}
+                >
+                  <Minimize2 size={14} className="shrink-0" /> {(labels as any).exitFullscreen || 'Exit'}
+                </button>
+              </div>
+            </div>
+            <iframe src={fileSrc} className="flex-1 w-full bg-white" title={titleLabel} />
+          </div>
+        )}
+      </>
+    )
+  }
+
+  // No file stored — show extracted text in a card (with optional fullscreen for text too)
+  return (
+    <>
+      <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
+        <CardHeader className="pb-3 flex flex-row items-center justify-between gap-2">
+          <CardTitle className="text-sm flex items-center gap-2 min-w-0">{titleIcon} <span className="truncate">{titleLabel}</span></CardTitle>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setFullscreen(true)}
+            className="gap-1.5 h-7 text-xs whitespace-normal text-center leading-tight"
+          >
+            <Maximize2 size={12} className="shrink-0" /> {(labels as any).fullscreen || 'Fullscreen'}
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <pre className="text-xs text-gray-600 dark:text-gray-300 whitespace-pre-wrap font-sans leading-relaxed max-h-96 overflow-y-auto">
+            {fallbackText}
+          </pre>
+          <p className="text-[10px] text-amber-600 mt-2 break-words">
+            {(labels as any).noOriginalFileNote || 'Original file not stored (older record). Showing extracted text only.'}
+          </p>
+        </CardContent>
+      </Card>
+
+      {fullscreen && (
+        <div className="fixed inset-0 z-[100] bg-white dark:bg-gray-950 flex flex-col">
+          <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-800">
+            <span className="text-sm font-medium truncate flex items-center gap-2 min-w-0">
+              {titleIcon}<span className="truncate">{titleLabel}</span>
+            </span>
+            <button
+              onClick={() => setFullscreen(false)}
+              className="inline-flex items-center gap-1.5 h-8 px-3 text-xs bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md whitespace-normal text-center leading-tight"
+            >
+              <Minimize2 size={14} className="shrink-0" /> {(labels as any).exitFullscreen || 'Exit'}
+            </button>
+          </div>
+          <pre className="flex-1 overflow-y-auto p-6 text-sm text-gray-700 dark:text-gray-200 whitespace-pre-wrap font-sans leading-relaxed">
+            {fallbackText}
+          </pre>
+        </div>
+      )}
+    </>
   )
 }
