@@ -143,13 +143,22 @@ async function upsertCandidate(userId: string, platform: string, data: {
 
   let cvContent: string | null = null
   let cvFileName = data.cvFileName || null
+  let cvMimeType: string | null = null
 
   if (data.cvBuffer) {
     try {
-      const mimeType = cvFileName?.endsWith('.pdf') ? 'application/pdf'
+      cvMimeType = cvFileName?.endsWith('.pdf') ? 'application/pdf'
         : cvFileName?.endsWith('.docx') ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         : 'application/octet-stream'
-      cvContent = await parseDocument(data.cvBuffer, mimeType)
+      // Fallback when the ATS didn't provide a filename: sniff PDF/DOCX magic bytes
+      if (cvMimeType === 'application/octet-stream') {
+        const head4 = data.cvBuffer.slice(0, 4)
+        if (head4.toString('utf-8') === '%PDF') cvMimeType = 'application/pdf'
+        else if (head4.toString('hex').toLowerCase().startsWith('504b0304')) {
+          cvMimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        }
+      }
+      cvContent = await parseDocument(data.cvBuffer, cvMimeType)
       if (cvContent && cvContent.trim().length < 50) cvContent = null
     } catch {
       cvContent = null
@@ -165,6 +174,12 @@ async function upsertCandidate(userId: string, platform: string, data: {
       linkedIn: data.linkedIn || null,
       cvContent,
       cvFileName,
+      // Also persist the original binary so the recruiter can preview the real
+      // PDF/DOCX in the candidate detail page — not just the extracted text.
+      // ATS adapters that don't download the file (cvBuffer null) fall back to
+      // text-only view, with the amber notice shown by DocumentViewer.
+      cvFile: data.cvBuffer || undefined,
+      cvMimeType: data.cvBuffer ? (cvMimeType || 'application/octet-stream') : undefined,
       motivationText: data.motivationText || null,
       status: mapAtsStatus(data.atsStatus),
       source: platform,
