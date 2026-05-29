@@ -11,7 +11,6 @@ import { toast } from '@/components/ui/use-toast'
 import { useDemoMode } from '@/hooks/useDemoGuard'
 import { formatRelativeTime } from '@/lib/utils'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { EmailDiagnoseDialog } from './EmailDiagnoseDialog'
 
 // Preset IMAP settings for common providers
 const PROVIDER_PRESETS = {
@@ -49,17 +48,46 @@ export function EmailClient() {
   const [cleaning, setCleaning] = useState(false)
   const [inboxes, setInboxes] = useState<Inbox[]>([])
   const [loading, setLoading] = useState(true)
-  const [showDiagnose, setShowDiagnose] = useState(false)
-  const [diagnoseInboxId, setDiagnoseInboxId] = useState<string>('')
+  // Email signature / footer — managed here so recruiters can configure it in the Email tab
+  const [signature, setSignature] = useState('')
+  const [signatureSaved, setSignatureSaved] = useState(true)
+  const [savingSignature, setSavingSignature] = useState(false)
 
-  // Load connected inboxes on mount — no auto demo scan (user triggers manually)
-  useEffect(() => { fetchInboxes() }, [])
+  // Load connected inboxes + current signature on mount — no auto demo scan (user triggers manually)
+  useEffect(() => {
+    fetchInboxes()
+    fetch('/api/user')
+      .then(r => (r.ok ? r.json() : null))
+      .then(u => { if (u?.emailSignature !== undefined) setSignature(u.emailSignature || '') })
+      .catch(() => {})
+  }, [])
 
   const fetchInboxes = async () => {
     try {
       const res = await fetch('/api/email/connect')
       if (res.ok) setInboxes(await res.json())
     } catch { /* silent — user sees empty list */ } finally { setLoading(false) }
+  }
+
+  const handleSaveSignature = async () => {
+    if (isDemo) { toast({ title: (te as any).demoCannotSave || 'Demo mode — cannot save', variant: 'destructive' }); return }
+    setSavingSignature(true)
+    try {
+      const res = await fetch('/api/user', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emailSignature: signature }),
+      })
+      if (res.ok) {
+        setSignatureSaved(true)
+        toast({ title: (te as any).signatureSaved || 'Email signature saved' })
+      } else {
+        const data = await res.json().catch(() => ({}))
+        toast({ title: data.error || (te as any).saveFailed || 'Save failed', variant: 'destructive' })
+      }
+    } finally {
+      setSavingSignature(false)
+    }
   }
 
   const openConnectDialog = () => {
@@ -328,6 +356,13 @@ export function EmailClient() {
             <Plus size={14} className="shrink-0" /> {te.connectInbox}
           </Button>
         </CardHeader>
+        {inboxes.length > 0 && (
+          <div className="px-6 pb-3 -mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed break-words">
+              ℹ️ {(te as any).scanInfo || 'Each scan reads the 25 most recent emails. Detected candidates are assigned to the active vacancy with the highest AI fit score.'}
+            </p>
+          </div>
+        )}
         <CardContent>
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12 gap-2">
@@ -365,9 +400,6 @@ export function EmailClient() {
                     <Button size="sm" variant="outline" onClick={() => handleScan(inbox.id)} disabled={scanning === inbox.id} className="gap-1.5 text-xs h-auto py-1.5 whitespace-normal text-center leading-tight">
                       {scanning === inbox.id ? <><Loader2 size={12} className="animate-spin shrink-0" /> {te.scanning}</> : <><RefreshCw size={12} className="shrink-0" /> {te.scanNow}</>}
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => { setDiagnoseInboxId(inbox.id); setShowDiagnose(true) }} className="gap-1.5 text-xs h-auto py-1.5 whitespace-normal text-center leading-tight">
-                      🔍 Diagnose
-                    </Button>
                     <button onClick={() => handleDelete(inbox.id)} className="p-1.5 text-gray-400 hover:text-red-500 rounded transition-colors shrink-0">
                       <Trash2 size={15} />
                     </button>
@@ -376,6 +408,58 @@ export function EmailClient() {
               ))}
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Email signature / footer — applied to every email sent to candidates */}
+      <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Mail className="w-4 h-4 text-blue-500" />
+            {(te as any).signatureTitle || 'Email signature & logo'}
+          </CardTitle>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 break-words">
+            {(te as any).signatureDesc || 'Appended to every email you send to candidates. Supports HTML — paste an <img> tag to add your company logo.'}
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <textarea
+            value={signature}
+            onChange={e => { setSignature(e.target.value); setSignatureSaved(false) }}
+            placeholder={(te as any).signaturePlaceholder || 'Best regards,\nJohn Doe | Acme Corp\n+32 471 000 000\n<img src="https://your-company.com/logo.png" width="150" alt="Company Logo">'}
+            rows={6}
+            className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y font-mono"
+            disabled={isDemo}
+          />
+          {signature && (
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-gray-50 dark:bg-gray-900">
+              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">
+                {(te as any).signaturePreview || 'Preview'}
+              </p>
+              <div
+                className="text-sm text-gray-700 dark:text-gray-300 break-words"
+                dangerouslySetInnerHTML={{ __html: signature }}
+              />
+            </div>
+          )}
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <p className="text-xs text-gray-400 break-words flex-1 min-w-0">
+              {(te as any).signatureHelp || 'Tip: host your logo on a public URL (your website, Imgur, Cloudinary) and reference it with <img src="...">.'}
+            </p>
+            <Button
+              onClick={handleSaveSignature}
+              disabled={savingSignature || signatureSaved || isDemo}
+              size="sm"
+              className="gradient-bg gap-2 h-auto py-2 whitespace-normal text-center leading-tight shrink-0"
+            >
+              {savingSignature ? <Loader2 size={14} className="animate-spin shrink-0" /> : <CheckCircle size={14} className="shrink-0" />}
+              {savingSignature
+                ? ((te as any).signatureSaving || 'Saving...')
+                : signatureSaved
+                  ? ((te as any).signatureSavedLabel || 'Saved')
+                  : ((te as any).signatureSave || 'Save signature')}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -515,18 +599,52 @@ export function EmailClient() {
                 />
               )}
 
-              {/* Manual IMAP fields for "Other" */}
+              {/* Manual IMAP fields + help guide for "Other" */}
               {selectedProvider === 'other' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label>{te.imapHost}</Label>
-                    <Input placeholder="imap.example.com" value={form.host} onChange={e => setForm(p => ({ ...p, host: e.target.value }))} required />
+                <>
+                  <HelpGuide
+                    title={(te as any).imapHelpTitle || 'How to set up custom IMAP'}
+                    steps={[
+                      (te as any).imapStep1 || 'Enable IMAP access in your email provider settings.',
+                      <>
+                        {(te as any).imapStep2 || 'Find the IMAP host in your provider docs. Common ones:'}
+                        <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 leading-relaxed break-words">
+                          {(te as any).imapStep2Examples || 'Yahoo: imap.mail.yahoo.com · iCloud: imap.mail.me.com · OVH: ssl0.ovh.net · Infomaniak: mail.infomaniak.com · Zoho: imap.zoho.eu'}
+                        </div>
+                      </>,
+                      (te as any).imapStep3 || 'Port is almost always 993 (SSL/TLS).',
+                      (te as any).imapStep4 || 'Username is usually your full email address.',
+                      (te as any).imapStep5 || 'Password is your mailbox password (or App Password if 2FA is on).',
+                      (te as any).imapStep6 || 'We only read mail (INBOX). Nothing is sent or deleted.',
+                    ]}
+                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label>{te.imapHost}</Label>
+                      <Input
+                        placeholder={(te as any).imapHostPlaceholder || 'imap.example.com'}
+                        value={form.host}
+                        onChange={e => setForm(p => ({ ...p, host: e.target.value }))}
+                        required
+                      />
+                      <p className="text-[11px] text-gray-500 dark:text-gray-400 break-words">
+                        {(te as any).imapHostHint || 'Example: imap.mail.yahoo.com, ssl0.ovh.net, mail.infomaniak.com'}
+                      </p>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>{te.port}</Label>
+                      <Input
+                        type="number"
+                        value={form.port}
+                        onChange={e => setForm(p => ({ ...p, port: parseInt(e.target.value) }))}
+                        required
+                      />
+                      <p className="text-[11px] text-gray-500 dark:text-gray-400 break-words">
+                        {(te as any).portHint || '993 (SSL/TLS, recommended) or 143 (STARTTLS)'}
+                      </p>
+                    </div>
                   </div>
-                  <div className="space-y-1.5">
-                    <Label>{te.port}</Label>
-                    <Input type="number" value={form.port} onChange={e => setForm(p => ({ ...p, port: parseInt(e.target.value) }))} required />
-                  </div>
-                </div>
+                </>
               )}
 
               {/* Security note */}
@@ -547,12 +665,6 @@ export function EmailClient() {
         </DialogContent>
       </Dialog>
 
-      {/* Email scan diagnostic — debug why a specific email isn't picked up */}
-      <EmailDiagnoseDialog
-        open={showDiagnose}
-        onClose={() => setShowDiagnose(false)}
-        inboxId={diagnoseInboxId}
-      />
     </div>
   )
 }

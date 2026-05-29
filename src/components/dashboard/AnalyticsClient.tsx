@@ -125,7 +125,7 @@ export function AnalyticsClient({ candidates, vacancies, candidatesOverTime }: P
                   <Tooltip />
                 </PieChart>
               </ResponsiveContainer>
-            ) : <div className="h-[220px] flex items-center justify-center text-gray-400 text-sm">No data yet</div>}
+            ) : <div className="h-[220px] flex items-center justify-center text-gray-400 text-sm">{(ta as any).noDataYet || 'No data yet'}</div>}
           </CardContent>
         </Card>
       </div>
@@ -145,7 +145,7 @@ export function AnalyticsClient({ candidates, vacancies, candidatesOverTime }: P
                   <Bar dataKey="candidates" fill="#6366f1" radius={[0, 4, 4, 0]} name="Candidates" />
                 </BarChart>
               </ResponsiveContainer>
-            ) : <div className="h-[220px] flex items-center justify-center text-gray-400 text-sm">No data yet</div>}
+            ) : <div className="h-[220px] flex items-center justify-center text-gray-400 text-sm">{(ta as any).noDataYet || 'No data yet'}</div>}
           </CardContent>
         </Card>
         <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
@@ -160,7 +160,7 @@ export function AnalyticsClient({ candidates, vacancies, candidatesOverTime }: P
                   <Tooltip />
                 </PieChart>
               </ResponsiveContainer>
-            ) : <div className="h-[220px] flex items-center justify-center text-gray-400 text-sm">No data yet</div>}
+            ) : <div className="h-[220px] flex items-center justify-center text-gray-400 text-sm">{(ta as any).noDataYet || 'No data yet'}</div>}
           </CardContent>
         </Card>
       </div>

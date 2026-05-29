@@ -29,7 +29,13 @@ export async function logAiUsage(
 export async function getAiUsageStats(userId?: string) {
   const where = userId ? { userId } : {}
 
-  const [totalLogs, totals, last30d, byOperation] = await Promise.all([
+  // 12 months ago — used to scope the monthly breakdown
+  const twelveMonthsAgo = new Date()
+  twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12)
+  twelveMonthsAgo.setDate(1)
+  twelveMonthsAgo.setHours(0, 0, 0, 0)
+
+  const [totalLogs, totals, last30d, byOperation, monthlyLogs] = await Promise.all([
     prisma.aiUsageLog.count({ where }),
     prisma.aiUsageLog.aggregate({
       where,
@@ -46,7 +52,27 @@ export async function getAiUsageStats(userId?: string) {
       _sum: { totalTokens: true, costUsd: true },
       _count: true,
     }),
+    // Fetch the timestamps + cost/token for the last 12 months and bucket in JS.
+    // Prisma's groupBy can't truncate dates portably, so JS-side bucketing is the
+    // simplest cross-database approach. The dataset is small (one row per AI call).
+    prisma.aiUsageLog.findMany({
+      where: { ...where, createdAt: { gte: twelveMonthsAgo } },
+      select: { createdAt: true, totalTokens: true, costUsd: true },
+    }),
   ])
+
+  const monthlyMap = new Map<string, { month: string; calls: number; tokens: number; costUsd: number }>()
+  for (const log of monthlyLogs) {
+    const month = log.createdAt.toISOString().slice(0, 7) // YYYY-MM
+    const entry = monthlyMap.get(month) || { month, calls: 0, tokens: 0, costUsd: 0 }
+    entry.calls++
+    entry.tokens += log.totalTokens
+    entry.costUsd += log.costUsd
+    monthlyMap.set(month, entry)
+  }
+  const byMonth = Array.from(monthlyMap.values())
+    .map(m => ({ ...m, costUsd: Math.round(m.costUsd * 10000) / 10000 }))
+    .sort((a, b) => a.month.localeCompare(b.month))
 
   return {
     totalCalls: totalLogs,
@@ -65,5 +91,6 @@ export async function getAiUsageStats(userId?: string) {
       tokens: op._sum.totalTokens || 0,
       costUsd: Math.round((op._sum.costUsd || 0) * 10000) / 10000,
     })),
+    byMonth,
   }
 }

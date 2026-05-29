@@ -301,6 +301,87 @@ export async function detectDocumentType(text: string): Promise<'cv' | 'motivati
   return cvScore >= 2 ? 'cv' : 'other'
 }
 
+// ── Best-vacancy matching ────────────────────────────────────────────────────
+// Given a CV and a list of active vacancies, ask Gemini to pick the one that
+// best fits. Falls back to keyword/Jaccard scoring when no API key is set or
+// the AI call fails so the scan keeps working.
+
+const SELECT_VACANCY_TOOL: FunctionDeclaration = {
+  name: 'select_best_vacancy',
+  description: 'Choose the vacancy that best matches the candidate CV.',
+  parameters: {
+    type: SchemaType.OBJECT,
+    properties: {
+      vacancyId: { type: SchemaType.STRING, description: 'The id of the best matching vacancy from the provided list' },
+      fitScore: { type: SchemaType.NUMBER, description: 'Fit score 0-100 for the chosen vacancy' },
+      reasoning: { type: SchemaType.STRING, description: 'Short 1-2 sentence reason' },
+    },
+    required: ['vacancyId'],
+  },
+}
+
+function keywordVacancyFallback(
+  cvText: string,
+  vacancies: Array<{ id: string; title: string; description: string; requirements: string }>,
+): { vacancyId: string; fitScore: number } {
+  const cvLower = cvText.toLowerCase()
+  let bestId = vacancies[0].id
+  let bestScore = 0
+  for (const v of vacancies) {
+    const vacText = `${v.title} ${v.description} ${v.requirements}`.toLowerCase()
+    const words = [...new Set(vacText.match(/\b[a-z]{4,}\b/g) || [])]
+    const hits = words.filter(w => cvLower.includes(w)).length
+    const score = words.length > 0 ? hits / words.length : 0
+    if (score > bestScore) { bestScore = score; bestId = v.id }
+  }
+  return { vacancyId: bestId, fitScore: Math.round(bestScore * 100) }
+}
+
+export async function selectBestVacancyForCV(
+  cvText: string,
+  vacancies: Array<{ id: string; title: string; description: string; requirements: string }>,
+): Promise<{ vacancyId: string; fitScore: number; reasoning?: string }> {
+  if (vacancies.length === 0) throw new Error('No vacancies to match against')
+  if (vacancies.length === 1) return { vacancyId: vacancies[0].id, fitScore: 100 }
+  if (isDemoMode()) return keywordVacancyFallback(cvText, vacancies)
+
+  const genAI = getClient()
+
+  const vacancyList = vacancies.map(v =>
+    `ID: ${v.id}\nTitle: ${v.title}\nDescription: ${v.description.slice(0, 400)}\nRequirements: ${v.requirements.slice(0, 300)}`
+  ).join('\n\n---\n\n')
+
+  try {
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash',
+      systemInstruction: 'You are an expert recruiter. Read the candidate CV and pick the SINGLE vacancy from the list that best matches their skills, experience, and seniority. Always return the exact vacancyId from the provided list.',
+      generationConfig: { temperature: 0.1 },
+      tools: [{ functionDeclarations: [SELECT_VACANCY_TOOL] }],
+      toolConfig: { functionCallingConfig: { mode: FunctionCallingMode.ANY } },
+    })
+
+    const result = await model.generateContent(
+      `CANDIDATE CV:\n${cvText.slice(0, 4000)}\n\nACTIVE VACANCIES:\n${vacancyList}\n\nCall select_best_vacancy with the id of the best match.`
+    )
+    const call = result.response.functionCalls()?.[0]
+    if (call) {
+      const args = call.args as any
+      const chosen = vacancies.find(v => v.id === args.vacancyId)
+      if (chosen) {
+        return {
+          vacancyId: chosen.id,
+          fitScore: typeof args.fitScore === 'number' ? Math.max(0, Math.min(100, args.fitScore)) : 70,
+          reasoning: args.reasoning,
+        }
+      }
+    }
+  } catch (error: any) {
+    console.error('[AI] selectBestVacancyForCV error:', error?.message || error)
+  }
+
+  return keywordVacancyFallback(cvText, vacancies)
+}
+
 export async function generateRecruiterInsights(candidates: Array<{
   name: string; matchScore: number; strengths: string[]; weaknesses: string[]
 }>): Promise<string> {

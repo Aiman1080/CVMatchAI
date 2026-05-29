@@ -8,7 +8,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { parseDocument } from '@/lib/pdf-parser'
-import { analyzeCVAgainstVacancy, classifyRecruitmentEmail, detectDocumentType } from '@/lib/ai'
+import { analyzeCVAgainstVacancy, classifyRecruitmentEmail, detectDocumentType, selectBestVacancyForCV } from '@/lib/ai'
 import { getPlanLimits, getEffectiveSubscription } from '@/lib/plans'
 import { decrypt } from '@/lib/crypto'
 import { isDemoAccount } from '@/lib/demo-guard'
@@ -119,11 +119,11 @@ export async function POST(req: Request) {
       // we must use startsWith('text/').
       const isTextPart = (p: { type: string }) => p.type.startsWith('text/')
 
-      // Process the 30 MOST RECENT messages (not the oldest!). IMAP fetch returns
+      // Process the 25 MOST RECENT messages (not the oldest!). IMAP fetch returns
       // messages in ascending UID order (oldest first), so we reverse and take.
-      // Previously we did slice(0, 30) which processed the OLDEST 30 — recent
+      // Previously we did slice(0, N) which processed the OLDEST N — recent
       // applications got skipped entirely on busy inboxes.
-      const messagesToProcess = [...messages].reverse().slice(0, 30)
+      const messagesToProcess = [...messages].reverse().slice(0, 25)
       console.log(`[email/scan] Processing ${messagesToProcess.length} most recent messages (UIDs ${messagesToProcess[0]?.uid} → ${messagesToProcess[messagesToProcess.length - 1]?.uid})`)
       for (const msg of messagesToProcess) {
         try {
@@ -298,18 +298,30 @@ export async function POST(req: Request) {
           const scan = await prisma.emailScan.findFirst({ where: { inboxId: inbox.id, sender, subject: { contains: `::uid=${msg.uid}` } } })
           if (!scan) continue
 
-          // Smart vacancy matching: score each vacancy and pick the best match
-          const cvLower = cvText.toLowerCase()
-          let bestVacancy = vacancies[0]
-          let bestScore = 0
-          for (const v of vacancies) {
-            const vacText = `${v.title} ${v.description} ${v.requirements}`.toLowerCase()
-            const words = [...new Set(vacText.match(/\b[a-z]{4,}\b/g) || [])]
-            const hits = words.filter(w => cvLower.includes(w)).length
-            const score = words.length > 0 ? hits / words.length : 0
-            if (score > bestScore) { bestScore = score; bestVacancy = v }
+          // AI-based vacancy matching: Gemini reads the CV and picks the vacancy
+          // with the best fit. Falls back to keyword/Jaccard scoring if the AI
+          // call fails so the scan keeps working.
+          const best = await selectBestVacancyForCV(cvText, vacancies)
+          const vacancy = vacancies.find(v => v.id === best.vacancyId) || vacancies[0]
+          console.log(`[email/scan] PASS2 msg ${msg.uid}: AI matched to vacancy "${vacancy.title}" (fit=${best.fitScore})`)
+
+          // Duplicate guard: candidate records are unique per (email, vacancyId).
+          // If this person already applied to THIS vacancy, link the scan to the
+          // existing candidate and move on — never overwrite. The SAME person
+          // applying to a DIFFERENT vacancy creates a new record (intended).
+          const existing = await prisma.candidate.findFirst({
+            where: { email: sender, vacancyId: vacancy.id, userId },
+            select: { id: true },
+          })
+          if (existing) {
+            console.log(`[email/scan] PASS2 msg ${msg.uid}: candidate ${existing.id} already exists for this vacancy — linking and skipping`)
+            await prisma.emailScan.update({
+              where: { id: scan.id },
+              data: { processed: true, candidateId: existing.id },
+            })
+            results.relevant--
+            continue
           }
-          const vacancy = bestVacancy
 
           const analysis = await analyzeCVAgainstVacancy(
             cvText, vacancy.title, vacancy.description, vacancy.requirements, motivationText || undefined, (vacancy as any).language,

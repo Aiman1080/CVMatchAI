@@ -64,6 +64,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
   const [notesSaved, setNotesSaved] = useState(true)
   const [showEmail, setShowEmail] = useState(false)
   const [emailFrom, setEmailFrom] = useState('')
+  const [connectedInboxes, setConnectedInboxes] = useState<Array<{ id: string; email: string }>>([])
   const [emailType, setEmailType] = useState('rejection')
   const [emailSubject, setEmailSubject] = useState('')
   const [emailBody, setEmailBody] = useState('')
@@ -101,6 +102,20 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
       } catch {}
     }, 800)
   }
+
+  // Pre-fill the "From" field of the email dialog with the user's connected
+  // inbox address — the most natural sender for replies to candidates.
+  useEffect(() => {
+    fetch('/api/email/connect')
+      .then(res => (res.ok ? res.json() : []))
+      .then((data: any) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setConnectedInboxes(data.map((i: any) => ({ id: i.id, email: i.email })))
+          setEmailFrom(prev => prev || data[0].email)
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   const score = candidate.matchScore || 0
   const strengths = parseJsonSafe<string[]>(candidate.strengths, [])
@@ -993,7 +1008,15 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                   onChange={e => setEmailFrom(e.target.value)}
                   placeholder={t.dashboard?.settingsProfile?.email || 'your-email@company.com'}
                   className="text-sm"
+                  list="connected-inbox-list"
                 />
+                {connectedInboxes.length > 0 && (
+                  <datalist id="connected-inbox-list">
+                    {connectedInboxes.map(inbox => (
+                      <option key={inbox.id} value={inbox.email} />
+                    ))}
+                  </datalist>
+                )}
               </div>
             </div>
 

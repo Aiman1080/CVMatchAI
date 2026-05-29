@@ -22,6 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog'
 import { toast } from '@/components/ui/use-toast'
 import { formatDate, cn } from '@/lib/utils'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -127,6 +128,7 @@ interface Props {
     totalCostUsd: number
     last30d: { calls: number; tokens: number; costUsd: number }
     byOperation: Array<{ operation: string; calls: number; tokens: number; costUsd: number }>
+    byMonth?: Array<{ month: string; calls: number; tokens: number; costUsd: number }>
   } | null
   dbStats?: {
     users: number; vacancies: number; candidates: number
@@ -145,12 +147,30 @@ export function AdminClient({
   activeToday, weeklySignups, recentActivity,
   aiUsageStats, dbStats,
 }: Props) {
-  // Sync tab with URL — useSearchParams reacts to client-side navigation,
-  // so no polling is needed to detect tab changes from the sidebar links.
+  const { t } = useLanguage()
+  const ta = (t.dashboard as any).admin || {}
+  // Tab state is driven by the sidebar's `admin-tab-change` custom event so tab
+  // switches are purely client-side (no server re-render, no extra DB queries).
+  // We still seed the initial value from the URL on first mount.
   const searchParams = useSearchParams()
   const tabParam = searchParams?.get('tab') || 'accounts'
   const [activeTab, setActiveTab] = useState(tabParam)
-  useEffect(() => { setActiveTab(tabParam) }, [tabParam])
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as string
+      setActiveTab(detail || 'accounts')
+    }
+    window.addEventListener('admin-tab-change', handler)
+    return () => window.removeEventListener('admin-tab-change', handler)
+  }, [])
+  // Mirror local tab changes (from clicking inside content) back to the URL so
+  // refresh/share preserves the active tab.
+  useEffect(() => {
+    const url = activeTab && activeTab !== 'accounts' ? `/admin?tab=${activeTab}` : '/admin'
+    if (typeof window !== 'undefined' && window.location.pathname + window.location.search !== url) {
+      window.history.replaceState({}, '', url)
+    }
+  }, [activeTab])
 
   const [users, setUsers] = useState(initialUsers)
   const [tickets, setTickets] = useState(initialTickets)
@@ -185,12 +205,12 @@ export function AdminClient({
       })
       if (res.ok) {
         setEmailSent(true)
-        toast({ title: `Email sent to ${filteredEmailUsers.length} user(s)` })
+        toast({ title: (ta.emailSentTo || 'Email sent to {count} user(s)').replace('{count}', String(filteredEmailUsers.length)) })
       } else {
-        toast({ title: 'Failed to send emails', variant: 'destructive' })
+        toast({ title: ta.failedSendEmails || 'Failed to send emails', variant: 'destructive' })
       }
     } catch {
-      toast({ title: 'Failed to send emails', variant: 'destructive' })
+      toast({ title: ta.failedSendEmails || 'Failed to send emails', variant: 'destructive' })
     } finally {
       setSendingEmail(false)
     }
@@ -199,6 +219,7 @@ export function AdminClient({
 
   // Search & filter state
   const [userSearch, setUserSearch] = useState('')
+  const [userPlanFilter, setUserPlanFilter] = useState<'all' | 'free' | 'pro' | 'admin' | 'suspended'>('all')
   const [ticketStatusFilter, setTicketStatusFilter] = useState<string>('all')
   const [ticketPriorityFilter, setTicketPriorityFilter] = useState<string>('all')
 
@@ -219,8 +240,38 @@ export function AdminClient({
     ? new Date(Math.min(...realProUsers.filter(u => u.subscriptionEnd).map(u => new Date(u.subscriptionEnd!).getTime()))).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
     : 'No active subscriptions'
 
-  const openCount = tickets.filter((t: any) => t.status === 'open').length
+  // Tickets that still need attention (drives the alerts counter in the sidebar
+  // and the "Open Tickets" cards). Includes both `open` AND `in_progress` so
+  // the badge stays raised until the admin actually resolves the work.
+  const activeTickets = tickets.filter((t: any) => t.status === 'open' || t.status === 'in_progress')
+  const openCount = activeTickets.length
   const proCount = realProUsers.length
+  const [resolvingAll, setResolvingAll] = useState(false)
+
+  const handleResolveAll = async () => {
+    if (resolvingAll || openCount === 0) return
+    if (!confirm((ta.resolveAllConfirm || 'Mark all {count} open/in-progress tickets as resolved?').replace('{count}', String(openCount)))) return
+    setResolvingAll(true)
+    try {
+      const res = await fetch('/api/admin/support/resolve-all', { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok) {
+        // Sync local state so the counter drops to 0 immediately without a reload
+        setTickets((prev: any[]) => prev.map(t =>
+          t.status === 'open' || t.status === 'in_progress'
+            ? { ...t, status: 'resolved', repliedAt: new Date().toISOString() }
+            : t
+        ))
+        toast({ title: (ta.resolveAllDone || '{count} tickets resolved').replace('{count}', String(data.resolved ?? openCount)) })
+      } else {
+        toast({ title: data.error || ta.resolveAllFailed || 'Failed to resolve tickets', variant: 'destructive' })
+      }
+    } catch {
+      toast({ title: ta.resolveAllFailed || 'Failed to resolve tickets', variant: 'destructive' })
+    } finally {
+      setResolvingAll(false)
+    }
+  }
 
   const filteredEmailUsers = realUsers.filter(u => {
     if (emailFilter === 'free') return u.subscription === 'free'
@@ -228,16 +279,24 @@ export function AdminClient({
     return true
   })
 
-  // Filtered users by search
+  // Filtered users by search + plan filter
   const filteredUsers = useMemo(() => {
-    if (!userSearch.trim()) return users
-    const q = userSearch.toLowerCase()
-    return users.filter(u =>
-      (u.name?.toLowerCase().includes(q)) ||
-      (u.email?.toLowerCase().includes(q)) ||
-      (u.company?.toLowerCase().includes(q))
-    )
-  }, [users, userSearch])
+    const q = userSearch.trim().toLowerCase()
+    return users.filter(u => {
+      if (userPlanFilter === 'admin' && u.role !== 'admin') return false
+      if (userPlanFilter === 'free' && u.subscription !== 'free') return false
+      if (userPlanFilter === 'pro' && u.subscription !== 'pro') return false
+      if (userPlanFilter === 'suspended' && !u.suspended) return false
+      if (q) {
+        return (
+          (u.name?.toLowerCase().includes(q)) ||
+          (u.email?.toLowerCase().includes(q)) ||
+          (u.company?.toLowerCase().includes(q))
+        )
+      }
+      return true
+    })
+  }, [users, userSearch, userPlanFilter])
 
   // Filtered tickets
   const filteredTickets = useMemo(() => {
@@ -259,29 +318,29 @@ export function AdminClient({
       })
       if (res.ok) {
         setUsers(prev => prev.map(u => u.id === id ? { ...u, ...data } : u))
-        toast({ title: 'Account updated' })  // Admin-only
+        toast({ title: ta.accountUpdated || 'Account updated' })  // Admin-only
       } else {
         const err = await res.json().catch(() => ({}))
-        toast({ title: err.error || 'Update failed', variant: 'destructive' })
+        toast({ title: err.error || ta.updateFailed || 'Update failed', variant: 'destructive' })
       }
     } catch {
-      toast({ title: 'Update failed', variant: 'destructive' })
+      toast({ title: ta.updateFailed || 'Update failed', variant: 'destructive' })
     }
   }
 
   const deleteUser = async (id: string) => {
-    if (!confirm('Permanently delete this account? All associated data will be lost. This action is irreversible.')) return
+    if (!confirm(ta.deleteAccountConfirm || 'Permanently delete this account? All associated data will be lost. This action is irreversible.')) return
     try {
       const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' })
       if (res.ok) {
         setUsers(prev => prev.filter(u => u.id !== id))
-        toast({ title: 'Account permanently deleted' })
+        toast({ title: ta.accountDeleted || 'Account permanently deleted' })
       } else {
         const err = await res.json().catch(() => ({}))
-        toast({ title: err.error || 'Delete failed', variant: 'destructive' })
+        toast({ title: err.error || ta.deleteFailed || 'Delete failed', variant: 'destructive' })
       }
     } catch {
-      toast({ title: 'Delete failed', variant: 'destructive' })
+      toast({ title: ta.deleteFailed || 'Delete failed', variant: 'destructive' })
     }
   }
 
@@ -292,12 +351,12 @@ export function AdminClient({
       if (res.ok) {
         const { tempPassword } = await res.json()
         setTempPasswords(p => ({ ...p, [id]: tempPassword }))
-        toast({ title: 'Temporary password generated' })
+        toast({ title: ta.tempPasswordGenerated || 'Temporary password generated' })
       } else {
-        toast({ title: 'Reset failed', variant: 'destructive' })
+        toast({ title: ta.resetFailed || 'Reset failed', variant: 'destructive' })
       }
     } catch {
-      toast({ title: 'Reset failed', variant: 'destructive' })
+      toast({ title: ta.resetFailed || 'Reset failed', variant: 'destructive' })
     } finally {
       setLoading(p => ({ ...p, [id]: false }))
     }
@@ -319,12 +378,12 @@ export function AdminClient({
         const updated = await res.json()
         setTickets((prev: any[]) => prev.map(t => t.id === id ? { ...t, ...updated } : t))
         if (data.adminReply) setReplyText(p => ({ ...p, [id]: '' }))
-        toast({ title: 'Ticket updated' })
+        toast({ title: ta.ticketUpdated || 'Ticket updated' })
       } else {
-        toast({ title: 'Update failed', variant: 'destructive' })
+        toast({ title: ta.updateFailed || 'Update failed', variant: 'destructive' })
       }
     } catch {
-      toast({ title: 'Update failed', variant: 'destructive' })
+      toast({ title: ta.updateFailed || 'Update failed', variant: 'destructive' })
     }
   }
 
@@ -341,9 +400,9 @@ export function AdminClient({
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
-      toast({ title: 'Users exported successfully' })
+      toast({ title: ta.usersExported || 'Users exported successfully' })
     } catch {
-      toast({ title: 'Export failed', variant: 'destructive' })
+      toast({ title: ta.exportFailed || 'Export failed', variant: 'destructive' })
     }
   }
 
@@ -358,16 +417,16 @@ export function AdminClient({
       })
       if (res.ok) {
         const { sent } = await res.json()
-        toast({ title: `Broadcast sent to ${sent} users` })
+        toast({ title: (ta.broadcastSent || 'Broadcast sent to {count} users').replace('{count}', String(sent)) })
         setBroadcastOpen(false)
         setBroadcastTitle('')
         setBroadcastMessage('')
       } else {
         const err = await res.json().catch(() => ({}))
-        toast({ title: err.error || 'Broadcast failed', variant: 'destructive' })
+        toast({ title: err.error || ta.broadcastFailed || 'Broadcast failed', variant: 'destructive' })
       }
     } catch {
-      toast({ title: 'Broadcast failed', variant: 'destructive' })
+      toast({ title: ta.broadcastFailed || 'Broadcast failed', variant: 'destructive' })
     } finally {
       setBroadcastSending(false)
     }
@@ -437,7 +496,7 @@ export function AdminClient({
           { label: 'MRR', value: `€${mrr}`, icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950' },
           { label: 'AI Analyses', value: aiAnalysesCount, icon: Brain, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-950' },
           { label: 'New users 7d', value: newUsersThisWeek, icon: UserPlus, color: 'text-cyan-600', bg: 'bg-cyan-50 dark:bg-cyan-950' },
-          { label: 'Open tickets', value: counts.openTickets, icon: MessageSquare, color: counts.openTickets > 0 ? 'text-red-600' : 'text-gray-400', bg: counts.openTickets > 0 ? 'bg-red-50 dark:bg-red-950' : 'bg-gray-50 dark:bg-gray-800' },
+          { label: 'Open tickets', value: openCount, icon: MessageSquare, color: openCount > 0 ? 'text-red-600' : 'text-gray-400', bg: openCount > 0 ? 'bg-red-50 dark:bg-red-950' : 'bg-gray-50 dark:bg-gray-800' },
         ].map(s => (
           <Card key={s.label} className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <CardContent className="p-3 flex items-center gap-2">
@@ -520,6 +579,40 @@ export function AdminClient({
             {userSearch && (
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
                 {filteredUsers.length} of {users.length} users
+              </span>
+            )}
+          </div>
+
+          {/* Plan filter chips — quick filter by Free / Pro / Admin / Suspended */}
+          <div className="flex flex-wrap gap-2 items-center">
+            <Filter className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+            {([
+              { key: 'all', label: ta.filterAll || 'All', count: users.length },
+              { key: 'free', label: ta.filterFree || 'Free', count: users.filter(u => u.subscription === 'free').length },
+              { key: 'pro', label: ta.filterPro || 'Pro', count: users.filter(u => u.subscription === 'pro').length },
+              { key: 'admin', label: ta.filterAdmin || 'Admin', count: users.filter(u => u.role === 'admin').length },
+              { key: 'suspended', label: ta.filterSuspended || 'Suspended', count: users.filter(u => u.suspended).length },
+            ] as const).map(chip => {
+              const active = userPlanFilter === chip.key
+              return (
+                <button
+                  key={chip.key}
+                  type="button"
+                  onClick={() => setUserPlanFilter(chip.key)}
+                  className={cn(
+                    'px-3 py-1 rounded-full text-xs font-medium border transition-colors whitespace-normal text-center leading-tight',
+                    active
+                      ? 'bg-purple-100 dark:bg-purple-900/50 border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300'
+                      : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                  )}
+                >
+                  {chip.label} <span className="opacity-60">({chip.count})</span>
+                </button>
+              )
+            })}
+            {(userPlanFilter !== 'all' || userSearch) && (
+              <span className="text-xs text-gray-400 ml-auto">
+                {filteredUsers.length} {ta.filterMatching || 'matching'}
               </span>
             )}
           </div>
@@ -815,7 +908,22 @@ export function AdminClient({
                 <SelectItem value="urgent">Urgent</SelectItem>
               </SelectContent>
             </Select>
-            <span className="text-xs text-gray-400 ml-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleResolveAll}
+              disabled={resolvingAll || openCount === 0}
+              className="h-8 gap-1.5 text-xs ml-auto whitespace-normal text-center leading-tight"
+              title={ta.resolveAllTooltip || 'Mark every open/in-progress ticket as resolved'}
+            >
+              {resolvingAll ? <Loader2 size={12} className="animate-spin shrink-0" /> : <CheckCircle2 size={12} className="shrink-0" />}
+              {resolvingAll
+                ? (ta.resolveAllResolving || 'Resolving...')
+                : openCount > 0
+                  ? (ta.resolveAllBtn || 'Mark all {count} resolved').replace('{count}', String(openCount))
+                  : (ta.resolveAllDoneAll || 'All resolved')}
+            </Button>
+            <span className="text-xs text-gray-400">
               {filteredTickets.length} of {tickets.length} tickets
             </span>
           </div>
@@ -1048,7 +1156,7 @@ export function AdminClient({
                   { label: 'Database', status: 'Connected', ok: true, icon: Database },
                   { label: 'AI API Key', status: hasAiKey ? 'Configured' : 'Missing', ok: hasAiKey, icon: Brain },
                   { label: 'SMTP Email', status: hasSmtp ? 'Configured' : 'Not configured', ok: hasSmtp, icon: Mail },
-                  { label: 'Open Tickets', status: `${counts.openTickets} pending`, ok: counts.openTickets === 0, icon: MessageSquare },
+                  { label: 'Open Tickets', status: `${openCount} pending`, ok: openCount === 0, icon: MessageSquare },
                 ].map(item => (
                   <div key={item.label} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -1074,7 +1182,7 @@ export function AdminClient({
             </CardHeader>
             <CardContent className="p-0">
               {recentActivity.length === 0 ? (
-                <p className="text-xs text-gray-400 px-5 py-4">No recent activity</p>
+                <p className="text-xs text-gray-400 px-5 py-4">{ta.noRecentActivity || 'No recent activity'}</p>
               ) : (
                 <div className="divide-y divide-gray-50 dark:divide-gray-800">
                   {recentActivity.map((item, i) => {
@@ -1233,7 +1341,7 @@ export function AdminClient({
               </CardHeader>
               <CardContent className="space-y-2">
                 {candidateStatusDist.length === 0 ? (
-                  <p className="text-xs text-gray-400">No candidates</p>
+                  <p className="text-xs text-gray-400">{ta.noCandidates || 'No candidates'}</p>
                 ) : candidateStatusDist.map(s => {
                   const total = candidateStatusDist.reduce((acc, x) => acc + x._count, 0)
                   const pct = total > 0 ? Math.round((s._count / total) * 100) : 0
@@ -1261,7 +1369,7 @@ export function AdminClient({
               </CardHeader>
               <CardContent className="space-y-2">
                 {candidatesBySource.length === 0 ? (
-                  <p className="text-xs text-gray-400">No data</p>
+                  <p className="text-xs text-gray-400">{ta.noData || 'No data'}</p>
                 ) : candidatesBySource.map(s => {
                   const total = candidatesBySource.reduce((acc, x) => acc + x._count, 0)
                   const pct = total > 0 ? Math.round((s._count / total) * 100) : 0
@@ -1696,7 +1804,7 @@ export function AdminClient({
                   { label: 'Active vacancies', value: activeVacanciesCount, icon: Briefcase },
                   { label: 'ATS integrations', value: integrationsCount, icon: Link2 },
                   { label: 'Inboxes', value: emailInboxesCount, icon: Inbox },
-                  { label: 'Support tickets', value: counts.openTickets, icon: MessageSquare },
+                  { label: 'Support tickets', value: openCount, icon: MessageSquare },
                 ].map(item => (
                   <div key={item.label} className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
@@ -1803,6 +1911,36 @@ export function AdminClient({
                     ))}
                   </div>
                 )}
+                {aiUsageStats.byMonth && aiUsageStats.byMonth.length > 0 && (() => {
+                  const months = aiUsageStats.byMonth!
+                  const maxCost = Math.max(...months.map(m => m.costUsd), 0.0001)
+                  const formatMonth = (ym: string) => {
+                    const [y, m] = ym.split('-')
+                    const date = new Date(Number(y), Number(m) - 1, 1)
+                    return date.toLocaleDateString(undefined, { month: 'short', year: '2-digit' })
+                  }
+                  return (
+                    <div className="mt-6 space-y-2 border-t border-gray-100 dark:border-gray-800 pt-4">
+                      <p className="text-xs font-semibold text-gray-500 uppercase">By Month (last 12)</p>
+                      <div className="space-y-1.5">
+                        {months.map(m => (
+                          <div key={m.month} className="flex items-center gap-3 text-xs">
+                            <span className="text-gray-600 dark:text-gray-400 font-mono w-16 shrink-0">{formatMonth(m.month)}</span>
+                            <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-full"
+                                style={{ width: `${Math.max(2, (m.costUsd / maxCost) * 100)}%` }}
+                              />
+                            </div>
+                            <span className="text-gray-400 w-20 text-right shrink-0">{m.calls} calls</span>
+                            <span className="text-gray-400 w-20 text-right shrink-0">{(m.tokens / 1000).toFixed(1)}k</span>
+                            <span className="font-semibold text-gray-700 dark:text-gray-300 w-20 text-right shrink-0">${m.costUsd.toFixed(4)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })()}
               </CardContent>
             </Card>
           )}
@@ -1857,7 +1995,7 @@ export function AdminClient({
             </CardHeader>
             <CardContent className="p-0">
               {latestVacancies.length === 0 ? (
-                <p className="text-xs text-gray-400 px-5 py-4">No vacancies</p>
+                <p className="text-xs text-gray-400 px-5 py-4">{ta.noVacancies || 'No vacancies'}</p>
               ) : (
                 <div className="divide-y divide-gray-50 dark:divide-gray-800">
                   {latestVacancies.map((v, i) => (
@@ -1884,25 +2022,25 @@ export function AdminClient({
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Megaphone className="w-5 h-5 text-orange-500" /> Broadcast Notification
+              <Megaphone className="w-5 h-5 text-orange-500" /> {ta.broadcastTitle || 'Broadcast Notification'}
             </DialogTitle>
             <DialogDescription>
-              This notification will be sent to all active (non-suspended) users on the platform.
+              {ta.broadcastDesc || 'This notification will be sent to all active (non-suspended) users on the platform.'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">Title</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">{ta.broadcastTitleLabel || 'Title'}</label>
               <Input
-                placeholder="e.g., Platform Update"
+                placeholder={ta.broadcastTitlePlaceholder || 'e.g., Platform Update'}
                 value={broadcastTitle}
                 onChange={e => setBroadcastTitle(e.target.value)}
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">Message</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">{ta.broadcastMessageLabel || 'Message'}</label>
               <Textarea
-                placeholder="Write your message to all users..."
+                placeholder={ta.broadcastMessagePlaceholder || 'Write your message to all users...'}
                 value={broadcastMessage}
                 onChange={e => setBroadcastMessage(e.target.value)}
                 rows={4}
@@ -1911,7 +2049,7 @@ export function AdminClient({
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
+              <Button variant="outline">{ta.cancel || 'Cancel'}</Button>
             </DialogClose>
             <Button
               className="gradient-bg gap-2"

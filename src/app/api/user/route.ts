@@ -14,11 +14,17 @@ export async function GET() {
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const userId = (session.user as any).id
   try {
-    const [vacancyCount, candidateCount] = await Promise.all([
+    const [vacancyCount, candidateCount, dbUser] = await Promise.all([
       prisma.vacancy.count({ where: { userId } }),
       prisma.candidate.count({ where: { userId } }),
+      prisma.user.findUnique({ where: { id: userId }, select: { emailSignature: true } }),
     ])
-    return NextResponse.json({ vacancyCount, candidateCount, subscription: (session.user as any).subscription })
+    return NextResponse.json({
+      vacancyCount,
+      candidateCount,
+      subscription: (session.user as any).subscription,
+      emailSignature: dbUser?.emailSignature || '',
+    })
   } catch {
     return NextResponse.json({ error: 'Failed to load user stats' }, { status: 500 })
   }

@@ -205,7 +205,7 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
             if (candidates.length === 1 && page > 1) {
               fetchPage(page - 1)
             }
-            toast({ title: tc.deleted, description: `${name} has been removed.` })
+            toast({ title: tc.deleted, description: ((tc as any).removedDesc || '{name} has been removed.').replace('{name}', name) })
           } else {
             toast({ title: tc.deleteError, variant: 'destructive' })
           }
@@ -236,9 +236,13 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
       )
       setSelectedIds(new Set())
       if (failureCount > 0) {
-        toast({ title: `${successCount} of ${results.length} candidates updated`, description: `${failureCount} could not be updated. Please retry those candidates individually.`, variant: 'destructive' })
+        toast({
+          title: ((tc as any).bulkUpdatedPartial || '{success} of {total} candidates updated').replace('{success}', String(successCount)).replace('{total}', String(results.length)),
+          description: ((tc as any).bulkUpdatedPartialDesc || '{failed} could not be updated. Please retry those candidates individually.').replace('{failed}', String(failureCount)),
+          variant: 'destructive',
+        })
       } else {
-        toast({ title: `${successCount} candidate(s) updated to "${newStatus}"` })
+        toast({ title: ((tc as any).bulkUpdatedAll || '{count} candidate(s) updated to "{status}"').replace('{count}', String(successCount)).replace('{status}', newStatus) })
       }
     } catch {
       toast({ title: (tc as any).bulkUpdateError || tc.updateError, variant: 'destructive' })
@@ -249,10 +253,11 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
 
   const handleBulkDelete = () => {
     if (selectedIds.size === 0) return
+    const count = String(selectedIds.size)
     openConfirm({
-      title: 'Delete selected candidates',
-      description: `Delete ${selectedIds.size} selected candidate(s)? This action cannot be undone.`,
-      confirmText: `Delete ${selectedIds.size}`,
+      title: (tc as any).bulkDeleteConfirmTitle || 'Delete selected candidates',
+      description: ((tc as any).bulkDeleteConfirmDesc || 'Delete {count} selected candidate(s)? This action cannot be undone.').replace('{count}', count),
+      confirmText: ((tc as any).bulkDeleteConfirmBtn || 'Delete {count}').replace('{count}', count),
       variant: 'destructive',
       onConfirm: async () => {
         closeConfirm()
@@ -276,9 +281,13 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
           setSelectedIds(new Set())
           const failed = ids.length - deletedIds.size
           if (failed > 0) {
-            toast({ title: `${deletedIds.size} of ${ids.length} deleted`, description: `${failed} could not be deleted. Please retry those candidates individually.`, variant: 'destructive' })
+            toast({
+              title: ((tc as any).bulkDeletedPartial || '{success} of {total} deleted').replace('{success}', String(deletedIds.size)).replace('{total}', String(ids.length)),
+              description: ((tc as any).bulkDeletedPartialDesc || '{failed} could not be deleted. Please retry those candidates individually.').replace('{failed}', String(failed)),
+              variant: 'destructive',
+            })
           } else {
-            toast({ title: `${deletedIds.size} candidate(s) deleted` })
+            toast({ title: ((tc as any).bulkDeletedAll || '{count} candidate(s) deleted').replace('{count}', String(deletedIds.size)) })
           }
           if (candidates.length === deletedIds.size && page > 1) {
             fetchPage(page - 1)
@@ -298,9 +307,9 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
     try {
       const selected = filtered.filter(c => selectedIds.has(c.id))
       await exportCandidatesToExcel(selected)
-      toast({ title: `Excel export of ${selected.length} candidate(s) downloaded!` })
+      toast({ title: ((tc as any).excelDownloaded || 'Excel export of {count} candidate(s) downloaded!').replace('{count}', String(selected.length)) })
     } catch {
-      toast({ title: (tc as any).exportFailed || 'Export failed', description: 'Could not generate the Excel file. Please try again.', variant: 'destructive' })
+      toast({ title: (tc as any).exportFailedTitle || 'Export failed', description: (tc as any).excelFailedDesc || 'Could not generate the Excel file. Please try again.', variant: 'destructive' })
     } finally {
       setExportingExcel(false)
     }
@@ -312,9 +321,9 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
     try {
       const selected = filtered.filter(c => selectedIds.has(c.id))
       await exportCandidatesToPDF(selected)
-      toast({ title: `PDF export of ${selected.length} candidate(s) downloaded!` })
+      toast({ title: ((tc as any).pdfDownloaded || 'PDF export of {count} candidate(s) downloaded!').replace('{count}', String(selected.length)) })
     } catch {
-      toast({ title: (tc as any).exportFailed || 'Export failed', description: 'Could not generate the PDF file. Please try again.', variant: 'destructive' })
+      toast({ title: (tc as any).exportFailedTitle || 'Export failed', description: (tc as any).pdfFailedDesc || 'Could not generate the PDF file. Please try again.', variant: 'destructive' })
     } finally {
       setExportingPdf(false)
     }
@@ -367,16 +376,16 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
         const res = await fetch(`/api/candidates/export?email=${encodeURIComponent(exportEmail)}`)
         const data = await res.json()
         if (res.ok) {
-          toast({ title: 'Email sent!', description: `Export sent to ${exportEmail}` })
+          toast({ title: (tc as any).emailSent || 'Email sent!', description: ((tc as any).emailSentDesc || 'Export sent to {email}').replace('{email}', exportEmail) })
           setShowExport(false)
         } else {
-          toast({ title: 'Email could not be sent', description: data.error || 'Please check the email address and try again.', variant: 'destructive' })
+          toast({ title: (tc as any).emailFailed || 'Email could not be sent', description: data.error || (tc as any).emailFailedDesc || 'Please check the email address and try again.', variant: 'destructive' })
         }
       } else if (sendEmail === false) {
         // CSV download
         const res = await fetch('/api/candidates/export')
         if (!res.ok) {
-          toast({ title: (tc as any).exportFailed || 'Export failed', description: 'Could not generate the CSV. Please try again.', variant: 'destructive' })
+          toast({ title: (tc as any).exportFailedTitle || 'Export failed', description: (tc as any).csvFailedDesc || 'Could not generate the CSV. Please try again.', variant: 'destructive' })
           return
         }
         const blob = await res.blob()
@@ -384,16 +393,16 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
         a.href = URL.createObjectURL(blob)
         a.download = `candidates-${new Date().toISOString().slice(0, 10)}.csv`
         a.click()
-        toast({ title: 'CSV export downloaded!' })
+        toast({ title: (tc as any).csvDownloaded || 'CSV export downloaded!' })
         setShowExport(false)
       } else {
         // PDF — open in new tab for print/save
         window.open('/api/candidates/pdf', '_blank')
-        toast({ title: 'PDF report opened', description: 'Use Ctrl+P to save as PDF.' })
+        toast({ title: (tc as any).pdfOpened || 'PDF report opened', description: (tc as any).pdfOpenedDesc || 'Use Ctrl+P to save as PDF.' })
         setShowExport(false)
       }
     } catch {
-      toast({ title: (tc as any).exportFailed || 'Export failed', description: 'Please check your connection and try again.', variant: 'destructive' })
+      toast({ title: (tc as any).exportFailedTitle || 'Export failed', description: (tc as any).connectionRetry || 'Please check your connection and try again.', variant: 'destructive' })
     } finally { setExporting(false) }
   }
 
@@ -491,8 +500,8 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
               setExportingExcel(true)
               try {
                 await exportCandidatesToExcel(filtered)
-                toast({ title: 'Excel export downloaded!' })
-              } catch { toast({ title: (tc as any).exportFailed || 'Export failed', description: 'Could not generate the Excel file. Please try again.', variant: 'destructive' }) }
+                toast({ title: (tc as any).excelDownloadedSimple || 'Excel export downloaded!' })
+              } catch { toast({ title: (tc as any).exportFailedTitle || 'Export failed', description: (tc as any).excelFailedDesc || 'Could not generate the Excel file. Please try again.', variant: 'destructive' }) }
               finally { setExportingExcel(false) }
             }}
             className="gap-1.5 h-auto py-2 whitespace-normal text-center leading-tight"
@@ -508,8 +517,8 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
               setExportingPdf(true)
               try {
                 await exportCandidatesToPDF(filtered)
-                toast({ title: 'PDF export downloaded!' })
-              } catch { toast({ title: (tc as any).exportFailed || 'Export failed', description: 'Could not generate the PDF file. Please try again.', variant: 'destructive' }) }
+                toast({ title: (tc as any).pdfDownloadedSimple || 'PDF export downloaded!' })
+              } catch { toast({ title: (tc as any).exportFailedTitle || 'Export failed', description: (tc as any).pdfFailedDesc || 'Could not generate the PDF file. Please try again.', variant: 'destructive' }) }
               finally { setExportingPdf(false) }
             }}
             className="gap-1.5 h-auto py-2 whitespace-normal text-center leading-tight"

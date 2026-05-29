@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { User, Shield, Save, Trash2, Lock, Eye, EyeOff, Camera, Mail } from 'lucide-react'
+import { User, Shield, Save, Trash2, Lock, Eye, EyeOff, Camera } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,7 +15,7 @@ import { useLanguage } from '@/contexts/LanguageContext'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
 interface Props {
-  user: { id?: string; name?: string; email?: string; company?: string; subscription?: string; image?: string; emailSignature?: string }
+  user: { id?: string; name?: string; email?: string; company?: string; subscription?: string; image?: string }
   isDemo?: boolean
 }
 
@@ -26,7 +26,10 @@ const PLANS = [
 
 export function SettingsClient({ user, isDemo }: Props) {
   const { t } = useLanguage()
-  const [form, setForm] = useState({ name: user.name || '', company: user.company || '', image: user.image || '', emailSignature: user.emailSignature || '' })
+  // emailSignature is now managed in the Email tab (EmailClient) so it's
+  // intentionally not part of this form — saving here would overwrite the
+  // value the user just set in the dedicated Email tab card.
+  const [form, setForm] = useState({ name: user.name || '', company: user.company || '', image: user.image || '' })
   const initials = user.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'
   const [saving, setSaving] = useState(false)
   const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirm: '' })
@@ -166,6 +169,11 @@ export function SettingsClient({ user, isDemo }: Props) {
           <CardHeader><CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white min-w-0"><User className="w-4 h-4 shrink-0" /><span className="break-words min-w-0">{t.dashboard.settingsProfile.title}</span></CardTitle></CardHeader>
           <CardContent>
             <form onSubmit={handleSave} className="space-y-4">
+              {isDemo && (
+                <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 text-xs text-amber-700 dark:text-amber-400 break-words">
+                  {(sp as any)?.demoCannotModify || 'Demo accounts cannot modify profile settings.'}
+                </div>
+              )}
               <div className="flex items-center gap-4">
                 <Avatar className="w-16 h-16">
                   {form.image && <AvatarImage src={form.image} alt={form.name || 'Avatar'} />}
@@ -173,7 +181,13 @@ export function SettingsClient({ user, isDemo }: Props) {
                 </Avatar>
                 <div className="flex-1 space-y-1.5">
                   <Label className="text-gray-700 dark:text-gray-300 flex items-center gap-1.5"><Camera size={14} /> {(sp as any)?.profilePhotoUrl || 'Profile Photo URL'}</Label>
-                  <Input value={form.image} onChange={e => setForm(p => ({ ...p, image: e.target.value }))} placeholder="https://example.com/photo.jpg" />
+                  <Input
+                    value={form.image}
+                    onChange={e => setForm(p => ({ ...p, image: e.target.value }))}
+                    placeholder="https://example.com/photo.jpg"
+                    disabled={isDemo}
+                    className={isDemo ? 'opacity-60' : ''}
+                  />
                 </div>
               </div>
               <div className="space-y-1.5">
@@ -183,7 +197,8 @@ export function SettingsClient({ user, isDemo }: Props) {
                   onChange={e => setProfileField('name', e.target.value)}
                   onBlur={() => markProfileTouched('name')}
                   aria-invalid={!!errors.name}
-                  className={errors.name ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                  disabled={isDemo}
+                  className={`${errors.name ? 'border-red-500 focus-visible:ring-red-500' : ''} ${isDemo ? 'opacity-60' : ''}`}
                 />
                 {errors.name && <p className="text-xs text-red-500" role="alert">{errors.name}</p>}
               </div>
@@ -194,21 +209,15 @@ export function SettingsClient({ user, isDemo }: Props) {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-gray-700 dark:text-gray-300">{t.dashboard.settingsProfile.company}</Label>
-                <Input value={form.company} onChange={e => setForm(p => ({ ...p, company: e.target.value }))} placeholder={t.dashboard.settingsProfile.companyPlaceholder} />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-gray-700 dark:text-gray-300 flex items-center gap-1.5"><Mail size={14} /> {(sp as any)?.emailSignatureLabel || 'Email Signature (supports HTML for logos)'}</Label>
-                <textarea
-                  value={form.emailSignature}
-                  onChange={e => setForm(p => ({ ...p, emailSignature: e.target.value }))}
-                  placeholder={(sp as any)?.emailSignaturePlaceholder || "Best regards,\nJohn Doe | Acme Corp\n+32 471 000 000\n<img src=\"https://your-company.com/logo.png\" width=\"150\" alt=\"Company Logo\">"}
-                  rows={5}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+                <Input
+                  value={form.company}
+                  onChange={e => setForm(p => ({ ...p, company: e.target.value }))}
+                  placeholder={t.dashboard.settingsProfile.companyPlaceholder}
+                  disabled={isDemo}
+                  className={isDemo ? 'opacity-60' : ''}
                 />
-                <p className="text-xs text-gray-400">{(sp as any)?.emailSignatureHelp || "You can paste HTML with images. Use <img src='...'> for your company logo."}</p>
               </div>
               <Button type="submit" disabled={saving || isDemo} className="gradient-bg gap-2 h-auto py-2 whitespace-normal text-center leading-tight"><Save size={14} className="shrink-0" />{saving ? t.dashboard.settingsProfile.saving : t.dashboard.settingsProfile.saveChanges}</Button>
-              {isDemo && <p className="text-xs text-amber-600 break-words">{(sp as any)?.demoCannotModify || 'Demo accounts cannot modify profile settings.'}</p>}
             </form>
           </CardContent>
         </Card>
@@ -424,13 +433,14 @@ export function SettingsClient({ user, isDemo }: Props) {
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={deletingAll}
+                    disabled={deletingAll || isDemo}
                     className="w-full justify-start text-red-600 hover:text-red-700 hover:border-red-300 dark:border-gray-700 h-auto py-2 whitespace-normal text-left leading-tight"
                     onClick={() => setDeleteAllDialog(true)}
                   >
                     <Trash2 size={14} className="mr-2 shrink-0" />
                     {deletingAll ? t.dashboard.settingsPage.deletingData : t.dashboard.settingsPage.deleteAllData}
                   </Button>
+                  {isDemo && <p className="text-xs text-amber-600 break-words">{(sp as any)?.demoCannotModify || 'Demo accounts cannot modify data.'}</p>}
                 </div>
               </div>
             </CardContent>

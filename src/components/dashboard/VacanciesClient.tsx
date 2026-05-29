@@ -57,9 +57,9 @@ export function VacanciesClient({ initialVacancies, isDemo }: { initialVacancies
     const candidateCount = vacancies.find(v => v.id === id)?._count.candidates ?? 0
     setConfirmDialog({
       open: true,
-      title: 'Delete vacancy',
-      description: `Delete "${title}"? All ${candidateCount} candidate(s) in this vacancy will also be deleted. This action cannot be undone.`,
-      confirmText: 'Delete',
+      title: (tv as any).deleteConfirmTitle || 'Delete vacancy',
+      description: ((tv as any).deleteConfirmDesc || 'Delete "{title}"? All {count} candidate(s) in this vacancy will also be deleted. This action cannot be undone.').replace('{title}', title).replace('{count}', String(candidateCount)),
+      confirmText: (tv as any).deleteConfirmBtn || 'Delete',
       variant: 'destructive',
       onConfirm: async () => {
         setConfirmDialog(prev => ({ ...prev, open: false }))
@@ -68,21 +68,21 @@ export function VacanciesClient({ initialVacancies, isDemo }: { initialVacancies
           const res = await fetch(`/api/vacancies/${id}`, { method: 'DELETE' })
           if (res.ok) {
             setVacancies(prev => prev.filter(v => v.id !== id))
-            toast({ title: tv.deleted, description: `"${title}" and all its candidates have been removed.` })
+            toast({ title: tv.deleted, description: ((tv as any).deletedDesc || '"{title}" and all its candidates have been removed.').replace('{title}', title) })
           } else {
             const data = await res.json().catch(() => ({}))
             if (data.upgrade) {
-              toast({ title: 'Upgrade required', description: 'Upgrade to Pro to manage more vacancies.', variant: 'destructive' })
+              toast({ title: (tv as any).upgradeRequired || 'Upgrade required', description: (tv as any).upgradeRequiredDesc || 'Upgrade to Pro to manage more vacancies.', variant: 'destructive' })
             } else {
               toast({
                 title: tv.deleteError,
-                description: data.error || 'Could not delete the vacancy. Please refresh the page and try again.',
+                description: data.error || (tv as any).deleteFailedDesc || 'Could not delete the vacancy. Please refresh the page and try again.',
                 variant: 'destructive',
               })
             }
           }
         } catch {
-          toast({ title: tv.deleteError, description: 'Please check your connection and try again.', variant: 'destructive' })
+          toast({ title: tv.deleteError, description: (tv as any).connectionRetry || 'Please check your connection and try again.', variant: 'destructive' })
         } finally { setDeleting(null) }
       },
     })
@@ -97,16 +97,16 @@ export function VacanciesClient({ initialVacancies, isDemo }: { initialVacancies
       const data = await res.json()
       if (res.ok) {
         setVacancies(prev => [{ ...data, _count: { candidates: 0 } }, ...prev])
-        toast({ title: tv.duplicated, description: `"${data.title}" has been created.` })
+        toast({ title: tv.duplicated, description: ((tv as any).duplicatedDesc || '"{title}" has been created.').replace('{title}', data.title) })
       } else {
         if (data.upgrade) {
-          toast({ title: 'Upgrade required', description: data.error || 'Upgrade to Pro to duplicate more vacancies.', variant: 'destructive' })
+          toast({ title: (tv as any).upgradeRequired || 'Upgrade required', description: data.error || (tv as any).upgradeRequiredDuplicateDesc || 'Upgrade to Pro to duplicate more vacancies.', variant: 'destructive' })
         } else {
-          toast({ title: 'Duplication failed', description: data.error || 'Could not duplicate the vacancy. Please try again.', variant: 'destructive' })
+          toast({ title: (tv as any).duplicationFailed || 'Duplication failed', description: data.error || (tv as any).duplicationFailedDesc || 'Could not duplicate the vacancy. Please try again.', variant: 'destructive' })
         }
       }
     } catch {
-      toast({ title: 'Duplication failed', description: 'Please check your connection and try again.', variant: 'destructive' })
+      toast({ title: (tv as any).duplicationFailed || 'Duplication failed', description: (tv as any).connectionRetry || 'Please check your connection and try again.', variant: 'destructive' })
     } finally {
       setDuplicating(null)
     }
