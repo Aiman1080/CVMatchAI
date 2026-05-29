@@ -128,6 +128,7 @@ interface Props {
     totalCostUsd: number
     last30d: { calls: number; tokens: number; costUsd: number }
     byOperation: Array<{ operation: string; calls: number; tokens: number; costUsd: number }>
+    byMonth?: Array<{ month: string; calls: number; tokens: number; costUsd: number }>
   } | null
   dbStats?: {
     users: number; vacancies: number; candidates: number
@@ -218,6 +219,7 @@ export function AdminClient({
 
   // Search & filter state
   const [userSearch, setUserSearch] = useState('')
+  const [userPlanFilter, setUserPlanFilter] = useState<'all' | 'free' | 'pro' | 'admin' | 'suspended'>('all')
   const [ticketStatusFilter, setTicketStatusFilter] = useState<string>('all')
   const [ticketPriorityFilter, setTicketPriorityFilter] = useState<string>('all')
 
@@ -277,16 +279,24 @@ export function AdminClient({
     return true
   })
 
-  // Filtered users by search
+  // Filtered users by search + plan filter
   const filteredUsers = useMemo(() => {
-    if (!userSearch.trim()) return users
-    const q = userSearch.toLowerCase()
-    return users.filter(u =>
-      (u.name?.toLowerCase().includes(q)) ||
-      (u.email?.toLowerCase().includes(q)) ||
-      (u.company?.toLowerCase().includes(q))
-    )
-  }, [users, userSearch])
+    const q = userSearch.trim().toLowerCase()
+    return users.filter(u => {
+      if (userPlanFilter === 'admin' && u.role !== 'admin') return false
+      if (userPlanFilter === 'free' && u.subscription !== 'free') return false
+      if (userPlanFilter === 'pro' && u.subscription !== 'pro') return false
+      if (userPlanFilter === 'suspended' && !u.suspended) return false
+      if (q) {
+        return (
+          (u.name?.toLowerCase().includes(q)) ||
+          (u.email?.toLowerCase().includes(q)) ||
+          (u.company?.toLowerCase().includes(q))
+        )
+      }
+      return true
+    })
+  }, [users, userSearch, userPlanFilter])
 
   // Filtered tickets
   const filteredTickets = useMemo(() => {
@@ -569,6 +579,40 @@ export function AdminClient({
             {userSearch && (
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
                 {filteredUsers.length} of {users.length} users
+              </span>
+            )}
+          </div>
+
+          {/* Plan filter chips — quick filter by Free / Pro / Admin / Suspended */}
+          <div className="flex flex-wrap gap-2 items-center">
+            <Filter className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+            {([
+              { key: 'all', label: ta.filterAll || 'All', count: users.length },
+              { key: 'free', label: ta.filterFree || 'Free', count: users.filter(u => u.subscription === 'free').length },
+              { key: 'pro', label: ta.filterPro || 'Pro', count: users.filter(u => u.subscription === 'pro').length },
+              { key: 'admin', label: ta.filterAdmin || 'Admin', count: users.filter(u => u.role === 'admin').length },
+              { key: 'suspended', label: ta.filterSuspended || 'Suspended', count: users.filter(u => u.suspended).length },
+            ] as const).map(chip => {
+              const active = userPlanFilter === chip.key
+              return (
+                <button
+                  key={chip.key}
+                  type="button"
+                  onClick={() => setUserPlanFilter(chip.key)}
+                  className={cn(
+                    'px-3 py-1 rounded-full text-xs font-medium border transition-colors whitespace-normal text-center leading-tight',
+                    active
+                      ? 'bg-purple-100 dark:bg-purple-900/50 border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300'
+                      : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                  )}
+                >
+                  {chip.label} <span className="opacity-60">({chip.count})</span>
+                </button>
+              )
+            })}
+            {(userPlanFilter !== 'all' || userSearch) && (
+              <span className="text-xs text-gray-400 ml-auto">
+                {filteredUsers.length} {ta.filterMatching || 'matching'}
               </span>
             )}
           </div>
@@ -1867,6 +1911,36 @@ export function AdminClient({
                     ))}
                   </div>
                 )}
+                {aiUsageStats.byMonth && aiUsageStats.byMonth.length > 0 && (() => {
+                  const months = aiUsageStats.byMonth!
+                  const maxCost = Math.max(...months.map(m => m.costUsd), 0.0001)
+                  const formatMonth = (ym: string) => {
+                    const [y, m] = ym.split('-')
+                    const date = new Date(Number(y), Number(m) - 1, 1)
+                    return date.toLocaleDateString(undefined, { month: 'short', year: '2-digit' })
+                  }
+                  return (
+                    <div className="mt-6 space-y-2 border-t border-gray-100 dark:border-gray-800 pt-4">
+                      <p className="text-xs font-semibold text-gray-500 uppercase">By Month (last 12)</p>
+                      <div className="space-y-1.5">
+                        {months.map(m => (
+                          <div key={m.month} className="flex items-center gap-3 text-xs">
+                            <span className="text-gray-600 dark:text-gray-400 font-mono w-16 shrink-0">{formatMonth(m.month)}</span>
+                            <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-full"
+                                style={{ width: `${Math.max(2, (m.costUsd / maxCost) * 100)}%` }}
+                              />
+                            </div>
+                            <span className="text-gray-400 w-20 text-right shrink-0">{m.calls} calls</span>
+                            <span className="text-gray-400 w-20 text-right shrink-0">{(m.tokens / 1000).toFixed(1)}k</span>
+                            <span className="font-semibold text-gray-700 dark:text-gray-300 w-20 text-right shrink-0">${m.costUsd.toFixed(4)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })()}
               </CardContent>
             </Card>
           )}
