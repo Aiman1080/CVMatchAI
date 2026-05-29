@@ -87,176 +87,196 @@ export async function POST(req: Request) {
 
       results.scanned = messages.length
 
-      // Cap at 20 messages per scan to avoid timeouts on busy inboxes
-      for (const msg of messages.slice(0, 20)) {
+      // ════════════════════════════════════════════════════════════════
+      // PASS 1: AI reads every email's content and decides which look like
+      // real applications with a CV. Selected ones go to a "shortlist".
+      // ════════════════════════════════════════════════════════════════
+      type Shortlisted = {
+        msg: any
+        subject: string
+        sender: string
+        receivedAt: Date
+        bodyText: string
+        allParts: Array<{ path: string; type: string; subtype: string; name: string }>
+        classification: any
+      }
+      const shortlist: Shortlisted[] = []
+
+      // Strip HTML to readable text for AI context
+      const stripHtml = (html: string): string =>
+        html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+          .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/\s+/g, ' ')
+          .trim()
+
+      // Cap at 30 messages per scan to keep classification quick.
+      for (const msg of messages.slice(0, 30)) {
         try {
           const subject = msg.envelope?.subject || ''
           const sender = msg.envelope?.from?.[0]?.address || ''
           const receivedAt = msg.envelope?.date || new Date()
 
-          // SIMPLE & ROBUST detection: walk the entire MIME tree and collect EVERY
-          // leaf part. We don't filter by mime/filename anymore — we just try to
-          // download and parse everything. If a buffer parses as PDF or DOCX with
-          // real text, it's a CV. This is bulletproof against weird structures.
+          // Walk MIME tree once and collect all leaf parts with their paths
           const allParts: Array<{ path: string; type: string; subtype: string; name: string }> = []
-          const bodyStructure = msg.bodyStructure
-
           const collectAllParts = (part: any, path: string = '1') => {
             if (!part) return
             const filename = part.parameters?.name || part.dispositionParameters?.filename || ''
             const subtype = (part.subtype || '').toLowerCase()
             const type = (part.type || '').toLowerCase()
-            // Record every leaf (anything not multipart) regardless of filename/type
             if (type !== 'multipart') {
-              allParts.push({
-                path: part.part || path,
-                type,
-                subtype,
-                name: filename,
-              })
+              allParts.push({ path: part.part || path, type, subtype, name: filename })
             }
             if (part.childNodes) {
               part.childNodes.forEach((child: any, idx: number) => collectAllParts(child, `${path}.${idx + 1}`))
             }
           }
-          collectAllParts(bodyStructure)
+          collectAllParts(msg.bodyStructure)
 
-          // Build a list of attachments based on filename ending in known doc extensions
-          // OR explicit attachment disposition. Still keep ALL parts for fallback download.
-          const attachments = allParts.filter(p => {
-            const isText = p.type === 'text'
-            const isDoc = p.subtype.match(/pdf|docx?|word|officedocument|wordprocessingml/) ||
-              p.name.toLowerCase().match(/\.(pdf|docx?|odt|rtf)$/)
-            return !isText && isDoc
-          })
-
-          // Download just the text body part (part 1) for classification preview
+          // Download body — prefer text/plain, fallback to text/html stripped
           let bodyText = ''
-          try {
-            const textPart = await client.download(msg.uid.toString(), '1', { uid: true }) as any
-            if (textPart?.content) {
-              const chunks: Buffer[] = []
-              for await (const chunk of textPart.content) chunks.push(chunk)
-              bodyText = Buffer.concat(chunks).toString('utf-8').slice(0, 2000)
-            }
-          } catch { /* no text part — attachment-only emails are still classified via filename */ }
+          const textPart = allParts.find(p => p.type === 'text' && p.subtype === 'plain')
+            || allParts.find(p => p.type === 'text' && p.subtype === 'html')
+            || allParts.find(p => p.type === 'text')
+          if (textPart) {
+            try {
+              const dl = await client.download(msg.uid.toString(), textPart.path, { uid: true }) as any
+              if (dl?.content) {
+                const chunks: Buffer[] = []
+                for await (const chunk of dl.content) chunks.push(chunk)
+                let raw = Buffer.concat(chunks).toString('utf-8')
+                if (textPart.subtype === 'html') raw = stripHtml(raw)
+                bodyText = raw.slice(0, 5000)
+              }
+            } catch {}
+          }
 
-          // Log every email being analyzed — makes debugging easy from Vercel logs
-          console.log(`[email/scan] msg ${msg.uid} from ${sender} | subject="${subject.slice(0, 80)}" | attachments=[${attachments.map(a => a.name).join(', ')}] | bodyLen=${bodyText.length}`)
+          // List the attachment-looking parts (skip text bodies)
+          const namedAttachments = allParts.filter(p => p.type !== 'text' && p.name).map(a => a.name)
 
-          const classification = await classifyRecruitmentEmail(
-            subject,
-            bodyText,
-            attachments.map(a => a.name),
-          )
-          console.log(`[email/scan] msg ${msg.uid} → AI: relevant=${classification.isRelevant} confidence=${classification.confidence} intent="${(classification as any).intent || ''}" candidate="${classification.candidateName || ''}" position="${classification.appliedPosition || ''}"`)
+          console.log(`[email/scan] PASS1 msg ${msg.uid} from ${sender} | subject="${subject.slice(0, 80)}" | bodyLen=${bodyText.length} | attachments=[${namedAttachments.join(', ')}]`)
 
-          // Skip emails already recorded to prevent duplicate candidates on re-scan
+          // Send to Gemini for understanding the email content
+          const classification = await classifyRecruitmentEmail(subject, bodyText, namedAttachments)
+          console.log(`[email/scan] PASS1 msg ${msg.uid} → AI: relevant=${classification.isRelevant} confidence=${classification.confidence} intent="${classification.intent || ''}" candidate="${classification.candidateName || ''}" cvFile="${classification.cvAttachmentName || ''}"`)
+
+          // Skip if already scanned (dedup)
           const uidTag = msg.uid ? `::uid=${msg.uid}` : ''
           const alreadyScanned = await prisma.emailScan.findFirst({
-            where: {
-              inboxId: inbox.id,
-              sender,
-              receivedAt: new Date(receivedAt),
-              subject: uidTag ? { contains: uidTag } : subject,
-            },
+            where: { inboxId: inbox.id, sender, receivedAt: new Date(receivedAt), subject: uidTag ? { contains: uidTag } : subject },
           })
           if (alreadyScanned) continue
 
-          // Always record the scan attempt for audit purposes
-          const scan = await prisma.emailScan.create({
+          // Record the scan attempt
+          await prisma.emailScan.create({
             data: {
               subject: subject + uidTag,
               sender,
               receivedAt: new Date(receivedAt),
               processed: false,
               relevant: classification.isRelevant,
-              attachments: JSON.stringify(attachments.map(a => a.name)),
+              attachments: JSON.stringify(namedAttachments),
               inboxId: inbox.id,
             },
           })
 
-          // STRICT processing rule: only process emails that have at least one
-          // real PDF/DOCX attachment (verified by magic bytes below). This avoids
-          // creating garbage candidates from newsletters, transactional emails,
-          // and HTML marketing content.
-          //
-          // The AI classification is now used as a SECOND signal, not the primary one.
-          // If there are no attachments at all, skip immediately — recruiters don't
-          // get applications without CVs.
-          if (allParts.filter(p => p.type !== 'text').length === 0) {
-            console.log(`[email/scan] msg ${msg.uid}: SKIPPED (no non-text parts at all — clearly not an application)`)
+          // Only shortlist if AI marked it as a real application AND there's at least
+          // one non-text MIME part (i.e. a potential CV file)
+          if (!classification.isRelevant) continue
+          const hasFiles = allParts.some(p => p.type !== 'text')
+          if (!hasFiles) {
+            console.log(`[email/scan] PASS1 msg ${msg.uid}: AI said application but no files — skipping`)
             continue
           }
-          results.relevant++
+
+          shortlist.push({ msg, subject, sender, receivedAt: new Date(receivedAt), bodyText, allParts, classification })
+        } catch (e: any) {
+          console.error(`[email/scan] PASS1 msg ${msg.uid} failed:`, e?.message)
+        }
+      }
+
+      console.log(`[email/scan] PASS1 complete: ${shortlist.length} application(s) shortlisted out of ${messages.length} messages`)
+      results.relevant = shortlist.length
+
+      // ════════════════════════════════════════════════════════════════
+      // PASS 2: For each shortlisted email, download attachments, parse,
+      // run full CV analysis, and create candidate records.
+      // ════════════════════════════════════════════════════════════════
+      const tryParseBuffer = async (buffer: Buffer, hint: string): Promise<{ text: string; docType: string }> => {
+        if (buffer.length < 500) return { text: '', docType: 'unknown' }
+        const head4 = buffer.slice(0, 4)
+        const isPDF = head4.toString('utf-8') === '%PDF'
+        const isZIP = head4.toString('hex').toLowerCase().startsWith('504b0304')
+        if (!isPDF && !isZIP) return { text: '', docType: 'unknown' }
+        const mime = isPDF
+          ? 'application/pdf'
+          : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        try {
+          const text = await parseDocument(buffer, mime)
+          if (text.length < 100) return { text: '', docType: 'unknown' }
+          const docType = await detectDocumentType(text)
+          console.log(`[email/scan] ${hint}: parsed ${text.length} chars as ${mime}, detected as ${docType}`)
+          return { text, docType }
+        } catch (e: any) {
+          console.log(`[email/scan] ${hint}: parse failed (${e?.message?.slice(0, 60)})`)
+          return { text: '', docType: 'unknown' }
+        }
+      }
+
+      for (const item of shortlist) {
+        const { msg, subject, sender, receivedAt, allParts, classification } = item
+        try {
+          console.log(`[email/scan] PASS2 msg ${msg.uid}: analyzing for candidate creation`)
+
+          // Try Gemini's hinted CV attachment first, then any non-text part
+          const cvHint = classification.cvAttachmentName?.toLowerCase().trim()
+          const motivHint = classification.motivationAttachmentName?.toLowerCase().trim()
+          const matchByName = (name: string, hint: string) =>
+            !!hint && (name.toLowerCase().includes(hint) || hint.includes(name.toLowerCase()))
+
+          const orderedParts = [...allParts.filter(p => p.type !== 'text')].sort((a, b) => {
+            const aIsCv = matchByName(a.name, cvHint || '') ? 1 : 0
+            const bIsCv = matchByName(b.name, cvHint || '') ? 1 : 0
+            return bIsCv - aIsCv
+          })
 
           let cvText = ''
           let motivationText = ''
-
-          // Strict parser: ONLY accept buffers that start with PDF or ZIP (DOCX) magic
-          // bytes. Reject HTML, text, images. This is the key change — previously we
-          // were treating HTML newsletter bodies as 'CVs' because they parsed as text.
-          const tryParseBuffer = async (buffer: Buffer, hint: string): Promise<{ text: string; docType: string }> => {
-            if (buffer.length < 500) return { text: '', docType: 'unknown' }
-            const head4 = buffer.slice(0, 4)
-            const headStr = head4.toString('utf-8')
-            const headHex = head4.toString('hex').toLowerCase()
-            const isPDF = headStr === '%PDF'
-            const isZIP = headHex.startsWith('504b0304') // PK\x03\x04 = ZIP (DOCX is zip)
-
-            if (!isPDF && !isZIP) {
-              return { text: '', docType: 'unknown' }
-            }
-
-            const mime = isPDF
-              ? 'application/pdf'
-              : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-            try {
-              const text = await parseDocument(buffer, mime)
-              if (text.length < 100) {
-                console.log(`[email/scan] ${hint}: parsed too short (${text.length} chars), skipping`)
-                return { text: '', docType: 'unknown' }
-              }
-              const docType = await detectDocumentType(text)
-              console.log(`[email/scan] ${hint}: parsed ${text.length} chars as ${mime}, detected as ${docType}`)
-              return { text, docType }
-            } catch (e: any) {
-              console.log(`[email/scan] ${hint}: parse failed (${e?.message?.slice(0, 60)})`)
-              return { text: '', docType: 'unknown' }
-            }
-          }
-
-          // Download each MIME part and try to parse it. Magic-byte check ensures
-          // only real PDF/DOCX files become candidates.
-          for (const p of allParts) {
+          for (const p of orderedParts) {
             if (cvText && motivationText) break
-            if (p.type === 'text') continue // skip text/html bodies — never a CV
             try {
               const dl = await client.download(msg.uid.toString(), p.path, { uid: true }) as any
               if (!dl?.content) continue
               const chunks: Buffer[] = []
               for await (const chunk of dl.content) chunks.push(chunk)
               const buffer = Buffer.concat(chunks)
-              if (buffer.length < 500) continue
-
               const { text, docType } = await tryParseBuffer(buffer, `msg ${msg.uid} path ${p.path} ${p.name || p.subtype}`)
               if (!text) continue
-              if (docType === 'cv' && !cvText) cvText = text
-              else if (docType === 'motivation' && !motivationText) motivationText = text
-              else if (!cvText) cvText = text  // unclassified: assume CV (it's a real PDF/DOCX)
+
+              const looksLikeCV = matchByName(p.name, cvHint || '') || docType === 'cv'
+              const looksLikeMotivation = matchByName(p.name, motivHint || '') || docType === 'motivation'
+              if (looksLikeCV && !cvText) cvText = text
+              else if (looksLikeMotivation && !motivationText) motivationText = text
+              else if (!cvText) cvText = text
+              else if (!motivationText) motivationText = text
             } catch (e: any) {
-              console.log(`[email/scan] msg ${msg.uid} path ${p.path}: download failed (${e?.message?.slice(0, 60)})`)
+              console.log(`[email/scan] PASS2 msg ${msg.uid} path ${p.path}: download failed (${e?.message?.slice(0, 60)})`)
             }
           }
 
-          // NO MORE FALLBACK to email body or HTML — those were creating garbage
-          // candidates. If we don't have a real PDF/DOCX, this isn't a candidate.
           if (!cvText || cvText.length < 200) {
-            console.log(`[email/scan] msg ${msg.uid}: no real CV file found (cvText len=${cvText.length}), skipping`)
-            await prisma.emailScan.update({ where: { id: scan.id }, data: { processed: true } })
-            results.relevant--  // wasn't actually relevant after all
+            console.log(`[email/scan] PASS2 msg ${msg.uid}: no real CV (cvText len=${cvText.length}), skipping`)
+            const scan = await prisma.emailScan.findFirst({ where: { inboxId: inbox.id, sender, subject: { contains: `::uid=${msg.uid}` } } })
+            if (scan) await prisma.emailScan.update({ where: { id: scan.id }, data: { processed: true } })
+            results.relevant--
             continue
           }
+          const scan = await prisma.emailScan.findFirst({ where: { inboxId: inbox.id, sender, subject: { contains: `::uid=${msg.uid}` } } })
+          if (!scan) continue
 
           // Smart vacancy matching: score each vacancy and pick the best match
           const cvLower = cvText.toLowerCase()
