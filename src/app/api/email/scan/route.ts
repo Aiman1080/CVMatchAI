@@ -119,8 +119,13 @@ export async function POST(req: Request) {
       // we must use startsWith('text/').
       const isTextPart = (p: { type: string }) => p.type.startsWith('text/')
 
-      // Cap at 30 messages per scan to keep classification quick.
-      for (const msg of messages.slice(0, 30)) {
+      // Process the 30 MOST RECENT messages (not the oldest!). IMAP fetch returns
+      // messages in ascending UID order (oldest first), so we reverse and take.
+      // Previously we did slice(0, 30) which processed the OLDEST 30 — recent
+      // applications got skipped entirely on busy inboxes.
+      const messagesToProcess = [...messages].reverse().slice(0, 30)
+      console.log(`[email/scan] Processing ${messagesToProcess.length} most recent messages (UIDs ${messagesToProcess[0]?.uid} → ${messagesToProcess[messagesToProcess.length - 1]?.uid})`)
+      for (const msg of messagesToProcess) {
         try {
           const subject = msg.envelope?.subject || ''
           const sender = msg.envelope?.from?.[0]?.address || ''
