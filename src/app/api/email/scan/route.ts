@@ -114,6 +114,11 @@ export async function POST(req: Request) {
           .replace(/\s+/g, ' ')
           .trim()
 
+      // IMPORTANT: imapflow returns part.type as the FULL mime type ("text/plain"),
+      // not separate type/subtype. So checking p.type === 'text' never matches —
+      // we must use startsWith('text/').
+      const isTextPart = (p: { type: string }) => p.type.startsWith('text/')
+
       // Cap at 30 messages per scan to keep classification quick.
       for (const msg of messages.slice(0, 30)) {
         try {
@@ -138,10 +143,11 @@ export async function POST(req: Request) {
           collectAllParts(msg.bodyStructure)
 
           // Download body — prefer text/plain, fallback to text/html stripped
+          // (imapflow stores the full mime in `type`, not split into type/subtype)
           let bodyText = ''
-          const textPart = allParts.find(p => p.type === 'text' && p.subtype === 'plain')
-            || allParts.find(p => p.type === 'text' && p.subtype === 'html')
-            || allParts.find(p => p.type === 'text')
+          const textPart = allParts.find(p => p.type === 'text/plain')
+            || allParts.find(p => p.type === 'text/html')
+            || allParts.find(p => isTextPart(p))
           if (textPart) {
             try {
               const dl = await client.download(msg.uid.toString(), textPart.path, { uid: true }) as any
@@ -149,14 +155,14 @@ export async function POST(req: Request) {
                 const chunks: Buffer[] = []
                 for await (const chunk of dl.content) chunks.push(chunk)
                 let raw = Buffer.concat(chunks).toString('utf-8')
-                if (textPart.subtype === 'html') raw = stripHtml(raw)
+                if (textPart.type === 'text/html') raw = stripHtml(raw)
                 bodyText = raw.slice(0, 5000)
               }
             } catch {}
           }
 
           // List the attachment-looking parts (skip text bodies)
-          const namedAttachments = allParts.filter(p => p.type !== 'text' && p.name).map(a => a.name)
+          const namedAttachments = allParts.filter(p => !isTextPart(p) && p.name).map(a => a.name)
 
           console.log(`[email/scan] PASS1 msg ${msg.uid} from ${sender} | subject="${subject.slice(0, 80)}" | bodyLen=${bodyText.length} | attachments=[${namedAttachments.join(', ')}]`)
 
@@ -164,14 +170,23 @@ export async function POST(req: Request) {
           const classification = await classifyRecruitmentEmail(subject, bodyText, namedAttachments)
           console.log(`[email/scan] PASS1 msg ${msg.uid} → AI: relevant=${classification.isRelevant} confidence=${classification.confidence} intent="${classification.intent || ''}" candidate="${classification.candidateName || ''}" cvFile="${classification.cvAttachmentName || ''}"`)
 
-          // Skip if already scanned (dedup)
+          // Dedup: only skip if we PREVIOUSLY succeeded in creating a candidate from
+          // this exact email. If the previous scan attempt failed (no candidate created),
+          // we re-try. This avoids the silent "already scanned but never imported" bug.
           const uidTag = msg.uid ? `::uid=${msg.uid}` : ''
-          const alreadyScanned = await prisma.emailScan.findFirst({
+          const previousScan = await prisma.emailScan.findFirst({
             where: { inboxId: inbox.id, sender, receivedAt: new Date(receivedAt), subject: uidTag ? { contains: uidTag } : subject },
           })
-          if (alreadyScanned) continue
+          if (previousScan && previousScan.candidateId) {
+            console.log(`[email/scan] PASS1 msg ${msg.uid}: already imported as candidate ${previousScan.candidateId}, skipping`)
+            continue
+          }
+          // Clean up any previous failed scan attempt so we don't accumulate duplicates
+          if (previousScan) {
+            await prisma.emailScan.delete({ where: { id: previousScan.id } }).catch(() => {})
+          }
 
-          // Record the scan attempt
+          // Record the new scan attempt
           await prisma.emailScan.create({
             data: {
               subject: subject + uidTag,
@@ -187,7 +202,7 @@ export async function POST(req: Request) {
           // Only shortlist if AI marked it as a real application AND there's at least
           // one non-text MIME part (i.e. a potential CV file)
           if (!classification.isRelevant) continue
-          const hasFiles = allParts.some(p => p.type !== 'text')
+          const hasFiles = allParts.some(p => !isTextPart(p))
           if (!hasFiles) {
             console.log(`[email/scan] PASS1 msg ${msg.uid}: AI said application but no files — skipping`)
             continue
@@ -238,7 +253,7 @@ export async function POST(req: Request) {
           const matchByName = (name: string, hint: string) =>
             !!hint && (name.toLowerCase().includes(hint) || hint.includes(name.toLowerCase()))
 
-          const orderedParts = [...allParts.filter(p => p.type !== 'text')].sort((a, b) => {
+          const orderedParts = [...allParts.filter(p => !isTextPart(p))].sort((a, b) => {
             const aIsCv = matchByName(a.name, cvHint || '') ? 1 : 0
             const bIsCv = matchByName(b.name, cvHint || '') ? 1 : 0
             return bIsCv - aIsCv
