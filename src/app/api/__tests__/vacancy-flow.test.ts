@@ -232,6 +232,7 @@ describe('Vacancy Flow - Delete', () => {
 
   it('delete vacancy → 200', async () => {
     ;(prisma.vacancy.findFirst as any).mockResolvedValue({ id: 'v1', userId: 'user-1' })
+    ;(prisma.candidate.findMany as any).mockResolvedValue([])
     ;(prisma.vacancy.delete as any).mockResolvedValue({})
 
     const req = new Request('http://localhost/api/vacancies/v1', { method: 'DELETE' })

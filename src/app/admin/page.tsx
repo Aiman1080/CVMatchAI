@@ -5,6 +5,7 @@ import prisma from '@/lib/prisma'
 import { Header } from '@/components/layout/Header'
 import { AdminClient } from '@/components/admin/AdminClient'
 import { getAiUsageStats } from '@/lib/ai-usage'
+import { getUpstashUsage, getSentryUsage } from '@/lib/service-usage'
 
 const safe = async <T,>(p: Promise<T>, fallback: T, label: string): Promise<T> => {
   // 5-second timeout per query so a slow/dead DB doesn't hang the whole page
@@ -60,6 +61,8 @@ export default async function AdminPage() {
     notifCount,
     activityCount,
     scanCount,
+    upstashUsage,
+    sentryUsage,
   ] = await Promise.all([
     safe(
       prisma.user.findMany({
@@ -169,6 +172,8 @@ export default async function AdminPage() {
     safe(prisma.notification.count(), 0, 'notifCount'),
     safe(prisma.candidateActivity.count(), 0, 'activityCount'),
     safe(prisma.emailScan.count(), 0, 'scanCount'),
+    getUpstashUsage().catch(() => ({ configured: false, available: false, keys: null })),
+    getSentryUsage().catch(() => ({ configured: false, available: false, errors30d: null })),
   ])
 
   const dbStats = {
@@ -213,6 +218,8 @@ export default async function AdminPage() {
           recentActivity={recentActivity}
           aiUsageStats={aiUsageStats}
           dbStats={{ ...dbStats, totalRows }}
+          upstashUsage={upstashUsage}
+          sentryUsage={sentryUsage}
         />
       </div>
     </div>

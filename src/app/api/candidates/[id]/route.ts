@@ -7,6 +7,7 @@ import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { logActivity } from '@/lib/activity'
 import { isDemoAccount } from '@/lib/demo-guard'
+import { deleteDocuments } from '@/lib/storage'
 
 // Fetches a single candidate with full vacancy details for the detail page
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -83,9 +84,14 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   const isAdmin = (session.user as any).role === 'admin'
   try {
     // Ownership check before delete
-    const existing = await prisma.candidate.findFirst({ where: isAdmin ? { id } : { id, userId } })
+    const existing = await prisma.candidate.findFirst({
+      where: isAdmin ? { id } : { id, userId },
+      select: { id: true, cvStoragePath: true, motivationStoragePath: true },
+    })
     if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     await prisma.candidate.delete({ where: { id } })
+    // Remove the candidate's binaries from Supabase Storage (best-effort).
+    await deleteDocuments([existing.cvStoragePath, existing.motivationStoragePath])
     return NextResponse.json({ success: true })
   } catch {
     return NextResponse.json({ error: 'Failed to delete candidate' }, { status: 500 })

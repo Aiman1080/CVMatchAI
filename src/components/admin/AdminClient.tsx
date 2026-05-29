@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { AdminSystemTab } from './AdminSystemTab'
+import type { UpstashUsage, SentryUsage } from '@/lib/service-usage'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -161,6 +162,8 @@ interface Props {
     notifications: number; activities: number; emailScans: number; aiLogs: number
     totalRows: number
   }
+  upstashUsage: UpstashUsage
+  sentryUsage: SentryUsage
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -172,7 +175,7 @@ export function AdminClient({
   latestVacancies, newUsersThisWeek, candidatesThisWeek, candidatesToday,
   integrationsByPlatform, candidatesBySource, activeVacanciesCount,
   activeToday, weeklySignups, recentActivity,
-  aiUsageStats, dbStats,
+  aiUsageStats, dbStats, upstashUsage, sentryUsage,
 }: Props) {
   const { t } = useLanguage()
   const ta = (t.dashboard as any).admin || {}
@@ -1662,6 +1665,8 @@ export function AdminClient({
             aiUsageStats={aiUsageStats}
             dbStats={dbStats}
             ta={ta}
+            upstashUsage={upstashUsage}
+            sentryUsage={sentryUsage}
           />
         </TabsContent>
       </Tabs>

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { isDemoAccount } from '@/lib/demo-guard'
+import { deleteDocuments } from '@/lib/storage'
 
 export async function DELETE() {
   const session = await getServerSession(authOptions)
@@ -15,7 +16,7 @@ export async function DELETE() {
   try {
     const candidates = await prisma.candidate.findMany({
       where: { userId },
-      select: { id: true },
+      select: { id: true, cvStoragePath: true, motivationStoragePath: true },
     })
     const ids = candidates.map(c => c.id)
 
@@ -25,6 +26,9 @@ export async function DELETE() {
       prisma.emailScan.deleteMany({ where: { candidateId: { in: ids } } }),
       prisma.candidate.deleteMany({ where: { userId } }),
     ])
+
+    // Best-effort: remove their binaries from Supabase Storage.
+    await deleteDocuments(candidates.flatMap(c => [c.cvStoragePath, c.motivationStoragePath]))
 
     return NextResponse.json({ deleted: ids.length })
   } catch {

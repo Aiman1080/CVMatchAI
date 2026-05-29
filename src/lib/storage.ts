@@ -106,3 +106,10 @@ export async function deleteDocument(path?: string | null): Promise<void> {
     log.warn(`delete failed for ${path}`, { message: e?.message })
   }
 }
+
+// Best-effort bulk delete (bulk candidate removal / vacancy cascade). Never throws.
+export async function deleteDocuments(paths: Array<string | null | undefined>): Promise<void> {
+  const valid = paths.filter((p): p is string => !!p)
+  if (valid.length === 0) return
+  await Promise.allSettled(valid.map(p => deleteDocument(p)))
+}

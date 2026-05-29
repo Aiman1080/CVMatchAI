@@ -6,6 +6,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { isDemoAccount } from '@/lib/demo-guard'
+import { deleteDocuments } from '@/lib/storage'
 
 export async function POST() {
   const session = await getServerSession(authOptions)
@@ -20,16 +21,18 @@ export async function POST() {
     const all = await prisma.candidate.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
-      select: { id: true, email: true },
+      select: { id: true, email: true, cvStoragePath: true, motivationStoragePath: true },
     })
 
     const seenEmails = new Set<string>()
     const toDelete: string[] = []
+    const pathsToDelete: Array<string | null> = []
 
     for (const c of all) {
       if (!c.email) continue
       if (seenEmails.has(c.email)) {
         toDelete.push(c.id)
+        pathsToDelete.push(c.cvStoragePath, c.motivationStoragePath)
       } else {
         seenEmails.add(c.email)
       }
@@ -41,6 +44,9 @@ export async function POST() {
       prisma.emailScan.deleteMany({ where: { candidateId: { in: toDelete } } }),
       prisma.candidate.deleteMany({ where: { id: { in: toDelete } } }),
     ])
+
+    // Best-effort: remove the duplicates' binaries from Supabase Storage.
+    await deleteDocuments(pathsToDelete)
 
     return NextResponse.json({ deleted: toDelete.length })
   } catch {

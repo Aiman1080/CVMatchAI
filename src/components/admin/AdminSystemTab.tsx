@@ -6,6 +6,7 @@ import {
   Link2, Inbox, MessageSquare, Network, GitBranch, Brain,
 } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
+import type { UpstashUsage, SentryUsage } from '@/lib/service-usage'
 
 interface Props {
   counts: { users: number; vacancies: number; candidates: number; openTickets: number }
@@ -37,12 +38,15 @@ interface Props {
     totalRows: number
   }
   ta: any
+  upstashUsage: UpstashUsage
+  sentryUsage: SentryUsage
 }
 
 export function AdminSystemTab({
   counts, hasAiKey, hasSmtp, hasSentry, hasUpstash, hasStripe, hasGa,
   integrationsByPlatform, integrationsCount, emailInboxesCount, activeVacanciesCount,
   openCount, latestVacancies, aiUsageStats, dbStats, ta,
+  upstashUsage, sentryUsage,
 }: Props) {
   return (
     <>
@@ -319,6 +323,71 @@ export function AdminSystemTab({
               <p className="text-[11px] text-gray-400 dark:text-gray-500">
                 ● configured (env vars set) · ○ inactive. Prices are indicative (early 2026) — always confirm on each billing page. This panel links out to billing dashboards; it cannot change external plans for you.
               </p>
+            </CardContent>
+          </Card>
+
+          {/* ── Live service usage vs free-tier ceilings ── */}
+          <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Network className="w-5 h-5 text-cyan-500" /> Rate limiting & monitoring — usage
+              </CardTitle>
+              <CardDescription>Live readings where available, with the free-tier ceiling and when it starts costing</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {/* Upstash */}
+              <div className="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className={upstashUsage.configured ? 'text-green-500' : 'text-gray-400'}>{upstashUsage.configured ? '●' : '○'}</span>
+                    <span className="font-semibold text-sm text-gray-900 dark:text-white">Upstash Redis</span>
+                    <span className="text-xs text-gray-500">rate limiting</span>
+                  </div>
+                  <a href="https://console.upstash.com/" target="_blank" rel="noopener noreferrer" className="text-xs px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900 font-medium border border-blue-200 dark:border-blue-800">Console →</a>
+                </div>
+                <div className="mt-1.5 ml-6 text-xs text-gray-600 dark:text-gray-400">
+                  {!upstashUsage.configured
+                    ? <span>Not configured — rate limiting runs in-memory (per-instance).</span>
+                    : upstashUsage.available
+                      ? <span><span className="font-semibold text-gray-900 dark:text-white">{upstashUsage.keys?.toLocaleString()}</span> active keys stored.</span>
+                      : <span>Configured, but the live reading is unavailable right now.</span>}
+                  <span className="block mt-0.5 text-gray-400">Free: 256 MB · 500K commands/month. The monthly command count (the real ceiling) is on the Upstash console.</span>
+                </div>
+              </div>
+
+              {/* Sentry */}
+              <div className="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className={sentryUsage.configured ? 'text-green-500' : 'text-gray-400'}>{sentryUsage.configured ? '●' : '○'}</span>
+                    <span className="font-semibold text-sm text-gray-900 dark:text-white">Sentry</span>
+                    <span className="text-xs text-gray-500">error monitoring</span>
+                  </div>
+                  <a href="https://sentry.io/" target="_blank" rel="noopener noreferrer" className="text-xs px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900 font-medium border border-blue-200 dark:border-blue-800">Dashboard →</a>
+                </div>
+                <div className="mt-1.5 ml-6 text-xs text-gray-600 dark:text-gray-400">
+                  {!sentryUsage.configured
+                    ? <span>Not configured — set SENTRY_DSN to capture production errors.</span>
+                    : sentryUsage.available
+                      ? (() => {
+                          const n = sentryUsage.errors30d || 0
+                          const pct = Math.min(100, Math.round((n / 5000) * 100))
+                          return (
+                            <div>
+                              <div className="flex items-center justify-between mb-1">
+                                <span><span className="font-semibold text-gray-900 dark:text-white">{n.toLocaleString()}</span> errors / 30 days</span>
+                                <span className="text-gray-400">{pct}% of free tier</span>
+                              </div>
+                              <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                                <div className={`h-full rounded-full ${pct > 80 ? 'bg-red-500' : pct > 50 ? 'bg-amber-500' : 'bg-green-500'}`} style={{ width: `${Math.max(2, pct)}%` }} />
+                              </div>
+                            </div>
+                          )
+                        })()
+                      : <span>Configured — live error count is in the Sentry dashboard (set SENTRY_AUTH_TOKEN + SENTRY_ORG to show it here).</span>}
+                  <span className="block mt-0.5 text-gray-400">Free: 5,000 errors/month · 1 user → Team ~$26/mo beyond.</span>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
