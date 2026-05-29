@@ -39,4 +39,25 @@ const nextConfig = {
   },
 }
 
-module.exports = nextConfig
+// Sentry — only wrap when SENTRY_DSN is configured so dev/CI without Sentry
+// don't pay the source-map upload step or the runtime overhead. When unset,
+// we export the bare Next config.
+let exportedConfig = nextConfig
+if (process.env.SENTRY_DSN) {
+  try {
+    const { withSentryConfig } = require('@sentry/nextjs')
+    exportedConfig = withSentryConfig(nextConfig, {
+      silent: !process.env.SENTRY_DEBUG,
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+      widenClientFileUpload: true,
+      hideSourceMaps: true,
+      disableLogger: true,
+    })
+  } catch (e) {
+    console.warn('[next.config] Sentry wrapper skipped:', (e && e.message) || e)
+  }
+}
+
+module.exports = exportedConfig

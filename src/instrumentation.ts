@@ -1,7 +1,14 @@
 // Runs once when the Next.js server starts (Node.js runtime only).
 // In DEVELOPMENT: seeds demo accounts if the database is empty.
-// In PRODUCTION: does nothing — client data is managed by the deployment pipeline.
+// In PRODUCTION: initializes Sentry for the server runtime; otherwise no-op.
 export async function register() {
+  // Load Sentry early so it captures errors thrown during the rest of init.
+  if (process.env.NEXT_RUNTIME === 'nodejs') {
+    await import('../sentry.server.config')
+  } else if (process.env.NEXT_RUNTIME === 'edge') {
+    await import('../sentry.edge.config')
+  }
+
   if (process.env.NEXT_RUNTIME !== 'nodejs') return
   if (process.env.NODE_ENV !== 'development') return
 
@@ -48,4 +55,13 @@ export async function register() {
   } catch {
     // Tables not created yet — run: npx prisma db push
   }
+}
+
+// Forward server-side request errors (route handlers, server components) into
+// Sentry when configured. Without this hook, Next.js eats the error silently
+// from Sentry's perspective.
+export async function onRequestError(...args: any[]) {
+  if (!process.env.SENTRY_DSN) return
+  const Sentry = await import('@sentry/nextjs')
+  ;(Sentry as any).captureRequestError?.(...args)
 }
