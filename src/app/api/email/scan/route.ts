@@ -12,6 +12,9 @@ import { analyzeCVAgainstVacancy, classifyRecruitmentEmail, detectDocumentType, 
 import { getPlanLimits, getEffectiveSubscription } from '@/lib/plans'
 import { decrypt } from '@/lib/crypto'
 import { isDemoAccount } from '@/lib/demo-guard'
+import { createLogger } from '@/lib/logger'
+
+const log = createLogger('email/scan')
 
 // Allow up to 5 minutes — IMAP + multiple AI calls can easily take 2–3 min
 export const maxDuration = 300
@@ -83,7 +86,7 @@ export async function POST(req: Request) {
       )) {
         messages.push(msg)
       }
-      console.log(`[email/scan] Inbox ${inbox.id}: fetched ${messages.length} messages from last 30 days`)
+      log.info(`Inbox ${inbox.id}: fetched ${messages.length} messages from last 30 days`)
 
       results.scanned = messages.length
 
@@ -124,7 +127,7 @@ export async function POST(req: Request) {
       // Previously we did slice(0, N) which processed the OLDEST N — recent
       // applications got skipped entirely on busy inboxes.
       const messagesToProcess = [...messages].reverse().slice(0, 25)
-      console.log(`[email/scan] Processing ${messagesToProcess.length} most recent messages (UIDs ${messagesToProcess[0]?.uid} → ${messagesToProcess[messagesToProcess.length - 1]?.uid})`)
+      log.info(`Processing ${messagesToProcess.length} most recent messages (UIDs ${messagesToProcess[0]?.uid} → ${messagesToProcess[messagesToProcess.length - 1]?.uid})`)
       for (const msg of messagesToProcess) {
         try {
           const subject = msg.envelope?.subject || ''
@@ -169,11 +172,11 @@ export async function POST(req: Request) {
           // List the attachment-looking parts (skip text bodies)
           const namedAttachments = allParts.filter(p => !isTextPart(p) && p.name).map(a => a.name)
 
-          console.log(`[email/scan] PASS1 msg ${msg.uid} from ${sender} | subject="${subject.slice(0, 80)}" | bodyLen=${bodyText.length} | attachments=[${namedAttachments.join(', ')}]`)
+          log.debug(`PASS1 msg ${msg.uid} from ${sender}`, { subject: subject.slice(0, 80), bodyLen: bodyText.length, attachments: namedAttachments })
 
           // Send to Gemini for understanding the email content
           const classification = await classifyRecruitmentEmail(subject, bodyText, namedAttachments)
-          console.log(`[email/scan] PASS1 msg ${msg.uid} → AI: relevant=${classification.isRelevant} confidence=${classification.confidence} intent="${classification.intent || ''}" candidate="${classification.candidateName || ''}" cvFile="${classification.cvAttachmentName || ''}"`)
+          log.debug(`PASS1 msg ${msg.uid} → AI verdict`, { relevant: classification.isRelevant, confidence: classification.confidence, intent: classification.intent, candidate: classification.candidateName, cvFile: classification.cvAttachmentName })
 
           // Dedup: only skip if we PREVIOUSLY succeeded in creating a candidate from
           // this exact email. If the previous scan attempt failed (no candidate created),
@@ -183,7 +186,7 @@ export async function POST(req: Request) {
             where: { inboxId: inbox.id, sender, receivedAt: new Date(receivedAt), subject: uidTag ? { contains: uidTag } : subject },
           })
           if (previousScan && previousScan.candidateId) {
-            console.log(`[email/scan] PASS1 msg ${msg.uid}: already imported as candidate ${previousScan.candidateId}, skipping`)
+            log.debug(`PASS1 msg ${msg.uid}: already imported as candidate ${previousScan.candidateId}, skipping`)
             continue
           }
           // Clean up any previous failed scan attempt so we don't accumulate duplicates
@@ -209,17 +212,17 @@ export async function POST(req: Request) {
           if (!classification.isRelevant) continue
           const hasFiles = allParts.some(p => !isTextPart(p))
           if (!hasFiles) {
-            console.log(`[email/scan] PASS1 msg ${msg.uid}: AI said application but no files — skipping`)
+            log.debug(`PASS1 msg ${msg.uid}: AI said application but no files — skipping`)
             continue
           }
 
           shortlist.push({ msg, subject, sender, receivedAt: new Date(receivedAt), bodyText, allParts, classification })
         } catch (e: any) {
-          console.error(`[email/scan] PASS1 msg ${msg.uid} failed:`, e?.message)
+          log.error(`PASS1 msg ${msg.uid} failed`, { message: e?.message })
         }
       }
 
-      console.log(`[email/scan] PASS1 complete: ${shortlist.length} application(s) shortlisted out of ${messages.length} messages`)
+      log.info(`PASS1 complete: ${shortlist.length} application(s) shortlisted out of ${messages.length} messages`)
       results.relevant = shortlist.length
 
       // ════════════════════════════════════════════════════════════════
@@ -239,10 +242,10 @@ export async function POST(req: Request) {
           const text = await parseDocument(buffer, mime)
           if (text.length < 100) return { text: '', docType: 'unknown' }
           const docType = await detectDocumentType(text)
-          console.log(`[email/scan] ${hint}: parsed ${text.length} chars as ${mime}, detected as ${docType}`)
+          log.debug(`${hint}: parsed ${text.length} chars as ${mime}, detected as ${docType}`)
           return { text, docType }
         } catch (e: any) {
-          console.log(`[email/scan] ${hint}: parse failed (${e?.message?.slice(0, 60)})`)
+          log.debug(`${hint}: parse failed`, { message: e?.message?.slice(0, 60) })
           return { text: '', docType: 'unknown' }
         }
       }
@@ -250,7 +253,7 @@ export async function POST(req: Request) {
       for (const item of shortlist) {
         const { msg, subject, sender, receivedAt, allParts, classification } = item
         try {
-          console.log(`[email/scan] PASS2 msg ${msg.uid}: analyzing for candidate creation`)
+          log.debug(`PASS2 msg ${msg.uid}: analyzing for candidate creation`)
 
           // Try Gemini's hinted CV attachment first, then any non-text part
           const cvHint = classification.cvAttachmentName?.toLowerCase().trim()
@@ -300,12 +303,12 @@ export async function POST(req: Request) {
               else if (!cvText) { cvText = text; cvBuffer = buffer; cvFileName = name; cvMime = mime }
               else if (!motivationText) { motivationText = text; motivBuffer = buffer; motivFileName = name; motivMime = mime }
             } catch (e: any) {
-              console.log(`[email/scan] PASS2 msg ${msg.uid} path ${p.path}: download failed (${e?.message?.slice(0, 60)})`)
+              log.debug(`PASS2 msg ${msg.uid} path ${p.path}: download failed`, { message: e?.message?.slice(0, 60) })
             }
           }
 
           if (!cvText || cvText.length < 200) {
-            console.log(`[email/scan] PASS2 msg ${msg.uid}: no real CV (cvText len=${cvText.length}), skipping`)
+            log.debug(`PASS2 msg ${msg.uid}: no real CV, skipping`, { cvTextLen: cvText.length })
             const scan = await prisma.emailScan.findFirst({ where: { inboxId: inbox.id, sender, subject: { contains: `::uid=${msg.uid}` } } })
             if (scan) await prisma.emailScan.update({ where: { id: scan.id }, data: { processed: true } })
             results.relevant--
@@ -319,7 +322,7 @@ export async function POST(req: Request) {
           // call fails so the scan keeps working.
           const best = await selectBestVacancyForCV(cvText, vacancies)
           const vacancy = vacancies.find(v => v.id === best.vacancyId) || vacancies[0]
-          console.log(`[email/scan] PASS2 msg ${msg.uid}: AI matched to vacancy "${vacancy.title}" (fit=${best.fitScore})`)
+          log.debug(`PASS2 msg ${msg.uid}: AI matched to vacancy`, { vacancy: vacancy.title, fit: best.fitScore })
 
           // Duplicate guard: candidate records are unique per (email, vacancyId).
           // If this person already applied to THIS vacancy, link the scan to the
@@ -330,7 +333,7 @@ export async function POST(req: Request) {
             select: { id: true },
           })
           if (existing) {
-            console.log(`[email/scan] PASS2 msg ${msg.uid}: candidate ${existing.id} already exists for this vacancy — linking and skipping`)
+            log.debug(`PASS2 msg ${msg.uid}: candidate already exists for this vacancy, linking`, { candidateId: existing.id })
             await prisma.emailScan.update({
               where: { id: scan.id },
               data: { processed: true, candidateId: existing.id },
@@ -391,9 +394,9 @@ export async function POST(req: Request) {
 
     await client.logout()
     await prisma.emailInbox.update({ where: { id: inbox.id }, data: { lastScan: new Date() } })
-    console.log(`[email/scan] Inbox ${inbox.id}: scanned=${results.scanned} relevant=${results.relevant} processed=${results.processed} errors=${results.errors.length}`)
+    log.info(`Inbox ${inbox.id}: scanned=${results.scanned} relevant=${results.relevant} processed=${results.processed} errors=${results.errors.length}`)
   } catch (error: any) {
-    console.error(`[email/scan] FAILED for inbox ${inbox.id}:`, error?.message, error?.code)
+    log.error(`FAILED for inbox ${inbox.id}`, { message: error?.message, code: error?.code })
     // Surface a useful hint to the user
     let hint = ''
     if (error?.code === 'ETIMEOUT' || error?.message?.includes('timeout')) {

@@ -1,7 +1,19 @@
 import crypto from 'crypto'
 
 const ALGORITHM = 'aes-256-gcm'
-const SECRET = process.env.NEXTAUTH_SECRET || 'fallback-secret-key-change-me'
+
+// Fail fast at module load instead of silently using a public default secret.
+// Without this guard, deploying without NEXTAUTH_SECRET would leave every
+// IMAP password (and anything else encrypted) decryptable by anyone who can
+// read the source — i.e. the entire internet. This is non-negotiable.
+const SECRET = process.env.NEXTAUTH_SECRET
+if (!SECRET || SECRET.length < 32) {
+  throw new Error(
+    '[crypto] NEXTAUTH_SECRET is missing or too short (need >= 32 chars). ' +
+    'Generate one with: openssl rand -base64 48'
+  )
+}
+
 const SALT = crypto.createHash('sha256').update(SECRET + '-salt').digest()
 const KEY = crypto.scryptSync(SECRET, SALT, 32)
 
