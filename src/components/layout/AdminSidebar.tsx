@@ -57,18 +57,39 @@ export function AdminSidebar() {
         <p className="text-xs font-semibold text-gray-500 dark:text-gray-600 uppercase tracking-wide px-3 mb-2">Admin</p>
         {navItems.map(item => {
           const active = isAdmin && currentTab === item.tab
-          return (
-            <Link
-              key={item.tab}
-              href={item.href}
-              onClick={() => setMobileOpen(false)}
-              className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
-                active ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-200'
-              )}
-            >
+          const className = cn(
+            'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all w-full text-left',
+            active ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-200'
+          )
+          const content = (
+            <>
               <item.icon size={18} className={cn('shrink-0', active ? 'text-purple-600 dark:text-purple-400' : 'text-gray-400 dark:text-gray-500')} />
               <span className="truncate flex-1 min-w-0">{item.label}</span>
+            </>
+          )
+          // When already on /admin, switch tabs purely client-side: update the URL via
+          // history.replaceState and emit an event AdminClient listens for. This avoids
+          // re-running the server component (which fires 20+ DB queries per nav).
+          if (isAdmin) {
+            return (
+              <button
+                key={item.tab}
+                type="button"
+                onClick={() => {
+                  setMobileOpen(false)
+                  const url = item.tab ? `/admin?tab=${item.tab}` : '/admin'
+                  window.history.replaceState({}, '', url)
+                  window.dispatchEvent(new CustomEvent('admin-tab-change', { detail: item.tab }))
+                }}
+                className={className}
+              >
+                {content}
+              </button>
+            )
+          }
+          return (
+            <Link key={item.tab} href={item.href} onClick={() => setMobileOpen(false)} className={className}>
+              {content}
             </Link>
           )
         })}

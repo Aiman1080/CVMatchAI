@@ -305,6 +305,24 @@ export async function POST(req: Request) {
           const vacancy = vacancies.find(v => v.id === best.vacancyId) || vacancies[0]
           console.log(`[email/scan] PASS2 msg ${msg.uid}: AI matched to vacancy "${vacancy.title}" (fit=${best.fitScore})`)
 
+          // Duplicate guard: candidate records are unique per (email, vacancyId).
+          // If this person already applied to THIS vacancy, link the scan to the
+          // existing candidate and move on — never overwrite. The SAME person
+          // applying to a DIFFERENT vacancy creates a new record (intended).
+          const existing = await prisma.candidate.findFirst({
+            where: { email: sender, vacancyId: vacancy.id, userId },
+            select: { id: true },
+          })
+          if (existing) {
+            console.log(`[email/scan] PASS2 msg ${msg.uid}: candidate ${existing.id} already exists for this vacancy — linking and skipping`)
+            await prisma.emailScan.update({
+              where: { id: scan.id },
+              data: { processed: true, candidateId: existing.id },
+            })
+            results.relevant--
+            continue
+          }
+
           const analysis = await analyzeCVAgainstVacancy(
             cvText, vacancy.title, vacancy.description, vacancy.requirements, motivationText || undefined, (vacancy as any).language,
           )

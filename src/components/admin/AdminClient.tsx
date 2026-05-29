@@ -145,12 +145,28 @@ export function AdminClient({
   activeToday, weeklySignups, recentActivity,
   aiUsageStats, dbStats,
 }: Props) {
-  // Sync tab with URL — useSearchParams reacts to client-side navigation,
-  // so no polling is needed to detect tab changes from the sidebar links.
+  // Tab state is driven by the sidebar's `admin-tab-change` custom event so tab
+  // switches are purely client-side (no server re-render, no extra DB queries).
+  // We still seed the initial value from the URL on first mount.
   const searchParams = useSearchParams()
   const tabParam = searchParams?.get('tab') || 'accounts'
   const [activeTab, setActiveTab] = useState(tabParam)
-  useEffect(() => { setActiveTab(tabParam) }, [tabParam])
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as string
+      setActiveTab(detail || 'accounts')
+    }
+    window.addEventListener('admin-tab-change', handler)
+    return () => window.removeEventListener('admin-tab-change', handler)
+  }, [])
+  // Mirror local tab changes (from clicking inside content) back to the URL so
+  // refresh/share preserves the active tab.
+  useEffect(() => {
+    const url = activeTab && activeTab !== 'accounts' ? `/admin?tab=${activeTab}` : '/admin'
+    if (typeof window !== 'undefined' && window.location.pathname + window.location.search !== url) {
+      window.history.replaceState({}, '', url)
+    }
+  }, [activeTab])
 
   const [users, setUsers] = useState(initialUsers)
   const [tickets, setTickets] = useState(initialTickets)
