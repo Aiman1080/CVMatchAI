@@ -21,6 +21,7 @@ import { toast } from '@/components/ui/use-toast'
 import { getStatusColor, parseJsonSafe, formatDate } from '@/lib/utils'
 import { exportHiringReportPDF } from '@/lib/export'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { CandidateEmailDialog } from './CandidateEmailDialog'
 
 const RECOMMENDATION_COLORS: Record<string, string> = {
   strong_yes: 'bg-green-100 text-green-800 border border-green-200',
@@ -981,112 +982,27 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
         </div>
       </div>
 
-      {/* Email sending dialog */}
-      <Dialog open={showEmail} onOpenChange={setShowEmail}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{cd.sendEmail} — {candidate.firstName}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 mt-2">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm">
-                <Mail size={14} className="text-gray-400" />
-                <span className="text-gray-600 dark:text-gray-300">{(cd as any).toLabel || 'To'}: <strong>{candidate.email}</strong></span>
-              </div>
-              <div>
-                <Label className="text-xs text-gray-500 mb-1">{(cd as any).fromYourEmail || 'From (your email)'}</Label>
-                <Input
-                  value={emailFrom}
-                  onChange={e => setEmailFrom(e.target.value)}
-                  placeholder={t.dashboard?.settingsProfile?.email || 'your-email@company.com'}
-                  className="text-sm"
-                  list="connected-inbox-list"
-                />
-                {connectedInboxes.length > 0 && (
-                  <datalist id="connected-inbox-list">
-                    {connectedInboxes.map(inbox => (
-                      <option key={inbox.id} value={inbox.email} />
-                    ))}
-                  </datalist>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
-              {[
-                { type: 'interview', label: `📅 ${cd.interview}`, color: 'border-blue-300 text-blue-700 bg-blue-50' },
-                { type: 'rejection', label: `❌ ${cd.rejection}`, color: 'border-red-300 text-red-700 bg-red-50' },
-                { type: 'followup', label: `📩 ${cd.followup}`, color: 'border-gray-300 text-gray-700 bg-gray-50' },
-                { type: 'custom', label: `✉️ ${(cd as any).customEmail || 'Free-form email'}`, color: 'border-purple-300 text-purple-700 bg-purple-50' },
-              ].map(opt => (
-                <button
-                  key={opt.type}
-                  onClick={() => {
-                    setEmailType(opt.type)
-                    if (opt.type === 'custom') {
-                      setEmailSubject('')
-                      setEmailBody('')
-                    } else {
-                      setEmailSubject('')
-                      setEmailBody('')
-                    }
-                  }}
-                  className={`sm:flex-1 text-xs py-1.5 px-2 rounded-lg border font-medium transition-all ${emailType === opt.type ? opt.color : 'border-gray-200 text-gray-400'}`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-
-            {emailType !== 'custom' && <Button
-              onClick={handleGenerateEmail}
-              disabled={generatingEmail}
-              variant="outline"
-              className="w-full gap-2 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-400 dark:hover:bg-purple-950"
-            >
-              {generatingEmail ? <Loader2 size={14} className="animate-spin" /> : <span>✨</span>}
-              {generatingEmail ? '...' : cd.generateWithAI}
-            </Button>}
-
-            <div>
-              <Label className="text-xs text-gray-500 mb-1.5">{cd.emailSubject}</Label>
-              <Input value={emailSubject} onChange={e => setEmailSubject(e.target.value)} className="text-sm" />
-            </div>
-
-            <div>
-              <Label className="text-xs text-gray-500 mb-1.5">{cd.emailBody}</Label>
-              <textarea
-                value={emailBody}
-                onChange={e => setEmailBody(e.target.value)}
-                rows={7}
-                className="w-full p-3 text-sm border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-xl resize-y focus:outline-none focus:ring-2 focus:ring-blue-200"
-              />
-            </div>
-
-            {emailType === 'interview' && (
-              <div>
-                <Label className="text-xs text-gray-500 mb-1.5 flex items-center gap-1">
-                  <Video size={12} className="text-blue-500" /> {cd.teamsLink}
-                </Label>
-                <Input
-                  value={teamsLink}
-                  onChange={e => setTeamsLink(e.target.value)}
-                  placeholder="https://teams.microsoft.com/l/meetup-join/..."
-                  className="text-sm"
-                />
-              </div>
-            )}
-
-            <div className="flex gap-2 pt-2">
-              <Button variant="outline" onClick={() => setShowEmail(false)} className="flex-1">{cd.cancel}</Button>
-              <Button onClick={handleSendEmail} disabled={sendingEmail || !emailSubject || !emailBody} className="flex-1 gradient-bg gap-2">
-                {sendingEmail ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-                {sendingEmail ? cd.sending : cd.send}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <CandidateEmailDialog
+        open={showEmail}
+        onOpenChange={setShowEmail}
+        candidate={{ firstName: candidate.firstName, email: candidate.email }}
+        connectedInboxes={connectedInboxes}
+        emailFrom={emailFrom}
+        onFromChange={setEmailFrom}
+        emailType={emailType}
+        onTypeChange={setEmailType}
+        emailSubject={emailSubject}
+        onSubjectChange={setEmailSubject}
+        emailBody={emailBody}
+        onBodyChange={setEmailBody}
+        teamsLink={teamsLink}
+        onTeamsLinkChange={setTeamsLink}
+        onGenerateEmail={handleGenerateEmail}
+        onSendEmail={handleSendEmail}
+        generatingEmail={generatingEmail}
+        sendingEmail={sendingEmail}
+        labels={{ ...cd, emailPlaceholder: t.dashboard?.settingsProfile?.email } as any}
+      />
     </div>
   )
 }
