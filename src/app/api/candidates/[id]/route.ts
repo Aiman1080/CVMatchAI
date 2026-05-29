@@ -7,6 +7,7 @@ import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { logActivity } from '@/lib/activity'
 import { isDemoAccount } from '@/lib/demo-guard'
+import { deleteDocuments } from '@/lib/storage'
 
 // Fetches a single candidate with full vacancy details for the detail page
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -22,12 +23,16 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       include: { vacancy: true, emailSource: true },
     })
     if (!candidate) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    // Strip the heavy binary columns — the client renders documents via
+    // /api/candidates/[id]/file, never from this payload (the SSR page strips
+    // them too). Returning them base64-bloats every detail fetch.
+    const { cvFile, motivationFile, ...slim } = candidate as any
     // Mark as viewed on first open
     if (!candidate.viewedAt) {
       await prisma.candidate.update({ where: { id }, data: { viewedAt: new Date() } })
-      return NextResponse.json({ ...candidate, viewedAt: new Date() })
+      return NextResponse.json({ ...slim, viewedAt: new Date() })
     }
-    return NextResponse.json(candidate)
+    return NextResponse.json(slim)
   } catch {
     return NextResponse.json({ error: 'Failed to load candidate' }, { status: 500 })
   }
@@ -56,6 +61,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       return NextResponse.json({ error: 'Invalid status value' }, { status: 400 })
     }
     const candidate = await prisma.candidate.update({ where: { id }, data })
+    // Strip heavy binary columns from the response (see GET above).
+    const { cvFile, motivationFile, ...slim } = candidate as any
 
     // Log status changes
     if (data.status && data.status !== existing.status) {
@@ -66,7 +73,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       await logActivity(id, 'note_added', 'Notes updated')
     }
 
-    return NextResponse.json(candidate)
+    return NextResponse.json(slim)
   } catch {
     return NextResponse.json({ error: 'Failed to update candidate' }, { status: 500 })
   }
@@ -83,9 +90,14 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   const isAdmin = (session.user as any).role === 'admin'
   try {
     // Ownership check before delete
-    const existing = await prisma.candidate.findFirst({ where: isAdmin ? { id } : { id, userId } })
+    const existing = await prisma.candidate.findFirst({
+      where: isAdmin ? { id } : { id, userId },
+      select: { id: true, cvStoragePath: true, motivationStoragePath: true },
+    })
     if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     await prisma.candidate.delete({ where: { id } })
+    // Remove the candidate's binaries from Supabase Storage (best-effort).
+    await deleteDocuments([existing.cvStoragePath, existing.motivationStoragePath])
     return NextResponse.json({ success: true })
   } catch {
     return NextResponse.json({ error: 'Failed to delete candidate' }, { status: 500 })

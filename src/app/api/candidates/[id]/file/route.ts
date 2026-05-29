@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { downloadDocument } from '@/lib/storage'
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions)
@@ -22,15 +23,20 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     const candidate = await prisma.candidate.findFirst({
       where: isAdmin ? { id } : { id, userId },
       select: {
-        cvFile: true, cvMimeType: true, cvFileName: true,
-        motivationFile: true, motivationMimeType: true,
+        cvFile: true, cvMimeType: true, cvFileName: true, cvStoragePath: true,
+        motivationFile: true, motivationMimeType: true, motivationStoragePath: true,
         firstName: true, lastName: true,
       },
     })
     if (!candidate) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-    const fileBuffer = type === 'motivation' ? candidate.motivationFile : candidate.cvFile
     const mimeType = (type === 'motivation' ? candidate.motivationMimeType : candidate.cvMimeType) || 'application/pdf'
+    // Prefer Supabase Storage; fall back to the legacy Postgres bytea column
+    // (older candidates, or if Storage is momentarily unavailable).
+    const storagePath = type === 'motivation' ? candidate.motivationStoragePath : candidate.cvStoragePath
+    const byteaFile = type === 'motivation' ? candidate.motivationFile : candidate.cvFile
+    let fileBuffer: Buffer | null = storagePath ? await downloadDocument(storagePath) : null
+    if (!fileBuffer && byteaFile) fileBuffer = Buffer.from(byteaFile)
     if (!fileBuffer) {
       return NextResponse.json({ error: 'No file stored for this candidate' }, { status: 404 })
     }

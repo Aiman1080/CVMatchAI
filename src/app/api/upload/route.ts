@@ -12,6 +12,7 @@ import { getPlanLimits, getEffectiveSubscription } from '@/lib/plans'
 import { createNotification } from '@/lib/notifications'
 import { logActivity } from '@/lib/activity'
 import { isDemoAccount } from '@/lib/demo-guard'
+import { persistDocument } from '@/lib/storage'
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
@@ -88,18 +89,22 @@ export async function POST(req: Request) {
     // Create a placeholder candidate first so we have an ID for the analysis update.
     // Store the raw binary too so the recruiter can preview the original PDF/DOCX
     // (not just the extracted text) in the candidate detail page.
-    const cvBytes = docType === 'cv' ? buffer : undefined
-    const motivBytes = docType === 'motivation' ? buffer : undefined
+    // Persist the original binary to Supabase Storage (falls back to Postgres
+    // bytea when Storage isn't configured or the upload fails).
+    const cvDoc = docType === 'cv' ? await persistDocument(buffer, file.type, 'cv') : null
+    const motivDoc = docType === 'motivation' ? await persistDocument(buffer, file.type, 'motivation') : null
     let candidate = await prisma.candidate.create({
       data: {
         firstName: 'Unknown', lastName: 'Candidate',
         cvFileName: fileName,
         cvContent: docType === 'cv' ? text : undefined,
-        cvFile: cvBytes,
-        cvMimeType: cvBytes ? file.type : undefined,
+        cvFile: cvDoc?.fileBytes ?? undefined,
+        cvStoragePath: cvDoc?.storagePath ?? undefined,
+        cvMimeType: docType === 'cv' ? file.type : undefined,
         motivationText: docType === 'motivation' ? text : undefined,
-        motivationFile: motivBytes,
-        motivationMimeType: motivBytes ? file.type : undefined,
+        motivationFile: motivDoc?.fileBytes ?? undefined,
+        motivationStoragePath: motivDoc?.storagePath ?? undefined,
+        motivationMimeType: docType === 'motivation' ? file.type : undefined,
         status: 'new', source: 'upload',
         gdprConsent: true, gdprConsentDate: new Date(),
         vacancyId, userId,

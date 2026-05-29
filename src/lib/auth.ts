@@ -7,6 +7,9 @@ import AzureADProvider from 'next-auth/providers/azure-ad'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import bcrypt from 'bcryptjs'
 import prisma from './prisma'
+import { createLogger } from './logger'
+
+const log = createLogger('auth')
 
 // Build the providers list dynamically — SSO providers only load when env vars are set
 const providers: NextAuthOptions['providers'] = [
@@ -19,36 +22,36 @@ const providers: NextAuthOptions['providers'] = [
     async authorize(credentials) {
       try {
         if (!credentials?.email || !credentials?.password) {
-          console.warn('[Auth] Missing credentials')
+          log.warn('Missing credentials')
           return null
         }
         const email = credentials.email.toLowerCase()
         const user = await prisma.user.findUnique({ where: { email } })
         if (!user) {
-          console.warn(`[Auth] No user found for email: ${email}`)
+          log.warn('No user found', { email })
           return null
         }
         if (!user.password) {
-          console.warn(`[Auth] User ${email} has no password set (likely SSO-only)`)
+          log.warn('User has no password set (likely SSO-only)', { email })
           return null
         }
         const isValid = await bcrypt.compare(credentials.password, user.password)
         if (!isValid) {
-          console.warn(`[Auth] Invalid password for ${email}`)
+          log.warn('Invalid password', { email })
           return null
         }
         if (user.suspended) {
-          console.warn(`[Auth] Suspended user tried to log in: ${email}`)
+          log.warn('Suspended user tried to log in', { email })
           return null
         }
-        console.log(`[Auth] Successful login: ${email} (role=${user.role}, plan=${user.subscription})`)
+        log.info('Successful login', { email, role: user.role, plan: user.subscription })
         return {
           id: user.id, email: user.email, name: user.name,
           role: user.role, subscription: user.subscription, company: user.company,
           emailVerified: user.emailVerified, emailSignature: (user as any).emailSignature,
         }
       } catch (e: any) {
-        console.error('[Auth] authorize() threw:', e?.message || e)
+        log.error('authorize() threw', { message: e?.message })
         return null
       }
     },

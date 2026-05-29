@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { isDemoAccount } from '@/lib/demo-guard'
+import { deleteDocuments } from '@/lib/storage'
 
 // Next.js 15 requires params to be awaited — it's a Promise in the App Router
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -77,8 +78,14 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     // Ownership check before delete
     const existing = await prisma.vacancy.findFirst({ where: isAdmin ? { id } : { id, userId } })
     if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-    // Cascading deletes for candidates are handled by Prisma schema onDelete rules
+    // Candidates cascade-delete at the DB level (which won't run app code), so
+    // collect their Storage paths first to clean the binaries afterwards.
+    const candidates = await prisma.candidate.findMany({
+      where: { vacancyId: id },
+      select: { cvStoragePath: true, motivationStoragePath: true },
+    })
     await prisma.vacancy.delete({ where: { id } })
+    await deleteDocuments(candidates.flatMap(c => [c.cvStoragePath, c.motivationStoragePath]))
     return NextResponse.json({ success: true })
   } catch {
     return NextResponse.json({ error: 'Failed to delete vacancy' }, { status: 500 })

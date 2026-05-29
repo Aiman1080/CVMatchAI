@@ -12,6 +12,11 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
 
   useEffect(() => {
     console.error('[App Error]', error)
+    // Forward to Sentry when configured. Loaded lazily to keep the bundle
+    // small for users without Sentry.
+    if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
+      import('@sentry/nextjs').then(Sentry => Sentry.captureException(error)).catch(() => {})
+    }
   }, [error])
 
   return (

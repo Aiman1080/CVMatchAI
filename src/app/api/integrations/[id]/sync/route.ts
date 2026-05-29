@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { isDemoAccount } from '@/lib/demo-guard'
+import { getPlanLimits, getEffectiveSubscription } from '@/lib/plans'
 import {
   syncTeamtailor, syncRecruitee, syncSmartRecruiters,
   syncGreenhouse, syncLever, syncBullhorn, syncWorkable, syncFlatchr,
@@ -25,6 +26,14 @@ export async function POST(_req: Request, context: { params: Promise<{ id: strin
     return NextResponse.json({ error: 'Failed to load integration' }, { status: 500 })
   }
   if (!integration) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  // Re-check the Pro gate at sync time, not just at connect time — otherwise a
+  // user who connected while Pro then downgraded could keep syncing for free.
+  const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { subscription: true, subscriptionEnd: true } })
+  const limits = getPlanLimits(getEffectiveSubscription(dbUser?.subscription || 'free', dbUser?.subscriptionEnd || null))
+  if (!limits.atsIntegrations) {
+    return NextResponse.json({ error: 'ATS integrations require a Pro plan', upgrade: true }, { status: 403 })
+  }
 
   const since = integration.lastSyncAt || undefined
 

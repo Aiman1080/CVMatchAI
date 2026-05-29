@@ -26,11 +26,11 @@ export default async function CandidateDetailPage({ params }: { params: Promise<
   // base64-serialized into the SSR HTML — bloating the page by 100s of KB.
   // Strip them out and pass booleans the client uses to render the PDF
   // viewer (which fetches the binary via /api/candidates/[id]/file on demand).
-  const { cvFile, motivationFile, ...metadata } = raw
+  const { cvFile, motivationFile, cvStoragePath, motivationStoragePath, ...metadata } = raw
   const candidate = {
     ...metadata,
-    hasCvFile: !!cvFile,
-    hasMotivationFile: !!motivationFile,
+    hasCvFile: !!(cvFile || cvStoragePath),
+    hasMotivationFile: !!(motivationFile || motivationStoragePath),
   }
 
   const fullName = `${candidate.firstName || ''} ${candidate.lastName || ''}`.trim() || 'Candidate'

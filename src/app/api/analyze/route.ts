@@ -7,11 +7,15 @@ import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { analyzeCVAgainstVacancy } from '@/lib/ai'
 import { logActivity } from '@/lib/activity'
+import { isDemoAccount } from '@/lib/demo-guard'
 
 // Re-runs AI analysis on an existing candidate — useful after editing vacancy requirements
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (isDemoAccount(session.user?.email)) {
+    return NextResponse.json({ error: 'Demo accounts cannot perform this action', demo: true }, { status: 403 })
+  }
   let body: any
   try { body = await req.json() } catch { return NextResponse.json({ error: 'Invalid request body' }, { status: 400 }) }
   const { candidateId } = body

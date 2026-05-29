@@ -9,10 +9,14 @@ import { isDemoAccount } from '@/lib/demo-guard'
 
 export async function POST(req: Request) {
   try {
-    const { email } = await req.json()
-    if (!email || typeof email !== 'string') {
+    const { email: rawEmail } = await req.json()
+    if (!rawEmail || typeof rawEmail !== 'string') {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 })
     }
+    // Users are stored with lowercased emails (register/login normalize), so
+    // match that here — otherwise a differently-cased input silently finds no
+    // user and the reset email is never sent (we always return success).
+    const email = rawEmail.toLowerCase().trim()
 
     // Always return success to prevent email enumeration
     const successResponse = NextResponse.json({ success: true })

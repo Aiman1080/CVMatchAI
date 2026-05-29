@@ -3,6 +3,9 @@
 // API key is configured so the app works out-of-the-box without a paid account.
 import { GoogleGenerativeAI, FunctionCallingMode, type FunctionDeclaration, SchemaType } from '@google/generative-ai'
 import { logAiUsage } from './ai-usage'
+import { createLogger } from './logger'
+
+const log = createLogger('ai')
 
 const isDemoMode = () =>
   !process.env.GEMINI_API_KEY ||
@@ -116,23 +119,23 @@ ${cvText.slice(0, 6000)}` +
     }
     // API call succeeded but returned no function call — fall back to demo data
     // so the app keeps working instead of crashing.
-    console.warn('[AI] analyzeCVAgainstVacancy returned no structured result, falling back to demo analysis.')
+    log.warn('analyzeCVAgainstVacancy returned no structured result, falling back to demo')
     return generateDemoAnalysis(cvText, vacancyTitle)
   } catch (error: any) {
     if (error?.status === 429) {
-      console.error('[AI] Rate limit hit on Gemini API:', error?.message)
+      log.error('Rate limit hit on Gemini API', { message: error?.message })
     } else if (error?.status === 401 || error?.status === 403) {
-      console.error('[AI] Invalid Gemini API key / permission denied:', error?.message)
+      log.error('Invalid Gemini API key / permission denied', { message: error?.message })
     } else if (error?.status === 400) {
-      console.error('[AI] Bad request to Gemini API:', error?.message)
+      log.error('Bad request to Gemini API', { message: error?.message })
     } else {
-      console.error('[AI] analyzeCVAgainstVacancy error:', error?.message || error)
+      log.error('analyzeCVAgainstVacancy error', { message: error?.message })
     }
 
     // Always fall back to demo data so the app keeps working when the AI call
     // fails (rate limit, quota, network, etc.). A working app with demo data is
     // preferable to a "correctly broken" page that crashes for the user.
-    console.warn('[AI] Falling back to demo analysis after AI failure.')
+    log.warn('Falling back to demo analysis after AI failure')
     return generateDemoAnalysis(cvText, vacancyTitle)
   }
 }
@@ -244,7 +247,7 @@ export async function classifyRecruitmentEmail(
       }
     }
   } catch (error) {
-    console.error('[AI] Email classification error:', error)
+    log.error('Email classification error', { error: String(error) })
   }
 
   return { isRelevant: false, confidence: 0 }
@@ -292,7 +295,7 @@ export async function detectDocumentType(text: string): Promise<'cv' | 'motivati
     const call = result.response.functionCalls()?.[0]
     if (call) return (call.args as any).type
   } catch (error) {
-    console.error('[AI] detectDocumentType error:', error)
+    log.error('detectDocumentType error', { error: String(error) })
   }
 
   const lower = text.toLowerCase()
@@ -376,7 +379,7 @@ export async function selectBestVacancyForCV(
       }
     }
   } catch (error: any) {
-    console.error('[AI] selectBestVacancyForCV error:', error?.message || error)
+    log.error('selectBestVacancyForCV error', { message: error?.message })
   }
 
   return keywordVacancyFallback(cvText, vacancies)
@@ -589,7 +592,7 @@ Call submit_interview_questions now.`
     if (call) {
       return call.args as unknown as { questions: Array<{ question: string; category: string; rationale: string; expectedAnswer: string }> }
     }
-    console.warn('[AI] generateInterviewQuestions returned no structured result, falling back to demo questions.')
+    log.warn('generateInterviewQuestions returned no structured result, falling back')
     return {
       questions: [
         { question: 'Can you describe a challenging technical problem you solved recently and how you approached it?', category: 'technical', rationale: 'Assesses problem-solving ability and technical depth relevant to the role.', expectedAnswer: 'A strong answer describes a specific problem, the systematic debugging or design approach taken, and the measurable outcome or lesson learned.' },
@@ -601,11 +604,11 @@ Call submit_interview_questions now.`
       ],
     }
   } catch (error: any) {
-    console.error('[AI] generateInterviewQuestions error:', error?.message || error)
+    log.error('generateInterviewQuestions error', { message: error?.message })
 
     // Always fall back to canned demo questions so the app keeps working when
     // the AI call fails (rate limit, quota, network, etc.).
-    console.warn('[AI] Falling back to demo interview questions after AI failure.')
+    log.warn('Falling back to demo interview questions after AI failure')
     return {
       questions: [
         { question: 'Can you describe a challenging technical problem you solved recently and how you approached it?', category: 'technical', rationale: 'Assesses problem-solving ability and technical depth relevant to the role.', expectedAnswer: 'A strong answer describes a specific problem, the systematic debugging or design approach taken, and the measurable outcome or lesson learned.' },
@@ -677,7 +680,7 @@ Create a compelling description (200-300 words), a clear list of must-have requi
     if (call) {
       return call.args as unknown as { description: string; requirements: string; niceToHave: string }
     }
-    console.warn('[AI] generateJobDescription returned no structured result, falling back to demo content.')
+    log.warn('generateJobDescription returned no structured result, falling back')
     {
       const companyLine = company ? ` at ${company}` : ''
       return {
@@ -687,11 +690,11 @@ Create a compelling description (200-300 words), a clear list of must-have requi
       }
     }
   } catch (error: any) {
-    console.error('[AI] generateJobDescription error:', error?.message || error)
+    log.error('generateJobDescription error', { message: error?.message })
 
     // Always fall back to canned content so the app keeps working when the AI
     // call fails (rate limit, quota, network, etc.).
-    console.warn('[AI] Falling back to demo job description after AI failure.')
+    log.warn('Falling back to demo job description after AI failure')
     const companyLine = company ? ` at ${company}` : ''
     return {
       description: `We are looking for a talented ${title}${companyLine}. ${keywords || 'Modern technologies'} experience required. Collaborative team environment with growth opportunities.`,
@@ -783,7 +786,7 @@ Call submit_ranking now.`
     if (call) {
       return call.args as unknown as { ranking: Array<{ candidateId: string; rank: number; reasoning: string; standoutFactor: string }> }
     }
-    console.warn('[AI] rankCandidates returned no structured result, falling back to demo ranking.')
+    log.warn('rankCandidates returned no structured result, falling back')
     {
       const fallback = topCandidates.map((c, idx) => ({
         candidateId: c.id,
@@ -794,11 +797,11 @@ Call submit_ranking now.`
       return { ranking: fallback }
     }
   } catch (error: any) {
-    console.error('[AI] rankCandidates error:', error?.message || error)
+    log.error('rankCandidates error', { message: error?.message })
 
     // Always fall back to a deterministic score-based ranking so the app keeps
     // working when the AI call fails (rate limit, quota, network, etc.).
-    console.warn('[AI] Falling back to demo ranking after AI failure.')
+    log.warn('Falling back to demo ranking after AI failure')
     const fallback = topCandidates.map((c, idx) => ({
       candidateId: c.id,
       rank: idx + 1,
@@ -969,18 +972,18 @@ Call submit_hiring_report now.`
     if (call) {
       return call.args as unknown as { report: string }
     }
-    console.warn('[AI] generateHiringReport returned no structured result, falling back to template report.')
+    log.warn('generateHiringReport returned no structured result, falling back')
     {
       const recLabel = candidate.recommendation === 'strong_yes' ? 'Strongly Recommended' : candidate.recommendation === 'yes' ? 'Recommended' : candidate.recommendation === 'maybe' ? 'Consider with Reservations' : 'Not Recommended'
       const scoreLabel = candidate.matchScore >= 80 ? 'Excellent match' : candidate.matchScore >= 65 ? 'Good match' : candidate.matchScore >= 50 ? 'Moderate match' : 'Below expectations'
       return { report: `# Hiring Report\n\n## Candidate Overview\n- **Name:** ${candidate.firstName} ${candidate.lastName}\n- **Position:** ${vacancyTitle}${candidate.email ? `\n- **Email:** ${candidate.email}` : ''}${candidate.phone ? `\n- **Phone:** ${candidate.phone}` : ''}\n- **Report Date:** ${new Date().toLocaleDateString()}\n\n## Match Score: ${candidate.matchScore}% — ${scoreLabel}\n\n## Professional Summary\n${candidate.summary || 'See CV for details.'}\n\n## Strengths\n${candidate.strengths || '- See CV for details'}\n\n## Areas of Concern\n${candidate.weaknesses || '- See CV for details'}\n\n## Experience\n${candidate.experience || 'See CV for details.'}\n\n## Education\n${candidate.education || 'See CV for details.'}\n\n## Interview Readiness\n${candidate.recommendation === 'strong_yes' || candidate.recommendation === 'yes' ? 'Candidate is ready for a comprehensive interview. Focus on verifying key qualifications and cultural fit.' : 'Consider a preliminary screening call before committing to a full interview.'}\n\n## Salary Considerations\nBased on the ${scoreLabel.toLowerCase()} rating, compensation should be calibrated to the candidate\'s experience level and market benchmarks for this role.\n\n## Final Recommendation: ${recLabel}\n\n## Next Steps\n1. ${candidate.recommendation === 'strong_yes' || candidate.recommendation === 'yes' ? 'Schedule interview within 5-7 business days' : 'Conduct preliminary screening call'}\n2. Prepare targeted interview questions based on areas of concern\n3. Review alongside other candidates in the pipeline\n\n---\n*Generated by DeltaMatch*` }
     }
   } catch (error: any) {
-    console.error('[AI] generateHiringReport error:', error?.message || error)
+    log.error('generateHiringReport error', { message: error?.message })
 
     // Always fall back to a structured template report so the app keeps working
     // when the AI call fails (rate limit, quota, network, etc.).
-    console.warn('[AI] Falling back to demo hiring report after AI failure.')
+    log.warn('Falling back to demo hiring report after AI failure')
     const recLabel = candidate.recommendation === 'strong_yes' ? 'Strongly Recommended' : candidate.recommendation === 'yes' ? 'Recommended' : candidate.recommendation === 'maybe' ? 'Consider with Reservations' : 'Not Recommended'
     const scoreLabel = candidate.matchScore >= 80 ? 'Excellent match' : candidate.matchScore >= 65 ? 'Good match' : candidate.matchScore >= 50 ? 'Moderate match' : 'Below expectations'
     return { report: `# Hiring Report\n\n## Candidate Overview\n- **Name:** ${candidate.firstName} ${candidate.lastName}\n- **Position:** ${vacancyTitle}${candidate.email ? `\n- **Email:** ${candidate.email}` : ''}${candidate.phone ? `\n- **Phone:** ${candidate.phone}` : ''}\n- **Report Date:** ${new Date().toLocaleDateString()}\n\n## Match Score: ${candidate.matchScore}% — ${scoreLabel}\n\n## Professional Summary\n${candidate.summary || 'See CV for details.'}\n\n## Strengths\n${candidate.strengths || '- See CV for details'}\n\n## Areas of Concern\n${candidate.weaknesses || '- See CV for details'}\n\n## Experience\n${candidate.experience || 'See CV for details.'}\n\n## Education\n${candidate.education || 'See CV for details.'}\n\n## Interview Readiness\n${candidate.recommendation === 'strong_yes' || candidate.recommendation === 'yes' ? 'Candidate is ready for a comprehensive interview. Focus on verifying key qualifications and cultural fit.' : 'Consider a preliminary screening call before committing to a full interview.'}\n\n## Salary Considerations\nBased on the ${scoreLabel.toLowerCase()} rating, compensation should be calibrated to the candidate\'s experience level and market benchmarks for this role.\n\n## Final Recommendation: ${recLabel}\n\n## Next Steps\n1. ${candidate.recommendation === 'strong_yes' || candidate.recommendation === 'yes' ? 'Schedule interview within 5-7 business days' : 'Conduct preliminary screening call'}\n2. Prepare targeted interview questions based on areas of concern\n3. Review alongside other candidates in the pipeline\n\n---\n*Generated by DeltaMatch*` }

@@ -121,10 +121,12 @@ model Candidate {
   // Stored in Postgres bytea; large but bounded (CVs typically 100-300 KB).
   cvFile          Bytes?
   cvMimeType      String?
+  cvStoragePath   String?
   motivationText  String?
   motivationUrl   String?
   motivationFile  Bytes?
   motivationMimeType String?
+  motivationStoragePath String?
   language        String     @default("nl")
   matchScore      Float?
   summary         String?

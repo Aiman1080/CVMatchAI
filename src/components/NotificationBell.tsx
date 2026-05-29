@@ -99,7 +99,9 @@ export function NotificationBell() {
   }
 
   const deleteOne = async (id: string) => {
+    const wasUnread = notifications.some(n => n.id === id && !n.read)
     setNotifications(prev => prev.filter(n => n.id !== id))
+    if (wasUnread) setUnreadCount(c => Math.max(0, c - 1))
     try {
       await fetch('/api/notifications', {
         method: 'PATCH',
