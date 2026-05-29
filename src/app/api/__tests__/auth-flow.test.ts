@@ -92,7 +92,7 @@ describe('Auth Flow - Register', () => {
 
     const req = new Request('http://localhost/api/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ name: 'John', email: 'john@test.com', password: 'Password123!' }),
+      body: JSON.stringify({ name: 'John', email: 'john@test.com', password: 'Password123!', company: 'Acme' }),
     })
 
     const response = await POST(req)
@@ -104,7 +104,7 @@ describe('Auth Flow - Register', () => {
   it('register with short password → 400', async () => {
     const req = new Request('http://localhost/api/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ name: 'John', email: 'john@test.com', password: 'short' }),
+      body: JSON.stringify({ name: 'John', email: 'john@test.com', password: 'short', company: 'Acme' }),
     })
 
     const response = await POST(req)
@@ -117,6 +117,16 @@ describe('Auth Flow - Register', () => {
     const req = new Request('http://localhost/api/auth/register', {
       method: 'POST',
       body: JSON.stringify({ email: 'john@test.com' }),
+    })
+
+    const response = await POST(req)
+    expect(response.status).toBe(400)
+  })
+
+  it('register without company → 400', async () => {
+    const req = new Request('http://localhost/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ name: 'John', email: 'john@test.com', password: 'Password123!' }),
     })
 
     const response = await POST(req)

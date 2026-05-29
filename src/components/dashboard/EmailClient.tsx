@@ -599,18 +599,52 @@ export function EmailClient() {
                 />
               )}
 
-              {/* Manual IMAP fields for "Other" */}
+              {/* Manual IMAP fields + help guide for "Other" */}
               {selectedProvider === 'other' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label>{te.imapHost}</Label>
-                    <Input placeholder="imap.example.com" value={form.host} onChange={e => setForm(p => ({ ...p, host: e.target.value }))} required />
+                <>
+                  <HelpGuide
+                    title={(te as any).imapHelpTitle || 'How to set up custom IMAP'}
+                    steps={[
+                      (te as any).imapStep1 || 'Enable IMAP access in your email provider settings.',
+                      <>
+                        {(te as any).imapStep2 || 'Find the IMAP host in your provider docs. Common ones:'}
+                        <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 leading-relaxed break-words">
+                          {(te as any).imapStep2Examples || 'Yahoo: imap.mail.yahoo.com · iCloud: imap.mail.me.com · OVH: ssl0.ovh.net · Infomaniak: mail.infomaniak.com · Zoho: imap.zoho.eu'}
+                        </div>
+                      </>,
+                      (te as any).imapStep3 || 'Port is almost always 993 (SSL/TLS).',
+                      (te as any).imapStep4 || 'Username is usually your full email address.',
+                      (te as any).imapStep5 || 'Password is your mailbox password (or App Password if 2FA is on).',
+                      (te as any).imapStep6 || 'We only read mail (INBOX). Nothing is sent or deleted.',
+                    ]}
+                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label>{te.imapHost}</Label>
+                      <Input
+                        placeholder={(te as any).imapHostPlaceholder || 'imap.example.com'}
+                        value={form.host}
+                        onChange={e => setForm(p => ({ ...p, host: e.target.value }))}
+                        required
+                      />
+                      <p className="text-[11px] text-gray-500 dark:text-gray-400 break-words">
+                        {(te as any).imapHostHint || 'Example: imap.mail.yahoo.com, ssl0.ovh.net, mail.infomaniak.com'}
+                      </p>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>{te.port}</Label>
+                      <Input
+                        type="number"
+                        value={form.port}
+                        onChange={e => setForm(p => ({ ...p, port: parseInt(e.target.value) }))}
+                        required
+                      />
+                      <p className="text-[11px] text-gray-500 dark:text-gray-400 break-words">
+                        {(te as any).portHint || '993 (SSL/TLS, recommended) or 143 (STARTTLS)'}
+                      </p>
+                    </div>
                   </div>
-                  <div className="space-y-1.5">
-                    <Label>{te.port}</Label>
-                    <Input type="number" value={form.port} onChange={e => setForm(p => ({ ...p, port: parseInt(e.target.value) }))} required />
-                  </div>
-                </div>
+                </>
               )}
 
               {/* Security note */}

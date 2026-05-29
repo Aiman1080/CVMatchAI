@@ -29,10 +29,12 @@ export default function RegisterPage() {
   const nameRequiredMsg = tAuth?.nameRequired || 'Please enter your full name'
   const emailRequiredMsg = tAuth?.emailRequired || 'Please enter your email'
   const invalidEmailMsg = tAuth?.invalidEmail || 'Please enter a valid email address'
+  const companyRequiredMsg = tAuth?.companyRequired || 'Please enter your company name'
 
   const validate = (f: typeof form): Record<string, string> => {
     const next: Record<string, string> = {}
     if (!f.name.trim()) next.name = nameRequiredMsg
+    if (!f.company.trim()) next.company = companyRequiredMsg
     if (!f.email.trim()) next.email = emailRequiredMsg
     else if (!EMAIL_REGEX.test(f.email)) next.email = invalidEmailMsg
     if (!f.password) next.password = t.auth.tooShort
@@ -68,7 +70,7 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setTouched({ name: true, email: true, password: true, confirmPassword: true })
+    setTouched({ name: true, company: true, email: true, password: true, confirmPassword: true })
     const all = validate(form)
     if (Object.keys(all).length > 0) {
       setErrors(all)
@@ -161,8 +163,16 @@ export default function RegisterPage() {
               {errors.name && <p className="text-xs text-red-500" role="alert">{errors.name}</p>}
             </div>
             <div className="space-y-1.5">
-              <Label>{t.auth.company}</Label>
-              <Input placeholder="Acme Corp" value={form.company} onChange={e => setForm(p => ({ ...p, company: e.target.value }))} />
+              <Label>{t.auth.company} <span className="text-red-500">*</span></Label>
+              <Input
+                placeholder="Acme Corp"
+                value={form.company}
+                onChange={e => setField('company', e.target.value)}
+                onBlur={() => markTouched('company')}
+                aria-invalid={!!errors.company}
+                className={errors.company ? 'border-red-500 focus-visible:ring-red-500' : ''}
+              />
+              {errors.company && <p className="text-xs text-red-500" role="alert">{errors.company}</p>}
             </div>
           </div>
           <div className="space-y-1.5">
