@@ -141,25 +141,37 @@ ${cvText.slice(0, 6000)}` +
 
 const EMAIL_CLASSIFY_TOOL: FunctionDeclaration = {
   name: 'classify_email',
-  description: 'Determine whether the email is from someone applying for a job (with or without explicit mention)',
+  description: 'Read the email and determine if it is a job application from someone sending their CV',
   parameters: {
     type: SchemaType.OBJECT,
     properties: {
       isRelevant: {
         type: SchemaType.BOOLEAN,
         description:
-          'TRUE if the email is sent by a person who wants to apply for a job, sends their CV, or expresses interest in a position. Includes: explicit applications, spontaneous applications, follow-up emails to recruiters, emails mentioning CV/resume attached, emails about a candidate sending their profile, emails forwarding a CV from any platform (LinkedIn, Indeed, careers portals). FALSE only for: marketing emails, newsletters, transactional emails (orders, receipts), social notifications, spam, automated alerts, OR completely off-topic personal correspondence.',
+          'TRUE only if a HUMAN is sending their own CV/resume to apply for a job. ' +
+          'Includes: spontaneous applications, applications to a specific position, follow-ups WITH a new CV, ' +
+          'applications forwarded from career portals (LinkedIn, Indeed, etc.). ' +
+          'FALSE for: newsletters, marketing, password resets, order confirmations, automated alerts, ' +
+          'social notifications, recruiter-to-recruiter emails, candidate STATUS UPDATES without a CV, ' +
+          'OUT-OF-OFFICE replies, vacation autoresponders, OR if there is no document attachment at all.',
       },
-      candidateName: { type: SchemaType.STRING, description: 'Full name of the candidate as it appears in the email signature or body' },
-      appliedPosition: { type: SchemaType.STRING, description: 'Position or role the person is applying for (if mentioned)' },
+      candidateName: { type: SchemaType.STRING, description: 'Full name of the applicant — extract from signature, body, or sender' },
+      appliedPosition: { type: SchemaType.STRING, description: 'Position the candidate is applying for, if mentioned' },
+      cvAttachmentName: {
+        type: SchemaType.STRING,
+        description: 'EXACT filename of the attachment that is most likely the CV/resume. Must match one of the attachment names provided. Empty string if none.',
+      },
+      motivationAttachmentName: {
+        type: SchemaType.STRING,
+        description: 'EXACT filename of the attachment that is most likely the motivation letter / cover letter. Empty if none or same as CV.',
+      },
       intent: {
         type: SchemaType.STRING,
-        description: 'Short summary of the sender intent in 5-10 words. Examples: "Spontaneous application", "Applying for Senior Developer", "Forwarded CV from LinkedIn", "Following up on previous application"',
+        description: 'Short summary in 5-10 words: e.g. "Spontaneous application", "Forwarded CV from LinkedIn", "Applying for Senior Developer"',
       },
-      hasAttachments: { type: SchemaType.BOOLEAN, description: 'Whether the email has document attachments listed' },
-      confidence: { type: SchemaType.NUMBER, description: 'Confidence score 0-100 in the isRelevant decision' },
+      confidence: { type: SchemaType.NUMBER, description: 'Confidence 0-100 in the isRelevant decision' },
     },
-    required: ['isRelevant', 'hasAttachments', 'confidence'],
+    required: ['isRelevant', 'confidence'],
   },
 }
 
@@ -167,7 +179,15 @@ export async function classifyRecruitmentEmail(
   subject: string,
   bodyPreview: string,
   attachmentNames: string[],
-): Promise<{ isRelevant: boolean; candidateName?: string; appliedPosition?: string; intent?: string; confidence: number }> {
+): Promise<{
+  isRelevant: boolean
+  candidateName?: string
+  appliedPosition?: string
+  intent?: string
+  cvAttachmentName?: string
+  motivationAttachmentName?: string
+  confidence: number
+}> {
   if (isDemoMode()) {
     const keywords = ['sollicitatie', 'application', 'cv', 'resume', 'motivation', 'candidature', 'apply', 'kandidaat']
     const text = `${subject} ${bodyPreview}`.toLowerCase()
@@ -187,19 +207,26 @@ export async function classifyRecruitmentEmail(
     })
 
     const result = await model.generateContent(
-      `You are reading an email that just arrived in a recruiter's inbox. ` +
-      `Determine whether the SENDER WANTS TO APPLY FOR A JOB at the recruiter's company. ` +
-      `Be GENEROUS: include spontaneous applications, follow-ups, forwarded CVs, expressions of interest. ` +
-      `Even if the body is short, ambiguous, or in another language (FR/NL/EN/DE/ES), still mark TRUE if there's any sign the person is sending themselves or their CV.\n\n` +
-      `Rules:\n` +
-      `- A CV/resume attachment is the STRONGEST signal — almost always means application.\n` +
-      `- Phrases like "please find attached my CV", "I'm interested", "my profile", "I would like to apply", "ci-joint mon CV", "candidature spontanée", "veuillez trouver", "voici mon CV", "sollicit", "kandidaat", "bewerb" all mean YES.\n` +
-      `- Forwarded emails from LinkedIn/Indeed/Welcome to the Jungle: YES.\n` +
-      `- Newsletters, "Welcome to X", order confirmations, password resets, marketing: NO.\n` +
-      `- When in doubt, lean YES.\n\n` +
+      `You are a careful recruitment assistant reading an email in a recruiter's inbox.\n` +
+      `Your job: decide if THIS specific email is a real job application from a human who has attached their CV.\n\n` +
+      `STRONG YES signals:\n` +
+      `- An attached file that looks like a CV/resume (e.g. "CV_John.pdf", "resume.docx", "Lebenslauf.pdf")\n` +
+      `- Phrases: "find attached my CV", "ci-joint mon CV", "veuillez trouver", "voici mon CV", "candidature spontanée",\n` +
+      `  "I would like to apply", "I'm interested in this position", "sollicit", "kandidaat", "bewerbung"\n` +
+      `- Forwarded from LinkedIn/Indeed/Welcome to the Jungle: YES (only if a CV is attached)\n\n` +
+      `STRONG NO signals (do NOT mark as application):\n` +
+      `- Newsletters, marketing emails, password resets, order confirmations, automated notifications\n` +
+      `- Out-of-office / vacation autoresponders\n` +
+      `- Emails between recruiters (not from candidates)\n` +
+      `- Status updates without a NEW CV attached\n` +
+      `- ANY email with NO real document attachment — applications without a CV are not real applications\n\n` +
+      `If isRelevant is TRUE, you MUST also identify which attachment filename is most likely the CV ` +
+      `(field cvAttachmentName) and which is the motivation/cover letter (field motivationAttachmentName).\n\n` +
+      `--- EMAIL ---\n` +
       `Subject: ${subject}\n` +
-      `Body: ${bodyPreview.slice(0, 1500)}\n` +
-      `Attachments: ${attachmentNames.join(', ') || 'none'}\n\n` +
+      `Body (truncated to 3000 chars):\n${bodyPreview.slice(0, 3000)}\n\n` +
+      `Attachments available: ${attachmentNames.length ? attachmentNames.join(' | ') : '(none)'}\n` +
+      `--- END EMAIL ---\n\n` +
       `Call classify_email now with your decision.`
     )
 
@@ -211,6 +238,8 @@ export async function classifyRecruitmentEmail(
         candidateName: input.candidateName,
         appliedPosition: input.appliedPosition,
         intent: input.intent,
+        cvAttachmentName: input.cvAttachmentName,
+        motivationAttachmentName: input.motivationAttachmentName,
         confidence: input.confidence,
       }
     }
