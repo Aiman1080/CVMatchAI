@@ -153,6 +153,12 @@ export function AISupportChat({ onCreateTicket }: AISupportChatProps) {
             </Button>
           </div>
 
+          {messages.length >= MAX_MESSAGES && (
+            <p className="text-xs text-center text-amber-600 dark:text-amber-400 mt-2">
+              {(ts as any).limitReached || 'Conversation limit reached — create a support ticket below to continue.'}
+            </p>
+          )}
+
           {/* Create ticket button */}
           <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
             <Button

@@ -89,6 +89,11 @@ export default function RegisterPage() {
         // If they selected Pro at registration, send them to /upgrade to pay via Stripe.
         // Pro access is only granted after a successful payment + webhook confirmation.
         router.push(data.wantsUpgrade ? '/upgrade' : '/dashboard')
+      } else {
+        // Account created but auto-login failed — route to /login with a notice
+        // rather than silently stranding them on the re-enabled register form.
+        toast({ title: (t.auth as any).accountCreatedSignIn || 'Account created — please sign in.' })
+        router.push('/login')
       }
     } catch (error: any) {
       toast({

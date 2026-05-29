@@ -185,9 +185,23 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
         body: JSON.stringify({ candidateId: candidate.id }),
       })
       const data = await res.json()
-      if (data.success) {
-        setCandidate(data.candidate)
+      if (res.ok && data.success) {
+        // Merge, don't replace: /api/analyze returns a bare candidate update with
+        // no vacancy/emailSource relations and no hasCvFile/hasMotivationFile
+        // booleans, so replacing would wipe the title, document viewer and email
+        // tab. Drop the raw binary fields too to avoid bloating React state.
+        const { cvFile, motivationFile, ...rest } = data.candidate
+        setCandidate((prev: any) => ({
+          ...prev,
+          ...rest,
+          vacancy: prev.vacancy,
+          emailSource: prev.emailSource,
+          hasCvFile: prev.hasCvFile,
+          hasMotivationFile: prev.hasMotivationFile,
+        }))
         toast({ title: cd.aiAnalysis, description: `${cd.match}: ${data.candidate.matchScore?.toFixed(0)}%` })
+      } else {
+        toast({ title: data.error || cd.aiAnalysis, variant: 'destructive' })
       }
     } catch {
       toast({ title: cd.aiAnalysis, variant: 'destructive' })

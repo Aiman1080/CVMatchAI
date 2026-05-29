@@ -65,7 +65,7 @@ interface AtsVacancy {
   externalSource: string | null
 }
 
-export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) {
+export function VacancyDetailClient({ vacancy: initial, canExport = false }: { vacancy: Vacancy; canExport?: boolean }) {
   const router = useRouter()
   const { t } = useLanguage()
   const vd = t.dashboard.vacancyDetail
@@ -440,7 +440,7 @@ export function VacancyDetailClient({ vacancy: initial }: { vacancy: Vacancy }) 
                 {rankingLoading ? vd.rankingInProgress : vd.aiRanking}
               </Button>
             )}
-            {sortedCandidates.length > 0 && (
+            {canExport && sortedCandidates.length > 0 && (
               <>
                 <Button
                   size="sm"
