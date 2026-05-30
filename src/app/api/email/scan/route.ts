@@ -128,12 +128,32 @@ export async function POST(req: Request) {
       // we must use startsWith('text/').
       const isTextPart = (p: { type: string }) => p.type.startsWith('text/')
 
-      // Process the 25 MOST RECENT messages (not the oldest!). IMAP fetch returns
-      // messages in ascending UID order (oldest first), so we reverse and take.
-      // Previously we did slice(0, N) which processed the OLDEST N — recent
-      // applications got skipped entirely on busy inboxes.
-      const messagesToProcess = [...messages].reverse().slice(0, 25)
-      T(`PROCESSING ${messagesToProcess.length} most recent messages`)
+      // A real application almost always carries a CV as a non-text attachment,
+      // while newsletters/marketing rarely do. On busy inboxes (hundreds of
+      // promos), taking the 25 most-recent messages meant the scan saw only
+      // newsletters and never reached the actual applications. So we first KEEP
+      // ONLY messages that have at least one non-text attachment part, THEN take
+      // the 25 most recent of those. Dramatically more reliable + cheaper (fewer
+      // AI calls). Falls back to all messages if none have attachments.
+      const hasAttachmentPart = (bodyStructure: any): boolean => {
+        let found = false
+        const walk = (part: any) => {
+          if (!part || found) return
+          const type = (part.type || '').toLowerCase()
+          if (type !== 'multipart' && !type.startsWith('text/')) { found = true; return }
+          if (part.childNodes) part.childNodes.forEach(walk)
+        }
+        walk(bodyStructure)
+        return found
+      }
+      const withAttachments = messages.filter(m => hasAttachmentPart(m.bodyStructure))
+      T(`FILTERED ${withAttachments.length}/${messages.length} messages have an attachment`)
+
+      // Process the 25 most recent messages that HAVE an attachment (newest
+      // first). IMAP fetch returns ascending UID (oldest first), so reverse.
+      const pool = withAttachments.length > 0 ? withAttachments : messages
+      const messagesToProcess = [...pool].reverse().slice(0, 25)
+      T(`PROCESSING ${messagesToProcess.length} most recent messages with attachments`)
       for (const msg of messagesToProcess) {
         try {
           const subject = msg.envelope?.subject || ''
