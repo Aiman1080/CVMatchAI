@@ -950,6 +950,7 @@ export const fr = {
       readyToScan: '{email} est prête à être scannée.',
       connectionFailed: 'Connexion échouée',
       scanComplete: 'Scan terminé',
+      scanRateLimited: 'Limite atteinte (5 scans par heure). Patientez environ une heure puis réessayez.',
       scanDesc: '{scanned} e-mails scannés · {relevant} pertinents · {processed} candidats ajoutés',
       scanFailed: 'Scan échoué',
       demoScanComplete: 'Scan démo terminé',
