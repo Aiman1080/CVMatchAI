@@ -61,12 +61,20 @@ export async function POST(req: Request) {
         try {
           const subscription = event.data.object as any
           const userId = subscription.metadata?.userId
+          const customerId = subscription.customer as string | undefined
           if (userId) {
             await prisma.user.update({
               where: { id: userId },
               data: { subscription: 'free' },
             })
             console.log(`[Stripe webhook ${event.id}] User ${userId} downgraded to free (subscription deleted)`)
+          } else if (customerId) {
+            // Portal-initiated cancellations may lack our userId — resolve by email.
+            const customer = await stripe.customers.retrieve(customerId) as any
+            if (customer?.email) {
+              const res = await prisma.user.updateMany({ where: { email: customer.email }, data: { subscription: 'free' } })
+              console.log(`[Stripe webhook ${event.id}] Downgraded ${res.count} user(s) to free by customer email`)
+            }
           }
         } catch (err: any) {
           console.error(`[Stripe webhook ${event.id}] customer.subscription.deleted handler error:`, err?.message || err)
@@ -107,8 +115,24 @@ export async function POST(req: Request) {
               data: updateData,
             })
             console.log(`[Stripe webhook ${event.id}] User ${userId} subscription updated (status=${status})`)
+          } else if (customerId) {
+            // Fallback: subscriptions changed/cancelled from the Stripe Customer
+            // Portal may not carry our userId in metadata. Resolve the user by
+            // the customer's email so downgrades/expiries still apply.
+            try {
+              const customer = await stripe.customers.retrieve(customerId) as any
+              const custEmail = customer?.email
+              if (custEmail) {
+                const res = await prisma.user.updateMany({ where: { email: custEmail }, data: updateData })
+                console.log(`[Stripe webhook ${event.id}] Updated ${res.count} user(s) by customer email (status=${status})`)
+              } else {
+                console.warn(`[Stripe webhook ${event.id}] No userId and no customer email, customer=${customerId}`)
+              }
+            } catch (e: any) {
+              console.error(`[Stripe webhook ${event.id}] customer lookup failed:`, e?.message || e)
+            }
           } else {
-            console.warn(`[Stripe webhook ${event.id}] No userId in metadata, customer=${customerId}`)
+            console.warn(`[Stripe webhook ${event.id}] No userId and no customer on subscription`)
           }
         } catch (err: any) {
           console.error(`[Stripe webhook ${event.id}] customer.subscription.updated handler error:`, err?.message || err)
