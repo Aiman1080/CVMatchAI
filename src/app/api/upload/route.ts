@@ -152,6 +152,17 @@ export async function POST(req: Request) {
         await logActivity(candidate.id, 'created', 'Candidate created via CV upload')
         return NextResponse.json({ success: true, candidate, analysis }, { status: 201 })
       } catch (aiError: any) {
+        // Duplicate guard: if the AI extracted an email that already exists for
+        // this vacancy (i.e. the same CV was uploaded before), the update above
+        // hits the @@unique([email, vacancyId]) constraint. That's a DUPLICATE,
+        // not an AI failure — delete the placeholder and return 409 instead of
+        // leaving an "Unknown Candidate" orphan with no score.
+        if (aiError instanceof Prisma.PrismaClientKnownRequestError && aiError.code === 'P2002') {
+          if (placeholderCandidateId) {
+            await prisma.candidate.delete({ where: { id: placeholderCandidateId } }).catch(() => {})
+          }
+          return NextResponse.json({ error: 'This candidate has already been submitted for this vacancy.' }, { status: 409 })
+        }
         // AI analysis failed (rate limit / quota / network). Keep the candidate
         // record but mark them as not yet analyzed so the recruiter can retry
         // rather than silently storing fabricated demo scores.
