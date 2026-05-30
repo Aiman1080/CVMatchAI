@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowLeft, Shield, Eye, Database, Lock, Mail, Globe, UserX, RefreshCw } from 'lucide-react'
+import { ArrowLeft, Shield, Eye, Database, Lock, Mail, Globe, UserX, RefreshCw, ShieldOff } from 'lucide-react'
 import { Logo } from '@/components/Logo'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
@@ -33,7 +33,7 @@ export default function PrivacyPage() {
         {
           icon: Lock,
           title: 'Data security',
-          text: 'All data is encrypted in transit (TLS 1.3) and at rest (AES-256). Passwords are hashed using bcrypt. We use Neon PostgreSQL hosted in the EU (AWS eu-west-2). Access to production systems is restricted to authorised personnel only.',
+          text: 'Security is a priority. All data is encrypted in transit (HTTPS/TLS) and at rest. Account passwords are hashed with bcrypt (never stored in plain text), and credentials for connected email inboxes are encrypted with AES-256-GCM. Data is hosted on Supabase (PostgreSQL) within the EU, with row-level security and strict per-account isolation so each customer can only access their own data. We enforce API rate limiting, security headers, and continuous error monitoring. Access to production systems is restricted to authorised personnel. No system is perfectly secure, but we apply industry-standard measures to protect your data.',
         },
         {
           icon: RefreshCw,
@@ -54,6 +54,11 @@ export default function PrivacyPage() {
           icon: UserX,
           title: 'Your rights',
           text: 'Under GDPR you have the right to access, rectify, erase, restrict, and port your personal data. To exercise these rights, contact us at privacy@cvmatch.ai or use the export/delete tools in Settings. You also have the right to lodge a complaint with your national supervisory authority.',
+        },
+        {
+          icon: ShieldOff,
+          title: 'Limitation of liability',
+          text: 'While we apply strong security measures, no online service can be guaranteed 100% secure or available. To the maximum extent permitted by law, DeltaMatch is not liable for data loss, breaches caused by factors outside our control, service interruptions, or for errors or bias in AI-generated outputs. You remain responsible for keeping your own exports/backups and for validating AI results before acting on them. This section supplements our Terms of Service.',
         },
         {
           icon: Mail,
@@ -85,7 +90,7 @@ export default function PrivacyPage() {
         {
           icon: Lock,
           title: 'Gegevensbeveiliging',
-          text: 'Alle gegevens zijn versleuteld tijdens transport (TLS 1.3) en in rust (AES-256). Wachtwoorden worden gehasht met bcrypt. We gebruiken Neon PostgreSQL gehost in de EU (AWS eu-west-2). Toegang tot productiesystemen is beperkt tot bevoegd personeel.',
+          text: 'Beveiliging is een prioriteit. Alle gegevens zijn versleuteld tijdens transport (HTTPS/TLS) en in rust. Accountwachtwoorden worden gehasht met bcrypt (nooit in leesbare tekst opgeslagen), en de inloggegevens van gekoppelde e-mailboxen worden versleuteld met AES-256-GCM. Gegevens worden gehost op Supabase (PostgreSQL) binnen de EU, met row-level security en strikte isolatie per account zodat elke klant enkel zijn eigen gegevens kan raadplegen. Wij passen API-snelheidslimieten, beveiligingsheaders en continue foutmonitoring toe. Toegang tot productiesystemen is beperkt tot bevoegd personeel. Geen enkel systeem is perfect beveiligd, maar wij hanteren maatregelen volgens de industrienormen om uw gegevens te beschermen.',
         },
         {
           icon: RefreshCw,
@@ -106,6 +111,11 @@ export default function PrivacyPage() {
           icon: UserX,
           title: 'Uw rechten',
           text: 'Op grond van de AVG heeft u het recht op inzage, rectificatie, verwijdering, beperking en overdraagbaarheid van uw persoonsgegevens. Neem contact op via privacy@cvmatch.ai of gebruik de export-/verwijdertools in Instellingen.',
+        },
+        {
+          icon: ShieldOff,
+          title: 'Beperking van aansprakelijkheid',
+          text: 'Hoewel wij sterke beveiligingsmaatregelen toepassen, kan geen enkele online dienst 100% veilig of beschikbaar worden gegarandeerd. Voor zover wettelijk toegestaan is DeltaMatch niet aansprakelijk voor gegevensverlies, inbreuken door factoren buiten onze controle, serviceonderbrekingen, of fouten of bias in door AI gegenereerde resultaten. U blijft verantwoordelijk voor uw eigen exports/back-ups en voor het valideren van AI-resultaten voordat u ernaar handelt. Deze sectie vormt een aanvulling op onze Gebruiksvoorwaarden.',
         },
         {
           icon: Mail,
@@ -137,7 +147,7 @@ export default function PrivacyPage() {
         {
           icon: Lock,
           title: 'Sécurité des données',
-          text: 'Toutes les données sont chiffrées en transit (TLS 1.3) et au repos (AES-256). Les mots de passe sont hachés avec bcrypt. Nous utilisons Neon PostgreSQL hébergé dans l\'UE (AWS eu-west-2). L\'accès aux systèmes de production est limité au personnel autorisé.',
+          text: 'La sécurité est une priorité. Toutes les données sont chiffrées en transit (HTTPS/TLS) et au repos. Les mots de passe des comptes sont hachés avec bcrypt (jamais stockés en clair), et les identifiants des boîtes e-mail connectées sont chiffrés en AES-256-GCM. Les données sont hébergées sur Supabase (PostgreSQL) au sein de l\'UE, avec une sécurité au niveau des lignes (RLS) et une isolation stricte par compte : chaque client n\'accède qu\'à ses propres données. Nous appliquons une limitation de débit des API, des en-têtes de sécurité et une surveillance continue des erreurs. L\'accès aux systèmes de production est limité au personnel autorisé. Aucun système n\'est parfaitement sécurisé, mais nous appliquons des mesures conformes aux standards du secteur pour protéger vos données.',
         },
         {
           icon: RefreshCw,
@@ -158,6 +168,11 @@ export default function PrivacyPage() {
           icon: UserX,
           title: 'Vos droits',
           text: 'En vertu du RGPD, vous disposez du droit d\'accès, de rectification, d\'effacement, de limitation et de portabilité de vos données personnelles. Pour exercer ces droits, contactez-nous à privacy@cvmatch.ai ou utilisez les outils d\'export/suppression dans Paramètres. Vous avez également le droit d\'introduire une réclamation auprès de la CNIL.',
+        },
+        {
+          icon: ShieldOff,
+          title: 'Limitation de responsabilité',
+          text: 'Bien que nous appliquions de solides mesures de sécurité, aucun service en ligne ne peut être garanti sûr ou disponible à 100 %. Dans la mesure maximale permise par la loi, DeltaMatch n\'est pas responsable des pertes de données, des violations causées par des facteurs hors de notre contrôle, des interruptions de service, ni des erreurs ou biais dans les résultats générés par l\'IA. Il vous appartient de conserver vos propres exports/sauvegardes et de valider les résultats de l\'IA avant d\'agir. Cette section complète nos Conditions d\'utilisation.',
         },
         {
           icon: Mail,
