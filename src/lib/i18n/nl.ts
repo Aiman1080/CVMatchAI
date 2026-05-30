@@ -950,6 +950,7 @@ export const nl = {
       readyToScan: '{email} is klaar om te scannen.',
       connectionFailed: 'Verbinding mislukt',
       scanComplete: 'Scan voltooid',
+      scanRateLimited: 'Limiet bereikt (5 scans per uur). Wacht ongeveer een uur en probeer opnieuw.',
       scanDesc: '{scanned} e-mails gescand · {relevant} relevant · {processed} kandidaten toegevoegd',
       scanFailed: 'Scan mislukt',
       demoScanComplete: 'Demo-scan voltooid',

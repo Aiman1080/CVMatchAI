@@ -43,9 +43,6 @@ export function EmailClient() {
   const [scanning, setScanning] = useState<string | null>(null)
   const [scanProgress, setScanProgress] = useState<number>(0)
   const [scanTimer, setScanTimer] = useState<number>(0)
-  // On-screen diagnostic report from the last scan (status + per-message trace),
-  // so the user can copy it here instead of digging through Vercel logs.
-  const [scanReport, setScanReport] = useState<string | null>(null)
   const scanIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [demoScanning, setDemoScanning] = useState(false)
   const [cleaning, setCleaning] = useState(false)
@@ -165,33 +162,19 @@ export function EmailClient() {
     }
     window.addEventListener('beforeunload', beforeUnload)
 
-    setScanReport(null)
-    const stamp = new Date().toLocaleString()
     try {
       const res = await fetch('/api/email/scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ inboxId }),
       })
-      // The route may return JSON (normal) or a plain 429 from the rate limiter
-      // (5 scans/hour) — handle both so the user always gets a clear report.
-      const raw = await res.text()
-      let data: any = {}
-      try { data = JSON.parse(raw) } catch { data = { error: raw } }
-
-      const head = `=== SCAN REPORT ${stamp} === HTTP ${res.status}`
+      // Handle the rate limiter (5 scans/hour) — it may return a plain 429 body,
+      // so give the user a clear message instead of a cryptic parse error.
       if (res.status === 429) {
-        const report = `${head}\nRATE LIMITED — you've hit the 5 scans/hour cap. Wait ~1 hour, then try ONE scan.`
-        setScanReport(report)
-        toast({ title: te.scanFailed, description: 'Rate limit: 5 scans/hour. Wait ~1h.', variant: 'destructive' })
+        toast({ title: te.scanFailed, description: (te as any).scanRateLimited || 'Rate limit reached (5 scans/hour). Please wait about an hour and try again.', variant: 'destructive' })
         return
       }
-      const summary = res.ok
-        ? `scanned=${data.scanned} relevant=${data.relevant} processed=${data.processed}\n${data.diagnostic || ''}`
-        : `ERROR: ${data.error || 'unknown'}`
-      const traceLines = Array.isArray(data.trace) && data.trace.length ? '\n\n--- trace ---\n' + data.trace.join('\n') : '\n(no trace — request stopped before scan: auth, plan, inbox, or no active vacancy)'
-      setScanReport(`${head}\n${summary}${traceLines}`)
-
+      const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data.error)
       setScanProgress(100)
       toast({
@@ -204,7 +187,6 @@ export function EmailClient() {
         ? `${err.message} — ${te.scanCredentialsTip}`
         : te.scanGenericError
       toast({ title: te.scanFailed, description, variant: 'destructive' })
-      setScanReport(prev => prev || `=== SCAN REPORT ${stamp} ===\nNETWORK/CLIENT ERROR: ${err?.message || 'unknown'}`)
     } finally {
       window.removeEventListener('beforeunload', beforeUnload)
       if (scanIntervalRef.current) clearInterval(scanIntervalRef.current)
@@ -433,22 +415,6 @@ export function EmailClient() {
           )}
         </CardContent>
       </Card>
-
-      {/* Scan diagnostic report — copy/paste this to debug a scan in one shot */}
-      {scanReport && (
-        <Card className="border border-amber-300 dark:border-amber-800 shadow-sm">
-          <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-sm text-amber-700 dark:text-amber-400">Scan diagnostic (copy this to support)</CardTitle>
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={() => { navigator.clipboard?.writeText(scanReport).then(() => toast({ title: 'Copied' })).catch(() => {}) }}>Copy</Button>
-              <Button size="sm" variant="outline" onClick={() => setScanReport(null)}>Close</Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <pre className="text-xs whitespace-pre-wrap break-words bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-3 max-h-80 overflow-auto font-mono">{scanReport}</pre>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Email signature / footer — applied to every email sent to candidates */}
       <Card className="border border-gray-200 shadow-sm dark:border-gray-800">

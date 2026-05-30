@@ -60,10 +60,9 @@ export async function POST(req: Request) {
   }
 
   const results = { scanned: 0, relevant: 0, processed: 0, errors: [] as string[] }
-  // Per-message decision trace, returned in the response so the recruiter can see
-  // (and copy) exactly why each email was kept or dropped — no Vercel logs needed.
-  const trace: string[] = []
-  const T = (line: string) => { trace.push(line); log.info(line) }
+  // Per-message decision logger — writes to the Vercel runtime logs (info level)
+  // so a scan can be debugged server-side without exposing internals to the client.
+  const T = (line: string) => { log.info(line) }
   T(`START inbox=${inbox.email} host=${inbox.host}:${inbox.port} activeVacancies=${vacancies.length}`)
 
   try {
@@ -436,7 +435,7 @@ export async function POST(req: Request) {
     } else if (error?.code === 'ECONNREFUSED' || error?.message?.includes('connect')) {
       hint = ' — Could not reach the IMAP server. Check your host and port are correct.'
     }
-    return NextResponse.json({ error: `Scan failed: ${error.message}${hint}`, trace }, { status: 500 })
+    return NextResponse.json({ error: `Scan failed: ${error.message}${hint}` }, { status: 500 })
   }
 
   // Add a diagnostic message so the recruiter knows why nothing was added
@@ -452,5 +451,5 @@ export async function POST(req: Request) {
   }
 
   T(`DONE scanned=${results.scanned} relevant=${results.relevant} processed=${results.processed} errors=${results.errors.length}`)
-  return NextResponse.json({ ...results, diagnostic, trace })
+  return NextResponse.json({ ...results, diagnostic })
 }
