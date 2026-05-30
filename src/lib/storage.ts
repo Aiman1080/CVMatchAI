@@ -15,7 +15,15 @@ import { createLogger } from './logger'
 const log = createLogger('storage')
 
 const BUCKET = 'cv-files'
-const SUPABASE_URL = process.env.SUPABASE_URL?.replace(/\/+$/, '')
+// Keep ONLY the origin (https://xxxx.supabase.co). If SUPABASE_URL was pasted
+// with a path (e.g. ".../rest/v1"), the upload URL becomes
+// "/rest/v1/storage/v1/object/..." which PostgREST rejects with PGRST125
+// "Invalid path specified in request URL". Normalizing to the origin fixes that.
+function originOf(raw?: string): string | undefined {
+  if (!raw) return undefined
+  try { return new URL(raw).origin } catch { return raw.replace(/\/+$/, '') }
+}
+const SUPABASE_URL = originOf(process.env.SUPABASE_URL)
 const SECRET_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 export function isStorageConfigured(): boolean {
