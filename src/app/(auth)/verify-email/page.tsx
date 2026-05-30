@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react'
 import { Logo } from '@/components/Logo'
@@ -13,6 +14,7 @@ export default function VerifyEmailPage() {
   const token = searchParams.get('token')
   const email = searchParams.get('email')
   const { t } = useLanguage()
+  const { update: updateSession } = useSession()
 
   const [status, setStatus] = useState<'loading' | 'success' | 'alreadyVerified' | 'error'>('loading')
   const [errorMessage, setErrorMessage] = useState('')
@@ -33,6 +35,9 @@ export default function VerifyEmailPage() {
         })
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || t.auth.verificationFailed)
+        // Refresh the JWT so the stale "unverified" flag clears immediately and
+        // the dashboard's verification banner disappears without a re-login.
+        await updateSession().catch(() => {})
         if (data.alreadyVerified) setStatus('alreadyVerified')
         else setStatus('success')
       } catch (err: any) {
