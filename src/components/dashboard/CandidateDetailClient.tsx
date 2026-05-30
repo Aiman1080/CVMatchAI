@@ -969,6 +969,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                 candidateId={candidate.id}
                 type="cv"
                 hasFile={!!candidate.hasCvFile}
+                mimeType={candidate.cvMimeType}
                 fallbackText={candidate.cvContent}
                 noTextLabel={ci.noCvText}
                 titleIcon={<FileText className="w-4 h-4 text-gray-400" />}
@@ -984,6 +985,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                   candidateId={candidate.id}
                   type="motivation"
                   hasFile={!!candidate.hasMotivationFile}
+                  mimeType={candidate.motivationMimeType}
                   fallbackText={candidate.motivationText}
                   noTextLabel={ci.noCvText}
                   titleIcon={<FileText className="w-4 h-4 text-indigo-400" />}
@@ -1028,6 +1030,7 @@ interface DocumentViewerProps {
   candidateId: string
   type: 'cv' | 'motivation'
   hasFile: boolean
+  mimeType?: string | null
   fallbackText?: string | null
   noTextLabel: string
   titleIcon: React.ReactNode
@@ -1035,10 +1038,14 @@ interface DocumentViewerProps {
   labels: Record<string, string>
 }
 
-function DocumentViewer({ candidateId, type, hasFile, fallbackText, noTextLabel, titleIcon, titleLabel, labels }: DocumentViewerProps) {
+function DocumentViewer({ candidateId, type, hasFile, mimeType, fallbackText, noTextLabel, titleIcon, titleLabel, labels }: DocumentViewerProps) {
   const [fullscreen, setFullscreen] = useState(false)
   const fileSrc = `/api/candidates/${candidateId}/file?type=${type}`
   const downloadSrc = `${fileSrc}&download=1`
+  // Browsers can render PDFs inline in an <iframe>, but NOT .docx/.doc — those
+  // would show a blank frame (or silently download). So only PDFs get the inline
+  // viewer; other formats get a clear download/open card.
+  const isPdf = !mimeType || mimeType.includes('pdf')
 
   // Close fullscreen with Esc
   useEffect(() => {
@@ -1061,7 +1068,49 @@ function DocumentViewer({ candidateId, type, hasFile, fallbackText, noTextLabel,
     )
   }
 
-  // Has the original file → render in iframe with fullscreen + download controls
+  // Non-PDF original (e.g. Word .docx) → can't be shown inline in a browser
+  // frame, so offer download + open-in-new-tab instead of a blank iframe.
+  if (hasFile && !isPdf) {
+    return (
+      <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm flex items-center gap-2 min-w-0">{titleIcon} <span className="truncate">{titleLabel}</span></CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
+            <FileText className="w-12 h-12 text-blue-400" />
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              {(labels as any).wordNotInline || 'Word documents can’t be previewed in the browser. Download or open it to view.'}
+            </p>
+            <div className="flex items-center gap-2">
+              <a
+                href={downloadSrc}
+                className="inline-flex items-center gap-1.5 h-9 px-3 text-sm gradient-bg text-white rounded-md"
+              >
+                <Download size={14} /> {(labels as any).download || 'Download'}
+              </a>
+              <a
+                href={fileSrc}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 h-9 px-3 text-sm border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800"
+              >
+                <Maximize2 size={14} /> {(labels as any).openInNewTab || 'Open in new tab'}
+              </a>
+            </div>
+          </div>
+          {fallbackText && (
+            <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+              <p className="text-xs text-gray-400 mb-2">{(labels as any).extractedText || 'Extracted text'}</p>
+              <pre className="text-xs whitespace-pre-wrap break-words text-gray-600 dark:text-gray-300 max-h-72 overflow-auto">{fallbackText}</pre>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Has the original PDF → render in iframe with fullscreen + download controls
   if (hasFile) {
     return (
       <>
