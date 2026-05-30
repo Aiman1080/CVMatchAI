@@ -176,11 +176,11 @@ export async function POST(req: Request) {
           // List the attachment-looking parts (skip text bodies)
           const namedAttachments = allParts.filter(p => !isTextPart(p) && p.name).map(a => a.name)
 
-          log.debug(`PASS1 msg ${msg.uid} from ${sender}`, { subject: subject.slice(0, 80), bodyLen: bodyText.length, attachments: namedAttachments })
+          log.info(`PASS1 msg ${msg.uid} from ${sender}`, { subject: subject.slice(0, 80), bodyLen: bodyText.length, attachments: namedAttachments })
 
           // Send to Gemini for understanding the email content
           const classification = await classifyRecruitmentEmail(subject, bodyText, namedAttachments)
-          log.debug(`PASS1 msg ${msg.uid} → AI verdict`, { relevant: classification.isRelevant, confidence: classification.confidence, intent: classification.intent, candidate: classification.candidateName, cvFile: classification.cvAttachmentName })
+          log.info(`PASS1 msg ${msg.uid} → AI verdict`, { relevant: classification.isRelevant, confidence: classification.confidence, intent: classification.intent, candidate: classification.candidateName, cvFile: classification.cvAttachmentName })
 
           // Dedup: only skip if we PREVIOUSLY succeeded in creating a candidate from
           // this exact email. If the previous scan attempt failed (no candidate created),
@@ -190,10 +190,17 @@ export async function POST(req: Request) {
             where: { inboxId: inbox.id, sender, receivedAt: new Date(receivedAt), subject: uidTag ? { contains: uidTag } : subject },
           })
           if (previousScan && previousScan.candidateId) {
-            log.debug(`PASS1 msg ${msg.uid}: already imported as candidate ${previousScan.candidateId}, skipping`)
-            continue
+            // Verify the linked candidate STILL EXISTS — if it was deleted (e.g. the
+            // recruiter deleted it to re-import), the EmailScan still points at the
+            // gone id, and skipping here would make re-import impossible forever.
+            const stillExists = await prisma.candidate.findUnique({ where: { id: previousScan.candidateId }, select: { id: true } })
+            if (stillExists) {
+              log.info(`PASS1 msg ${msg.uid}: SKIP — already imported as candidate ${previousScan.candidateId} (still exists)`)
+              continue
+            }
+            log.info(`PASS1 msg ${msg.uid}: previous candidate ${previousScan.candidateId} was DELETED — re-importing`)
           }
-          // Clean up any previous failed scan attempt so we don't accumulate duplicates
+          // Clean up any previous scan attempt (failed, or whose candidate was deleted)
           if (previousScan) {
             await prisma.emailScan.delete({ where: { id: previousScan.id } }).catch(() => {})
           }
@@ -213,13 +220,17 @@ export async function POST(req: Request) {
 
           // Only shortlist if AI marked it as a real application AND there's at least
           // one non-text MIME part (i.e. a potential CV file)
-          if (!classification.isRelevant) continue
+          if (!classification.isRelevant) {
+            log.info(`PASS1 msg ${msg.uid}: SKIP — AI classified as NOT a real application`, { intent: classification.intent })
+            continue
+          }
           const hasFiles = allParts.some(p => !isTextPart(p))
           if (!hasFiles) {
-            log.debug(`PASS1 msg ${msg.uid}: AI said application but no files — skipping`)
+            log.info(`PASS1 msg ${msg.uid}: SKIP — relevant but no attachment/file parts found`)
             continue
           }
 
+          log.info(`PASS1 msg ${msg.uid}: SHORTLISTED for import`)
           shortlist.push({ msg, subject, sender, receivedAt: new Date(receivedAt), bodyText, allParts, classification })
         } catch (e: any) {
           log.error(`PASS1 msg ${msg.uid} failed`, { message: e?.message })
@@ -312,21 +323,21 @@ export async function POST(req: Request) {
           }
 
           if (!cvText || cvText.length < 200) {
-            log.debug(`PASS2 msg ${msg.uid}: no real CV, skipping`, { cvTextLen: cvText.length })
+            log.info(`PASS2 msg ${msg.uid}: SKIP — no real CV text extracted`, { cvTextLen: cvText.length })
             const scan = await prisma.emailScan.findFirst({ where: { inboxId: inbox.id, sender, subject: { contains: `::uid=${msg.uid}` } } })
             if (scan) await prisma.emailScan.update({ where: { id: scan.id }, data: { processed: true } })
             results.relevant--
             continue
           }
           const scan = await prisma.emailScan.findFirst({ where: { inboxId: inbox.id, sender, subject: { contains: `::uid=${msg.uid}` } } })
-          if (!scan) continue
+          if (!scan) { log.info(`PASS2 msg ${msg.uid}: SKIP — scan record not found (dedup subject mismatch)`); continue }
 
           // AI-based vacancy matching: Gemini reads the CV and picks the vacancy
           // with the best fit. Falls back to keyword/Jaccard scoring if the AI
           // call fails so the scan keeps working.
           const best = await selectBestVacancyForCV(cvText, vacancies)
           const vacancy = vacancies.find(v => v.id === best.vacancyId) || vacancies[0]
-          log.debug(`PASS2 msg ${msg.uid}: AI matched to vacancy`, { vacancy: vacancy.title, fit: best.fitScore })
+          log.info(`PASS2 msg ${msg.uid}: matched to vacancy`, { vacancy: vacancy.title, fit: best.fitScore })
 
           // Duplicate guard: candidate records are unique per (email, vacancyId).
           // If this person already applied to THIS vacancy, link the scan to the
@@ -337,7 +348,7 @@ export async function POST(req: Request) {
             select: { id: true },
           })
           if (existing) {
-            log.debug(`PASS2 msg ${msg.uid}: candidate already exists for this vacancy, linking`, { candidateId: existing.id })
+            log.info(`PASS2 msg ${msg.uid}: SKIP — candidate already exists for this vacancy (${existing.id}), linking only`, { candidateId: existing.id })
             await prisma.emailScan.update({
               where: { id: scan.id },
               data: { processed: true, candidateId: existing.id },
@@ -386,6 +397,8 @@ export async function POST(req: Request) {
               userId,
             },
           })
+
+          log.info(`PASS2 msg ${msg.uid}: CREATED candidate ${candidate.id} (${candidate.firstName} ${candidate.lastName}) for vacancy "${vacancy.title}"`)
 
           // Link the scan record to the created candidate for audit trail
           await prisma.emailScan.update({
