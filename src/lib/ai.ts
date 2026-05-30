@@ -304,6 +304,36 @@ export async function detectDocumentType(text: string): Promise<'cv' | 'motivati
   return cvScore >= 2 ? 'cv' : 'other'
 }
 
+// ── OCR fallback for scanned/image PDFs ──────────────────────────────────────
+// pdf-parse returns little/no text for scanned or image-only PDFs. Gemini reads
+// PDFs (and images) natively, so we send the raw bytes and ask for verbatim
+// text — no Tesseract/system dependency, no Vercel memory/timeout risk. Returns
+// '' in demo mode, for non-PDF/image types, for oversized files, or on any
+// failure, so callers keep their existing behaviour.
+export async function extractTextWithGemini(buffer: Buffer, mimeType: string): Promise<string> {
+  if (isDemoMode()) return ''
+  if (mimeType !== 'application/pdf' && !mimeType.startsWith('image/')) return ''
+  // Inline base64 inflates ~33%; keep well under Gemini's request limit.
+  if (buffer.length > 14 * 1024 * 1024) {
+    log.warn('extractTextWithGemini skipped — file too large for inline OCR', { bytes: buffer.length })
+    return ''
+  }
+  try {
+    const genAI = getClient()
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
+    const result = await model.generateContent([
+      { text: 'This document may be a scanned or image-based CV or motivation letter. Extract ALL readable text verbatim, preserving line breaks where possible. Return ONLY the extracted text, with no commentary.' },
+      { inlineData: { mimeType, data: buffer.toString('base64') } },
+    ])
+    const out = (result.response.text() || '').trim()
+    log.info('Gemini OCR extracted text', { chars: out.length })
+    return out
+  } catch (error) {
+    log.warn('Gemini OCR failed', { message: (error as Error).message })
+    return ''
+  }
+}
+
 // ── Best-vacancy matching ────────────────────────────────────────────────────
 // Given a CV and a list of active vacancies, ask Gemini to pick the one that
 // best fits. Falls back to keyword/Jaccard scoring when no API key is set or
