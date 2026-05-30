@@ -28,7 +28,25 @@ export async function parseDOCX(buffer: Buffer): Promise<string> {
 
 // Dispatches to the correct parser based on MIME type; falls back to raw UTF-8 for plain text
 export async function parseDocument(buffer: Buffer, mimeType: string): Promise<string> {
-  if (mimeType === 'application/pdf') return parsePDF(buffer)
+  if (mimeType === 'application/pdf') {
+    const text = await parsePDF(buffer)
+    // OCR fallback: scanned/image-only PDFs yield little or no text from
+    // pdf-parse. When that happens, ask Gemini to read the PDF directly (it
+    // handles PDFs natively — no Tesseract/system dependency, no Vercel
+    // memory/timeout risk). No-op in demo mode / on failure, so behaviour is
+    // unchanged when normal extraction already works. Dynamic import keeps the
+    // AI layer out of contexts that only need plain parsing.
+    if (text.trim().length < 100) {
+      try {
+        const { extractTextWithGemini } = await import('./ai')
+        const ocr = await extractTextWithGemini(buffer, mimeType)
+        if (ocr.trim().length > text.trim().length) return ocr
+      } catch (error) {
+        console.error('OCR fallback error:', error)
+      }
+    }
+    return text
+  }
   if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || mimeType === 'application/msword') return parseDOCX(buffer)
   return buffer.toString('utf-8')
 }
