@@ -19,7 +19,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
     ? await prisma.user.findUnique({ where: { id: userId }, select: { emailVerified: true, suspended: true } }).catch(() => null)
     : null
   if (dbUser?.suspended) redirect('/api/auth/signout?callbackUrl=/login?suspended=1')
-  const emailVerified = dbUser?.emailVerified ?? (session.user as any)?.emailVerified
+  // The DB is the source of truth for verification (the JWT is stale — it still
+  // says unverified even after the user clicked the link). Only fall back to the
+  // token's value if the DB query itself failed (dbUser === null).
+  const emailVerified = dbUser ? !!dbUser.emailVerified : !!(session.user as any)?.emailVerified
   const isDemoAccount = ['demo@cvmatch.ai', 'pro@cvmatch.ai', 'free@cvmatch.ai'].includes(email)
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex">

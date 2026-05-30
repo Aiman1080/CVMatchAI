@@ -114,7 +114,7 @@ export const authOptions: NextAuthOptions = {
       return true
     },
     // Persist extra fields into the JWT token on sign-in
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account, trigger }) {
       if (user) {
         // For SSO logins, fetch the DB user to get the role/subscription
         if (account?.provider === 'google' || account?.provider === 'azure-ad') {
@@ -132,6 +132,20 @@ export const authOptions: NextAuthOptions = {
           token.subscription = (user as any).subscription
           token.company = (user as any).company
           token.emailVerified = (user as any).emailVerified
+        }
+      } else if (trigger === 'update' && token.id) {
+        // Client called useSession().update() (e.g. right after email
+        // verification or a plan change) — re-read the fresh values from the DB
+        // so the stale token reflects reality without waiting for a re-login.
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { role: true, subscription: true, company: true, emailVerified: true },
+        }).catch(() => null)
+        if (dbUser) {
+          token.role = dbUser.role
+          token.subscription = dbUser.subscription
+          token.company = dbUser.company
+          token.emailVerified = dbUser.emailVerified
         }
       }
       return token
