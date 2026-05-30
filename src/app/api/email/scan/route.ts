@@ -60,6 +60,11 @@ export async function POST(req: Request) {
   }
 
   const results = { scanned: 0, relevant: 0, processed: 0, errors: [] as string[] }
+  // Per-message decision trace, returned in the response so the recruiter can see
+  // (and copy) exactly why each email was kept or dropped — no Vercel logs needed.
+  const trace: string[] = []
+  const T = (line: string) => { trace.push(line); log.info(line) }
+  T(`START inbox=${inbox.email} host=${inbox.host}:${inbox.port} activeVacancies=${vacancies.length}`)
 
   try {
     const { ImapFlow } = await import('imapflow')
@@ -88,7 +93,7 @@ export async function POST(req: Request) {
       )) {
         messages.push(msg)
       }
-      log.info(`Inbox ${inbox.id}: fetched ${messages.length} messages from last 30 days`)
+      T(`FETCHED ${messages.length} messages from last 15 days`)
 
       results.scanned = messages.length
 
@@ -129,7 +134,7 @@ export async function POST(req: Request) {
       // Previously we did slice(0, N) which processed the OLDEST N — recent
       // applications got skipped entirely on busy inboxes.
       const messagesToProcess = [...messages].reverse().slice(0, 25)
-      log.info(`Processing ${messagesToProcess.length} most recent messages (UIDs ${messagesToProcess[0]?.uid} → ${messagesToProcess[messagesToProcess.length - 1]?.uid})`)
+      T(`PROCESSING ${messagesToProcess.length} most recent messages`)
       for (const msg of messagesToProcess) {
         try {
           const subject = msg.envelope?.subject || ''
@@ -180,7 +185,7 @@ export async function POST(req: Request) {
 
           // Send to Gemini for understanding the email content
           const classification = await classifyRecruitmentEmail(subject, bodyText, namedAttachments)
-          log.info(`PASS1 msg ${msg.uid} → AI verdict`, { relevant: classification.isRelevant, confidence: classification.confidence, intent: classification.intent, candidate: classification.candidateName, cvFile: classification.cvAttachmentName })
+          T(`PASS1 uid=${msg.uid} from=${sender} relevant=${classification.isRelevant} conf=${classification.confidence} intent=${classification.intent} cvFile=${classification.cvAttachmentName||"none"}`)
 
           // Dedup: only skip if we PREVIOUSLY succeeded in creating a candidate from
           // this exact email. If the previous scan attempt failed (no candidate created),
@@ -195,10 +200,10 @@ export async function POST(req: Request) {
             // gone id, and skipping here would make re-import impossible forever.
             const stillExists = await prisma.candidate.findUnique({ where: { id: previousScan.candidateId }, select: { id: true } })
             if (stillExists) {
-              log.info(`PASS1 msg ${msg.uid}: SKIP — already imported as candidate ${previousScan.candidateId} (still exists)`)
+              T(`PASS1 uid=${msg.uid}: SKIP already imported (candidate ${previousScan.candidateId} exists)`)
               continue
             }
-            log.info(`PASS1 msg ${msg.uid}: previous candidate ${previousScan.candidateId} was DELETED — re-importing`)
+            T(`PASS1 uid=${msg.uid}: previous candidate was DELETED, re-importing`)
           }
           // Clean up any previous scan attempt (failed, or whose candidate was deleted)
           if (previousScan) {
@@ -221,16 +226,16 @@ export async function POST(req: Request) {
           // Only shortlist if AI marked it as a real application AND there's at least
           // one non-text MIME part (i.e. a potential CV file)
           if (!classification.isRelevant) {
-            log.info(`PASS1 msg ${msg.uid}: SKIP — AI classified as NOT a real application`, { intent: classification.intent })
+            T(`PASS1 uid=${msg.uid}: SKIP not-an-application intent=${classification.intent}`)
             continue
           }
           const hasFiles = allParts.some(p => !isTextPart(p))
           if (!hasFiles) {
-            log.info(`PASS1 msg ${msg.uid}: SKIP — relevant but no attachment/file parts found`)
+            T(`PASS1 uid=${msg.uid}: SKIP no-attachment-parts`)
             continue
           }
 
-          log.info(`PASS1 msg ${msg.uid}: SHORTLISTED for import`)
+          T(`PASS1 uid=${msg.uid}: SHORTLISTED`)
           shortlist.push({ msg, subject, sender, receivedAt: new Date(receivedAt), bodyText, allParts, classification })
         } catch (e: any) {
           log.error(`PASS1 msg ${msg.uid} failed`, { message: e?.message })
@@ -323,21 +328,21 @@ export async function POST(req: Request) {
           }
 
           if (!cvText || cvText.length < 200) {
-            log.info(`PASS2 msg ${msg.uid}: SKIP — no real CV text extracted`, { cvTextLen: cvText.length })
+            T(`PASS2 uid=${msg.uid}: SKIP no-CV-text (len=${cvText.length})`)
             const scan = await prisma.emailScan.findFirst({ where: { inboxId: inbox.id, sender, subject: { contains: `::uid=${msg.uid}` } } })
             if (scan) await prisma.emailScan.update({ where: { id: scan.id }, data: { processed: true } })
             results.relevant--
             continue
           }
           const scan = await prisma.emailScan.findFirst({ where: { inboxId: inbox.id, sender, subject: { contains: `::uid=${msg.uid}` } } })
-          if (!scan) { log.info(`PASS2 msg ${msg.uid}: SKIP — scan record not found (dedup subject mismatch)`); continue }
+          if (!scan) { T(`PASS2 uid=${msg.uid}: SKIP scan-record-missing`); continue }
 
           // AI-based vacancy matching: Gemini reads the CV and picks the vacancy
           // with the best fit. Falls back to keyword/Jaccard scoring if the AI
           // call fails so the scan keeps working.
           const best = await selectBestVacancyForCV(cvText, vacancies)
           const vacancy = vacancies.find(v => v.id === best.vacancyId) || vacancies[0]
-          log.info(`PASS2 msg ${msg.uid}: matched to vacancy`, { vacancy: vacancy.title, fit: best.fitScore })
+          T(`PASS2 uid=${msg.uid}: matched vacancy="${vacancy.title}" fit=${best.fitScore}`)
 
           // Duplicate guard: candidate records are unique per (email, vacancyId).
           // If this person already applied to THIS vacancy, link the scan to the
@@ -348,7 +353,7 @@ export async function POST(req: Request) {
             select: { id: true },
           })
           if (existing) {
-            log.info(`PASS2 msg ${msg.uid}: SKIP — candidate already exists for this vacancy (${existing.id}), linking only`, { candidateId: existing.id })
+            T(`PASS2 uid=${msg.uid}: SKIP duplicate (candidate ${existing.id} exists for this vacancy)`)
             await prisma.emailScan.update({
               where: { id: scan.id },
               data: { processed: true, candidateId: existing.id },
@@ -398,7 +403,7 @@ export async function POST(req: Request) {
             },
           })
 
-          log.info(`PASS2 msg ${msg.uid}: CREATED candidate ${candidate.id} (${candidate.firstName} ${candidate.lastName}) for vacancy "${vacancy.title}"`)
+          T(`PASS2 uid=${msg.uid}: CREATED candidate ${candidate.firstName} ${candidate.lastName} → "${vacancy.title}"`)
 
           // Link the scan record to the created candidate for audit trail
           await prisma.emailScan.update({
@@ -421,6 +426,7 @@ export async function POST(req: Request) {
     log.info(`Inbox ${inbox.id}: scanned=${results.scanned} relevant=${results.relevant} processed=${results.processed} errors=${results.errors.length}`)
   } catch (error: any) {
     log.error(`FAILED for inbox ${inbox.id}`, { message: error?.message, code: error?.code })
+    T(`FATAL code=${error?.code || 'none'} message=${error?.message}`)
     // Surface a useful hint to the user
     let hint = ''
     if (error?.code === 'ETIMEOUT' || error?.message?.includes('timeout')) {
@@ -430,13 +436,13 @@ export async function POST(req: Request) {
     } else if (error?.code === 'ECONNREFUSED' || error?.message?.includes('connect')) {
       hint = ' — Could not reach the IMAP server. Check your host and port are correct.'
     }
-    return NextResponse.json({ error: `Scan failed: ${error.message}${hint}` }, { status: 500 })
+    return NextResponse.json({ error: `Scan failed: ${error.message}${hint}`, trace }, { status: 500 })
   }
 
   // Add a diagnostic message so the recruiter knows why nothing was added
   let diagnostic = ''
   if (results.scanned === 0) {
-    diagnostic = 'No emails found in the last 30 days. Make sure your inbox has recent messages.'
+    diagnostic = 'No emails found in the last 15 days. Make sure your inbox has recent messages.'
   } else if (results.relevant === 0) {
     diagnostic = `Found ${results.scanned} email(s), but AI determined none are job applications. Recruiters typically receive CVs as PDF/DOCX attachments — check that your applicants are sending attachments.`
   } else if (results.processed === 0) {
@@ -445,5 +451,6 @@ export async function POST(req: Request) {
     diagnostic = `Successfully imported ${results.processed} new candidate(s).`
   }
 
-  return NextResponse.json({ ...results, diagnostic })
+  T(`DONE scanned=${results.scanned} relevant=${results.relevant} processed=${results.processed} errors=${results.errors.length}`)
+  return NextResponse.json({ ...results, diagnostic, trace })
 }
