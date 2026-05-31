@@ -123,6 +123,7 @@ export const fr = {
       emailScanning: { title: 'Scan de la boîte mail', desc: "Connectez votre boîte de recrutement. L'IA scanne les e-mails entrants, détecte les CV et lettres de motivation, et place automatiquement chaque candidat dans l'offre la plus adaptée selon ses compétences." },
       atsIntegrations: { title: '14 intégrations ATS (Greenhouse, Bullhorn, Personio...)', desc: 'Connectez 14 plateformes ATS dont Teamtailor, Greenhouse, Bullhorn, Personio et plus. Importez candidats et offres automatiquement.' },
       pipeline: { title: 'Gestion du pipeline', desc: 'Faites avancer les candidats par étapes : Nouveau, En cours, Shortlisté, Embauché. Workflow de recrutement complet.' },
+      interviewScheduling: { title: 'Planification des entretiens', desc: "Planifiez les entretiens et envoyez au candidat une invitation calendrier (.ics) qu'il ajoute en un clic — compatible Google, Outlook et Apple. Tous vos entretiens à venir sur le tableau de bord." },
       analytics: { title: 'Tableau de bord analytique', desc: "Suivez vos indicateurs de recrutement, taux de conversion du pipeline, délai d'embauche et performance par source." },
       gdpr: { title: 'Conforme RGPD', desc: 'Stockage chiffré, suivi des consentements, export de données, suppression automatique. Conformité RGPD complète intégrée.' },
     },

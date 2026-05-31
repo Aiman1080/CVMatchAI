@@ -123,6 +123,7 @@ export const en = {
       emailScanning: { title: 'Email Inbox Scanning', desc: 'Connect your recruitment inbox. AI scans incoming emails, detects CVs and motivation letters, and automatically places each candidate in the best matching vacancy based on skills and experience.' },
       atsIntegrations: { title: 'ATS Integrations', desc: 'Connect 14 ATS platforms including Teamtailor, Greenhouse, Bullhorn, Personio and more. Import candidates and vacancies automatically.' },
       pipeline: { title: 'Pipeline Management', desc: 'Move candidates through stages: New, Reviewing, Shortlisted, Hired. Full recruitment workflow.' },
+      interviewScheduling: { title: 'Interview scheduling', desc: 'Schedule interviews and email candidates a calendar invite (.ics) they add in one click — works with Google, Outlook and Apple. All upcoming interviews on your dashboard.' },
       analytics: { title: 'Analytics Dashboard', desc: 'Track hiring metrics, pipeline conversion rates, time-to-hire, and candidate source performance.' },
       gdpr: { title: 'GDPR Compliant', desc: 'Encrypted storage, consent tracking, data export, automatic deletion. Full GDPR compliance built-in.' },
     },
