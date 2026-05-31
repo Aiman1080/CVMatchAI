@@ -147,6 +147,11 @@ model Candidate {
   // JSON-encoded array of recruiter-typed answers for AI-generated interview questions.
   // Persists across sessions so notes survive logout/re-login.
   interviewAnswers String?
+  // Scheduled interview (calendar / .ics invite). interviewAt is the start time;
+  // duration in minutes; location is a room or a video link (Meet/Teams/Zoom).
+  interviewAt       DateTime?
+  interviewDuration Int?       @default(30)
+  interviewLocation String?
   liked           Boolean    @default(false)
   priority        Boolean    @default(false)
   savedToPool     Boolean    @default(false)

@@ -22,6 +22,7 @@ import { getStatusColor, parseJsonSafe, formatDate } from '@/lib/utils'
 import { exportHiringReportPDF } from '@/lib/export'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { CandidateEmailDialog } from './CandidateEmailDialog'
+import { ScheduleInterview } from './ScheduleInterview'
 
 const RECOMMENDATION_COLORS: Record<string, string> = {
   strong_yes: 'bg-green-100 text-green-800 border border-green-200',
@@ -757,6 +758,14 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
 
             {/* ── Interview Questions tab ── */}
             <TabsContent value="interview" className="mt-4">
+              <ScheduleInterview
+                candidateId={candidate.id}
+                candidateName={`${candidate.firstName || ''} ${candidate.lastName || ''}`.trim() || 'Candidate'}
+                vacancyTitle={candidate.vacancy?.title}
+                initialInterviewAt={candidate.interviewAt}
+                initialDuration={candidate.interviewDuration}
+                initialLocation={candidate.interviewLocation}
+              />
               <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">

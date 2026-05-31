@@ -7,6 +7,7 @@ import { DashboardStats } from '@/components/dashboard/DashboardStats'
 import { RecentCandidates } from '@/components/dashboard/RecentCandidates'
 import { RecentVacancies } from '@/components/dashboard/RecentVacancies'
 import { AIInsightsPanel } from '@/components/dashboard/AIInsightsPanel'
+import { UpcomingInterviews } from '@/components/dashboard/UpcomingInterviews'
 import { DashboardClient } from '@/components/dashboard/DashboardClient'
 import { getEffectiveSubscription } from '@/lib/plans'
 
@@ -80,7 +81,10 @@ export default async function DashboardPage() {
         <DashboardStats stats={stats} />
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
           <div className="xl:col-span-2"><RecentCandidates candidates={recentCandidates} /></div>
-          <div><AIInsightsPanel candidates={recentCandidates.map((c: any) => ({ name: `${c.firstName || ''} ${c.lastName || ''}`.trim(), matchScore: c.matchScore || 0, vacancyTitle: c.vacancy?.title || '' }))} totalCandidates={candidateCount} avgScore={stats.avgScore} /></div>
+          <div className="space-y-4 sm:space-y-6">
+            <UpcomingInterviews />
+            <AIInsightsPanel candidates={recentCandidates.map((c: any) => ({ name: `${c.firstName || ''} ${c.lastName || ''}`.trim(), matchScore: c.matchScore || 0, vacancyTitle: c.vacancy?.title || '' }))} totalCandidates={candidateCount} avgScore={stats.avgScore} />
+          </div>
         </div>
         <RecentVacancies vacancies={recentVacancies} />
       </div>
