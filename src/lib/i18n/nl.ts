@@ -123,6 +123,7 @@ export const nl = {
       emailScanning: { title: 'E-mailinbox scannen', desc: 'Verbind uw recruitmentinbox. AI detecteert automatisch cv\'s in e-mails, negeert spam en maakt kandidaatprofielen aan.' },
       atsIntegrations: { title: '14 ATS-integraties (Greenhouse, Bullhorn, Personio...)', desc: 'Verbind 14 ATS-platforms waaronder Teamtailor, Greenhouse, Bullhorn, Personio en meer. Importeer kandidaten en vacatures automatisch.' },
       pipeline: { title: 'Pipeline-beheer', desc: 'Verplaats kandidaten door stadia: Nieuw, In beoordeling, Shortlist, Aangenomen. Complete wervingsworkflow.' },
+      interviewScheduling: { title: 'Gesprekken plannen', desc: 'Plan gesprekken en mail kandidaten een agenda-uitnodiging (.ics) die ze met één klik toevoegen — werkt met Google, Outlook en Apple. Alle komende gesprekken op je dashboard.' },
       analytics: { title: 'Analysedashboard', desc: 'Volg wervingsstatistieken, pipelineconversie, doorlooptijd en prestaties per kandidaatbron.' },
       gdpr: { title: 'AVG-conform', desc: 'Versleutelde opslag, toestemmingsregistratie, gegevensexport, automatische verwijdering. Volledige AVG-compliance ingebouwd.' },
     },
