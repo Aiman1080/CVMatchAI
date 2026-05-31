@@ -30,18 +30,28 @@ function toICalUtc(d: Date): string {
   return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
 }
 
-// Fold lines to <=75 octets per RFC 5545 §3.1 (continuation lines start with a space).
+// Fold lines to <=75 OCTETS per RFC 5545 §3.1 (continuation lines start with a
+// space). We count UTF-8 bytes, not UTF-16 code units, so accented names/links
+// (François, Müller, long Teams URLs) fold correctly. We never split inside a
+// multi-byte character.
 function fold(line: string): string {
-  if (line.length <= 75) return line
-  const chunks: string[] = []
-  let rest = line
-  chunks.push(rest.slice(0, 75))
-  rest = rest.slice(75)
-  while (rest.length > 0) {
-    chunks.push(' ' + rest.slice(0, 74))
-    rest = rest.slice(74)
+  if (Buffer.byteLength(line, 'utf8') <= 75) return line
+  const out: string[] = []
+  let current = ''
+  let isFirst = true
+  for (const ch of line) {
+    // First line budget is 75 octets; continuation lines reserve 1 for the leading space.
+    const limit = isFirst ? 75 : 74
+    if (Buffer.byteLength(current + ch, 'utf8') > limit) {
+      out.push(isFirst ? current : ' ' + current)
+      isFirst = false
+      current = ch
+    } else {
+      current += ch
+    }
   }
-  return chunks.join('\r\n')
+  if (current) out.push(isFirst ? current : ' ' + current)
+  return out.join('\r\n')
 }
 
 export function buildICS(ev: InterviewEvent): string {

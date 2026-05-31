@@ -12,10 +12,15 @@ export async function GET(req: Request) {
   const isAdmin = (session.user as any).role === 'admin'
 
   const url = new URL(req.url)
-  const from = url.searchParams.get('from') ? new Date(url.searchParams.get('from')!) : new Date()
-  const to = url.searchParams.get('to')
-    ? new Date(url.searchParams.get('to')!)
-    : new Date(Date.now() + 60 * 24 * 60 * 60 * 1000)
+  // Validate query dates — an invalid string would otherwise become an Invalid
+  // Date and make Prisma throw. Fall back to the defaults (now → +60 days).
+  const parseDate = (raw: string | null, fallback: Date): Date => {
+    if (!raw) return fallback
+    const d = new Date(raw)
+    return isNaN(d.getTime()) ? fallback : d
+  }
+  const from = parseDate(url.searchParams.get('from'), new Date())
+  const to = parseDate(url.searchParams.get('to'), new Date(Date.now() + 60 * 24 * 60 * 60 * 1000))
 
   try {
     const candidates = await prisma.candidate.findMany({

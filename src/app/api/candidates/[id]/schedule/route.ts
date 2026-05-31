@@ -121,7 +121,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   await prisma.candidate.update({
     where: { id },
-    data: { interviewAt: null, interviewLocation: null },
+    data: { interviewAt: null, interviewLocation: null, interviewDuration: 30 },
   })
   await logActivity(id, 'status_change', 'Interview unscheduled')
   return NextResponse.json({ success: true })
