@@ -68,7 +68,7 @@ export default function TermsPage() {
         {
           icon: Gavel,
           title: '11. Governing law, changes & contact',
-          text: 'These Terms are governed by the laws of Belgium, without regard to conflict-of-law rules. Any dispute shall be subject to the exclusive jurisdiction of the courts of [judicial district, e.g. Brussels], Belgium, without prejudice to any mandatory consumer-protection rights. If any provision is held invalid, the remainder stays in force. We may update these Terms with 30 days notice (by email or in-app); continued use after the effective date constitutes acceptance. Questions: legal@deltamatch.example (update to your real contact).',
+          text: 'These Terms are governed by the laws of Belgium, without regard to conflict-of-law rules. Any dispute shall be subject to the exclusive jurisdiction of the courts of [judicial district, e.g. Brussels], Belgium, without prejudice to any mandatory consumer-protection rights. If any provision is held invalid, the remainder stays in force. We may update these Terms with 30 days notice (by email or in-app); continued use after the effective date constitutes acceptance. Questions: legal@mydeltamatch.com (update to your real contact).',
         },
       ],
     },
@@ -130,7 +130,7 @@ export default function TermsPage() {
         {
           icon: Gavel,
           title: '11. Toepasselijk recht, wijzigingen & contact',
-          text: 'Deze voorwaarden worden beheerst door het Belgisch recht. Elk geschil valt onder de exclusieve bevoegdheid van de rechtbanken van [gerechtelijk arrondissement, bv. Brussel], België, onverminderd dwingende consumentenrechten. Als een bepaling ongeldig is, blijft de rest van kracht. Wij kunnen deze voorwaarden met 30 dagen kennisgeving (per e-mail of in-app) bijwerken; voortgezet gebruik na de ingangsdatum geldt als aanvaarding. Vragen: legal@deltamatch.example (vervang door uw echte contact).',
+          text: 'Deze voorwaarden worden beheerst door het Belgisch recht. Elk geschil valt onder de exclusieve bevoegdheid van de rechtbanken van [gerechtelijk arrondissement, bv. Brussel], België, onverminderd dwingende consumentenrechten. Als een bepaling ongeldig is, blijft de rest van kracht. Wij kunnen deze voorwaarden met 30 dagen kennisgeving (per e-mail of in-app) bijwerken; voortgezet gebruik na de ingangsdatum geldt als aanvaarding. Vragen: legal@mydeltamatch.com (vervang door uw echte contact).',
         },
       ],
     },
@@ -192,7 +192,7 @@ export default function TermsPage() {
         {
           icon: Gavel,
           title: '11. Droit applicable, modifications & contact',
-          text: "Les présentes Conditions sont régies par le droit belge. Tout litige relève de la compétence exclusive des tribunaux de [arrondissement judiciaire, ex. Bruxelles], Belgique, sans préjudice des droits impératifs des consommateurs. Si une clause est jugée invalide, le reste demeure en vigueur. Nous pouvons mettre à jour ces Conditions avec un préavis de 30 jours (par e-mail ou dans l'application) ; l'utilisation continue après la date d'effet vaut acceptation. Questions : legal@deltamatch.example (à remplacer par votre contact réel).",
+          text: "Les présentes Conditions sont régies par le droit belge. Tout litige relève de la compétence exclusive des tribunaux de [arrondissement judiciaire, ex. Bruxelles], Belgique, sans préjudice des droits impératifs des consommateurs. Si une clause est jugée invalide, le reste demeure en vigueur. Nous pouvons mettre à jour ces Conditions avec un préavis de 30 jours (par e-mail ou dans l'application) ; l'utilisation continue après la date d'effet vaut acceptation. Questions : legal@mydeltamatch.com (à remplacer par votre contact réel).",
         },
       ],
     },

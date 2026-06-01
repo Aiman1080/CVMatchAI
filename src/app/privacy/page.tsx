@@ -53,7 +53,7 @@ export default function PrivacyPage() {
         {
           icon: UserX,
           title: 'Your rights',
-          text: 'Under GDPR you have the right to access, rectify, erase, restrict, and port your personal data. To exercise these rights, contact us at privacy@cvmatch.ai or use the export/delete tools in Settings. You also have the right to lodge a complaint with your national supervisory authority.',
+          text: 'Under GDPR you have the right to access, rectify, erase, restrict, and port your personal data. To exercise these rights, contact us at privacy@mydeltamatch.com or use the export/delete tools in Settings. You also have the right to lodge a complaint with your national supervisory authority.',
         },
         {
           icon: ShieldOff,
@@ -63,7 +63,7 @@ export default function PrivacyPage() {
         {
           icon: Mail,
           title: 'Contact',
-          text: 'For any privacy-related questions, contact our Data Protection Officer at privacy@cvmatch.ai. For general questions, visit our Contact page.',
+          text: 'For any privacy-related questions, contact our Data Protection Officer at privacy@mydeltamatch.com. For general questions, visit our Contact page.',
         },
       ],
     },
@@ -110,7 +110,7 @@ export default function PrivacyPage() {
         {
           icon: UserX,
           title: 'Uw rechten',
-          text: 'Op grond van de AVG heeft u het recht op inzage, rectificatie, verwijdering, beperking en overdraagbaarheid van uw persoonsgegevens. Neem contact op via privacy@cvmatch.ai of gebruik de export-/verwijdertools in Instellingen.',
+          text: 'Op grond van de AVG heeft u het recht op inzage, rectificatie, verwijdering, beperking en overdraagbaarheid van uw persoonsgegevens. Neem contact op via privacy@mydeltamatch.com of gebruik de export-/verwijdertools in Instellingen.',
         },
         {
           icon: ShieldOff,
@@ -120,7 +120,7 @@ export default function PrivacyPage() {
         {
           icon: Mail,
           title: 'Contact',
-          text: 'Voor privacygerelateerde vragen kunt u contact opnemen met onze Functionaris voor Gegevensbescherming via privacy@cvmatch.ai.',
+          text: 'Voor privacygerelateerde vragen kunt u contact opnemen met onze Functionaris voor Gegevensbescherming via privacy@mydeltamatch.com.',
         },
       ],
     },
@@ -167,7 +167,7 @@ export default function PrivacyPage() {
         {
           icon: UserX,
           title: 'Vos droits',
-          text: 'En vertu du RGPD, vous disposez du droit d\'accès, de rectification, d\'effacement, de limitation et de portabilité de vos données personnelles. Pour exercer ces droits, contactez-nous à privacy@cvmatch.ai ou utilisez les outils d\'export/suppression dans Paramètres. Vous avez également le droit d\'introduire une réclamation auprès de la CNIL.',
+          text: 'En vertu du RGPD, vous disposez du droit d\'accès, de rectification, d\'effacement, de limitation et de portabilité de vos données personnelles. Pour exercer ces droits, contactez-nous à privacy@mydeltamatch.com ou utilisez les outils d\'export/suppression dans Paramètres. Vous avez également le droit d\'introduire une réclamation auprès de la CNIL.',
         },
         {
           icon: ShieldOff,
@@ -177,7 +177,7 @@ export default function PrivacyPage() {
         {
           icon: Mail,
           title: 'Contact',
-          text: 'Pour toute question relative à la confidentialité, contactez notre Délégué à la Protection des Données à privacy@cvmatch.ai. Pour les questions générales, consultez notre page Contact.',
+          text: 'Pour toute question relative à la confidentialité, contactez notre Délégué à la Protection des Données à privacy@mydeltamatch.com. Pour les questions générales, consultez notre page Contact.',
         },
       ],
     },
