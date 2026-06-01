@@ -36,6 +36,49 @@ async function callWithRetry<T>(fn: () => Promise<T>, attempts = 3): Promise<T> 
   throw lastErr
 }
 
+// gemini-2.5-flash is a "thinking" model: by default it spends hidden reasoning
+// tokens before answering. With function calling (mode ANY) on the larger
+// schemas (CV analysis, interview-answer assessment, hiring report) that
+// thinking step can starve or derail the actual function call — the response
+// comes back with no usable call (finishReason MAX_TOKENS / MALFORMED_FUNCTION_CALL)
+// and the SDK's functionCalls() then throws while reading the empty candidate.
+// That throw is exactly what dropped CV analysis into the demo fallback
+// ("Unknown Candidate", fake score) even with a valid PAID key, while the
+// small-output calls (doc-type, vacancy match, OCR) kept working. Disabling
+// thinking (budget 0) plus a generous output cap makes structured calls
+// deterministic, cheaper and faster. thinkingConfig isn't in the 0.24.1 SDK
+// types but the v1beta REST API honours it, hence the cast.
+function structuredGenConfig(temperature: number) {
+  return {
+    temperature,
+    maxOutputTokens: 8192,
+    thinkingConfig: { thinkingBudget: 0 },
+  } as any
+}
+
+// Safely extract the first function call from a Gemini response. A blocked or
+// truncated candidate (finishReason SAFETY / MAX_TOKENS / RECITATION / OTHER)
+// has no content parts, and the SDK's functionCalls() throws when it reads them.
+// We swallow that and return null so callers degrade gracefully instead of
+// crashing into demo mode, and we log the finishReason so the cause stays visible.
+function firstFunctionCall(result: any): any | null {
+  try {
+    const calls = result?.response?.functionCalls?.()
+    if (calls && calls.length > 0) return calls[0]
+  } catch (err: any) {
+    log.warn('Gemini functionCalls() threw — empty/blocked response', {
+      finishReason: result?.response?.candidates?.[0]?.finishReason,
+      message: String(err?.message || err).slice(0, 200),
+    })
+    return null
+  }
+  const finishReason = result?.response?.candidates?.[0]?.finishReason
+  if (finishReason && finishReason !== 'STOP') {
+    log.warn('Gemini returned no function call', { finishReason })
+  }
+  return null
+}
+
 export interface CVAnalysisResult {
   matchScore: number
   summary: string
@@ -128,14 +171,14 @@ ${cvText.slice(0, 6000)}` +
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-flash',
       systemInstruction: SYSTEM_PROMPT,
-      generationConfig: { temperature: 0.3 },
+      generationConfig: structuredGenConfig(0.3),
       tools: [{ functionDeclarations: [CV_ANALYSIS_TOOL] }],
       toolConfig: { functionCallingConfig: { mode: FunctionCallingMode.ANY } },
     })
 
     const result = await callWithRetry(() => model.generateContent(userContent))
     const usage = result.response.usageMetadata
-    const call = result.response.functionCalls()?.[0]
+    const call = firstFunctionCall(result)
     if (call) {
       logAiUsage('system', 'cv_analysis', usage?.promptTokenCount || 0, usage?.candidatesTokenCount || 0).catch(() => {})
       return call.args as unknown as CVAnalysisResult
@@ -225,7 +268,7 @@ export async function classifyRecruitmentEmail(
   try {
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-flash',
-      generationConfig: { temperature: 0.1 },
+      generationConfig: structuredGenConfig(0.1),
       tools: [{ functionDeclarations: [EMAIL_CLASSIFY_TOOL] }],
       toolConfig: { functionCallingConfig: { mode: FunctionCallingMode.ANY } },
     })
@@ -254,7 +297,7 @@ export async function classifyRecruitmentEmail(
       `Call classify_email now with your decision.`
     )
 
-    const call = result.response.functionCalls()?.[0]
+    const call = firstFunctionCall(result)
     if (call) {
       const input = call.args as any
       return {
@@ -305,7 +348,7 @@ export async function detectDocumentType(text: string): Promise<'cv' | 'motivati
   try {
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-flash',
-      generationConfig: { temperature: 0.1 },
+      generationConfig: structuredGenConfig(0.1),
       tools: [{ functionDeclarations: [DOC_TYPE_TOOL] }],
       toolConfig: { functionCallingConfig: { mode: FunctionCallingMode.ANY } },
     })
@@ -313,7 +356,7 @@ export async function detectDocumentType(text: string): Promise<'cv' | 'motivati
     const result = await model.generateContent(
       `Is this a CV/resume, motivation/cover letter, or something else?\n\n${text.slice(0, 800)}\n\nCall set_document_type now.`
     )
-    const call = result.response.functionCalls()?.[0]
+    const call = firstFunctionCall(result)
     if (call) return (call.args as any).type
   } catch (error) {
     log.error('detectDocumentType error', { error: String(error) })
@@ -409,7 +452,7 @@ export async function selectBestVacancyForCV(
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-flash',
       systemInstruction: 'You are an expert recruiter. Read the candidate CV and pick the SINGLE vacancy from the list that best matches their skills, experience, and seniority. Always return the exact vacancyId from the provided list.',
-      generationConfig: { temperature: 0.1 },
+      generationConfig: structuredGenConfig(0.1),
       tools: [{ functionDeclarations: [SELECT_VACANCY_TOOL] }],
       toolConfig: { functionCallingConfig: { mode: FunctionCallingMode.ANY } },
     })
@@ -417,7 +460,7 @@ export async function selectBestVacancyForCV(
     const result = await model.generateContent(
       `CANDIDATE CV:\n${cvText.slice(0, 4000)}\n\nACTIVE VACANCIES:\n${vacancyList}\n\nCall select_best_vacancy with the id of the best match.`
     )
-    const call = result.response.functionCalls()?.[0]
+    const call = firstFunctionCall(result)
     if (call) {
       const args = call.args as any
       const chosen = vacancies.find(v => v.id === args.vacancyId)
@@ -620,7 +663,7 @@ export async function generateInterviewQuestions(
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-flash',
       systemInstruction: `You are an expert HR interviewer with deep experience in structured interviewing techniques. Generate 8 personalized interview questions based on the candidate's CV, focusing on gaps, strengths, and the specific role requirements. Include a mix of technical, behavioral, situational, and cultural fit questions. Each question should be tailored — not generic. For each question, also provide a concise expected answer (1-2 sentences) describing what a good response should include. ${langInstruction}`,
-      generationConfig: { temperature: 0.3 },
+      generationConfig: structuredGenConfig(0.3),
       tools: [{ functionDeclarations: [INTERVIEW_QUESTIONS_TOOL] }],
       toolConfig: { functionCallingConfig: { mode: FunctionCallingMode.ANY } },
     })
@@ -639,7 +682,7 @@ ${cvText.slice(0, 5000)}
 Call submit_interview_questions now.`
     )
 
-    const call = result.response.functionCalls()?.[0]
+    const call = firstFunctionCall(result)
     if (call) {
       return call.args as unknown as { questions: Array<{ question: string; category: string; rationale: string; expectedAnswer: string }> }
     }
@@ -727,7 +770,7 @@ export async function analyzeInterviewAnswers(
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-flash',
       systemInstruction: `You are an expert interviewer evaluating a candidate's answers for the "${vacancyTitle}" role. Be honest and specific: judge each answer against the expected answer where provided. ${langInstruction}`,
-      generationConfig: { temperature: 0.3 },
+      generationConfig: structuredGenConfig(0.3),
       tools: [{ functionDeclarations: [ANSWERS_ASSESSMENT_TOOL] }],
       toolConfig: { functionCallingConfig: { mode: FunctionCallingMode.ANY } },
     })
@@ -738,7 +781,7 @@ export async function analyzeInterviewAnswers(
       `Assess how well the candidate answered these interview questions, then call submit_answers_assessment.\n\n${content}`,
     )
     const usage = result.response.usageMetadata
-    const call = result.response.functionCalls()?.[0]
+    const call = firstFunctionCall(result)
     if (call) {
       logAiUsage('system', 'interview_questions', usage?.promptTokenCount || 0, usage?.candidatesTokenCount || 0).catch(() => {})
       return call.args as unknown as AnswersAssessment
@@ -806,7 +849,7 @@ export async function generateJobDescription(
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-flash',
       systemInstruction: `You are an expert HR copywriter specializing in creating professional, attractive, and inclusive job descriptions that attract top talent. Write compelling descriptions that clearly communicate the role, responsibilities, and growth opportunities. ${langInstruction}`,
-      generationConfig: { temperature: 0.3 },
+      generationConfig: structuredGenConfig(0.3),
       tools: [{ functionDeclarations: [JOB_DESCRIPTION_TOOL] }],
       toolConfig: { functionCallingConfig: { mode: FunctionCallingMode.ANY } },
     })
@@ -820,7 +863,7 @@ Keywords/Focus areas: ${keywords || 'Not specified'}${companyContext}
 Create a compelling description (200-300 words), a clear list of must-have requirements, and a list of nice-to-have qualifications. Call submit_job_description now.`
     )
 
-    const call = result.response.functionCalls()?.[0]
+    const call = firstFunctionCall(result)
     if (call) {
       return call.args as unknown as { description: string; requirements: string; niceToHave: string }
     }
@@ -907,7 +950,7 @@ export async function rankCandidates(
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-flash',
       systemInstruction: `You are an expert talent evaluator. Rank the candidates for the specified role. Explain clearly WHY each candidate is ranked in their position — what makes #1 better than #2, etc. Focus on role fit, not just overall quality. ${langInstruction}`,
-      generationConfig: { temperature: 0.3 },
+      generationConfig: structuredGenConfig(0.3),
       tools: [{ functionDeclarations: [RANKING_TOOL] }],
       toolConfig: { functionCallingConfig: { mode: FunctionCallingMode.ANY } },
     })
@@ -926,7 +969,7 @@ ${candidateSummaries}
 Call submit_ranking now.`
     )
 
-    const call = result.response.functionCalls()?.[0]
+    const call = firstFunctionCall(result)
     if (call) {
       return call.args as unknown as { ranking: Array<{ candidateId: string; rank: number; reasoning: string; standoutFactor: string }> }
     }
@@ -1085,7 +1128,7 @@ ${nextSteps}
 12. **Next Steps** — Concrete, actionable next steps (3-5 items) tailored to the recommendation
 
 Be thorough, professional, and actionable. Use all candidate data available. ${langInstruction}`,
-      generationConfig: { temperature: 0.3 },
+      generationConfig: structuredGenConfig(0.3),
       tools: [{ functionDeclarations: [HIRING_REPORT_TOOL] }],
       toolConfig: { functionCallingConfig: { mode: FunctionCallingMode.ANY } },
     })
@@ -1112,7 +1155,7 @@ Recommendation: ${candidate.recommendation}
 Call submit_hiring_report now.`
     )
 
-    const call = result.response.functionCalls()?.[0]
+    const call = firstFunctionCall(result)
     if (call) {
       return call.args as unknown as { report: string }
     }
