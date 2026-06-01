@@ -675,10 +675,25 @@ export async function generateJobDescription(
   company?: string,
 ): Promise<{ description: string; requirements: string; niceToHave: string }> {
   if (isDemoMode()) {
-    const companyLine = company ? ` at ${company}` : ''
+    const companyLine = company ? (language === 'fr' ? ` chez ${company}` : language === 'nl' ? ` bij ${company}` : ` at ${company}`) : ''
+    const kw = keywords || (language === 'fr' ? 'des technologies modernes' : language === 'nl' ? 'moderne technologieën' : 'modern technologies')
+    if (language === 'fr') {
+      return {
+        description: `Nous recherchons un(e) ${title} talentueux(se)${companyLine} pour rejoindre notre équipe. Dans ce rôle, vous travaillerez sur des projets passionnants impliquant ${kw}. Vous collaborerez avec des équipes pluridisciplinaires afin de livrer des solutions de haute qualité ayant un réel impact. C'est l'opportunité de développer votre carrière dans un environnement dynamique et bienveillant où l'innovation est valorisée. Vous bénéficierez d'une autonomie pour prendre des décisions techniques tout en étant accompagné(e) par des professionnels expérimentés. Nous offrons une rémunération compétitive, des conditions de travail flexibles et des opportunités de formation continue.`,
+        requirements: `- Expérience confirmée en tant que ${title} ou dans un rôle similaire\n- Solides connaissances de ${kw}\n- Excellentes compétences en communication et capacité à travailler en équipe\n- Esprit d'analyse et souci du détail\n- Diplôme dans un domaine pertinent ou expérience équivalente`,
+        niceToHave: `- Expérience des méthodologies agiles (Scrum/Kanban)\n- Connaissance des plateformes cloud (AWS, Azure ou GCP)\n- Contributions à des projets open source\n- Compétences multilingues (français, néerlandais ou anglais)`,
+      }
+    }
+    if (language === 'nl') {
+      return {
+        description: `Wij zoeken een getalenteerde ${title}${companyLine} om ons team te versterken. In deze functie werkt u aan boeiende projecten met ${kw}. U werkt samen met multidisciplinaire teams om hoogwaardige oplossingen te leveren met echte impact. Dit is een kans om uw carrière uit te bouwen in een dynamische, ondersteunende omgeving waar innovatie wordt gewaardeerd. U krijgt de autonomie om technische beslissingen te nemen, met begeleiding van ervaren professionals. Wij bieden een competitieve verloning, flexibele werkomstandigheden en continue leermogelijkheden.`,
+        requirements: `- Aantoonbare ervaring als ${title} of in een vergelijkbare rol\n- Sterke kennis van ${kw}\n- Uitstekende communicatieve vaardigheden en teamgeest\n- Probleemoplossend vermogen en oog voor detail\n- Diploma in een relevant vakgebied of gelijkwaardige ervaring`,
+        niceToHave: `- Ervaring met agile methodologieën (Scrum/Kanban)\n- Kennis van cloudplatformen (AWS, Azure of GCP)\n- Bijdragen aan open source-projecten\n- Meertalige vaardigheden (Nederlands, Frans of Engels)`,
+      }
+    }
     return {
-      description: `We are looking for a talented ${title}${companyLine} to join our team. In this role, you will work on exciting projects involving ${keywords || 'modern technologies'}. You will collaborate with cross-functional teams to deliver high-quality solutions that drive business impact. This is an opportunity to grow your career in a dynamic, supportive environment where innovation is valued. You will have the autonomy to make technical decisions while receiving mentorship from experienced professionals. We offer competitive compensation, flexible working arrangements, and continuous learning opportunities.`,
-      requirements: `- Proven experience as a ${title} or in a similar role\n- Strong knowledge of ${keywords || 'relevant technologies'}\n- Excellent communication skills and ability to work in a team\n- Problem-solving mindset and attention to detail\n- Bachelor's degree in a relevant field or equivalent experience`,
+      description: `We are looking for a talented ${title}${companyLine} to join our team. In this role, you will work on exciting projects involving ${kw}. You will collaborate with cross-functional teams to deliver high-quality solutions that drive business impact. This is an opportunity to grow your career in a dynamic, supportive environment where innovation is valued. You will have the autonomy to make technical decisions while receiving mentorship from experienced professionals. We offer competitive compensation, flexible working arrangements, and continuous learning opportunities.`,
+      requirements: `- Proven experience as a ${title} or in a similar role\n- Strong knowledge of ${kw}\n- Excellent communication skills and ability to work in a team\n- Problem-solving mindset and attention to detail\n- Bachelor's degree in a relevant field or equivalent experience`,
       niceToHave: `- Experience with agile methodologies (Scrum/Kanban)\n- Knowledge of cloud platforms (AWS, Azure, or GCP)\n- Contributions to open source projects\n- Multilingual capabilities (English, Dutch, or French)`,
     }
   }

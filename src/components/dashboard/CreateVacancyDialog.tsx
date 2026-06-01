@@ -206,10 +206,14 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ title: form.title, keywords: form.department, language: form.language, company: form.company }),
                 })
-                const data = await res.json()
-                if (res.ok) {
-                  setForm(p => ({ ...p, description: data.description, requirements: data.requirements, niceToHave: data.niceToHave }))
+                const data = await res.json().catch(() => ({}))
+                if (res.ok && data.description) {
+                  setForm(p => ({ ...p, description: data.description, requirements: data.requirements || p.requirements, niceToHave: data.niceToHave || p.niceToHave }))
+                  // Clear any stale validation errors now that the fields are filled
+                  setErrors(prev => ({ ...prev, description: '', requirements: '' }))
                   toast({ title: cv.descGenerated })
+                } else {
+                  toast({ title: data.error || cv.genFailed, variant: 'destructive' })
                 }
               } catch { toast({ title: cv.genFailed, variant: 'destructive' }) }
               finally { setGenerating(false) }
