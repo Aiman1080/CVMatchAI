@@ -51,9 +51,10 @@ const COLUMN_STYLES: { topBar: string; dot: string; ring: string; headerBg: stri
 interface Props {
   candidates: Candidate[]
   onCandidatesChange: (updated: Candidate[]) => void
+  orientation?: 'horizontal' | 'vertical'
 }
 
-export function KanbanView({ candidates, onCandidatesChange }: Props) {
+export function KanbanView({ candidates, onCandidatesChange, orientation = 'horizontal' }: Props) {
   const { t } = useLanguage()
   const tk = t.dashboard.kanban
   const [activeId, setActiveId] = useState<string | null>(null)
@@ -139,7 +140,7 @@ export function KanbanView({ candidates, onCandidatesChange }: Props) {
       onDragEnd={handleDragEnd}
       onDragCancel={() => setActiveId(null)}
     >
-      <div className="flex gap-3 overflow-x-auto pb-4 min-h-[600px] scrollbar-thin">
+      <div className={orientation === 'vertical' ? 'flex flex-col gap-3 pb-4' : 'flex gap-3 overflow-x-auto pb-4 min-h-[600px] scrollbar-thin'}>
         {COLUMNS.map(col => (
           <KanbanColumn
             key={col.id}
@@ -148,6 +149,7 @@ export function KanbanView({ candidates, onCandidatesChange }: Props) {
             isDraggingAny={activeId !== null}
             updatingId={updatingId}
             labels={tk}
+            orientation={orientation}
             onToggleLiked={(id, liked) => updateCandidate(id, { liked })}
             onTogglePriority={(id, priority) => updateCandidate(id, { priority })}
             onTogglePool={(id, savedToPool) => updateCandidate(id, { savedToPool })}
@@ -164,21 +166,23 @@ export function KanbanView({ candidates, onCandidatesChange }: Props) {
 }
 
 function KanbanColumn({
-  col, cards, isDraggingAny, updatingId, labels, onToggleLiked, onTogglePriority, onTogglePool,
+  col, cards, isDraggingAny, updatingId, labels, orientation, onToggleLiked, onTogglePriority, onTogglePool,
 }: {
   col: { id: string; label: string; topBar: string; dot: string; ring: string; headerBg: string }
   cards: Candidate[]
   isDraggingAny: boolean
   updatingId: string | null
   labels: any
+  orientation: 'horizontal' | 'vertical'
   onToggleLiked: (id: string, liked: boolean) => void
   onTogglePriority: (id: string, priority: boolean) => void
   onTogglePool: (id: string, savedToPool: boolean) => void
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.id })
+  const vertical = orientation === 'vertical'
 
   return (
-    <div className="flex-shrink-0 w-72 flex flex-col rounded-2xl bg-gray-50 dark:bg-gray-800/50 overflow-hidden">
+    <div className={`${vertical ? 'w-full' : 'flex-shrink-0 w-72'} flex flex-col rounded-2xl bg-gray-50 dark:bg-gray-800/50 overflow-hidden`}>
       {/* Top accent bar */}
       <div className={`h-1 ${col.topBar}`} />
 
@@ -196,9 +200,11 @@ function KanbanColumn({
       {/* Drop zone */}
       <div
         ref={setNodeRef}
-        className={`px-2.5 pb-2.5 pt-2 space-y-2 flex-1 overflow-y-auto max-h-[calc(100vh-250px)] min-h-[180px] transition-all duration-200 rounded-b-2xl ${
-          isOver ? `ring-2 ring-inset ${col.ring} bg-blue-50/40 dark:bg-blue-950/20` : ''
-        }`}
+        className={`px-2.5 pb-2.5 pt-2 flex-1 transition-all duration-200 rounded-b-2xl ${
+          vertical
+            ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 min-h-[110px]'
+            : 'space-y-2 overflow-y-auto max-h-[calc(100vh-250px)] min-h-[180px]'
+        } ${isOver ? `ring-2 ring-inset ${col.ring} bg-blue-50/40 dark:bg-blue-950/20` : ''}`}
       >
         {cards.map(c => (
           <DraggableCard key={c.id} candidate={c} isUpdating={updatingId === c.id} labels={labels}
@@ -209,7 +215,7 @@ function KanbanColumn({
         ))}
 
         {cards.length === 0 && (
-          <div className={`flex flex-col items-center justify-center h-28 border-2 border-dashed rounded-xl transition-colors ${
+          <div className={`flex flex-col items-center justify-center h-28 border-2 border-dashed rounded-xl transition-colors ${vertical ? 'col-span-full' : ''} ${
             isOver ? 'border-blue-400 bg-blue-50/60 dark:bg-blue-950/30' : 'border-gray-200 dark:border-gray-700'
           }`}>
             <Users size={18} className={`mb-1 ${isOver ? 'text-blue-400' : 'text-gray-300 dark:text-gray-600'}`} />

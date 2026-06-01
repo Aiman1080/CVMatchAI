@@ -179,7 +179,7 @@ export const nl = {
       dashboard: 'Dashboard',
       vacancies: 'Vacatures',
       candidates: 'Kandidaten',
-      pipeline: 'Pijplijn',
+      pipeline: 'Kanban',
       email: 'E-mailinbox',
       integrations: '14 ATS-integraties (Greenhouse, Bullhorn, Personio...)',
       analytics: 'Analyses',

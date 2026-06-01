@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Search, Users, Mail, Trash2, LayoutGrid, Columns, Star, Flag, Download, Send, FileText, Eye, EyeOff, ChevronLeft, ChevronRight, Loader2, CheckSquare, Square, CheckCheck, X, GitCompareArrows, Upload } from 'lucide-react'
+import { Search, Users, Mail, Trash2, Star, Flag, Download, Send, FileText, Eye, EyeOff, ChevronLeft, ChevronRight, Loader2, CheckSquare, Square, CheckCheck, X, GitCompareArrows, Upload } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -13,7 +13,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from '@/components/ui/use-toast'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
-import { KanbanView } from './KanbanView'
 import { ImportCSVDialog } from './ImportCSVDialog'
 import { UploadWithVacancyDialog } from './UploadWithVacancyDialog'
 import { getStatusColor, formatRelativeTime, parseJsonSafe } from '@/lib/utils'
@@ -66,7 +65,6 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
     setSelectedIds(new Set())
     fetchPage(1, { vacancyId })
   }
-  const [view, setView] = useState<'grid' | 'kanban'>('grid')
   const [deleting, setDeleting] = useState<string | null>(null)
   const [updating, setUpdating] = useState<string | null>(null)
   const [showExport, setShowExport] = useState(false)
@@ -474,14 +472,6 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
             </SelectContent>
           </Select>
         </div>
-        <div className="flex items-center justify-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 self-start sm:self-auto">
-          <button onClick={() => setView('grid')} className={`p-1.5 rounded-md transition-colors ${view === 'grid' ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-800 dark:text-gray-200' : 'text-gray-400 hover:text-gray-600'}`} title={tcp.gridView}>
-            <LayoutGrid size={16} />
-          </button>
-          <button onClick={() => setView('kanban')} className={`p-1.5 rounded-md transition-colors ${view === 'kanban' ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-800 dark:text-gray-200' : 'text-gray-400 hover:text-gray-600'}`} title={tcp.kanbanView}>
-            <Columns size={16} />
-          </button>
-        </div>
         <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2 sm:contents">
           <Button size="sm" onClick={() => setShowUploadCV(true)} className="gap-1.5 h-auto py-2 gradient-bg whitespace-normal text-center leading-tight">
             <Upload size={15} className="shrink-0" /> {tcp.uploadCvBtn}
@@ -530,7 +520,7 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
       </div>
 
       {/* Bulk action bar */}
-      {selectedIds.size > 0 && view === 'grid' && (
+      {selectedIds.size > 0 && (
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 w-full">
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <CheckCheck size={16} className="text-blue-600 dark:text-blue-400 shrink-0" />
@@ -579,13 +569,8 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
         </div>
       )}
 
-      {/* Kanban view */}
-      {view === 'kanban' && (
-        <KanbanView candidates={filtered} onCandidatesChange={setCandidates} />
-      )}
-
       {/* Grid view */}
-      {view === 'grid' && (
+      {(
         filtered.length === 0 ? (() => {
           const hasActiveFilters = !!search.trim() || vacancyFilter !== 'all' || statusFilter !== 'all' || scoreFilter !== 'all'
           return (
@@ -696,13 +681,12 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1 flex-wrap mb-0.5">
                             <span className={`font-semibold text-sm truncate ${isUnread ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>{c.firstName} {c.lastName}</span>
-                            {isUnread && <span className="text-xs bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 px-1.5 rounded font-semibold animate-pulse">{tc.unread}</span>}
                             {c.liked && <Star size={10} className="text-amber-500 shrink-0" fill="currentColor" />}
                             {c.priority && <Flag size={10} className="text-red-500 shrink-0" />}
                             {c.savedToPool && <span className="text-xs bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 px-1 rounded font-medium">{tc.pool_badge}</span>}
                           </div>
                           <div className="flex items-center gap-1.5 mb-1 flex-wrap">
-                            <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${getStatusColor(c.status)}`}>{c.status}</span>
+                            <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${getStatusColor(c.status)}`}>{(tc as any)[c.status] || c.status}</span>
                             {c.vacancy && <span className="text-xs text-blue-600 truncate max-w-24">{c.vacancy.title}</span>}
                             {c.source === 'email' && <Mail size={9} className="text-blue-400 shrink-0" />}
                           </div>
@@ -758,7 +742,7 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
       )}
 
       {/* Pagination controls */}
-      {totalPages > 1 && view === 'grid' && (
+      {totalPages > 1 && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Showing {Math.min((page - 1) * PAGE_SIZE + 1, total)}&ndash;{Math.min(page * PAGE_SIZE, total)} of {total} candidates
