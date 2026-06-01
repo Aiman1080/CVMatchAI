@@ -861,6 +861,8 @@ export const nl = {
       emailBody: 'Bericht',
       teamsLink: 'Teams/Zoom link (optioneel)',
       calendarHint: 'Om een agenda-uitnodiging (.ics) te sturen die de kandidaat met één klik aan Google/Outlook toevoegt, gebruik het tabblad "Gesprek" → "Gesprek plannen".',
+      noSignatureTitle: 'Geen e-mailhandtekening ingesteld',
+      noSignatureDesc: 'Voeg een handtekening toe in het tabblad E-mail zodat uw e-mails er professioneel uitzien.',
       generateWithAI: 'Genereren met AI',
       send: 'Versturen',
       sending: 'Versturen...',

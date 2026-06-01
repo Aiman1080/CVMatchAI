@@ -921,6 +921,8 @@ export const fr = {
       emailBody: 'Message',
       teamsLink: 'Lien Teams/Zoom (optionnel)',
       calendarHint: 'Pour envoyer une invitation calendrier (.ics) que le candidat ajoute en un clic à Google/Outlook, utilisez l\'onglet « Entretien » → « Planifier l\'entretien ».',
+      noSignatureTitle: 'Aucune signature e-mail configurée',
+      noSignatureDesc: 'Ajoutez une signature dans l\'onglet E-mail pour que vos e-mails aient l\'air professionnels.',
       generateWithAI: 'Générer avec IA',
       send: 'Envoyer',
       sending: 'Envoi...',

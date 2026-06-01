@@ -259,6 +259,14 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
       if (res.ok) {
         toast({ title: cd.sendEmail, description: `${candidate.email}` })
         setShowEmail(false)
+        // Nudge: the email went out without a signature — invite them to add one
+        // in the Email tab so future emails look professional.
+        if (data.noSignature) {
+          toast({
+            title: (cd as any).noSignatureTitle || 'No email signature set',
+            description: (cd as any).noSignatureDesc || 'Add a signature in the Email tab so your emails look professional.',
+          })
+        }
         if (emailType === 'rejection') setCandidate((p: any) => ({ ...p, status: 'rejected' }))
         if (emailType === 'interview') setCandidate((p: any) => ({ ...p, status: 'shortlisted' }))
       } else {
