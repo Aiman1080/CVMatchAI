@@ -5,7 +5,7 @@
 // keeps owning subject/body/teamsLink/etc. so existing callers don't have
 // to be restructured.
 
-import { Mail, Loader2, Send, Video } from 'lucide-react'
+import { Mail, Loader2, Send, Video, CalendarClock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -31,6 +31,7 @@ interface Labels {
   send: string
   sending: string
   emailPlaceholder?: string
+  calendarHint?: string
 }
 
 interface Props {
@@ -164,6 +165,14 @@ export function CandidateEmailDialog({
                 placeholder="https://teams.microsoft.com/l/meetup-join/..."
                 className="text-sm"
               />
+              {/* Point recruiters to the dedicated scheduler (with .ics calendar
+                  invite) so they don't confuse "send an email" with "book a slot". */}
+              <div className="mt-2 flex items-start gap-2 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900">
+                <CalendarClock size={14} className="text-blue-500 shrink-0 mt-0.5" />
+                <p className="text-[11px] text-blue-700 dark:text-blue-300 leading-snug">
+                  {labels.calendarHint || 'To send a calendar invite (.ics) the candidate can add to Google/Outlook in one click, use the "Interview" tab → "Schedule interview".'}
+                </p>
+              </div>
             </div>
           )}
 
