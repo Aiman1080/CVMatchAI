@@ -594,7 +594,7 @@ export const nl = {
       type: 'Type',
       language: 'Taal',
       salary: 'Salaris',
-      salaryPlaceholder: 'bv. €50k–€70k',
+      salaryPlaceholder: 'bv. €50k-€70k',
       description: 'Functiebeschrijving',
       descriptionPlaceholder: 'Beschrijf de rol, verantwoordelijkheden en bedrijfscultuur...',
       requirements: 'Vereisten',
@@ -920,7 +920,7 @@ export const nl = {
       toLabel: 'Aan',
     },
     candidateInterview: {
-      interviewTab: 'Interview',
+      interviewTab: 'AI-vragen',
       reportTab: 'Rapport',
       motivationTab: 'Motivatie',
       cvTab: 'CV',

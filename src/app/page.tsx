@@ -14,7 +14,7 @@ import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 /* ═══════════════════════════════════════════════
-   useScrollReveal – IntersectionObserver hook
+   useScrollReveal - IntersectionObserver hook
    Fades in + slides up when element enters viewport
    ═══════════════════════════════════════════════ */
 function useScrollReveal(threshold = 0.15) {
@@ -36,7 +36,7 @@ function useScrollReveal(threshold = 0.15) {
 }
 
 /* ═══════════════════════════════════════════════
-   <ScrollReveal> – wrapper with stagger support
+   <ScrollReveal> - wrapper with stagger support
    ═══════════════════════════════════════════════ */
 function ScrollReveal({ children, delay = 0, className = '' }: { children: ReactNode; delay?: number; className?: string }) {
   const { ref, isVisible } = useScrollReveal(0.1)
@@ -56,7 +56,7 @@ function ScrollReveal({ children, delay = 0, className = '' }: { children: React
 }
 
 /* ═══════════════════════════════════════════════
-   useAnimatedCounter – counts from 0 to target
+   useAnimatedCounter - counts from 0 to target
    Uses requestAnimationFrame + easeOutExpo
    Starts only when element is in viewport
    ═══════════════════════════════════════════════ */
@@ -95,7 +95,7 @@ function useAnimatedCounter(target: number, duration = 2000) {
 }
 
 /* ═══════════════════════════════════════════════
-   AnimatedStat – single animated stat display
+   AnimatedStat - single animated stat display
    ═══════════════════════════════════════════════ */
 function AnimatedStat({ label, rawValue, color }: { label: string; rawValue: string; color: string }) {
   const numeric = parseInt(rawValue.replace(/[^0-9]/g, ''), 10)
@@ -314,7 +314,7 @@ export default function LandingPage() {
             {t.hero.badge}
           </div>
 
-          {/* Hero title line 1 – fades in + slides down */}
+          {/* Hero title line 1 - fades in + slides down */}
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight mb-6">
             <span
               className="block"
@@ -326,7 +326,7 @@ export default function LandingPage() {
             >
               {t.hero.title1}
             </span>
-            {/* Hero title line 2 – fades in + slides up, 200ms delay */}
+            {/* Hero title line 2 - fades in + slides up, 200ms delay */}
             <span
               className="block bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent"
               style={{
@@ -339,7 +339,7 @@ export default function LandingPage() {
             </span>
           </h1>
 
-          {/* Subtitle – 400ms delay */}
+          {/* Subtitle - 400ms delay */}
           <p
             className="text-base sm:text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-10 leading-relaxed"
             style={{
@@ -351,7 +351,7 @@ export default function LandingPage() {
             {t.hero.subtitle}
           </p>
 
-          {/* CTA buttons – 600ms delay */}
+          {/* CTA buttons - 600ms delay */}
           <div
             className="flex flex-col sm:flex-row gap-4 justify-center"
             style={{

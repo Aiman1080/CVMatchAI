@@ -8,7 +8,7 @@ import { uploadDocument, isStorageConfigured } from '../src/lib/storage'
 
 async function main() {
   if (!isStorageConfigured()) {
-    console.error('SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set — aborting.')
+    console.error('SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set - aborting.')
     process.exit(1)
   }
 
@@ -53,7 +53,7 @@ async function main() {
     // No progress this batch = every remaining row's upload is failing; stop to
     // avoid an infinite loop.
     if (migrated === before) {
-      console.error('No progress this batch — stopping. Check the Storage credentials / bucket.')
+      console.error('No progress this batch - stopping. Check the Storage credentials / bucket.')
       break
     }
   }

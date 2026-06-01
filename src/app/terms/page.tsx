@@ -58,7 +58,7 @@ export default function TermsPage() {
         {
           icon: Ban,
           title: '9. Suspension & termination',
-          text: 'We may suspend or terminate your account, with or without notice, if you breach these Terms, engage in fraudulent or unlawful activity, create risk or legal exposure for us, or fail to pay. You may terminate at any time by closing your account. On termination, your right to use the service ceases immediately; your data is retained for up to 30 days (to allow export) and then permanently deleted, unless longer retention is legally required. Sections 4–8, 10 and 11 survive termination.',
+          text: 'We may suspend or terminate your account, with or without notice, if you breach these Terms, engage in fraudulent or unlawful activity, create risk or legal exposure for us, or fail to pay. You may terminate at any time by closing your account. On termination, your right to use the service ceases immediately; your data is retained for up to 30 days (to allow export) and then permanently deleted, unless longer retention is legally required. Sections 4-8, 10 and 11 survive termination.',
         },
         {
           icon: Scale,
@@ -120,7 +120,7 @@ export default function TermsPage() {
         {
           icon: Ban,
           title: '9. Schorsing & beëindiging',
-          text: 'Wij kunnen uw account met of zonder kennisgeving schorsen of beëindigen bij inbreuk op deze voorwaarden, frauduleuze of onwettige activiteit, risico voor ons, of niet-betaling. U kunt te allen tijde beëindigen door uw account te sluiten. Bij beëindiging stopt uw gebruiksrecht onmiddellijk; uw gegevens worden tot 30 dagen bewaard (voor export) en daarna permanent verwijderd, tenzij langere bewaring wettelijk vereist is. De artikelen 4–8, 10 en 11 blijven na beëindiging gelden.',
+          text: 'Wij kunnen uw account met of zonder kennisgeving schorsen of beëindigen bij inbreuk op deze voorwaarden, frauduleuze of onwettige activiteit, risico voor ons, of niet-betaling. U kunt te allen tijde beëindigen door uw account te sluiten. Bij beëindiging stopt uw gebruiksrecht onmiddellijk; uw gegevens worden tot 30 dagen bewaard (voor export) en daarna permanent verwijderd, tenzij langere bewaring wettelijk vereist is. De artikelen 4-8, 10 en 11 blijven na beëindiging gelden.',
         },
         {
           icon: Scale,

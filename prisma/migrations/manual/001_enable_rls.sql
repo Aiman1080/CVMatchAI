@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- RLS hardening — apply once via Supabase SQL editor (or psql to DIRECT_URL)
+-- RLS hardening - apply once via Supabase SQL editor (or psql to DIRECT_URL)
 -- ════════════════════════════════════════════════════════════════════════
 --
 -- WHY THIS IS LIMITED DEFENSE-IN-DEPTH, NOT BULLETPROOF:
@@ -11,7 +11,7 @@
 -- WHAT THESE POLICIES *DO* PROTECT AGAINST:
 --   1. Direct queries via the Supabase JS client using the `anon` key
 --      (no key in your client bundle today, but if you ever add one)
---   2. Anyone who finds a Supabase auth JWT — `authenticated` role can
+--   2. Anyone who finds a Supabase auth JWT - `authenticated` role can
 --      only see their own rows
 --   3. A leaked database REST URL exposing the PostgREST API
 --
@@ -44,7 +44,7 @@ ALTER TABLE "AiUsageLog"        ENABLE ROW LEVEL SECURITY;
 -- ─── service_role bypass ───────────────────────────────────────────────
 -- Lets the Prisma connection (which uses service_role / postgres) pass through
 -- without restriction. Drop this clause if you want to force per-row checks
--- on Prisma queries too — see header for the bigger architectural change.
+-- on Prisma queries too - see header for the bigger architectural change.
 CREATE POLICY "service_role_all" ON "User"              FOR ALL TO service_role USING (true) WITH CHECK (true);
 CREATE POLICY "service_role_all" ON "Account"           FOR ALL TO service_role USING (true) WITH CHECK (true);
 CREATE POLICY "service_role_all" ON "Session"           FOR ALL TO service_role USING (true) WITH CHECK (true);
@@ -73,12 +73,12 @@ CREATE POLICY "auth_own_notif"   ON "Notification" FOR ALL TO authenticated USIN
 CREATE POLICY "auth_own_aiusage" ON "AiUsageLog"  FOR ALL TO authenticated USING (auth.uid()::text = "userId") WITH CHECK (auth.uid()::text = "userId");
 
 -- CandidateActivity / EmailScan / Account / Session / VerificationToken don't
--- carry userId directly — they reference it via FK. Default = deny for
+-- carry userId directly - they reference it via FK. Default = deny for
 -- `authenticated`; if the app ever queries them via supabase-js, write
 -- explicit join-based policies.
 
 -- ─── anon: deny everything ─────────────────────────────────────────────
 -- No CREATE POLICY for `anon` means RLS denies by default. Just being explicit
--- here for documentation — there's nothing to grant.
+-- here for documentation - there's nothing to grant.
 COMMENT ON SCHEMA public IS
   'RLS enabled on all user-scoped tables. service_role bypasses; authenticated sees own rows only; anon is denied by default. See prisma/migrations/manual/001_enable_rls.sql for the full rationale.';

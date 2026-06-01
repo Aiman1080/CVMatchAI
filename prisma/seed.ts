@@ -12,6 +12,13 @@ function hashScore(cv: string, title: string): number {
 }
 
 async function main() {
+  // Idempotent re-seed: wipe the two PURE-demo accounts first so running this
+  // again REFRESHES their data instead of duplicating it. Every model cascades
+  // on User delete, so this removes all their vacancies/candidates/activities/
+  // notifications/integrations in one go. admin@cvmatch.ai is a REAL account and
+  // is NEVER deleted here (only upserted below); no other user is touched.
+  await prisma.user.deleteMany({ where: { email: { in: ['demo@cvmatch.ai', 'pro@cvmatch.ai'] } } })
+
   const adminPassword = await bcrypt.hash('Wachtwoord_2201', 12)
   const recruiterPassword = await bcrypt.hash('recruiter123', 12)
   const proPassword = await bcrypt.hash('pro123', 12)
@@ -76,7 +83,7 @@ async function main() {
       base.setHours(10 + (di % 6), (di % 2) * 30, 0, 0)
       interviewAt = base
       interviewDuration = [30, 45, 60][di % 3]
-      interviewLocation = di % 2 === 0 ? 'https://meet.google.com/demo-interview' : 'Office — Meeting room B'
+      interviewLocation = di % 2 === 0 ? 'https://meet.google.com/demo-interview' : 'Office - Meeting room B'
     }
     di++
     await prisma.candidate.create({
@@ -98,7 +105,7 @@ async function main() {
     })
   }
 
-  // ── Demo Pro: rich impression — looks like an active recruitment agency ────
+  // ── Demo Pro: rich impression - looks like an active recruitment agency ────
 
   // 6 vacancies across different industries (Tech, Marketing, Finance, etc.)
   const proVacancies = VACANCIES.slice(3, 9)
@@ -118,7 +125,7 @@ async function main() {
     proVacancyIds.push(vacancy.id)
   }
 
-  // Realistic status distribution — like a real agency in action
+  // Realistic status distribution - like a real agency in action
   const STATUS_DISTRIBUTION = [
     'new', 'new', 'new', 'new', 'new',                          // 5 new
     'reviewing', 'reviewing', 'reviewing', 'reviewing', 'reviewing', 'reviewing', 'reviewing', 'reviewing', // 8 reviewing
@@ -130,14 +137,14 @@ async function main() {
 
   // Realistic notes used by recruiters
   const NOTES_POOL = [
-    'Strong candidate — schedule technical interview next week.',
+    'Strong candidate - schedule technical interview next week.',
     'Excellent communication skills. Good cultural fit.',
     'Lacking required experience in React, but eager learner.',
     'Top profile, fast-track to final round.',
-    'Asked about salary expectations — within range.',
+    'Asked about salary expectations - within range.',
     'Recommend to hiring manager for second interview.',
     'Available immediately. References checked, all positive.',
-    'Not a match for this role — consider for senior position later.',
+    'Not a match for this role - consider for senior position later.',
     'Strong technical background but weak in soft skills.',
     'Outstanding portfolio. Move to offer stage.',
     null, null, null,  // some candidates have no notes
@@ -186,17 +193,17 @@ async function main() {
 
     // Give some shortlisted/interviewing candidates a SCHEDULED interview so the
     // dashboard calendar has visible data on the demo accounts. Spread the dates
-    // across the next ~3 weeks at business hours (09:00–16:00).
+    // across the next ~3 weeks at business hours (09:00-16:00).
     let interviewAt: Date | null = null
     let interviewDuration: number | null = null
     let interviewLocation: string | null = null
     if ((status === 'shortlisted' || status === 'interviewing') && i % 3 === 0) {
       const base = new Date()
       base.setDate(base.getDate() + 1 + (i % 18)) // tomorrow .. +18 days
-      base.setHours(9 + (i % 8), (i % 2) * 30, 0, 0) // 09:00–16:30, on the hour/half-hour
+      base.setHours(9 + (i % 8), (i % 2) * 30, 0, 0) // 09:00-16:30, on the hour/half-hour
       interviewAt = base
       interviewDuration = [30, 45, 60][i % 3]
-      interviewLocation = i % 2 === 0 ? 'https://meet.google.com/demo-interview' : 'Office — Meeting room A'
+      interviewLocation = i % 2 === 0 ? 'https://meet.google.com/demo-interview' : 'Office - Meeting room A'
     }
 
     const candidate = await prisma.candidate.create({

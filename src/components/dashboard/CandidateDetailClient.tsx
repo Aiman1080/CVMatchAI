@@ -610,9 +610,9 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                 </div>
                 <Progress value={score} className="h-2" />
                 <div className="grid grid-cols-3 text-center text-xs text-gray-400 dark:text-gray-500">
-                  <span className="text-red-500">0–49<br />{ci.matchLow}</span>
-                  <span className="text-amber-500">50–74<br />{ci.matchMedium}</span>
-                  <span className="text-green-500">75–100<br />{ci.matchStrong}</span>
+                  <span className="text-red-500">0-49<br />{ci.matchLow}</span>
+                  <span className="text-amber-500">50-74<br />{ci.matchMedium}</span>
+                  <span className="text-green-500">75-100<br />{ci.matchStrong}</span>
                 </div>
               </CardContent>
             </Card>
