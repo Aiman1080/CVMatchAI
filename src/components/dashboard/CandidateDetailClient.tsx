@@ -154,6 +154,18 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
       .catch(() => {})
   }, [])
 
+  // Persist generated interview questions to localStorage (keyed by candidate) so
+  // they survive leaving the candidate, switching tabs, or a page reload. The
+  // recruiter's answers are persisted separately to the DB (interviewAnswers).
+  const questionsKey = `deltamatch-iq-${candidate.id}`
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(questionsKey)
+      if (saved) setInterviewQuestions(JSON.parse(saved))
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const score = candidate.matchScore || 0
   const strengths = parseJsonSafe<string[]>(candidate.strengths, [])
   const weaknesses = parseJsonSafe<string[]>(candidate.weaknesses, [])
@@ -344,6 +356,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
       const data = await res.json()
       if (res.ok) {
         setInterviewQuestions(data.questions)
+        try { localStorage.setItem(questionsKey, JSON.stringify(data.questions)) } catch {}
         setVisibleAnswers(new Set())
         toast({ title: ci.questionsGenerated })
       } else {

@@ -9,7 +9,7 @@ import Link from 'next/link'
 import { useEffect } from 'react'
 import {
   MapPin, Briefcase, Euro, Users, Upload, Star, ChevronRight, ChevronLeft,
-  Pencil, Trash2, CheckCircle, XCircle, Clock, Loader2, Save, X, Sparkles, Trophy, Download, Copy, Mail, Link2
+  Pencil, Trash2, CheckCircle, XCircle, Clock, Loader2, Save, X, Download, Copy, Mail, Link2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -165,8 +165,6 @@ export function VacancyDetailClient({ vacancy: initial, canExport = false }: { v
     }
   }
 
-  const [ranking, setRanking] = useState<Array<{ candidateId: string; rank: number; reasoning: string; standoutFactor: string }> | null>(null)
-  const [rankingLoading, setRankingLoading] = useState(false)
   const [exportingExcel, setExportingExcel] = useState(false)
   const [exportingPdf, setExportingPdf] = useState(false)
 
@@ -255,28 +253,6 @@ export function VacancyDetailClient({ vacancy: initial, canExport = false }: { v
       toast({ title: vd.summaryFailed, variant: 'destructive' })
     } finally {
       setSendingSummary(false)
-    }
-  }
-
-  const handleAIRanking = async () => {
-    setRankingLoading(true)
-    try {
-      const res = await fetch('/api/vacancies/ranking', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ vacancyId: vacancy.id }),
-      })
-      const data = await res.json()
-      if (res.ok) {
-        setRanking(data.ranking)
-        toast({ title: vd.aiRankingGenerated })
-      } else {
-        toast({ title: data.error || vd.rankingFailed, variant: 'destructive' })
-      }
-    } catch {
-      toast({ title: vd.rankingFailed, variant: 'destructive' })
-    } finally {
-      setRankingLoading(false)
     }
   }
 
@@ -434,12 +410,6 @@ export function VacancyDetailClient({ vacancy: initial, canExport = false }: { v
                 {vd.sendSummaryBtn}
               </Button>
             )}
-            {sortedCandidates.length >= 2 && (
-              <Button size="sm" variant="outline" onClick={handleAIRanking} disabled={rankingLoading} className="gap-1.5 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-400 h-auto py-2 whitespace-normal text-center leading-tight">
-                {rankingLoading ? <Loader2 size={13} className="animate-spin shrink-0" /> : <Trophy size={13} className="shrink-0" />}
-                {rankingLoading ? vd.rankingInProgress : vd.aiRanking}
-              </Button>
-            )}
             {canExport && sortedCandidates.length > 0 && (
               <>
                 <Button
@@ -482,30 +452,6 @@ export function VacancyDetailClient({ vacancy: initial, canExport = false }: { v
           </div>
         </CardHeader>
         <CardContent>
-          {ranking && ranking.length > 0 && (
-            <div className="mb-4 p-4 bg-purple-50 dark:bg-purple-950/30 rounded-xl border border-purple-200 dark:border-purple-800">
-              <div className="flex items-center gap-2 mb-3">
-                <Sparkles className="w-4 h-4 text-purple-600" />
-                <h4 className="text-sm font-bold text-purple-900 dark:text-purple-300">{vd.aiRankingAnalysis}</h4>
-              </div>
-              <div className="space-y-3">
-                {ranking.map(r => {
-                  const c = vacancy.candidates.find(c => c.id === r.candidateId)
-                  if (!c) return null
-                  return (
-                    <div key={r.candidateId} className="flex items-start gap-3 p-3 bg-white dark:bg-gray-900 rounded-lg">
-                      <span className={`text-lg font-bold shrink-0 w-7 ${r.rank === 1 ? 'text-amber-500' : r.rank === 2 ? 'text-gray-400' : r.rank === 3 ? 'text-orange-500' : 'text-gray-300'}`}>#{r.rank}</span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{c.firstName} {c.lastName} <span className="text-xs text-gray-400 font-normal ml-1">{c.matchScore?.toFixed(0)}%</span></p>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">{r.reasoning}</p>
-                        <p className="text-xs text-purple-600 dark:text-purple-400 mt-1 font-medium">{r.standoutFactor}</p>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
           {sortedCandidates.length === 0 ? (
             <div className="text-center py-10">
               <Upload className="w-8 h-8 text-gray-300 mx-auto mb-2" />
