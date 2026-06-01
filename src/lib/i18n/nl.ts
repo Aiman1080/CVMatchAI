@@ -139,6 +139,8 @@ export const nl = {
   dashboard: {
     calendar: {
       upcomingTitle: 'Komende gesprekken',
+      calendarTitle: 'Gesprekskalender',
+      noneThisDay: 'Geen gesprekken op deze dag.',
       loading: 'Laden…',
       empty: 'Geen gesprekken gepland. Plan er een via het tabblad Gesprek van een kandidaat.',
       video: 'Videogesprek',

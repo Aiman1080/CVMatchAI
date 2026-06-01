@@ -139,6 +139,8 @@ export const en = {
   dashboard: {
     calendar: {
       upcomingTitle: 'Upcoming interviews',
+      calendarTitle: 'Interview calendar',
+      noneThisDay: 'No interviews on this day.',
       loading: 'Loading…',
       empty: 'No interviews scheduled. Schedule one from a candidate’s Interview tab.',
       video: 'Video call',

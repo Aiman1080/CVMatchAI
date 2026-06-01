@@ -8,6 +8,7 @@ import { RecentCandidates } from '@/components/dashboard/RecentCandidates'
 import { RecentVacancies } from '@/components/dashboard/RecentVacancies'
 import { AIInsightsPanel } from '@/components/dashboard/AIInsightsPanel'
 import { UpcomingInterviews } from '@/components/dashboard/UpcomingInterviews'
+import { CalendarWidget } from '@/components/dashboard/CalendarWidget'
 import { DashboardClient } from '@/components/dashboard/DashboardClient'
 import { getEffectiveSubscription } from '@/lib/plans'
 
@@ -78,6 +79,7 @@ export default async function DashboardPage() {
       <DashboardGreeting firstName={session?.user?.name?.split(' ')[0] || ''} />
       <div className="p-4 sm:p-8 space-y-6 sm:space-y-8">
         <DashboardClient onboarding={onboarding} subscription={effectiveSubscription} />
+        <CalendarWidget />
         <DashboardStats stats={stats} />
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
           <div className="xl:col-span-2"><RecentCandidates candidates={recentCandidates} /></div>
