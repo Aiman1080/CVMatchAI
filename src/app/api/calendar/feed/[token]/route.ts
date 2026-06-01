@@ -1,5 +1,5 @@
 // Public iCal subscription feed: /api/calendar/feed/[token]
-// No session auth — the unguessable token IS the credential (this is how Google/
+// No session auth - the unguessable token IS the credential (this is how Google/
 // Outlook/Apple poll a private calendar URL). Returns text/calendar with the
 // user's interviews + personal events, so the whole DeltaMatch calendar shows
 // up in their personal agenda and stays auto-synced (read-only, one-way).
@@ -40,7 +40,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
       uid: `interview-${c.id}`,
       start: c.interviewAt as Date,
       durationMinutes: c.interviewDuration || 30,
-      summary: `Interview — ${`${c.firstName || ''} ${c.lastName || ''}`.trim() || 'Candidate'}${c.vacancy?.title ? ` (${c.vacancy.title})` : ''}`,
+      summary: `Interview - ${`${c.firstName || ''} ${c.lastName || ''}`.trim() || 'Candidate'}${c.vacancy?.title ? ` (${c.vacancy.title})` : ''}`,
       location: c.interviewLocation || undefined,
     })),
     ...personal.map((e: any) => ({
@@ -53,7 +53,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
     })),
   ]
 
-  const ics = buildICSFeed(events, `DeltaMatch — ${user.name || 'Calendar'}`)
+  const ics = buildICSFeed(events, `DeltaMatch - ${user.name || 'Calendar'}`)
   return new Response(ics, {
     status: 200,
     headers: {

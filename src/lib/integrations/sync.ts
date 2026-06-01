@@ -1,4 +1,4 @@
-// Core sync engine — pulls candidates from an ATS and creates/updates them in DeltaMatch
+// Core sync engine - pulls candidates from an ATS and creates/updates them in DeltaMatch
 import prisma from '@/lib/prisma'
 import { parseDocument } from '@/lib/pdf-parser'
 import { persistDocument } from '@/lib/storage'
@@ -180,7 +180,7 @@ async function upsertCandidate(userId: string, platform: string, data: {
       cvContent,
       cvFileName,
       // Also persist the original binary so the recruiter can preview the real
-      // PDF/DOCX in the candidate detail page — not just the extracted text.
+      // PDF/DOCX in the candidate detail page - not just the extracted text.
       // ATS adapters that don't download the file (cvBuffer null) fall back to
       // text-only view, with the amber notice shown by DocumentViewer.
       cvFile: cvDoc?.fileBytes ?? undefined,
@@ -195,7 +195,7 @@ async function upsertCandidate(userId: string, platform: string, data: {
       gdprConsentDate: new Date(),
       vacancyId: data.vacancyId,
       userId,
-      summary: !cvContent ? `Imported from ${platform} without CV. AI analysis not available — please upload the CV manually for full scoring.` : undefined,
+      summary: !cvContent ? `Imported from ${platform} without CV. AI analysis not available - please upload the CV manually for full scoring.` : undefined,
       notes: !cvContent ? `⚠️ No CV available from ${platform}. Upload the CV manually to get AI analysis.${!data.motivationText ? ' No motivation letter available either.' : ''}` : undefined,
     },
   })
@@ -653,13 +653,13 @@ export async function syncBullhorn(apiKey: string, restUrl: string, userId: stri
       try {
         const link = candidateJobMap.get(candidate.id)
         if (!link) {
-          // No job submission for this candidate — skip rather than incorrectly link to first job
+          // No job submission for this candidate - skip rather than incorrectly link to first job
           result.skipped++
           continue
         }
         const vacancyId = jobVacancyMap.get(link.jobId)
         if (!vacancyId) {
-          // Candidate's job isn't in our synced list (e.g. closed job) — skip
+          // Candidate's job isn't in our synced list (e.g. closed job) - skip
           result.skipped++
           continue
         }
@@ -839,14 +839,14 @@ export async function syncAshby(apiKey: string, userId: string, since?: Date): P
       try {
         const link = candidateAppMap.get(candidate.id)
         if (!link) {
-          // No application linking this candidate to a job — skip rather than guessing
+          // No application linking this candidate to a job - skip rather than guessing
           result.skipped++
           continue
         }
 
         const job = jobMap.get(link.jobId)
         if (!job) {
-          // The job for this candidate isn't in our synced list — skip
+          // The job for this candidate isn't in our synced list - skip
           result.skipped++
           continue
         }

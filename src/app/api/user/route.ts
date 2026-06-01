@@ -8,7 +8,7 @@ import { isDemoAccount } from '@/lib/demo-guard'
 
 const passwordSchema = z.string().min(8).regex(/[A-Z]/).regex(/[0-9]/).regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/)
 
-// Returns the current user's stats and subscription tier — used by the dashboard header
+// Returns the current user's stats and subscription tier - used by the dashboard header
 export async function GET() {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -30,7 +30,7 @@ export async function GET() {
   }
 }
 
-// Only `name` and `company` can be updated — email and role changes require admin.
+// Only `name` and `company` can be updated - email and role changes require admin.
 // Password change requires verifying the current password first.
 export async function PATCH(req: Request) {
   const session = await getServerSession(authOptions)

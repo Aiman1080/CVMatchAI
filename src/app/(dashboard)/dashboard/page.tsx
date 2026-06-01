@@ -19,7 +19,7 @@ export default async function DashboardPage() {
 
   if (!userId) redirect('/login')
 
-  // Update lastSeenAt — non-blocking, never throws
+  // Update lastSeenAt - non-blocking, never throws
   prisma.user.update({ where: { id: userId }, data: { lastSeenAt: new Date() } }).catch(() => {})
 
   const where = isAdmin ? {} : { userId }

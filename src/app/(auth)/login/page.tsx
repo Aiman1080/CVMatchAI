@@ -53,7 +53,7 @@ export default function LoginPage() {
             🚫 Your account has been suspended. Please contact <a href="mailto:support@mydeltamatch.com" className="underline font-medium">support</a> if you think this is an error.
           </div>
         )}
-        {/* SSO buttons — only show when env vars are configured AND not demo flow */}
+        {/* SSO buttons - only show when env vars are configured AND not demo flow */}
         {!showDemo && (process.env.NEXT_PUBLIC_HAS_GOOGLE_SSO === 'true' || process.env.NEXT_PUBLIC_HAS_MICROSOFT_SSO === 'true') && (
           <>
             <div className="flex flex-col gap-2 mb-4">

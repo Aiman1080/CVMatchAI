@@ -1,6 +1,6 @@
 // Returns (creating it on first use) the user's private iCal subscription URL.
 // The token is a long random string acting as the credential for the public
-// feed route — so we never expose it without an authenticated session here.
+// feed route - so we never expose it without an authenticated session here.
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -27,7 +27,7 @@ export async function GET() {
   }
 }
 
-// Regenerate the token (invalidates the old feed URL) — demo accounts blocked.
+// Regenerate the token (invalidates the old feed URL) - demo accounts blocked.
 export async function POST() {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

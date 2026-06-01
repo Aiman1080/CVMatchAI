@@ -1,4 +1,4 @@
-// Admin user list — returns all registered accounts with counts of their vacancies,
+// Admin user list - returns all registered accounts with counts of their vacancies,
 // candidates, inboxes and tickets. Password hashes are never included in the select.
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'

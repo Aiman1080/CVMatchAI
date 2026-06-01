@@ -1,4 +1,4 @@
-// AI analysis module — uses the Google Gemini SDK (function calling with mode:'ANY')
+// AI analysis module - uses the Google Gemini SDK (function calling with mode:'ANY')
 // for structured CV and email analysis. Falls back to generateDemoAnalysis() when no
 // API key is configured so the app works out-of-the-box without a paid account.
 import { GoogleGenerativeAI, FunctionCallingMode, type FunctionDeclaration, SchemaType } from '@google/generative-ai'
@@ -29,7 +29,7 @@ async function callWithRetry<T>(fn: () => Promise<T>, attempts = 3): Promise<T> 
       const is429 = err?.status === 429 || /429|too many requests|rate limit|quota/i.test(err?.message || '')
       if (!is429 || i === attempts - 1) throw err
       const waitMs = 1500 * Math.pow(2, i) // 1.5s, 3s, 6s
-      log.warn(`Gemini 429 — retrying in ${waitMs}ms (attempt ${i + 1}/${attempts})`)
+      log.warn(`Gemini 429 - retrying in ${waitMs}ms (attempt ${i + 1}/${attempts})`)
       await new Promise(r => setTimeout(r, waitMs))
     }
   }
@@ -39,7 +39,7 @@ async function callWithRetry<T>(fn: () => Promise<T>, attempts = 3): Promise<T> 
 // gemini-2.5-flash is a "thinking" model: by default it spends hidden reasoning
 // tokens before answering. With function calling (mode ANY) on the larger
 // schemas (CV analysis, interview-answer assessment, hiring report) that
-// thinking step can starve or derail the actual function call — the response
+// thinking step can starve or derail the actual function call - the response
 // comes back with no usable call (finishReason MAX_TOKENS / MALFORMED_FUNCTION_CALL)
 // and the SDK's functionCalls() then throws while reading the empty candidate.
 // That throw is exactly what dropped CV analysis into the demo fallback
@@ -66,7 +66,7 @@ function firstFunctionCall(result: any): any | null {
     const calls = result?.response?.functionCalls?.()
     if (calls && calls.length > 0) return calls[0]
   } catch (err: any) {
-    log.warn('Gemini functionCalls() threw — empty/blocked response', {
+    log.warn('Gemini functionCalls() threw - empty/blocked response', {
       finishReason: result?.response?.candidates?.[0]?.finishReason,
       message: String(err?.message || err).slice(0, 200),
     })
@@ -95,7 +95,7 @@ export interface CVAnalysisResult {
   phone?: string
 }
 
-// JSON Schema for the CV analysis tool — matches CVAnalysisResult fields exactly.
+// JSON Schema for the CV analysis tool - matches CVAnalysisResult fields exactly.
 const CV_ANALYSIS_TOOL: FunctionDeclaration = {
   name: 'submit_cv_analysis',
   description:
@@ -103,13 +103,13 @@ const CV_ANALYSIS_TOOL: FunctionDeclaration = {
   parameters: {
     type: SchemaType.OBJECT,
     properties: {
-      matchScore: { type: SchemaType.NUMBER, description: 'Match score 0-100. Be strict — average candidates score 50-65, only exceptional candidates score 80+.' },
+      matchScore: { type: SchemaType.NUMBER, description: 'Match score 0-100. Be strict - average candidates score 50-65, only exceptional candidates score 80+.' },
       summary: { type: SchemaType.STRING, description: '3-4 sentence professional summary covering the candidate\'s overall profile, key experience, main skills, and fit for this specific role.' },
       strengths: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING }, description: '4-6 specific strengths relevant to this vacancy. Each item should be a complete sentence explaining WHY it is a strength for this role (e.g. "5 years of Python development directly matching the backend requirements").' },
       weaknesses: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING }, description: '3-5 specific gaps or concerns relative to the vacancy requirements. Each item should be concrete (e.g. "No experience with Kubernetes mentioned despite it being a key requirement").' },
       skills: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING }, description: 'Technical and soft skills extracted from the CV' },
       experience: { type: SchemaType.STRING, description: 'Chronological summary of job roles only. Do NOT include education here.' },
-      education: { type: SchemaType.STRING, description: 'Degrees with institution and year, e.g. "Master CS — KU Leuven (2021)". Do NOT list jobs here.' },
+      education: { type: SchemaType.STRING, description: 'Degrees with institution and year, e.g. "Master CS - KU Leuven (2021)". Do NOT list jobs here.' },
       recommendation: { type: SchemaType.STRING, description: 'Hiring recommendation based on fit. Must be one of: strong_yes, yes, maybe, no' },
       language: { type: SchemaType.STRING, description: 'Dominant language detected in the CV. Must be one of: nl, en, fr, de' },
       firstName: { type: SchemaType.STRING, description: "Candidate's personal first name from the first line of the CV. Never a school or company name." },
@@ -123,17 +123,21 @@ const CV_ANALYSIS_TOOL: FunctionDeclaration = {
 
 const SYSTEM_PROMPT = `You are an expert HR recruiter and talent assessor with deep experience in Belgian and European job markets. Your task is to analyze a candidate's CV and optional motivation letter against an open vacancy and produce a thorough, honest structured assessment.
 
-CRITICAL EXTRACTION RULES — you must follow these exactly:
+CRITICAL EXTRACTION RULES - you must follow these exactly:
 1. firstName / lastName: The candidate's PERSONAL name appears on the FIRST 1-3 lines of the CV. It is NEVER:
    - A school or university name (KU Leuven, HoGent, UCL, Artesis Plantijn, VUB, ULiège…)
    - A company or employer name
    - A job title (Software Engineer, Project Manager…)
    - A section header (EDUCATION, EXPERIENCE, SKILLS, PROFILE, SUMMARY…)
    If you cannot identify a clear personal first+last name, leave both fields empty.
-2. education: Extract ACTUAL degrees with the institution name and year. Example: "Master in Computer Science — KU Leuven (2021), Bachelor Applied Informatics — HoGent (2018)". Do NOT list job titles, internships, or work experience here.
+2. education: Extract ACTUAL degrees with the institution name and year. Example: "Master in Computer Science - KU Leuven (2021), Bachelor Applied Informatics - HoGent (2018)". Do NOT list job titles, internships, or work experience here.
 3. experience: Summarize ACTUAL paid employment chronologically. Do NOT list education, courses, or certifications here.
 4. matchScore: Rate 0-100 strictly based on how well the candidate meets the listed requirements. A candidate missing key required skills should score below 50.
-5. language: Detect from the CV text — 'nl' Dutch, 'fr' French, 'en' English, 'de' German.`
+5. language: Detect from the CV text - 'nl' Dutch, 'fr' French, 'en' English, 'de' German.`
+
+// Em dashes read as an "AI tell". Append this to every prose-generating prompt
+// so generated copy (summaries, questions, reports, emails) never contains them.
+const NO_EM_DASH_RULE = ' Never use em dashes in your writing; use commas, parentheses, or periods instead.'
 
 export async function analyzeCVAgainstVacancy(
   cvText: string,
@@ -170,7 +174,7 @@ ${cvText.slice(0, 6000)}` +
   try {
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-flash',
-      systemInstruction: SYSTEM_PROMPT,
+      systemInstruction: SYSTEM_PROMPT + NO_EM_DASH_RULE,
       generationConfig: structuredGenConfig(0.3),
       tools: [{ functionDeclarations: [CV_ANALYSIS_TOOL] }],
       toolConfig: { functionCallingConfig: { mode: FunctionCallingMode.ANY } },
@@ -183,7 +187,7 @@ ${cvText.slice(0, 6000)}` +
       logAiUsage('system', 'cv_analysis', usage?.promptTokenCount || 0, usage?.candidatesTokenCount || 0).catch(() => {})
       return call.args as unknown as CVAnalysisResult
     }
-    // API call succeeded but returned no function call — fall back to demo data
+    // API call succeeded but returned no function call - fall back to demo data
     // so the app keeps working instead of crashing.
     log.warn('analyzeCVAgainstVacancy returned no structured result, falling back to demo')
     return generateDemoAnalysis(cvText, vacancyTitle)
@@ -222,7 +226,7 @@ const EMAIL_CLASSIFY_TOOL: FunctionDeclaration = {
           'social notifications, recruiter-to-recruiter emails, candidate STATUS UPDATES without a CV, ' +
           'OUT-OF-OFFICE replies, vacation autoresponders, OR if there is no document attachment at all.',
       },
-      candidateName: { type: SchemaType.STRING, description: 'Full name of the applicant — extract from signature, body, or sender' },
+      candidateName: { type: SchemaType.STRING, description: 'Full name of the applicant - extract from signature, body, or sender' },
       appliedPosition: { type: SchemaType.STRING, description: 'Position the candidate is applying for, if mentioned' },
       cvAttachmentName: {
         type: SchemaType.STRING,
@@ -286,7 +290,7 @@ export async function classifyRecruitmentEmail(
       `- Out-of-office / vacation autoresponders\n` +
       `- Emails between recruiters (not from candidates)\n` +
       `- Status updates without a NEW CV attached\n` +
-      `- ANY email with NO real document attachment — applications without a CV are not real applications\n\n` +
+      `- ANY email with NO real document attachment - applications without a CV are not real applications\n\n` +
       `If isRelevant is TRUE, you MUST also identify which attachment filename is most likely the CV ` +
       `(field cvAttachmentName) and which is the motivation/cover letter (field motivationAttachmentName).\n\n` +
       `--- EMAIL ---\n` +
@@ -371,7 +375,7 @@ export async function detectDocumentType(text: string): Promise<'cv' | 'motivati
 // ── OCR fallback for scanned/image PDFs ──────────────────────────────────────
 // pdf-parse returns little/no text for scanned or image-only PDFs. Gemini reads
 // PDFs (and images) natively, so we send the raw bytes and ask for verbatim
-// text — no Tesseract/system dependency, no Vercel memory/timeout risk. Returns
+// text - no Tesseract/system dependency, no Vercel memory/timeout risk. Returns
 // '' in demo mode, for non-PDF/image types, for oversized files, or on any
 // failure, so callers keep their existing behaviour.
 export async function extractTextWithGemini(buffer: Buffer, mimeType: string): Promise<string> {
@@ -379,7 +383,7 @@ export async function extractTextWithGemini(buffer: Buffer, mimeType: string): P
   if (mimeType !== 'application/pdf' && !mimeType.startsWith('image/')) return ''
   // Inline base64 inflates ~33%; keep well under Gemini's request limit.
   if (buffer.length > 14 * 1024 * 1024) {
-    log.warn('extractTextWithGemini skipped — file too large for inline OCR', { bytes: buffer.length })
+    log.warn('extractTextWithGemini skipped - file too large for inline OCR', { bytes: buffer.length })
     return ''
   }
   try {
@@ -593,12 +597,12 @@ function generateDemoAnalysis(cvText: string, vacancyTitle: string): CVAnalysisR
 
   return {
     matchScore: score,
-    summary: `Candidate presents relevant background for the ${vacancyTitle} role. Profile reviewed in demo mode — add a GEMINI_API_KEY for full AI assessment.`,
+    summary: `Candidate presents relevant background for the ${vacancyTitle} role. Profile reviewed in demo mode - add a GEMINI_API_KEY for full AI assessment.`,
     strengths: ['Relevant professional experience', 'Technical skills matching vacancy', 'Clear structured CV'],
     weaknesses: ['Demo mode: detailed analysis requires AI key', 'Some requirements need interview confirmation'],
     skills: detectedSkills,
-    experience: expSection ?? 'Work experience present — see CV tab for details.',
-    education: eduSection ?? 'Educational background present — see CV tab for details.',
+    experience: expSection ?? 'Work experience present - see CV tab for details.',
+    education: eduSection ?? 'Educational background present - see CV tab for details.',
     recommendation: score >= 80 ? 'strong_yes' : score >= 65 ? 'yes' : score >= 50 ? 'maybe' : 'no',
     language: lang,
     firstName,
@@ -662,7 +666,7 @@ export async function generateInterviewQuestions(
   try {
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-flash',
-      systemInstruction: `You are an expert HR interviewer with deep experience in structured interviewing techniques. Generate 8 personalized interview questions based on the candidate's CV, focusing on gaps, strengths, and the specific role requirements. Include a mix of technical, behavioral, situational, and cultural fit questions. Each question should be tailored — not generic. For each question, also provide a concise expected answer (1-2 sentences) describing what a good response should include. ${langInstruction}`,
+      systemInstruction: `You are an expert HR interviewer with deep experience in structured interviewing techniques. Generate 8 personalized interview questions based on the candidate's CV, focusing on gaps, strengths, and the specific role requirements. Include a mix of technical, behavioral, situational, and cultural fit questions. Each question should be tailored - not generic. For each question, also provide a concise expected answer (1-2 sentences) describing what a good response should include. ${langInstruction}${NO_EM_DASH_RULE}`,
       generationConfig: structuredGenConfig(0.3),
       tools: [{ functionDeclarations: [INTERVIEW_QUESTIONS_TOOL] }],
       toolConfig: { functionCallingConfig: { mode: FunctionCallingMode.ANY } },
@@ -756,7 +760,7 @@ export async function analyzeInterviewAnswers(
   if (isDemoMode()) {
     return {
       verdict: 'good', score: 72,
-      summary: `Demo mode — add a GEMINI_API_KEY for a real assessment. ${answered.length} of ${qa.length} questions answered.`,
+      summary: `Demo mode - add a GEMINI_API_KEY for a real assessment. ${answered.length} of ${qa.length} questions answered.`,
       strengths: ['Provided answers to most questions'],
       concerns: ['Enable AI for a detailed evaluation'],
     }
@@ -769,7 +773,7 @@ export async function analyzeInterviewAnswers(
     const genAI = getClient()
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-flash',
-      systemInstruction: `You are an expert interviewer evaluating a candidate's answers for the "${vacancyTitle}" role. Be honest and specific: judge each answer against the expected answer where provided. ${langInstruction}`,
+      systemInstruction: `You are an expert interviewer evaluating a candidate's answers for the "${vacancyTitle}" role. Be honest and specific: judge each answer against the expected answer where provided. ${langInstruction}${NO_EM_DASH_RULE}`,
       generationConfig: structuredGenConfig(0.3),
       tools: [{ functionDeclarations: [ANSWERS_ASSESSMENT_TOOL] }],
       toolConfig: { functionCallingConfig: { mode: FunctionCallingMode.ANY } },
@@ -791,7 +795,7 @@ export async function analyzeInterviewAnswers(
     log.error('analyzeInterviewAnswers error', { error: String(error) })
   }
   // Graceful fallback (do not block the UI)
-  return { verdict: 'mixed', score: 50, summary: 'Could not generate an AI assessment right now — please retry.', strengths: [], concerns: [] }
+  return { verdict: 'mixed', score: 50, summary: 'Could not generate an AI assessment right now - please retry.', strengths: [], concerns: [] }
 }
 
 // ── Job Description Generation ───────────────────────────────────────────────
@@ -848,7 +852,7 @@ export async function generateJobDescription(
   try {
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-flash',
-      systemInstruction: `You are an expert HR copywriter specializing in creating professional, attractive, and inclusive job descriptions that attract top talent. Write compelling descriptions that clearly communicate the role, responsibilities, and growth opportunities. ${langInstruction}`,
+      systemInstruction: `You are an expert HR copywriter specializing in creating professional, attractive, and inclusive job descriptions that attract top talent. Write compelling descriptions that clearly communicate the role, responsibilities, and growth opportunities. ${langInstruction}${NO_EM_DASH_RULE}`,
       generationConfig: structuredGenConfig(0.3),
       tools: [{ functionDeclarations: [JOB_DESCRIPTION_TOOL] }],
       toolConfig: { functionCallingConfig: { mode: FunctionCallingMode.ANY } },
@@ -949,7 +953,7 @@ export async function rankCandidates(
   try {
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-flash',
-      systemInstruction: `You are an expert talent evaluator. Rank the candidates for the specified role. Explain clearly WHY each candidate is ranked in their position — what makes #1 better than #2, etc. Focus on role fit, not just overall quality. ${langInstruction}`,
+      systemInstruction: `You are an expert talent evaluator. Rank the candidates for the specified role. Explain clearly WHY each candidate is ranked in their position - what makes #1 better than #2, etc. Focus on role fit, not just overall quality. ${langInstruction}${NO_EM_DASH_RULE}`,
       generationConfig: structuredGenConfig(0.3),
       tools: [{ functionDeclarations: [RANKING_TOOL] }],
       toolConfig: { functionCallingConfig: { mode: FunctionCallingMode.ANY } },
@@ -1054,10 +1058,10 @@ export async function generateHiringReport(
       : `At ${candidate.matchScore}% match (${scoreInterpretation.toLowerCase()}), compensation should be carefully calibrated. If this candidate is selected despite gaps, consider whether a slightly lower offer with a clear growth plan and performance milestones would be appropriate. Salary discussions should factor in the training and ramp-up time that may be needed.`
 
     const nextSteps = candidate.recommendation === 'strong_yes' || candidate.recommendation === 'yes'
-      ? `1. **Schedule Interview** — Arrange a comprehensive interview within the next 5-7 business days to maintain candidate engagement.\n2. **Prepare Interview Panel** — Assemble a panel covering technical assessment, team fit, and managerial evaluation.\n3. **Reference Check Preparation** — Begin preparing reference check questions based on the areas of concern identified above.\n4. **Offer Timeline** — If the interview is successful, aim to extend an offer within 48 hours to remain competitive.\n5. **Onboarding Planning** — Start preliminary onboarding planning to ensure a smooth transition if the candidate accepts.`
+      ? `1. **Schedule Interview** - Arrange a comprehensive interview within the next 5-7 business days to maintain candidate engagement.\n2. **Prepare Interview Panel** - Assemble a panel covering technical assessment, team fit, and managerial evaluation.\n3. **Reference Check Preparation** - Begin preparing reference check questions based on the areas of concern identified above.\n4. **Offer Timeline** - If the interview is successful, aim to extend an offer within 48 hours to remain competitive.\n5. **Onboarding Planning** - Start preliminary onboarding planning to ensure a smooth transition if the candidate accepts.`
       : candidate.recommendation === 'maybe'
-      ? `1. **Phone Screening** — Schedule a 20-30 minute screening call to address the key concerns before committing to a full interview.\n2. **Skills Assessment** — Consider a brief technical assessment or case study to evaluate the specific gaps identified.\n3. **Compare with Pool** — Review this candidate alongside other applicants to determine relative ranking.\n4. **Decision Point** — After screening, make a go/no-go decision on proceeding to a full interview within 3 business days.`
-      : `1. **Communicate Decision** — Send a professional rejection email thanking the candidate for their time and effort.\n2. **Pipeline Review** — Review the remaining candidate pipeline for stronger matches.\n3. **Role Assessment** — If no strong candidates remain, consider whether the role requirements should be adjusted.\n4. **Future Consideration** — File the candidate's profile for potential future openings where their skills may be a better fit.`
+      ? `1. **Phone Screening** - Schedule a 20-30 minute screening call to address the key concerns before committing to a full interview.\n2. **Skills Assessment** - Consider a brief technical assessment or case study to evaluate the specific gaps identified.\n3. **Compare with Pool** - Review this candidate alongside other applicants to determine relative ranking.\n4. **Decision Point** - After screening, make a go/no-go decision on proceeding to a full interview within 3 business days.`
+      : `1. **Communicate Decision** - Send a professional rejection email thanking the candidate for their time and effort.\n2. **Pipeline Review** - Review the remaining candidate pipeline for stronger matches.\n3. **Role Assessment** - If no strong candidates remain, consider whether the role requirements should be adjusted.\n4. **Future Consideration** - File the candidate's profile for potential future openings where their skills may be a better fit.`
 
     const report = `# Hiring Report
 
@@ -1066,13 +1070,13 @@ export async function generateHiringReport(
 - **Position:** ${vacancyTitle}${candidate.email ? `\n- **Email:** ${candidate.email}` : ''}${candidate.phone ? `\n- **Phone:** ${candidate.phone}` : ''}
 - **Report Date:** ${new Date().toLocaleDateString()}
 
-## Match Score: ${candidate.matchScore}% — ${scoreInterpretation}
+## Match Score: ${candidate.matchScore}% - ${scoreInterpretation}
 
 ## Key Qualifications
 ${candidate.skills ? candidate.skills.split(',').slice(0, 8).map(s => `- ${s.trim()}`).join('\n') : '- See CV for detailed qualifications'}
 
 ## Professional Summary
-${candidate.summary || 'Summary not available — review CV for details.'}
+${candidate.summary || 'Summary not available - review CV for details.'}
 
 ## Strengths
 ${parsedStrengths}
@@ -1100,7 +1104,7 @@ ${candidate.recommendation === 'strong_yes' || candidate.recommendation === 'yes
 ${nextSteps}
 
 ---
-*Generated by DeltaMatch — Demo Mode*`
+*Generated by DeltaMatch - Demo Mode*`
 
     return { report }
   }
@@ -1114,20 +1118,20 @@ ${nextSteps}
       model: 'gemini-2.5-flash',
       systemInstruction: `You are an expert HR professional. Generate a comprehensive, detailed hiring report for a hiring manager (at least 500 words). The report must include ALL of the following sections in clean markdown:
 
-1. **Candidate Overview** — Full name, position, email, phone, report date
-2. **Match Score** — Score with interpretation (Excellent/Good/Moderate/Below expectations)
-3. **Key Qualifications** — All relevant skills listed
-4. **Professional Summary** — Thorough summary of the candidate's profile
-5. **Strengths** — All strengths with explanations of relevance to the role
-6. **Areas of Concern** — All weaknesses with specific details
-7. **Experience** — Full work experience summary
-8. **Education** — Complete educational background
-9. **Interview Readiness** — Assessment of how ready the candidate is for interview, what format suits them, and what areas the interview should focus on
-10. **Salary Considerations** — Based on the candidate's experience level and match score, provide guidance on expected compensation range and negotiation points
-11. **Final Recommendation** — Clear hiring recommendation with detailed justification
-12. **Next Steps** — Concrete, actionable next steps (3-5 items) tailored to the recommendation
+1. **Candidate Overview** - Full name, position, email, phone, report date
+2. **Match Score** - Score with interpretation (Excellent/Good/Moderate/Below expectations)
+3. **Key Qualifications** - All relevant skills listed
+4. **Professional Summary** - Thorough summary of the candidate's profile
+5. **Strengths** - All strengths with explanations of relevance to the role
+6. **Areas of Concern** - All weaknesses with specific details
+7. **Experience** - Full work experience summary
+8. **Education** - Complete educational background
+9. **Interview Readiness** - Assessment of how ready the candidate is for interview, what format suits them, and what areas the interview should focus on
+10. **Salary Considerations** - Based on the candidate's experience level and match score, provide guidance on expected compensation range and negotiation points
+11. **Final Recommendation** - Clear hiring recommendation with detailed justification
+12. **Next Steps** - Concrete, actionable next steps (3-5 items) tailored to the recommendation
 
-Be thorough, professional, and actionable. Use all candidate data available. ${langInstruction}`,
+Be thorough, professional, and actionable. Use all candidate data available. ${langInstruction}${NO_EM_DASH_RULE}`,
       generationConfig: structuredGenConfig(0.3),
       tools: [{ functionDeclarations: [HIRING_REPORT_TOOL] }],
       toolConfig: { functionCallingConfig: { mode: FunctionCallingMode.ANY } },
@@ -1163,7 +1167,7 @@ Call submit_hiring_report now.`
     {
       const recLabel = candidate.recommendation === 'strong_yes' ? 'Strongly Recommended' : candidate.recommendation === 'yes' ? 'Recommended' : candidate.recommendation === 'maybe' ? 'Consider with Reservations' : 'Not Recommended'
       const scoreLabel = candidate.matchScore >= 80 ? 'Excellent match' : candidate.matchScore >= 65 ? 'Good match' : candidate.matchScore >= 50 ? 'Moderate match' : 'Below expectations'
-      return { report: `# Hiring Report\n\n## Candidate Overview\n- **Name:** ${candidate.firstName} ${candidate.lastName}\n- **Position:** ${vacancyTitle}${candidate.email ? `\n- **Email:** ${candidate.email}` : ''}${candidate.phone ? `\n- **Phone:** ${candidate.phone}` : ''}\n- **Report Date:** ${new Date().toLocaleDateString()}\n\n## Match Score: ${candidate.matchScore}% — ${scoreLabel}\n\n## Professional Summary\n${candidate.summary || 'See CV for details.'}\n\n## Strengths\n${candidate.strengths || '- See CV for details'}\n\n## Areas of Concern\n${candidate.weaknesses || '- See CV for details'}\n\n## Experience\n${candidate.experience || 'See CV for details.'}\n\n## Education\n${candidate.education || 'See CV for details.'}\n\n## Interview Readiness\n${candidate.recommendation === 'strong_yes' || candidate.recommendation === 'yes' ? 'Candidate is ready for a comprehensive interview. Focus on verifying key qualifications and cultural fit.' : 'Consider a preliminary screening call before committing to a full interview.'}\n\n## Salary Considerations\nBased on the ${scoreLabel.toLowerCase()} rating, compensation should be calibrated to the candidate\'s experience level and market benchmarks for this role.\n\n## Final Recommendation: ${recLabel}\n\n## Next Steps\n1. ${candidate.recommendation === 'strong_yes' || candidate.recommendation === 'yes' ? 'Schedule interview within 5-7 business days' : 'Conduct preliminary screening call'}\n2. Prepare targeted interview questions based on areas of concern\n3. Review alongside other candidates in the pipeline\n\n---\n*Generated by DeltaMatch*` }
+      return { report: `# Hiring Report\n\n## Candidate Overview\n- **Name:** ${candidate.firstName} ${candidate.lastName}\n- **Position:** ${vacancyTitle}${candidate.email ? `\n- **Email:** ${candidate.email}` : ''}${candidate.phone ? `\n- **Phone:** ${candidate.phone}` : ''}\n- **Report Date:** ${new Date().toLocaleDateString()}\n\n## Match Score: ${candidate.matchScore}% - ${scoreLabel}\n\n## Professional Summary\n${candidate.summary || 'See CV for details.'}\n\n## Strengths\n${candidate.strengths || '- See CV for details'}\n\n## Areas of Concern\n${candidate.weaknesses || '- See CV for details'}\n\n## Experience\n${candidate.experience || 'See CV for details.'}\n\n## Education\n${candidate.education || 'See CV for details.'}\n\n## Interview Readiness\n${candidate.recommendation === 'strong_yes' || candidate.recommendation === 'yes' ? 'Candidate is ready for a comprehensive interview. Focus on verifying key qualifications and cultural fit.' : 'Consider a preliminary screening call before committing to a full interview.'}\n\n## Salary Considerations\nBased on the ${scoreLabel.toLowerCase()} rating, compensation should be calibrated to the candidate\'s experience level and market benchmarks for this role.\n\n## Final Recommendation: ${recLabel}\n\n## Next Steps\n1. ${candidate.recommendation === 'strong_yes' || candidate.recommendation === 'yes' ? 'Schedule interview within 5-7 business days' : 'Conduct preliminary screening call'}\n2. Prepare targeted interview questions based on areas of concern\n3. Review alongside other candidates in the pipeline\n\n---\n*Generated by DeltaMatch*` }
     }
   } catch (error: any) {
     log.error('generateHiringReport error', { message: error?.message })
@@ -1173,6 +1177,6 @@ Call submit_hiring_report now.`
     log.warn('Falling back to demo hiring report after AI failure')
     const recLabel = candidate.recommendation === 'strong_yes' ? 'Strongly Recommended' : candidate.recommendation === 'yes' ? 'Recommended' : candidate.recommendation === 'maybe' ? 'Consider with Reservations' : 'Not Recommended'
     const scoreLabel = candidate.matchScore >= 80 ? 'Excellent match' : candidate.matchScore >= 65 ? 'Good match' : candidate.matchScore >= 50 ? 'Moderate match' : 'Below expectations'
-    return { report: `# Hiring Report\n\n## Candidate Overview\n- **Name:** ${candidate.firstName} ${candidate.lastName}\n- **Position:** ${vacancyTitle}${candidate.email ? `\n- **Email:** ${candidate.email}` : ''}${candidate.phone ? `\n- **Phone:** ${candidate.phone}` : ''}\n- **Report Date:** ${new Date().toLocaleDateString()}\n\n## Match Score: ${candidate.matchScore}% — ${scoreLabel}\n\n## Professional Summary\n${candidate.summary || 'See CV for details.'}\n\n## Strengths\n${candidate.strengths || '- See CV for details'}\n\n## Areas of Concern\n${candidate.weaknesses || '- See CV for details'}\n\n## Experience\n${candidate.experience || 'See CV for details.'}\n\n## Education\n${candidate.education || 'See CV for details.'}\n\n## Interview Readiness\n${candidate.recommendation === 'strong_yes' || candidate.recommendation === 'yes' ? 'Candidate is ready for a comprehensive interview. Focus on verifying key qualifications and cultural fit.' : 'Consider a preliminary screening call before committing to a full interview.'}\n\n## Salary Considerations\nBased on the ${scoreLabel.toLowerCase()} rating, compensation should be calibrated to the candidate\'s experience level and market benchmarks for this role.\n\n## Final Recommendation: ${recLabel}\n\n## Next Steps\n1. ${candidate.recommendation === 'strong_yes' || candidate.recommendation === 'yes' ? 'Schedule interview within 5-7 business days' : 'Conduct preliminary screening call'}\n2. Prepare targeted interview questions based on areas of concern\n3. Review alongside other candidates in the pipeline\n\n---\n*Generated by DeltaMatch*` }
+    return { report: `# Hiring Report\n\n## Candidate Overview\n- **Name:** ${candidate.firstName} ${candidate.lastName}\n- **Position:** ${vacancyTitle}${candidate.email ? `\n- **Email:** ${candidate.email}` : ''}${candidate.phone ? `\n- **Phone:** ${candidate.phone}` : ''}\n- **Report Date:** ${new Date().toLocaleDateString()}\n\n## Match Score: ${candidate.matchScore}% - ${scoreLabel}\n\n## Professional Summary\n${candidate.summary || 'See CV for details.'}\n\n## Strengths\n${candidate.strengths || '- See CV for details'}\n\n## Areas of Concern\n${candidate.weaknesses || '- See CV for details'}\n\n## Experience\n${candidate.experience || 'See CV for details.'}\n\n## Education\n${candidate.education || 'See CV for details.'}\n\n## Interview Readiness\n${candidate.recommendation === 'strong_yes' || candidate.recommendation === 'yes' ? 'Candidate is ready for a comprehensive interview. Focus on verifying key qualifications and cultural fit.' : 'Consider a preliminary screening call before committing to a full interview.'}\n\n## Salary Considerations\nBased on the ${scoreLabel.toLowerCase()} rating, compensation should be calibrated to the candidate\'s experience level and market benchmarks for this role.\n\n## Final Recommendation: ${recLabel}\n\n## Next Steps\n1. ${candidate.recommendation === 'strong_yes' || candidate.recommendation === 'yes' ? 'Schedule interview within 5-7 business days' : 'Conduct preliminary screening call'}\n2. Prepare targeted interview questions based on areas of concern\n3. Review alongside other candidates in the pipeline\n\n---\n*Generated by DeltaMatch*` }
   }
 }

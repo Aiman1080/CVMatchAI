@@ -6,7 +6,7 @@ import { Header } from '@/components/layout/Header'
 import { VacanciesClient } from '@/components/dashboard/VacanciesClient'
 import { isDemoAccount } from '@/lib/demo-guard'
 
-// Cap the initial server-rendered list — without this, a user with thousands
+// Cap the initial server-rendered list - without this, a user with thousands
 // of vacancies would crash the page. The client component handles paging beyond
 // this initial batch.
 const PAGE_SIZE = 50

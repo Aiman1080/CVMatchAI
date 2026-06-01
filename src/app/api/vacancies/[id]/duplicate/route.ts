@@ -1,4 +1,4 @@
-// Duplicate a vacancy — creates a copy with "Copy of " prefix, active status,
+// Duplicate a vacancy - creates a copy with "Copy of " prefix, active status,
 // and no candidates. Respects plan limits.
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'

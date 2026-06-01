@@ -1,4 +1,4 @@
-// Reset-password endpoint — validates the one-time token from VerificationToken,
+// Reset-password endpoint - validates the one-time token from VerificationToken,
 // hashes the new password with bcrypt (cost 12), updates the user, and deletes the token.
 import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'

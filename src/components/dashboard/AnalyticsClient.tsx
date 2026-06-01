@@ -64,7 +64,7 @@ export function AnalyticsClient({ candidates, vacancies, candidatesOverTime }: P
         ))}
       </div>
 
-      {/* Time-series area chart — full width, most prominent */}
+      {/* Time-series area chart - full width, most prominent */}
       <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2 min-w-0">

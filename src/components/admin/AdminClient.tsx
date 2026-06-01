@@ -613,7 +613,7 @@ export function AdminClient({
             )}
           </div>
 
-          {/* Plan filter chips — quick filter by Free / Pro / Admin / Suspended */}
+          {/* Plan filter chips - quick filter by Free / Pro / Admin / Suspended */}
           <div className="flex flex-wrap gap-2 items-center">
             <Filter className="w-3.5 h-3.5 text-gray-400 shrink-0" />
             {([
@@ -694,7 +694,7 @@ export function AdminClient({
                                   Exp. {formatDate(user.subscriptionEnd)}
                                 </div>
                               )}
-                              {/* Quick action buttons for fast plan changes — admin only */}
+                              {/* Quick action buttons for fast plan changes - admin only */}
                               <div className="flex gap-1 mt-1.5">
                                 {user.subscription !== 'pro' && (
                                   <button

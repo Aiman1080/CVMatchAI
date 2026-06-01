@@ -38,7 +38,7 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
     niceToHave: '', salary: '', language: 'en',
   })
 
-  // Pure validator — returns the full error map for a given form
+  // Pure validator - returns the full error map for a given form
   const validate = (f: typeof form): Record<string, string> => {
     const next: Record<string, string> = {}
     if (!f.title.trim()) next.title = vmsg.titleRequired
@@ -50,7 +50,7 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
     return next
   }
 
-  // Re-validate just the fields the user has interacted with — avoids shouting errors at first paint
+  // Re-validate just the fields the user has interacted with - avoids shouting errors at first paint
   const validateOnChange = (next: typeof form) => {
     const allErrors = validate(next)
     setErrors(prev => {

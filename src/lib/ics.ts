@@ -1,5 +1,5 @@
 // Generates RFC 5545 iCalendar (.ics) invitations for interviews. No external
-// dependency — the format is simple and we control every field. The resulting
+// dependency - the format is simple and we control every field. The resulting
 // string is attached to the interview email (Google/Outlook/Apple all parse it)
 // and also offered as a download in the app.
 
@@ -7,7 +7,7 @@ export interface InterviewEvent {
   uid: string            // stable unique id (use the candidate id so updates replace)
   start: Date            // interview start
   durationMinutes: number
-  summary: string        // event title, e.g. "Interview — Jane Doe (Frontend Dev)"
+  summary: string        // event title, e.g. "Interview - Jane Doe (Frontend Dev)"
   description?: string
   location?: string      // room or video link
   organizerName?: string
@@ -115,7 +115,7 @@ function buildVEVENT(ev: FeedEvent, now: Date): string[] {
 }
 
 // A subscribe-able iCalendar feed (METHOD:PUBLISH) bundling all of the user's
-// events — interviews + personal events. The user adds the feed URL once to
+// events - interviews + personal events. The user adds the feed URL once to
 // Google/Outlook/Apple and it stays in sync (read-only, one-way).
 export function buildICSFeed(events: FeedEvent[], calName = 'DeltaMatch'): string {
   const now = new Date()
@@ -133,7 +133,7 @@ export function buildICSFeed(events: FeedEvent[], calName = 'DeltaMatch'): strin
   return lines.map(fold).join('\r\n')
 }
 
-// Convenience: a "Add to Google Calendar" URL (no OAuth needed — opens a
+// Convenience: a "Add to Google Calendar" URL (no OAuth needed - opens a
 // prefilled event the user just saves). Handy as an in-app button for the recruiter.
 export function googleCalendarUrl(ev: InterviewEvent): string {
   const end = new Date(ev.start.getTime() + ev.durationMinutes * 60_000)

@@ -49,12 +49,12 @@ export function EmailClient() {
   const [cleaning, setCleaning] = useState(false)
   const [inboxes, setInboxes] = useState<Inbox[]>([])
   const [loading, setLoading] = useState(true)
-  // Email signature / footer — managed here so recruiters can configure it in the Email tab
+  // Email signature / footer - managed here so recruiters can configure it in the Email tab
   const [signature, setSignature] = useState('')
   const [signatureSaved, setSignatureSaved] = useState(true)
   const [savingSignature, setSavingSignature] = useState(false)
 
-  // Load connected inboxes + current signature on mount — no auto demo scan (user triggers manually)
+  // Load connected inboxes + current signature on mount - no auto demo scan (user triggers manually)
   useEffect(() => {
     fetchInboxes()
     fetch('/api/user')
@@ -67,11 +67,11 @@ export function EmailClient() {
     try {
       const res = await fetch('/api/email/connect')
       if (res.ok) setInboxes(await res.json())
-    } catch { /* silent — user sees empty list */ } finally { setLoading(false) }
+    } catch { /* silent - user sees empty list */ } finally { setLoading(false) }
   }
 
   const handleSaveSignature = async () => {
-    if (isDemo) { toast({ title: (te as any).demoCannotSave || 'Demo mode — cannot save', variant: 'destructive' }); return }
+    if (isDemo) { toast({ title: (te as any).demoCannotSave || 'Demo mode - cannot save', variant: 'destructive' }); return }
     setSavingSignature(true)
     try {
       const res = await fetch('/api/user', {
@@ -136,7 +136,7 @@ export function EmailClient() {
     } catch (err: any) {
       // Surface why the connection failed and what to do
       const description = err?.message
-        ? `${err.message} — ${te.connectionErrorTip}`
+        ? `${err.message} - ${te.connectionErrorTip}`
         : te.connectionGenericError
       toast({ title: te.connectionFailed, description, variant: 'destructive' })
     } finally { setConnecting(false) }
@@ -152,7 +152,7 @@ export function EmailClient() {
     scanIntervalRef.current = setInterval(() => {
       const elapsed = Math.floor((Date.now() - startTime) / 1000)
       setScanTimer(elapsed)
-      // Approach 95% asymptotically — never quite reach it from progress alone
+      // Approach 95% asymptotically - never quite reach it from progress alone
       setScanProgress(prev => Math.min(95, prev + (95 - prev) * 0.02))
     }, 500)
 
@@ -169,7 +169,7 @@ export function EmailClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ inboxId }),
       })
-      // Handle the rate limiter (5 scans/hour) — it may return a plain 429 body,
+      // Handle the rate limiter (5 scans/hour) - it may return a plain 429 body,
       // so give the user a clear message instead of a cryptic parse error.
       if (res.status === 429) {
         toast({ title: te.scanFailed, description: (te as any).scanRateLimited || 'Rate limit reached (5 scans/hour). Please wait about an hour and try again.', variant: 'destructive' })
@@ -193,7 +193,7 @@ export function EmailClient() {
       fetchInboxes()
     } catch (err: any) {
       const description = err?.message
-        ? `${err.message} — ${te.scanCredentialsTip}`
+        ? `${err.message} - ${te.scanCredentialsTip}`
         : te.scanGenericError
       toast({ title: te.scanFailed, description, variant: 'destructive' })
     } finally {
@@ -208,7 +208,7 @@ export function EmailClient() {
     }
   }
 
-  // Demo scan is safe to run multiple times — the server uses upsert so no duplicates
+  // Demo scan is safe to run multiple times - the server uses upsert so no duplicates
   const runDemoScan = async () => {
     setDemoScanning(true)
     try {
@@ -267,7 +267,7 @@ export function EmailClient() {
         </div>
       </div>
 
-      {/* Demo scan — only visible for demo accounts */}
+      {/* Demo scan - only visible for demo accounts */}
       {isDemo && <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border border-indigo-100 dark:border-indigo-900 flex flex-wrap items-center gap-4">
         <div className="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center shrink-0">
           <Zap className="w-5 h-5 text-white" />
@@ -288,7 +288,7 @@ export function EmailClient() {
         </Button>
       </div>}
 
-      {/* One-click duplicate cleanup — fixes databases that accumulated duplicates before the dedup fix */}
+      {/* One-click duplicate cleanup - fixes databases that accumulated duplicates before the dedup fix */}
       <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950 border border-amber-100 dark:border-amber-900 flex flex-wrap items-center gap-4">
         <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center shrink-0">
           <Eraser className="w-5 h-5 text-white" />
@@ -328,7 +328,7 @@ export function EmailClient() {
         ))}
       </div>
 
-      {/* Live scan progress — appears only while a scan is in flight */}
+      {/* Live scan progress - appears only while a scan is in flight */}
       {scanning && (
         <Card className="border-2 border-blue-300 dark:border-blue-700 bg-blue-50/70 dark:bg-blue-950/30 shadow-sm">
           <CardContent className="p-4">
@@ -425,7 +425,7 @@ export function EmailClient() {
         </CardContent>
       </Card>
 
-      {/* Scan diagnostic (shown when a scan imported nothing) — copy & share to debug */}
+      {/* Scan diagnostic (shown when a scan imported nothing) - copy & share to debug */}
       {scanReport && (
         <Card className="border border-amber-300 dark:border-amber-800 shadow-sm">
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
@@ -441,7 +441,7 @@ export function EmailClient() {
         </Card>
       )}
 
-      {/* Email signature / footer — applied to every email sent to candidates */}
+      {/* Email signature / footer - applied to every email sent to candidates */}
       <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
@@ -449,7 +449,7 @@ export function EmailClient() {
             {(te as any).signatureTitle || 'Email signature & logo'}
           </CardTitle>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 break-words">
-            {(te as any).signatureDesc || 'Appended to every email you send to candidates. Supports HTML — paste an <img> tag to add your company logo.'}
+            {(te as any).signatureDesc || 'Appended to every email you send to candidates. Supports HTML - paste an <img> tag to add your company logo.'}
           </p>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -699,7 +699,7 @@ export function EmailClient() {
   )
 }
 
-/** Collapsible help guide with numbered steps — used inside the email connect dialog */
+/** Collapsible help guide with numbered steps - used inside the email connect dialog */
 function HelpGuide({ title, steps }: { title: string; steps: React.ReactNode[] }) {
   const [open, setOpen] = useState(false)
   return (

@@ -35,7 +35,7 @@ export function SettingsClient({ user, isDemo }: Props) {
   // Returning from Stripe checkout (?upgraded=true): the webhook has already set
   // subscription='pro' in the DB, but the user's JWT is stale and still says
   // free. Refresh the session token from the DB so the Pro plan shows instantly
-  // — no logout/login needed. Then clean the URL.
+  // - no logout/login needed. Then clean the URL.
   useEffect(() => {
     if (searchParams?.get('upgraded') === 'true') {
       updateSession()
@@ -47,7 +47,7 @@ export function SettingsClient({ user, isDemo }: Props) {
   }, [])
 
   // emailSignature is now managed in the Email tab (EmailClient) so it's
-  // intentionally not part of this form — saving here would overwrite the
+  // intentionally not part of this form - saving here would overwrite the
   // value the user just set in the dedicated Email tab card.
   const [form, setForm] = useState({ name: user.name || '', company: user.company || '', image: user.image || '' })
   const initials = user.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'
@@ -83,7 +83,7 @@ export function SettingsClient({ user, isDemo }: Props) {
   // Confirm dialog for the destructive "delete all candidates" action
   const [deleteAllDialog, setDeleteAllDialog] = useState(false)
 
-  // Inline validation for the profile form — keeps users from losing context on errors
+  // Inline validation for the profile form - keeps users from losing context on errors
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [touched, setTouched] = useState<Record<string, boolean>>({})
 
@@ -149,7 +149,7 @@ export function SettingsClient({ user, isDemo }: Props) {
     } finally { setSaving(false) }
   }
 
-  // Password strength helpers — match the server-side requirements (min 8, uppercase, number, symbol)
+  // Password strength helpers - match the server-side requirements (min 8, uppercase, number, symbol)
   const pwHasLength = pwForm.newPassword.length >= 8
   const pwHasUpper = /[A-Z]/.test(pwForm.newPassword)
   const pwHasNumber = /[0-9]/.test(pwForm.newPassword)
@@ -264,10 +264,10 @@ export function SettingsClient({ user, isDemo }: Props) {
           </CardContent>
         </Card>
 
-        {/* Your personal account — security and personalization */}
+        {/* Your personal account - security and personalization */}
         {(() => {
           const pw = (t.dashboard as any).personalWorkspace || {}
-          const explanationTemplate = pw.explanation || 'This is your unique workspace identifier. Other users {bold} access your vacancies or candidates — every page is protected by your session and personalized to you.'
+          const explanationTemplate = pw.explanation || 'This is your unique workspace identifier. Other users {bold} access your vacancies or candidates - every page is protected by your session and personalized to you.'
           const explanationParts = explanationTemplate.split('{bold}')
           return (
             <Card className="border border-gray-100 dark:border-gray-800 shadow-none max-w-lg">
@@ -284,7 +284,7 @@ export function SettingsClient({ user, isDemo }: Props) {
                   <Label className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">{pw.accountIdLabel || 'Your account ID'}</Label>
                   <div className="mt-1 flex items-center gap-2">
                     <code className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-xs font-mono text-gray-700 dark:text-gray-300 break-all">
-                      {user.id || '—'}
+                      {user.id || '-'}
                     </code>
                     {user.id && (
                       <button
@@ -334,7 +334,7 @@ export function SettingsClient({ user, isDemo }: Props) {
           </CardContent>
         </Card>
 
-        {/* Password change — hidden for demo accounts */}
+        {/* Password change - hidden for demo accounts */}
         {!isDemo && <Card className="border-0 shadow-sm max-w-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base text-gray-900 dark:text-white min-w-0">
@@ -418,7 +418,7 @@ export function SettingsClient({ user, isDemo }: Props) {
             ))}
           </div>
 
-          {/* Manage / cancel subscription — only for paying (pro) users.
+          {/* Manage / cancel subscription - only for paying (pro) users.
               Opens the Stripe Customer Portal (update card, invoices, cancel). */}
           {(user.subscription === 'pro') && (
             <Card className="border-0 shadow-sm mt-6 max-w-lg">

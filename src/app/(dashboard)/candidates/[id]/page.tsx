@@ -23,7 +23,7 @@ export default async function CandidateDetailPage({ params }: { params: Promise<
   if (!raw) notFound()
 
   // The raw binary fields (cvFile, motivationFile) would otherwise get
-  // base64-serialized into the SSR HTML — bloating the page by 100s of KB.
+  // base64-serialized into the SSR HTML - bloating the page by 100s of KB.
   // Strip them out and pass booleans the client uses to render the PDF
   // viewer (which fetches the binary via /api/candidates/[id]/file on demand).
   const { cvFile, motivationFile, cvStoragePath, motivationStoragePath, ...metadata } = raw

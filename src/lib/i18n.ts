@@ -1,6 +1,6 @@
-// Translation barrel — re-exports the per-locale modules. The actual strings
+// Translation barrel - re-exports the per-locale modules. The actual strings
 // live in src/lib/i18n/{en,nl,fr}.ts so each locale stays under ~1500 lines.
-// Bundle size is unchanged (all three locales are statically imported) — the
+// Bundle size is unchanged (all three locales are statically imported) - the
 // motivation is editor responsiveness and diff readability, not perf.
 import { en } from './i18n/en'
 import { nl } from './i18n/nl'

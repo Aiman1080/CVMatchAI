@@ -72,7 +72,7 @@ vi.mock('@/lib/ai', () => ({
   }),
 }))
 
-// Mock imapflow for connect route — must be a class (not plain fn) for `new` to work
+// Mock imapflow for connect route - must be a class (not plain fn) for `new` to work
 vi.mock('imapflow', () => ({
   ImapFlow: class MockImapFlow {
     connect() { return Promise.resolve() }

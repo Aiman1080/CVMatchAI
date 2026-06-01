@@ -11,14 +11,14 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: {
-    default: 'DeltaMatch — Intelligent Recruitment Platform',
+    default: 'DeltaMatch - Intelligent Recruitment Platform',
     template: '%s | DeltaMatch',
   },
   description: 'AI-powered recruitment automation. Match CVs to vacancies, rank candidates, generate interview questions, and hire faster with artificial intelligence.',
   keywords: 'recruitment, AI, CV matching, ATS, hiring, HR software, interview questions, candidate ranking, hiring report',
   metadataBase: new URL(process.env.APP_URL || process.env.NEXTAUTH_URL || 'https://cvmatch.ai'),
   openGraph: {
-    title: 'DeltaMatch — Smarter Hiring. Better Matches.',
+    title: 'DeltaMatch - Smarter Hiring. Better Matches.',
     description: 'AI-powered recruitment platform: CV analysis, candidate ranking, interview questions, and hiring reports. Save 80% of screening time.',
     siteName: 'DeltaMatch',
     type: 'website',
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'DeltaMatch — Smarter Hiring. Better Matches.',
+    title: 'DeltaMatch - Smarter Hiring. Better Matches.',
     description: 'AI-powered recruitment platform: CV analysis, candidate ranking, interview questions, and hiring reports.',
   },
   robots: {

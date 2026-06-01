@@ -13,7 +13,7 @@ export async function createNotification(
       data: { userId, type, title, message },
     })
   } catch (error) {
-    // Log but don't throw — notifications should never break the main flow
+    // Log but don't throw - notifications should never break the main flow
     console.error('Failed to create notification:', error)
   }
 }

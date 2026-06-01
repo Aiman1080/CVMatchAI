@@ -1,4 +1,4 @@
-// Single candidate CRUD — GET loads the full profile for the detail page,
+// Single candidate CRUD - GET loads the full profile for the detail page,
 // PATCH updates mutable fields (typically status changes),
 // DELETE removes the candidate and relies on Prisma cascade for linked emailScan.
 import { NextResponse } from 'next/server'
@@ -17,13 +17,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const userId = (session.user as any).id
   const isAdmin = (session.user as any).role === 'admin'
   try {
-    // Ownership scoping — admins can view any candidate
+    // Ownership scoping - admins can view any candidate
     const candidate = await prisma.candidate.findFirst({
       where: isAdmin ? { id } : { id, userId },
       include: { vacancy: true, emailSource: true },
     })
     if (!candidate) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-    // Strip the heavy binary columns — the client renders documents via
+    // Strip the heavy binary columns - the client renders documents via
     // /api/candidates/[id]/file, never from this payload (the SSR page strips
     // them too). Returning them base64-bloats every detail fetch.
     const { cvFile, motivationFile, ...slim } = candidate as any

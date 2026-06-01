@@ -1,6 +1,6 @@
 'use client'
 
-// Vacancy detail page — shows vacancy info, candidate rankings, and allows editing
+// Vacancy detail page - shows vacancy info, candidate rankings, and allows editing
 // the vacancy inline. The Pencil button opens an edit dialog that saves via PATCH.
 
 import { useState } from 'react'
@@ -803,7 +803,7 @@ export function VacancyDetailClient({ vacancy: initial, canExport = false }: { v
                 <SelectContent>
                   {atsVacancies.map(v => (
                     <SelectItem key={v.id} value={v.id}>
-                      {v.title} ({v.company}) — {v.externalSource}
+                      {v.title} ({v.company}) - {v.externalSource}
                     </SelectItem>
                   ))}
                 </SelectContent>

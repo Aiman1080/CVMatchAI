@@ -1,4 +1,4 @@
-// Admin CSV export — returns all users as a downloadable CSV file.
+// Admin CSV export - returns all users as a downloadable CSV file.
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'

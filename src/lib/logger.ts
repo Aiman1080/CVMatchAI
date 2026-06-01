@@ -1,4 +1,4 @@
-// Structured logger — replaces ad-hoc console.log/console.error scattered
+// Structured logger - replaces ad-hoc console.log/console.error scattered
 // across the codebase.
 //
 // Why:

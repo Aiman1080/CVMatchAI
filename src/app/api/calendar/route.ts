@@ -14,7 +14,7 @@ export async function GET(req: Request) {
   const isAdmin = (session.user as any).role === 'admin'
 
   const url = new URL(req.url)
-  // Validate query dates — an invalid string would otherwise become an Invalid
+  // Validate query dates - an invalid string would otherwise become an Invalid
   // Date and make Prisma throw. Fall back to the defaults (now → +60 days).
   const parseDate = (raw: string | null, fallback: Date): Date => {
     if (!raw) return fallback

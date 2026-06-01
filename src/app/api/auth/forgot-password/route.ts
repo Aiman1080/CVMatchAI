@@ -1,4 +1,4 @@
-// Forgot-password endpoint — accepts an email, generates a one-time reset token,
+// Forgot-password endpoint - accepts an email, generates a one-time reset token,
 // stores it in VerificationToken (1-hour expiry), and sends a reset link via email.
 // Always returns 200 regardless of whether the email exists to prevent enumeration.
 import { NextResponse } from 'next/server'
@@ -14,7 +14,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 })
     }
     // Users are stored with lowercased emails (register/login normalize), so
-    // match that here — otherwise a differently-cased input silently finds no
+    // match that here - otherwise a differently-cased input silently finds no
     // user and the reset email is never sent (we always return success).
     const email = rawEmail.toLowerCase().trim()
 
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     const successResponse = NextResponse.json({ success: true })
 
     if (!isEmailConfigured()) {
-      console.warn('SMTP not configured — skipping password reset email')
+      console.warn('SMTP not configured - skipping password reset email')
       return successResponse
     }
 
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
     const token = crypto.randomBytes(32).toString('hex')
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
 
-    // Do NOT delete existing tokens — that would wipe pending email-verification tokens.
+    // Do NOT delete existing tokens - that would wipe pending email-verification tokens.
     // Just create a new reset token alongside any existing ones.
     await prisma.verificationToken.create({
       data: { identifier: email, token, expires },
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
     await sendEmail(
       email,
       'Reset your DeltaMatch password',
-      `Hi ${user.name || 'there'},\n\nYou requested a password reset for your DeltaMatch account.\n\nClick the link below to set a new password (valid for 24 hours):\n${resetLink}\n\nIf you didn't request this, you can safely ignore this email.\n\n— DeltaMatch`,
+      `Hi ${user.name || 'there'},\n\nYou requested a password reset for your DeltaMatch account.\n\nClick the link below to set a new password (valid for 24 hours):\n${resetLink}\n\nIf you didn't request this, you can safely ignore this email.\n\n- DeltaMatch`,
     )
 
     return successResponse

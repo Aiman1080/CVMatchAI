@@ -1,4 +1,4 @@
-// Candidate comparison API — returns full candidate data for 2–3 candidates.
+// Candidate comparison API - returns full candidate data for 2–3 candidates.
 // Used by the comparison page to render side-by-side analysis.
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'

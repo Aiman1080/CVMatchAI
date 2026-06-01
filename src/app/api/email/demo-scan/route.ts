@@ -1,4 +1,4 @@
-// Simulated email scan for demo purposes — no real IMAP connection needed.
+// Simulated email scan for demo purposes - no real IMAP connection needed.
 // Creates realistic demo candidates from fake recruitment emails so users can
 // see the full AI email-scanning flow without providing real credentials.
 // Uses upsert (email + vacancyId unique key) so running it multiple times is safe.
@@ -9,7 +9,7 @@ import prisma from '@/lib/prisma'
 import { analyzeCVAgainstVacancy } from '@/lib/ai'
 import { isDemoAccount } from '@/lib/demo-guard'
 
-// 4 demo emails × ~30-60s per Opus analysis = up to 4 min — allow the full run
+// 4 demo emails × ~30-60s per Opus analysis = up to 4 min - allow the full run
 export const maxDuration = 300
 
 const DEMO_EMAILS = [
@@ -22,18 +22,18 @@ const DEMO_EMAILS = [
 alex.johnson@gmail.com | +32 471 555 001 | Leuven, Belgium
 
 EXPERIENCE
-Senior Software Engineer — FinTech Brussels (2019–present)
+Senior Software Engineer - FinTech Brussels (2019–present)
 - Built React/TypeScript frontend for banking dashboard serving 150,000 users
 - Designed Node.js microservices communicating via REST and gRPC
 - Managed PostgreSQL databases with 10M+ records; optimized slow queries 60%
 - Set up Docker + Kubernetes deployment on AWS EKS
 
-Software Engineer — Consulting Firm Bruges (2016–2019)
+Software Engineer - Consulting Firm Bruges (2016–2019)
 - Developed custom ERP modules in Vue.js and PHP/Laravel
 - Integrated third-party APIs (payment, logistics, CRM)
 
 EDUCATION
-Master Software Engineering — KU Leuven (2016)
+Master Software Engineering - KU Leuven (2016)
 
 SKILLS
 React, TypeScript, Node.js, PostgreSQL, Docker, Kubernetes, AWS, gRPC, Redis, Vue.js`,
@@ -56,18 +56,18 @@ Alex Johnson`,
 maya.patel@outlook.com | +44 7911 234 567 | London, UK (open to remote)
 
 EXPERIENCE
-Lead UX Designer — EdTech Startup London (2020–present)
-- Redesigned core learning platform — user retention improved 45%
+Lead UX Designer - EdTech Startup London (2020–present)
+- Redesigned core learning platform - user retention improved 45%
 - Built Figma design system with 180+ components used across 5 products
 - Led weekly design critique sessions and mentored 2 junior designers
 - Conducted quarterly usability studies with 20+ participants
 
-UX/UI Designer — Digital Product Agency (2018–2020)
+UX/UI Designer - Digital Product Agency (2018–2020)
 - End-to-end design for iOS and Android apps in health and finance sectors
 - Created accessible designs meeting WCAG 2.1 AA standards
 
 EDUCATION
-BA Design — Central Saint Martins, London (2018)
+BA Design - Central Saint Martins, London (2018)
 
 SKILLS
 Figma, Principle, Framer, Adobe CC, Maze, UserTesting
@@ -78,7 +78,7 @@ AWARDS
 Design Week Award for Digital Innovation 2022`,
     motivationText: `To the Design Team at Acme Corp,
 
-I'm excited to apply for your UX/UI Designer role. I've spent 6 years designing digital products that people actually enjoy using — from complex EdTech platforms to consumer mobile apps.
+I'm excited to apply for your UX/UI Designer role. I've spent 6 years designing digital products that people actually enjoy using - from complex EdTech platforms to consumer mobile apps.
 
 What excites me most about this role is the opportunity to shape a B2B product from the ground up. I believe great design in B2B is underrated, and I want to be part of a team that disagrees.
 
@@ -95,19 +95,19 @@ Maya Patel`,
 julien.bernard@free.fr | +33 6 88 77 66 55 | Paris, France
 
 EXPÉRIENCE
-Data Engineer Senior — Startup SaaS Paris (2021–present)
+Data Engineer Senior - Startup SaaS Paris (2021–present)
 - Architecture et maintenance de pipelines dbt + Airflow en production
-- Migration data warehouse Oracle → BigQuery — réduction coûts 35%
+- Migration data warehouse Oracle → BigQuery - réduction coûts 35%
 - Implémentation monitoring qualité données (Great Expectations, dbt tests)
 - Développement API Python/FastAPI pour exposition des données BI
 
-Data Analyst — Société de Conseil Lyon (2018–2021)
+Data Analyst - Société de Conseil Lyon (2018–2021)
 - Développement tableaux de bord Looker, Power BI, Tableau
 - Automatisation rapports Python/pandas, SQL avancé
 
 FORMATION
-Master Data Science & IA — Université Paris-Saclay (2018)
-Licence Mathématiques — Université de Bordeaux (2016)
+Master Data Science & IA - Université Paris-Saclay (2018)
+Licence Mathématiques - Université de Bordeaux (2016)
 
 COMPÉTENCES
 Python, SQL (expert), dbt Core, Apache Airflow, BigQuery, Snowflake, PostgreSQL
@@ -130,17 +130,17 @@ Julien Bernard`,
 nina.schmidt@web.de | +49 176 999 888 | Berlin, Germany
 
 EXPERIENCE
-Full-Stack Developer — Berlin SaaS Company (2022–present)
+Full-Stack Developer - Berlin SaaS Company (2022–present)
 - React/Next.js frontend development with TypeScript
 - Node.js REST API development and PostgreSQL database management
 - Deployed applications on AWS using Docker containers
 
-Junior Developer — Web Agency Hamburg (2020–2022)
+Junior Developer - Web Agency Hamburg (2020–2022)
 - Built responsive websites using React and Vue.js
 - WordPress theme development and plugin customization
 
 EDUCATION
-Bachelor Computer Science — TU Berlin (2020)
+Bachelor Computer Science - TU Berlin (2020)
 
 SKILLS
 React, Next.js, TypeScript, JavaScript, Node.js, PostgreSQL, MySQL
@@ -158,10 +158,10 @@ function scoreVacancyForCV(
 ): number {
   const vacancyText = `${vacancy.title} ${vacancy.description} ${vacancy.requirements}`.toLowerCase()
 
-  // Domain keyword hits — direct match between CV profile and vacancy text
+  // Domain keyword hits - direct match between CV profile and vacancy text
   const domainHits = domainKeywords.filter(k => vacancyText.includes(k) || cvLower.includes(k)).length
 
-  // Word overlap — count meaningful vacancy words that appear in the CV
+  // Word overlap - count meaningful vacancy words that appear in the CV
   const vacancyWords = [...new Set((vacancyText.match(/\b[a-z]{4,}\b/g) || []))]
   const wordHits = vacancyWords.filter(w => cvLower.includes(w)).length
   const wordScore = vacancyWords.length > 0 ? wordHits / vacancyWords.length : 0
@@ -189,7 +189,7 @@ export async function POST() {
       return NextResponse.json({ error: 'Create at least one active vacancy before running a demo scan.' }, { status: 400 })
     }
 
-    // Reuse or create the demo inbox record — this is just a placeholder for the email source relation
+    // Reuse or create the demo inbox record - this is just a placeholder for the email source relation
     demoInbox = await prisma.emailInbox.findFirst({ where: { userId, provider: 'demo' } })
     if (!demoInbox) {
       demoInbox = await prisma.emailInbox.create({
@@ -197,7 +197,7 @@ export async function POST() {
       })
     }
 
-    // Load all existing demo candidate emails in one query — used to skip duplicates.
+    // Load all existing demo candidate emails in one query - used to skip duplicates.
     // We check by sender email globally (not per vacancy) because the scoring function
     // can pick a different vacancy on each run, which would otherwise create two rows
     // for the same real person under different vacancies.
@@ -213,7 +213,7 @@ export async function POST() {
 
   let processed = 0
   for (const email of DEMO_EMAILS) {
-    // Skip globally — same sender already exists under any vacancy for this user
+    // Skip globally - same sender already exists under any vacancy for this user
     if (existingEmails.has(email.sender)) continue
 
     // Select the vacancy whose full text best matches this CV's domain keywords.

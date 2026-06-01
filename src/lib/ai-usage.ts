@@ -29,7 +29,7 @@ export async function logAiUsage(
 export async function getAiUsageStats(userId?: string) {
   const where = userId ? { userId } : {}
 
-  // 12 months ago — used to scope the monthly breakdown
+  // 12 months ago - used to scope the monthly breakdown
   const twelveMonthsAgo = new Date()
   twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12)
   twelveMonthsAgo.setDate(1)

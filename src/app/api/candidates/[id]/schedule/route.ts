@@ -64,7 +64,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         uid: candidate.id,
         start,
         durationMinutes: duration,
-        summary: `Interview — ${fullName} (${role})`,
+        summary: `Interview - ${fullName} (${role})`,
         description: `Interview for ${role}.${interviewLocation ? ` Location: ${interviewLocation}` : ''}`,
         location: interviewLocation || undefined,
         organizerName: session.user.name || 'DeltaMatch',
@@ -74,7 +74,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       })
 
       const when = start.toLocaleString('en-GB', { dateStyle: 'full', timeStyle: 'short' })
-      const bodyText = `Hello ${candidate.firstName || ''},\n\nWe would like to invite you to an interview for ${role}.\n\nWhen: ${when}\nDuration: ${duration} minutes${interviewLocation ? `\nWhere: ${interviewLocation}` : ''}\n\nThe calendar invitation is attached — add it to your calendar in one click.\n\nBest regards`
+      const bodyText = `Hello ${candidate.firstName || ''},\n\nWe would like to invite you to an interview for ${role}.\n\nWhen: ${when}\nDuration: ${duration} minutes${interviewLocation ? `\nWhere: ${interviewLocation}` : ''}\n\nThe calendar invitation is attached - add it to your calendar in one click.\n\nBest regards`
       const bodyHtml = escapeHtml(bodyText).replace(/\n/g, '<br>').replace(/(https?:\/\/[^\s]+)/g, '<a href="$1">$1</a>')
 
       try {
@@ -86,7 +86,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
           from: `${session.user.name || 'DeltaMatch'} <${smtpUser}>`,
           to: candidate.email,
           replyTo: smtpUser,
-          subject: `Interview invitation — ${role}`,
+          subject: `Interview invitation - ${role}`,
           text: bodyText,
           html: bodyHtml,
           icalEvent: { method: 'REQUEST', content: ics, filename: 'interview.ics' },
@@ -95,7 +95,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         emailed = true
         await logActivity(id, 'email_sent', 'Interview invitation sent', { to: candidate.email })
       } catch (e: any) {
-        // Scheduling still succeeded even if the email failed — report it.
+        // Scheduling still succeeded even if the email failed - report it.
         return NextResponse.json({ success: true, emailed: false, emailError: e?.message, candidate: { id: updated.id, interviewAt: updated.interviewAt, interviewDuration: updated.interviewDuration, interviewLocation: updated.interviewLocation, status: updated.status } })
       }
     }

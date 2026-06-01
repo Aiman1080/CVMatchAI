@@ -1,4 +1,4 @@
-// NextAuth configuration — email/password login with bcrypt, JWT session strategy.
+// NextAuth configuration - email/password login with bcrypt, JWT session strategy.
 // Also supports Google and Microsoft SSO when client credentials are configured.
 import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
@@ -11,7 +11,7 @@ import { createLogger } from './logger'
 
 const log = createLogger('auth')
 
-// Build the providers list dynamically — SSO providers only load when env vars are set
+// Build the providers list dynamically - SSO providers only load when env vars are set
 const providers: NextAuthOptions['providers'] = [
   CredentialsProvider({
     name: 'credentials',
@@ -92,7 +92,7 @@ export const authOptions: NextAuthOptions = {
         const email = user.email.toLowerCase()
         const existing = await prisma.user.findUnique({ where: { email } })
         if (!existing) {
-          // First-time SSO user — create with Free plan and emailVerified set
+          // First-time SSO user - create with Free plan and emailVerified set
           await prisma.user.create({
             data: {
               email,
@@ -104,7 +104,7 @@ export const authOptions: NextAuthOptions = {
             },
           })
         } else if (!existing.emailVerified) {
-          // Existing user with unverified email — mark as verified via SSO
+          // Existing user with unverified email - mark as verified via SSO
           await prisma.user.update({
             where: { id: existing.id },
             data: { emailVerified: new Date() },
@@ -135,7 +135,7 @@ export const authOptions: NextAuthOptions = {
         }
       } else if (trigger === 'update' && token.id) {
         // Client called useSession().update() (e.g. right after email
-        // verification or a plan change) — re-read the fresh values from the DB
+        // verification or a plan change) - re-read the fresh values from the DB
         // so the stale token reflects reality without waiting for a re-login.
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },

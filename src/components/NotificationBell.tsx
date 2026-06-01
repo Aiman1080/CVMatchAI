@@ -60,7 +60,7 @@ export function NotificationBell() {
       setNotifications(data.notifications ?? [])
       setUnreadCount(data.unreadCount ?? 0)
     } catch {
-      // Silently fail — next poll will retry
+      // Silently fail - next poll will retry
     }
   }, [])
 

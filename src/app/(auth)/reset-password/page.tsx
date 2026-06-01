@@ -23,7 +23,7 @@ export default function ResetPasswordPage() {
   const [showPass, setShowPass] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
 
-  // Password strength helpers — match the server-side requirements (min 8, uppercase, number, symbol)
+  // Password strength helpers - match the server-side requirements (min 8, uppercase, number, symbol)
   const hasLength = password.length >= 8
   const hasUpper = /[A-Z]/.test(password)
   const hasNumber = /[0-9]/.test(password)

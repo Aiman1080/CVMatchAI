@@ -1,7 +1,7 @@
 'use client'
 
 // Email-send dialog extracted out of CandidateDetailClient (which was a
-// 1244-line monolith). Owns no state of its own — the parent component
+// 1244-line monolith). Owns no state of its own - the parent component
 // keeps owning subject/body/teamsLink/etc. so existing callers don't have
 // to be restructured.
 
@@ -43,7 +43,7 @@ interface Props {
   onOpenChange: (open: boolean) => void
   candidate: { firstName?: string | null; email?: string | null }
   connectedInboxes: CandidateInbox[]
-  // form state — owned by the parent
+  // form state - owned by the parent
   emailFrom: string
   onFromChange: (v: string) => void
   emailType: string
@@ -93,7 +93,7 @@ export function CandidateEmailDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{labels.sendEmail} — {candidate.firstName}</DialogTitle>
+          <DialogTitle>{labels.sendEmail} - {candidate.firstName}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 mt-2">
           <div className="space-y-2">
@@ -203,7 +203,7 @@ export function CandidateEmailDialog({
             <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
               <span className="text-amber-500 shrink-0 mt-0.5">⚠</span>
               <p className="text-xs text-amber-700 dark:text-amber-300 leading-snug">
-                {(labels as any).noSignatureTitle || 'No email signature set'} — {(labels as any).noSignatureDesc || 'Add a signature in the Email tab so your emails look professional.'}
+                {(labels as any).noSignatureTitle || 'No email signature set'} - {(labels as any).noSignatureDesc || 'Add a signature in the Email tab so your emails look professional.'}
               </p>
             </div>
           )}

@@ -64,9 +64,9 @@ export async function uploadDocument(
       // Put status + Supabase's error body INTO the message so it shows up
       // directly in the Sentry issue title (not buried in Additional Data).
       // Supabase returns e.g. {"statusCode":"404","message":"Bucket not found"}
-      // or a row-level-security message — that message is the actual diagnosis.
+      // or a row-level-security message - that message is the actual diagnosis.
       const body = (await res.text().catch(() => '')).slice(0, 300)
-      log.error(`upload failed for ${path} — HTTP ${res.status}: ${body}`, { status: res.status, body })
+      log.error(`upload failed for ${path} - HTTP ${res.status}: ${body}`, { status: res.status, body })
       return null
     }
     return path

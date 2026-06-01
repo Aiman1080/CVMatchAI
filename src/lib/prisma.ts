@@ -7,7 +7,7 @@ const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }
 export const prisma =
   globalForPrisma.prisma ||
   new PrismaClient({
-    // Only log errors in both environments — query logging would be too noisy
+    // Only log errors in both environments - query logging would be too noisy
     log: process.env.NODE_ENV === 'development' ? ['error'] : ['error'],
   })
 

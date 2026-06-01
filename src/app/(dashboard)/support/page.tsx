@@ -14,15 +14,15 @@ export default async function SupportPage() {
   const translations = {
     en: {
       title: 'Support',
-      description: 'Get help from our team — we reply within 24 hours',
+      description: 'Get help from our team - we reply within 24 hours',
     },
     nl: {
       title: 'Ondersteuning',
-      description: 'Krijg hulp van ons team — we reageren binnen 24 uur',
+      description: 'Krijg hulp van ons team - we reageren binnen 24 uur',
     },
     fr: {
       title: 'Support',
-      description: 'Obtenez de l\'aide de notre équipe — nous répondons sous 24 heures',
+      description: 'Obtenez de l\'aide de notre équipe - nous répondons sous 24 heures',
     },
   }
   const t = translations[locale] || translations.en

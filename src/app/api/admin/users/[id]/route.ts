@@ -1,4 +1,4 @@
-// Admin user management — GET/PATCH/DELETE a single user.
+// Admin user management - GET/PATCH/DELETE a single user.
 // Only fields in the allowlist can be changed via PATCH.
 // Password is never returned in any response.
 import { NextResponse } from 'next/server'

@@ -6,7 +6,7 @@ vi.mock('@/lib/email', () => ({
   isEmailConfigured: vi.fn().mockReturnValue(true),
 }))
 
-// Mock next/server — return objects with a .json() method so tests can read the body
+// Mock next/server - return objects with a .json() method so tests can read the body
 vi.mock('next/server', () => ({
   NextResponse: {
     json: (body: any, init?: { status?: number }) => ({

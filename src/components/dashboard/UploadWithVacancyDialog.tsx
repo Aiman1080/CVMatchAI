@@ -95,7 +95,7 @@ export function UploadWithVacancyDialog({ open, onClose, onUploaded }: Props) {
                 <SelectContent>
                   {vacancies.map(v => (
                     <SelectItem key={v.id} value={v.id}>
-                      {v.title} — {v.company}
+                      {v.title} - {v.company}
                     </SelectItem>
                   ))}
                 </SelectContent>

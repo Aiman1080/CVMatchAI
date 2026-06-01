@@ -9,7 +9,7 @@ function e(str: string | null | undefined): string {
   return escapeHtml(str || '')
 }
 
-// Generate a self-contained HTML PDF page — browser-print or puppeteer-compatible
+// Generate a self-contained HTML PDF page - browser-print or puppeteer-compatible
 function buildPDFHtml(candidates: any[], vacancyTitle: string, generatedBy: string, company: string) {
   const date = new Date().toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })
   const rows = candidates.map((c, i) => {
@@ -48,7 +48,7 @@ function buildPDFHtml(candidates: any[], vacancyTitle: string, generatedBy: stri
           </div>
         </div>
         <div class="score-circle" style="background:linear-gradient(135deg,${scoreColor},${scoreColor}dd)">
-          <div class="score-number">${score ?? '—'}</div>
+          <div class="score-number">${score ?? '-'}</div>
           <div class="score-label">${score ? '%' : ''}</div>
         </div>
       </div>
@@ -68,7 +68,7 @@ function buildPDFHtml(candidates: any[], vacancyTitle: string, generatedBy: stri
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Candidate Report — DeltaMatch</title>
+  <title>Candidate Report - DeltaMatch</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8fafc; color: #1e293b; }
@@ -163,7 +163,7 @@ function buildPDFHtml(candidates: any[], vacancyTitle: string, generatedBy: stri
     ${rows}
 
     <div class="footer">
-      Report generated on ${date} by DeltaMatch — Intelligent Recruitment Platform<br>
+      Report generated on ${date} by DeltaMatch - Intelligent Recruitment Platform<br>
       This document is confidential and intended solely for authorized recruiters.
     </div>
   </div>

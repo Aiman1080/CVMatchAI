@@ -1,4 +1,4 @@
-// Admin broadcast — send a notification to all users (or a filtered subset).
+// Admin broadcast - send a notification to all users (or a filtered subset).
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'

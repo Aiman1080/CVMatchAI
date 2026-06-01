@@ -1,4 +1,4 @@
-// Re-analysis endpoint — re-runs the full AI scoring on an existing candidate.
+// Re-analysis endpoint - re-runs the full AI scoring on an existing candidate.
 // Called from the candidate detail page when the recruiter wants a fresh assessment
 // after editing the vacancy requirements or uploading additional documents.
 import { NextResponse } from 'next/server'
@@ -10,7 +10,7 @@ import { analyzeCVAgainstVacancy } from '@/lib/ai'
 import { logActivity } from '@/lib/activity'
 import { isDemoAccount } from '@/lib/demo-guard'
 
-// Re-runs AI analysis on an existing candidate — useful after editing vacancy requirements
+// Re-runs AI analysis on an existing candidate - useful after editing vacancy requirements
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -24,13 +24,13 @@ export async function POST(req: Request) {
   const userId = (session.user as any).id
 
   try {
-    // findFirst with userId scoping prevents IDOR — users can only re-analyze their own candidates
+    // findFirst with userId scoping prevents IDOR - users can only re-analyze their own candidates
     const candidate = await prisma.candidate.findFirst({ where: { id: candidateId, userId }, include: { vacancy: true } })
     if (!candidate || !candidate.cvContent) return NextResponse.json({ error: 'Candidate or CV not found' }, { status: 404 })
     if (!candidate.vacancy) return NextResponse.json({ error: 'Vacancy not found' }, { status: 404 })
 
     // Output language follows the app's UI locale (same as upload), falling back
-    // to the vacancy language — keeps re-analysis consistent with the first run.
+    // to the vacancy language - keeps re-analysis consistent with the first run.
     const cookieLocale = (await cookies()).get('deltamatch-locale')?.value
     const outputLocale = (['en', 'nl', 'fr', 'de'].includes(cookieLocale || '') ? cookieLocale : candidate.vacancy?.language) || 'fr'
 
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
 
     // If the AI call silently fell back to demo data (rate limit / timeout /
     // empty response), don't overwrite a good existing analysis with placeholder
-    // junk — that's the "re-analyze made it worse" bug. The demo summary is
+    // junk - that's the "re-analyze made it worse" bug. The demo summary is
     // recognizable; refuse to persist it and ask the user to retry.
     const isDemoResult = typeof analysis.summary === 'string' && analysis.summary.includes('demo mode')
     if (isDemoResult && candidate.analyzedAt) {

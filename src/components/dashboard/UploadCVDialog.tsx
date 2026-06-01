@@ -51,7 +51,7 @@ export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploa
     setUploading(true)
     const uploaded: any[] = []
 
-    // Upload files sequentially — parallel uploads could saturate the AI analysis API
+    // Upload files sequentially - parallel uploads could saturate the AI analysis API
     for (let i = 0; i < files.length; i++) {
       const file = files[i]
       setProgress(Math.round(((i) / files.length) * 100))
@@ -125,7 +125,7 @@ export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploa
                         ).replace('{count}', String(successCount))}
                       </p>
                       <p className="text-xs text-green-700 dark:text-green-400 break-words">
-                        {(u as any).analysisCompleteHelp || 'AI analysis complete — view scores and details in the candidates list.'}
+                        {(u as any).analysisCompleteHelp || 'AI analysis complete - view scores and details in the candidates list.'}
                       </p>
                     </div>
                   </div>

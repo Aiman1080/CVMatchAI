@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/use-toast'
 import { useLanguage } from '@/contexts/LanguageContext'
 
-// RFC 5322-ish email check — server still validates strictly
+// RFC 5322-ish email check - server still validates strictly
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export default function RegisterPage() {
@@ -79,7 +79,7 @@ export default function RegisterPage() {
     }
     setLoading(true)
     try {
-      // Strip confirmPassword — server doesn't need it (already validated client-side)
+      // Strip confirmPassword - server doesn't need it (already validated client-side)
       const { confirmPassword: _, ...payload } = form
       const res = await fetch('/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
       const data = await res.json()
@@ -90,9 +90,9 @@ export default function RegisterPage() {
         // Pro access is only granted after a successful payment + webhook confirmation.
         router.push(data.wantsUpgrade ? '/upgrade' : '/dashboard')
       } else {
-        // Account created but auto-login failed — route to /login with a notice
+        // Account created but auto-login failed - route to /login with a notice
         // rather than silently stranding them on the re-enabled register form.
-        toast({ title: (t.auth as any).accountCreatedSignIn || 'Account created — please sign in.' })
+        toast({ title: (t.auth as any).accountCreatedSignIn || 'Account created - please sign in.' })
         router.push('/login')
       }
     } catch (error: any) {
@@ -112,7 +112,7 @@ export default function RegisterPage() {
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 break-words">{t.auth.startForFree}</h1>
           <p className="text-gray-500 text-sm mt-1 break-words">{t.auth.createYourAccount}</p>
         </div>
-        {/* SSO buttons — only when configured */}
+        {/* SSO buttons - only when configured */}
         {(process.env.NEXT_PUBLIC_HAS_GOOGLE_SSO === 'true' || process.env.NEXT_PUBLIC_HAS_MICROSOFT_SSO === 'true') && (
         <>
         <div className="flex flex-col gap-2 mb-4">
@@ -317,7 +317,7 @@ export default function RegisterPage() {
             </label>
           </div>
           <Button type="submit" disabled={loading} className="w-full gradient-bg h-auto py-2.5 whitespace-normal text-center leading-tight">
-            {loading ? <Loader2 className="w-4 h-4 animate-spin shrink-0" /> : form.plan === 'pro' ? 'Start Pro — 30 days free' : t.auth.createFreeAccount}
+            {loading ? <Loader2 className="w-4 h-4 animate-spin shrink-0" /> : form.plan === 'pro' ? 'Start Pro - 30 days free' : t.auth.createFreeAccount}
           </Button>
         </form>
         <p className="text-center text-sm text-gray-500 mt-6 break-words">

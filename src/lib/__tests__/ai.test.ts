@@ -16,11 +16,11 @@ jan.peeters@email.com
 +32 470 123 456
 
 EXPERIENCE
-Software Developer at TechCorp — 2019-2024
+Software Developer at TechCorp - 2019-2024
 Built React and Node.js applications
 
 EDUCATION
-Master Computer Science — KU Leuven (2019)
+Master Computer Science - KU Leuven (2019)
 
 SKILLS
 React, TypeScript, Node.js, Python, SQL, Docker`
@@ -57,9 +57,9 @@ React, TypeScript, Node.js, Python, SQL, Docker`
   it('detects Dutch language for Dutch CV', async () => {
     const dutchCV = `Pieter Janssen
 Werkervaring
-Software Ontwikkelaar bij BedrijfNaam — 2020-2024
+Software Ontwikkelaar bij BedrijfNaam - 2020-2024
 Opleiding
-Bachelor Informatica — HoGent (2020)
+Bachelor Informatica - HoGent (2020)
 Vaardigheden
 React, JavaScript`
 
@@ -70,9 +70,9 @@ React, JavaScript`
   it('detects French language for French CV', async () => {
     const frenchCV = `Marie Dupont
 Expérience professionnelle
-Développeuse chez Entreprise — 2019-2024
+Développeuse chez Entreprise - 2019-2024
 Formation
-Licence Informatique — UCLouvain (2019)
+Licence Informatique - UCLouvain (2019)
 Compétences
 Python, JavaScript`
 

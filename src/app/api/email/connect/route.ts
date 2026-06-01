@@ -22,7 +22,7 @@ export async function GET() {
   return NextResponse.json(inboxes)
 }
 
-// Verifies IMAP connection before saving — avoids storing credentials that don't work
+// Verifies IMAP connection before saving - avoids storing credentials that don't work
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
   }
 
-  // Test the connection live — fail fast with a clear error rather than storing bad credentials
+  // Test the connection live - fail fast with a clear error rather than storing bad credentials
   try {
     const { ImapFlow } = await import('imapflow')
     const client = new ImapFlow({
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
       data: { email, provider, host, port: Number(port) || 993, username, password: encrypt(password), userId },
     })
 
-    // Return only safe fields — never echo the password back to the client
+    // Return only safe fields - never echo the password back to the client
     return NextResponse.json({
       id: inbox.id,
       email: inbox.email,
