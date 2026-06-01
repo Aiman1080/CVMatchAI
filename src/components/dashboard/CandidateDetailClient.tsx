@@ -22,6 +22,7 @@ import { getStatusColor, parseJsonSafe, formatDate } from '@/lib/utils'
 import { exportHiringReportPDF } from '@/lib/export'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { CandidateEmailDialog } from './CandidateEmailDialog'
+import { GenerationLangPicker } from './GenerationLangPicker'
 
 const RECOMMENDATION_COLORS: Record<string, string> = {
   strong_yes: 'bg-green-100 text-green-800 border border-green-200',
@@ -59,6 +60,9 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
   }
 
   const [candidate, setCandidate] = useState(initial)
+  // Chosen OUTPUT language for AI generation (questions / report / email).
+  // Defaults to the UI language; the recruiter can override it per generation.
+  const [genLang, setGenLang] = useState<string>(locale)
   const [analyzing, setAnalyzing] = useState(false)
   const [updating, setUpdating] = useState(false)
   const [notes, setNotes] = useState(initial.notes || '')
@@ -266,7 +270,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
       const res = await fetch('/api/candidates/generate-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ candidateId: candidate.id, type: emailType, locale }),
+        body: JSON.stringify({ candidateId: candidate.id, type: emailType, locale: genLang }),
       })
       const data = await res.json()
       if (res.ok) {
@@ -335,7 +339,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
       const res = await fetch('/api/candidates/interview-questions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ candidateId: candidate.id }),
+        body: JSON.stringify({ candidateId: candidate.id, locale: genLang }),
       })
       const data = await res.json()
       if (res.ok) {
@@ -358,7 +362,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
       const res = await fetch('/api/candidates/hiring-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ candidateId: candidate.id }),
+        body: JSON.stringify({ candidateId: candidate.id, locale: genLang }),
       })
       const data = await res.json()
       if (res.ok) {
@@ -824,7 +828,8 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                     <CardTitle className="text-sm flex items-center gap-2">
                       <MessageSquareText className="w-4 h-4 text-purple-500" /> {ci.aiInterviewQuestions}
                     </CardTitle>
-                    <div className="flex flex-wrap gap-2 justify-end">
+                    <div className="flex flex-wrap gap-2 justify-end items-center">
+                      <GenerationLangPicker value={genLang} onChange={setGenLang} />
                       {interviewQuestions && (
                         <Button onClick={handleAssessAnswers} disabled={assessing} size="sm" variant="outline" className="gap-2 whitespace-normal text-center leading-tight h-auto py-1.5">
                           {assessing ? <Loader2 size={14} className="animate-spin shrink-0" /> : <Sparkles size={14} className="shrink-0" />}
@@ -945,7 +950,8 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                     <CardTitle className="text-sm flex items-center gap-2">
                       <ClipboardList className="w-4 h-4 text-indigo-500" /> {ci.aiHiringReport}
                     </CardTitle>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center flex-wrap justify-end">
+                      <GenerationLangPicker value={genLang} onChange={setGenLang} />
                       {hiringReport && (
                         <>
                           <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => copyToClipboard(hiringReport)}>
@@ -1111,6 +1117,8 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
         interviewDuration={emailInterviewDuration}
         onInterviewDurationChange={setEmailInterviewDuration}
         onGenerateEmail={handleGenerateEmail}
+        genLang={genLang}
+        onGenLangChange={setGenLang}
         onSendEmail={handleSendEmail}
         generatingEmail={generatingEmail}
         sendingEmail={sendingEmail}

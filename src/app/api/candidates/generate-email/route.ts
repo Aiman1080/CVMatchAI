@@ -57,7 +57,7 @@ export async function POST(req: Request) {
   }
   if (!candidate) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  const LANG_NAMES: Record<string, string> = { en: 'English', nl: 'Dutch', fr: 'French' }
+  const LANG_NAMES: Record<string, string> = { en: 'English', nl: 'Dutch', fr: 'French', de: 'German' }
   const langName = LANG_NAMES[locale] || 'French'
 
   const recruiterName = session.user.name || (locale === 'nl' ? 'De recruiter' : locale === 'en' ? 'The recruiter' : 'Le recruteur')

@@ -1145,6 +1145,8 @@ export const en = {
       selectAll: 'Select all',
       deselectAll: 'Deselect all',
       changeStatusTo: 'Change status to...',
+      allVacancies: 'All vacancies',
+      uploadCvBtn: 'Upload CV',
       compare: 'Compare',
       deleteCandidate: 'Delete candidate',
       deleteCandidateDesc: 'Delete {name}? This action cannot be undone.',
@@ -1170,6 +1172,7 @@ export const en = {
     },
     settingsPage: {
       errorSaving: 'Could not save settings. Please check your connection and try again.',
+      billingPortalError: 'Could not open billing portal',
       errorChangingPassword: 'Could not change password. Please check your current password and try again.',
       checkConnectionRetry: 'Please check your connection and try again.',
       refreshRetry: 'Please refresh the page and try again.',

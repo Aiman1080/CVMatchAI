@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
+import { GenerationLangPicker } from './GenerationLangPicker'
 
 interface CandidateInbox { id: string; email: string }
 
@@ -65,6 +66,9 @@ interface Props {
   generatingEmail: boolean
   sendingEmail: boolean
   hasSignature?: boolean
+  // AI output language (FR/NL/EN/DE picker next to "generate")
+  genLang?: string
+  onGenLangChange?: (v: string) => void
   labels: Labels
 }
 
@@ -80,6 +84,7 @@ export function CandidateEmailDialog({
   onGenerateEmail, onSendEmail,
   generatingEmail, sendingEmail,
   hasSignature = true,
+  genLang, onGenLangChange,
   labels,
 }: Props) {
   const typeOptions = [
@@ -141,15 +146,22 @@ export function CandidateEmailDialog({
           </div>
 
           {emailType !== 'custom' && (
-            <Button
-              onClick={onGenerateEmail}
-              disabled={generatingEmail}
-              variant="outline"
-              className="w-full gap-2 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-400 dark:hover:bg-purple-950"
-            >
-              {generatingEmail ? <Loader2 size={14} className="animate-spin" /> : <span>✨</span>}
-              {generatingEmail ? '...' : labels.generateWithAI}
-            </Button>
+            <div className="space-y-2">
+              {onGenLangChange && genLang !== undefined && (
+                <div className="flex justify-end">
+                  <GenerationLangPicker value={genLang} onChange={onGenLangChange} />
+                </div>
+              )}
+              <Button
+                onClick={onGenerateEmail}
+                disabled={generatingEmail}
+                variant="outline"
+                className="w-full gap-2 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-400 dark:hover:bg-purple-950"
+              >
+                {generatingEmail ? <Loader2 size={14} className="animate-spin" /> : <span>✨</span>}
+                {generatingEmail ? '...' : labels.generateWithAI}
+              </Button>
+            </div>
           )}
 
           <div>

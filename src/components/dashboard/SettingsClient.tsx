@@ -73,9 +73,9 @@ export function SettingsClient({ user, isDemo }: Props) {
         window.location.href = data.url
         return
       }
-      toast({ title: data.error || 'Could not open billing portal', variant: 'destructive' })
+      toast({ title: data.error || t.dashboard.settingsPage.billingPortalError, variant: 'destructive' })
     } catch {
-      toast({ title: 'Could not open billing portal', variant: 'destructive' })
+      toast({ title: t.dashboard.settingsPage.billingPortalError, variant: 'destructive' })
     } finally {
       setOpeningPortal(false)
     }

@@ -1136,6 +1136,8 @@ export const fr = {
       selectAll: 'Tout sélectionner',
       deselectAll: 'Tout désélectionner',
       changeStatusTo: 'Changer le statut en...',
+      allVacancies: 'Toutes les offres',
+      uploadCvBtn: 'Uploader un CV',
       compare: 'Comparer',
       deleteCandidate: 'Supprimer le candidat',
       deleteCandidateDesc: 'Supprimer {name} ? Cette action est irréversible.',
@@ -1161,6 +1163,7 @@ export const fr = {
     },
     settingsPage: {
       errorSaving: 'Impossible de sauvegarder les paramètres. Vérifiez votre connexion et réessayez.',
+      billingPortalError: "Impossible d'ouvrir le portail de facturation",
       errorChangingPassword: 'Impossible de changer le mot de passe. Vérifiez votre mot de passe actuel et réessayez.',
       checkConnectionRetry: 'Vérifiez votre connexion et réessayez.',
       refreshRetry: 'Rafraîchissez la page et réessayez.',

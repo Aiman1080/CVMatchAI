@@ -20,8 +20,10 @@ export async function POST(req: Request) {
   if (!limits.hiringReport) {
     return NextResponse.json({ error: 'Hiring reports require Pro plan' }, { status: 403 })
   }
-  const { candidateId } = await req.json()
+  const { candidateId, locale } = await req.json()
   if (!candidateId) return NextResponse.json({ error: 'candidateId required' }, { status: 400 })
+  // Output language: explicit UI choice wins, else the CV's detected language.
+  const outputLocale = ['en', 'nl', 'fr', 'de'].includes(locale || '') ? locale : null
 
   const candidate = await prisma.candidate.findFirst({
     where: { id: candidateId, userId },
@@ -47,7 +49,7 @@ export async function POST(req: Request) {
     },
     candidate.vacancy.title,
     candidate.vacancy.description,
-    candidate.language || 'en',
+    outputLocale || candidate.language || 'en',
   )
 
   return NextResponse.json(result)
