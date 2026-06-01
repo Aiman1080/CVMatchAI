@@ -1376,7 +1376,7 @@ export const fr = {
     invalidVerificationLink: 'Lien de vérification invalide. Token ou e-mail manquant.',
     verificationError: 'Une erreur est survenue. Veuillez réessayer.',
     verification: {
-      bannerMessage: "Veuillez vérifier votre adresse e-mail. Consultez votre boîte de réception pour le lien de vérification.",
+      bannerMessage: "Veuillez vérifier votre adresse e-mail. Consultez votre boîte de réception (et vos spams/courriers indésirables) pour le lien de vérification.",
       resend: 'Renvoyer',
       sent: 'Envoyé !',
       resending: 'Envoi en cours...',
