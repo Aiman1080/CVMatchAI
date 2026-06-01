@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Bot, Send, ChevronDown, ChevronUp, Ticket, Loader2 } from 'lucide-react'
+import { Bot, Send, ChevronDown, ChevronUp, Ticket, Loader2, RotateCcw } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,7 +21,16 @@ const MAX_MESSAGES = 10
 export function AISupportChat({ onCreateTicket }: AISupportChatProps) {
   const { t } = useLanguage()
   const ts = t.dashboard.support
-  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const STORAGE_KEY = 'deltamatch-support-chat'
+  // Load any previous conversation so switching tabs (which unmounts this
+  // component) doesn't wipe the chat. Persisted to localStorage on every change.
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    if (typeof window === 'undefined') return []
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY)
+      return saved ? JSON.parse(saved) : []
+    } catch { return [] }
+  })
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
@@ -29,7 +38,15 @@ export function AISupportChat({ onCreateTicket }: AISupportChatProps) {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    // Persist the conversation so it survives tab switches / page reloads.
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(messages)) } catch {}
   }, [messages])
+
+  const resetConversation = () => {
+    setMessages([])
+    setInput('')
+    try { localStorage.removeItem(STORAGE_KEY) } catch {}
+  }
 
   const sendMessage = async () => {
     const text = input.trim()
@@ -93,10 +110,21 @@ export function AISupportChat({ onCreateTicket }: AISupportChatProps) {
               <p className="text-xs font-normal text-gray-500 dark:text-gray-400">{ts.aiAssistantDesc}</p>
             </div>
           </CardTitle>
-          {collapsed
-            ? <ChevronDown size={16} className="text-gray-400" />
-            : <ChevronUp size={16} className="text-gray-400" />
-          }
+          <div className="flex items-center gap-1">
+            {messages.length > 0 && (
+              <button
+                onClick={(e) => { e.stopPropagation(); resetConversation() }}
+                title={(ts as any).resetChat || 'Reset conversation'}
+                className="p-1.5 rounded-md text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                <RotateCcw size={15} />
+              </button>
+            )}
+            {collapsed
+              ? <ChevronDown size={16} className="text-gray-400" />
+              : <ChevronUp size={16} className="text-gray-400" />
+            }
+          </div>
         </div>
       </CardHeader>
 

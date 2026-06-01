@@ -43,6 +43,7 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
     const next: Record<string, string> = {}
     if (!f.title.trim()) next.title = vmsg.titleRequired
     if (!f.company.trim()) next.company = vmsg.companyRequired
+    if (!f.location.trim()) next.location = (vmsg as any).locationRequired || 'Location is required'
     if (!f.description.trim()) next.description = vmsg.descriptionRequired
     else if (f.description.trim().length < 30) next.description = vmsg.descriptionTooShort
     if (!f.requirements.trim()) next.requirements = vmsg.requirementsRequired
@@ -77,7 +78,7 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     // Mark every required field as touched so the user sees all errors at once
-    setTouched({ title: true, company: true, description: true, requirements: true })
+    setTouched({ title: true, company: true, location: true, description: true, requirements: true })
     const allErrors = validate(form)
     if (Object.keys(allErrors).length > 0) {
       setErrors(allErrors)
@@ -160,8 +161,16 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
               <Input placeholder={cv.departmentPlaceholder} value={form.department} onChange={e => setForm(p => ({ ...p, department: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>{cv.location}</Label>
-              <Input placeholder={cv.locationPlaceholder} value={form.location} onChange={e => setForm(p => ({ ...p, location: e.target.value }))} />
+              <Label>{cv.location} <span className="text-red-500">*</span></Label>
+              <Input
+                placeholder={cv.locationPlaceholder}
+                value={form.location}
+                onChange={e => setField('location', e.target.value)}
+                onBlur={() => markTouched('location')}
+                aria-invalid={!!errors.location}
+                className={errors.location ? 'border-red-500 focus-visible:ring-red-500' : ''}
+              />
+              {errors.location && <p className="text-xs text-red-500" role="alert">{errors.location}</p>}
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

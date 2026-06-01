@@ -624,6 +624,7 @@ export const fr = {
       validation: {
         titleRequired: 'Le titre du poste est requis',
         companyRequired: "Le nom de l'entreprise est requis",
+        locationRequired: 'Le lieu est requis',
         descriptionRequired: 'Veuillez ajouter une description du poste',
         descriptionTooShort: 'La description doit comporter au moins 30 caractères',
         requirementsRequired: 'Veuillez lister les exigences',
@@ -1313,6 +1314,7 @@ export const fr = {
       priorityHighLabel: 'Haute',
       priorityUrgentLabel: 'Urgente',
       aiAssistant: 'Assistant IA Support',
+      resetChat: 'Réinitialiser la conversation',
       aiAssistantDesc: "Besoin d'aide ? Discutez d'abord avec notre assistant IA",
       createTicketInstead: 'Créer un ticket à la place',
       typeQuestion: 'Posez votre question...',
