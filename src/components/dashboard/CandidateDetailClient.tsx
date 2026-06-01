@@ -71,6 +71,8 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
   const [emailSubject, setEmailSubject] = useState('')
   const [emailBody, setEmailBody] = useState('')
   const [teamsLink, setTeamsLink] = useState('')
+  const [emailInterviewAt, setEmailInterviewAt] = useState('')
+  const [emailInterviewDuration, setEmailInterviewDuration] = useState('30')
   const [sendingEmail, setSendingEmail] = useState(false)
   const [generatingEmail, setGeneratingEmail] = useState(false)
   const [interviewQuestions, setInterviewQuestions] = useState<Array<{ question: string; category: string; rationale: string; expectedAnswer: string }> | null>(null)
@@ -215,7 +217,17 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
     setEmailType(type)
     setEmailSubject('')
     setEmailBody('')
-    setTeamsLink('')
+    setTeamsLink(candidate.interviewLocation || '')
+    // Pre-fill the scheduler from an existing interview (as a datetime-local string)
+    if (candidate.interviewAt) {
+      const d = new Date(candidate.interviewAt)
+      const pad = (n: number) => String(n).padStart(2, '0')
+      setEmailInterviewAt(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`)
+      setEmailInterviewDuration(String(candidate.interviewDuration || 30))
+    } else {
+      setEmailInterviewAt('')
+      setEmailInterviewDuration('30')
+    }
     setShowEmail(true)
   }
 
@@ -258,6 +270,24 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
       const data = await res.json()
       if (res.ok) {
         toast({ title: cd.sendEmail, description: `${candidate.email}` })
+        // If this is an interview email with a date set, also persist the
+        // interview + send the .ics calendar invite (schedule route).
+        if (emailType === 'interview' && emailInterviewAt) {
+          try {
+            await fetch(`/api/candidates/${candidate.id}/schedule`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                interviewAt: new Date(emailInterviewAt).toISOString(),
+                interviewDuration: Number(emailInterviewDuration) || 30,
+                interviewLocation: teamsLink || null,
+                notify: true,
+              }),
+            })
+            setCandidate((p: any) => ({ ...p, interviewAt: new Date(emailInterviewAt).toISOString(), interviewDuration: Number(emailInterviewDuration) || 30, interviewLocation: teamsLink || null }))
+            toast({ title: (cd as any).interviewScheduledToast || 'Interview scheduled & invite sent' })
+          } catch { /* email already sent; scheduling is best-effort */ }
+        }
         setShowEmail(false)
         // Nudge: the email went out without a signature — invite them to add one
         // in the Email tab so future emails look professional.
@@ -1030,6 +1060,10 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
         onBodyChange={setEmailBody}
         teamsLink={teamsLink}
         onTeamsLinkChange={setTeamsLink}
+        interviewAt={emailInterviewAt}
+        onInterviewAtChange={setEmailInterviewAt}
+        interviewDuration={emailInterviewDuration}
+        onInterviewDurationChange={setEmailInterviewDuration}
         onGenerateEmail={handleGenerateEmail}
         onSendEmail={handleSendEmail}
         generatingEmail={generatingEmail}

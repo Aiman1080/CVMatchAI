@@ -32,6 +32,10 @@ interface Labels {
   sending: string
   emailPlaceholder?: string
   calendarHint?: string
+  scheduleSection?: string
+  scheduleHint?: string
+  dateTime?: string
+  duration?: string
 }
 
 interface Props {
@@ -50,6 +54,11 @@ interface Props {
   onBodyChange: (v: string) => void
   teamsLink: string
   onTeamsLinkChange: (v: string) => void
+  // interview scheduling (only used when emailType === 'interview')
+  interviewAt: string
+  onInterviewAtChange: (v: string) => void
+  interviewDuration: string
+  onInterviewDurationChange: (v: string) => void
   // actions
   onGenerateEmail: () => void
   onSendEmail: () => void
@@ -65,6 +74,8 @@ export function CandidateEmailDialog({
   emailSubject, onSubjectChange,
   emailBody, onBodyChange,
   teamsLink, onTeamsLinkChange,
+  interviewAt, onInterviewAtChange,
+  interviewDuration, onInterviewDurationChange,
   onGenerateEmail, onSendEmail,
   generatingEmail, sendingEmail,
   labels,
@@ -155,23 +166,33 @@ export function CandidateEmailDialog({
           </div>
 
           {emailType === 'interview' && (
-            <div>
-              <Label className="text-xs text-gray-500 mb-1.5 flex items-center gap-1">
-                <Video size={12} className="text-blue-500" /> {labels.teamsLink}
-              </Label>
-              <Input
-                value={teamsLink}
-                onChange={e => onTeamsLinkChange(e.target.value)}
-                placeholder="https://teams.microsoft.com/l/meetup-join/..."
-                className="text-sm"
-              />
-              {/* Point recruiters to the dedicated scheduler (with .ics calendar
-                  invite) so they don't confuse "send an email" with "book a slot". */}
-              <div className="mt-2 flex items-start gap-2 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900">
-                <CalendarClock size={14} className="text-blue-500 shrink-0 mt-0.5" />
-                <p className="text-[11px] text-blue-700 dark:text-blue-300 leading-snug">
-                  {labels.calendarHint || 'To send a calendar invite (.ics) the candidate can add to Google/Outlook in one click, use the "Interview" tab → "Schedule interview".'}
-                </p>
+            <div className="space-y-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900">
+              <p className="text-xs font-medium text-blue-800 dark:text-blue-300 flex items-center gap-1.5">
+                <CalendarClock size={13} /> {labels.scheduleSection || 'Schedule the interview (optional)'}
+              </p>
+              <p className="text-[11px] text-blue-700/80 dark:text-blue-300/80 leading-snug">
+                {labels.scheduleHint || 'Set a date to attach a calendar invite (.ics) the candidate adds in one click. It also appears in your dashboard calendar.'}
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div className="sm:col-span-2">
+                  <Label className="text-[11px] text-gray-500 mb-1">{labels.dateTime || 'Date & time'}</Label>
+                  <Input type="datetime-local" value={interviewAt} onChange={e => onInterviewAtChange(e.target.value)} className="text-sm" />
+                </div>
+                <div>
+                  <Label className="text-[11px] text-gray-500 mb-1">{labels.duration || 'Duration (min)'}</Label>
+                  <Input type="number" min={5} step={5} value={interviewDuration} onChange={e => onInterviewDurationChange(e.target.value)} className="text-sm" />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs text-gray-500 mb-1 flex items-center gap-1">
+                  <Video size={12} className="text-blue-500" /> {labels.teamsLink}
+                </Label>
+                <Input
+                  value={teamsLink}
+                  onChange={e => onTeamsLinkChange(e.target.value)}
+                  placeholder="https://teams.microsoft.com/l/meetup-join/..."
+                  className="text-sm"
+                />
               </div>
             </div>
           )}
