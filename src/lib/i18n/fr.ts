@@ -179,6 +179,7 @@ export const fr = {
       dashboard: 'Dashboard',
       vacancies: 'Offres',
       candidates: 'Candidats',
+      pipeline: 'Pipeline',
       email: 'Boîte mail',
       integrations: '14 intégrations ATS (Greenhouse, Bullhorn, Personio...)',
       analytics: 'Analytique',
