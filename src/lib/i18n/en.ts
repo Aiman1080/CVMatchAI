@@ -1161,6 +1161,8 @@ export const en = {
       currentPlan: 'Current plan:',
       currentPlanBtn: 'Current Plan',
       upgradeBtn: 'Upgrade',
+      upgradedTitle: 'Welcome to Pro! 🎉',
+      upgradedDesc: 'Your Pro plan is now active.',
       manageBillingTitle: 'Manage subscription',
       manageBillingDesc: 'Update your payment method, download invoices, or cancel your subscription via Stripe.',
       manageBillingBtn: 'Manage / cancel subscription',

@@ -1152,6 +1152,8 @@ export const fr = {
       currentPlan: 'Plan actuel :',
       currentPlanBtn: 'Plan actuel',
       upgradeBtn: 'Mettre à niveau',
+      upgradedTitle: 'Bienvenue dans Pro ! 🎉',
+      upgradedDesc: 'Votre plan Pro est maintenant actif.',
       manageBillingTitle: 'Gérer l’abonnement',
       manageBillingDesc: 'Modifiez votre moyen de paiement, téléchargez vos factures ou résiliez votre abonnement via Stripe.',
       manageBillingBtn: 'Gérer / résilier l’abonnement',
