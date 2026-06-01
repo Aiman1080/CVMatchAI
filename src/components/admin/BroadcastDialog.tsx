@@ -21,6 +21,8 @@ interface Labels {
   broadcastTitlePlaceholder?: string
   broadcastMessageLabel?: string
   broadcastMessagePlaceholder?: string
+  broadcastSendAll?: string
+  broadcastSendingAll?: string
   cancel?: string
 }
 
@@ -84,7 +86,7 @@ export function BroadcastDialog({
             disabled={sending || !title.trim() || !message.trim()}
           >
             <Send size={14} />
-            {sending ? 'Sending...' : 'Send to all users'}
+            {sending ? (labels.broadcastSendingAll || 'Sending...') : (labels.broadcastSendAll || 'Send to all users')}
           </Button>
         </DialogFooter>
       </DialogContent>
