@@ -179,7 +179,7 @@ export const en = {
       dashboard: 'Dashboard',
       vacancies: 'Vacancies',
       candidates: 'Candidates',
-      pipeline: 'Pipeline',
+      pipeline: 'Kanban',
       email: 'Email Inbox',
       integrations: 'ATS Integrations',
       analytics: 'Analytics',

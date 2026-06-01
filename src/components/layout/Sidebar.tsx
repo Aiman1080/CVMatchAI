@@ -47,7 +47,7 @@ export function Sidebar() {
     { href: '/dashboard', icon: LayoutDashboard, label: t.dashboard.nav.dashboard },
     { href: '/vacancies', icon: Briefcase, label: t.dashboard.nav.vacancies },
     { href: '/candidates', icon: Users, label: t.dashboard.nav.candidates },
-    { href: '/pipeline', icon: Columns, label: (t.dashboard.nav as any).pipeline || 'Pipeline' },
+    { href: '/kanban', icon: Columns, label: (t.dashboard.nav as any).pipeline || 'Kanban' },
     { href: '/email', icon: Mail, label: t.dashboard.nav.email, locked: isFree },
     { href: '/integrations', icon: Plug, label: t.dashboard.nav.integrations, locked: isFree },
     { href: '/analytics', icon: BarChart3, label: t.dashboard.nav.analytics, locked: isFree },
