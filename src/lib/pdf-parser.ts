@@ -26,6 +26,28 @@ export async function parseDOCX(buffer: Buffer): Promise<string> {
   }
 }
 
+// Strip characters Postgres can't store in a text/utf8 column. The big one is
+// the NUL byte (0x00) — pdf-parse sometimes emits it, and Postgres rejects it
+// with: invalid byte sequence for encoding "UTF8": 0x00. We also drop other C0
+// control chars except tab/newline/carriage-return, and lone surrogates.
+export function sanitizeText(text: string): string {
+  if (!text) return ''
+  // Strip chars Postgres rejects in a utf8 text column. NUL (0x00) is the
+  // one that throws 'invalid byte sequence for encoding UTF8: 0x00'. We drop
+  // C0 controls except tab/newline/return, DEL, and lone surrogates. Built via
+  // String.fromCharCode so the source contains no literal control characters.
+  let out = ''
+  for (let i = 0; i < text.length; i++) {
+    const code = text.charCodeAt(i)
+    const isAllowedControl = code === 9 || code === 10 || code === 13
+    if (code < 32 && !isAllowedControl) continue   // C0 controls
+    if (code === 127) continue                     // DEL
+    if (code >= 0xD800 && code <= 0xDFFF) continue  // lone surrogates
+    out += text[i]
+  }
+  return out
+}
+
 // Dispatches to the correct parser based on MIME type; falls back to raw UTF-8 for plain text
 export async function parseDocument(buffer: Buffer, mimeType: string): Promise<string> {
   if (mimeType === 'application/pdf') {
@@ -40,15 +62,15 @@ export async function parseDocument(buffer: Buffer, mimeType: string): Promise<s
       try {
         const { extractTextWithGemini } = await import('./ai')
         const ocr = await extractTextWithGemini(buffer, mimeType)
-        if (ocr.trim().length > text.trim().length) return ocr
+        if (ocr.trim().length > text.trim().length) return sanitizeText(ocr)
       } catch (error) {
         console.error('OCR fallback error:', error)
       }
     }
-    return text
+    return sanitizeText(text)
   }
-  if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || mimeType === 'application/msword') return parseDOCX(buffer)
-  return buffer.toString('utf-8')
+  if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || mimeType === 'application/msword') return sanitizeText(await parseDOCX(buffer))
+  return sanitizeText(buffer.toString('utf-8'))
 }
 
 // Generates a safe filename for the upload. On Vercel/serverless the filesystem
