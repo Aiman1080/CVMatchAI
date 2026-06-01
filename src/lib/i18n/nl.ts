@@ -1152,6 +1152,8 @@ export const nl = {
       currentPlan: 'Huidig abonnement:',
       currentPlanBtn: 'Huidig plan',
       upgradeBtn: 'Upgraden',
+      upgradedTitle: 'Welkom bij Pro! 🎉',
+      upgradedDesc: 'Je Pro-abonnement is nu actief.',
       manageBillingTitle: 'Abonnement beheren',
       manageBillingDesc: 'Wijzig je betaalmethode, download facturen of zeg je abonnement op via Stripe.',
       manageBillingBtn: 'Abonnement beheren / opzeggen',

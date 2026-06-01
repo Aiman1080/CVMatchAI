@@ -1,5 +1,7 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { User, Shield, Save, Trash2, Lock, Eye, EyeOff, Camera, CreditCard, Loader2, ExternalLink } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -26,6 +28,24 @@ const PLANS = [
 
 export function SettingsClient({ user, isDemo }: Props) {
   const { t } = useLanguage()
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const { update: updateSession } = useSession()
+
+  // Returning from Stripe checkout (?upgraded=true): the webhook has already set
+  // subscription='pro' in the DB, but the user's JWT is stale and still says
+  // free. Refresh the session token from the DB so the Pro plan shows instantly
+  // — no logout/login needed. Then clean the URL.
+  useEffect(() => {
+    if (searchParams?.get('upgraded') === 'true') {
+      updateSession()
+        .then(() => toast({ title: (t.dashboard as any).settingsPage?.upgradedTitle || 'Welcome to Pro! 🎉', description: (t.dashboard as any).settingsPage?.upgradedDesc || 'Your Pro plan is now active.' }))
+        .catch(() => {})
+      router.replace('/settings')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // emailSignature is now managed in the Email tab (EmailClient) so it's
   // intentionally not part of this form — saving here would overwrite the
   // value the user just set in the dedicated Email tab card.
