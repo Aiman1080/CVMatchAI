@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useEffect } from 'react'
 import {
-  MapPin, Briefcase, DollarSign, Users, Upload, Star, ChevronRight, ChevronLeft,
+  MapPin, Briefcase, Euro, Users, Upload, Star, ChevronRight, ChevronLeft,
   Pencil, Trash2, CheckCircle, XCircle, Clock, Loader2, Save, X, Sparkles, Trophy, Download, Copy, Mail, Link2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -363,7 +363,7 @@ export function VacancyDetailClient({ vacancy: initial, canExport = false }: { v
             <div className="flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400 mb-4">
               {vacancy.location && <span className="flex items-center gap-1.5 min-w-0 break-words"><MapPin size={14} className="shrink-0" />{vacancy.location}</span>}
               <span className="flex items-center gap-1.5 min-w-0 break-words"><Briefcase size={14} className="shrink-0" />{(vd.contractTypes as any)[vacancy.type] || vacancy.type}</span>
-              {vacancy.salary && <span className="flex items-center gap-1.5 min-w-0 break-words"><DollarSign size={14} className="shrink-0" />{vacancy.salary}</span>}
+              {vacancy.salary && <span className="flex items-center gap-1.5 min-w-0 break-words"><Euro size={14} className="shrink-0" />{vacancy.salary}</span>}
               <span className="flex items-center gap-1.5 min-w-0 break-words"><Clock size={14} className="shrink-0" />{vd.posted} {formatDate(vacancy.createdAt)}</span>
             </div>
 
