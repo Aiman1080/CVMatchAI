@@ -88,6 +88,51 @@ export function buildICS(ev: InterviewEvent): string {
   return lines.map(fold).join('\r\n')
 }
 
+// A single VEVENT block (used by the subscription feed below).
+export interface FeedEvent {
+  uid: string
+  start: Date
+  durationMinutes: number
+  summary: string
+  description?: string
+  location?: string
+}
+
+function buildVEVENT(ev: FeedEvent, now: Date): string[] {
+  const end = new Date(ev.start.getTime() + ev.durationMinutes * 60_000)
+  return [
+    'BEGIN:VEVENT',
+    `UID:${esc(ev.uid)}@deltamatch`,
+    `DTSTAMP:${toICalUtc(now)}`,
+    `DTSTART:${toICalUtc(ev.start)}`,
+    `DTEND:${toICalUtc(end)}`,
+    `SUMMARY:${esc(ev.summary)}`,
+    ev.description ? `DESCRIPTION:${esc(ev.description)}` : '',
+    ev.location ? `LOCATION:${esc(ev.location)}` : '',
+    'STATUS:CONFIRMED',
+    'END:VEVENT',
+  ].filter(Boolean) as string[]
+}
+
+// A subscribe-able iCalendar feed (METHOD:PUBLISH) bundling all of the user's
+// events — interviews + personal events. The user adds the feed URL once to
+// Google/Outlook/Apple and it stays in sync (read-only, one-way).
+export function buildICSFeed(events: FeedEvent[], calName = 'DeltaMatch'): string {
+  const now = new Date()
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//DeltaMatch//Calendar Feed//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    `X-WR-CALNAME:${esc(calName)}`,
+    `X-WR-TIMEZONE:UTC`,
+    ...events.flatMap(ev => buildVEVENT(ev, now)),
+    'END:VCALENDAR',
+  ]
+  return lines.map(fold).join('\r\n')
+}
+
 // Convenience: a "Add to Google Calendar" URL (no OAuth needed — opens a
 // prefilled event the user just saves). Handy as an in-app button for the recruiter.
 export function googleCalendarUrl(ev: InterviewEvent): string {
