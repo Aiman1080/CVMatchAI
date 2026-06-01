@@ -624,6 +624,7 @@ export const nl = {
       validation: {
         titleRequired: 'Functietitel is vereist',
         companyRequired: 'Bedrijfsnaam is vereist',
+        locationRequired: 'Locatie is vereist',
         descriptionRequired: 'Voeg een functiebeschrijving toe',
         descriptionTooShort: 'De beschrijving moet minimaal 30 tekens bevatten',
         requirementsRequired: 'Geef de vereisten op',
@@ -1313,6 +1314,7 @@ export const nl = {
       priorityHighLabel: 'Hoog',
       priorityUrgentLabel: 'Dringend',
       aiAssistant: 'AI Support Assistent',
+      resetChat: 'Gesprek opnieuw starten',
       aiAssistantDesc: 'Hulp nodig? Chat eerst met onze AI-assistent',
       createTicketInstead: 'Liever een ticket aanmaken',
       typeQuestion: 'Stel uw vraag...',

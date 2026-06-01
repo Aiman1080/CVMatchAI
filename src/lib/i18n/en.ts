@@ -624,6 +624,7 @@ export const en = {
       validation: {
         titleRequired: 'Job title is required',
         companyRequired: 'Company name is required',
+        locationRequired: 'Location is required',
         descriptionRequired: 'Please add a job description',
         descriptionTooShort: 'Description should be at least 30 characters',
         requirementsRequired: 'Please list the requirements',
@@ -1322,6 +1323,7 @@ export const en = {
       priorityHighLabel: 'High',
       priorityUrgentLabel: 'Urgent',
       aiAssistant: 'AI Support Assistant',
+      resetChat: 'Reset conversation',
       aiAssistantDesc: 'Need help? Chat with our AI assistant first',
       createTicketInstead: 'Create a ticket instead',
       typeQuestion: 'Type your question...',
