@@ -125,6 +125,16 @@ export async function POST(req: Request) {
         const cookieLocale = (await cookies()).get('deltamatch-locale')?.value
         const outputLocale = (['en', 'nl', 'fr', 'de'].includes(cookieLocale || '') ? cookieLocale : vacancy.language) || 'fr'
         const analysis = await analyzeCVAgainstVacancy(cvText, vacancy.title, vacancy.description, vacancy.requirements, motivationText, outputLocale)
+        // A real GEMINI key is configured but the analysis came back as the demo
+        // fallback (its summary contains "demo mode") => the Gemini call genuinely
+        // failed (outage / quota / empty response). Never persist fabricated demo
+        // scores under a real account: throw so the catch below saves the CV
+        // WITHOUT a score and tells the recruiter to retry, instead of showing a
+        // fake "Unknown Candidate / 92%".
+        const keyConfigured = !!process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim() !== '' && process.env.GEMINI_API_KEY !== 'demo'
+        if (keyConfigured && typeof analysis.summary === 'string' && analysis.summary.includes('demo mode')) {
+          throw new Error('AI_DEMO_FALLBACK')
+        }
         candidate = await prisma.candidate.update({
           where: { id: candidate.id },
           data: {
