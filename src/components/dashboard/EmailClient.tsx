@@ -42,7 +42,6 @@ export function EmailClient() {
   const [connecting, setConnecting] = useState(false)
   const [scanning, setScanning] = useState<string | null>(null)
   const [scanProgress, setScanProgress] = useState<number>(0)
-  const [scanReport, setScanReport] = useState<string | null>(null)
   const [scanTimer, setScanTimer] = useState<number>(0)
   const scanIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [demoScanning, setDemoScanning] = useState(false)
@@ -178,14 +177,6 @@ export function EmailClient() {
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data.error)
       setScanProgress(100)
-      // When nothing was imported, surface the per-message trace so the user can
-      // copy it (helps diagnose "found nothing"). Logged to console too.
-      if (Array.isArray(data.trace) && (data.processed || 0) === 0) {
-        const report = `=== SCAN DIAGNOSTIC ===\n${data.diagnostic || ''}\n\n${data.trace.join('\n')}`
-        // eslint-disable-next-line no-console
-        console.log(report)
-        setScanReport(report)
-      }
       toast({
         title: te.scanComplete,
         description: data.diagnostic || te.scanDesc.replace('{scanned}', data.scanned).replace('{relevant}', data.relevant).replace('{processed}', data.processed),
@@ -424,22 +415,6 @@ export function EmailClient() {
           )}
         </CardContent>
       </Card>
-
-      {/* Scan diagnostic (shown when a scan imported nothing) - copy & share to debug */}
-      {scanReport && (
-        <Card className="border border-amber-300 dark:border-amber-800 shadow-sm">
-          <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-sm text-amber-700 dark:text-amber-400">Scan diagnostic (copy this)</CardTitle>
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={() => { navigator.clipboard?.writeText(scanReport).then(() => toast({ title: 'Copied' })).catch(() => {}) }}>Copy</Button>
-              <Button size="sm" variant="outline" onClick={() => setScanReport(null)}>Close</Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <pre className="text-xs whitespace-pre-wrap break-words bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-3 max-h-80 overflow-auto font-mono">{scanReport}</pre>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Email signature / footer - applied to every email sent to candidates */}
       <Card className="border border-gray-200 shadow-sm dark:border-gray-800">

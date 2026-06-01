@@ -67,11 +67,14 @@ async function main() {
   }
 
   const demoCandidates = ALL_CANDIDATES.filter(c => c.vacancyIndex < 3).slice(0, 12)
+  // Realistic pipeline spread so the demo doesn't show every candidate as "New".
+  const DEMO_STATUSES = ['reviewing', 'shortlisted', 'new', 'reviewing', 'hired', 'new', 'shortlisted', 'reviewing', 'rejected', 'reviewing', 'new', 'shortlisted']
   let di = 0
   for (const c of demoCandidates) {
     const { vacancyIndex, strengths, weaknesses, skills, ...rest } = c
     const vacancyId = demoVacancyIds[vacancyIndex]
     const vacancyTitle = demoVacancies[vacancyIndex].title
+    const status = DEMO_STATUSES[di % DEMO_STATUSES.length]
     // Schedule an interview for ~every 3rd demo candidate so the dashboard
     // calendar shows data on the read-only demo account too.
     let interviewAt: Date | null = null
@@ -89,6 +92,7 @@ async function main() {
     await prisma.candidate.create({
       data: {
         ...rest,
+        status,
         vacancyId,
         userId: recruiter.id,
         strengths: JSON.stringify(strengths),
