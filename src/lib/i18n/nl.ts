@@ -1241,6 +1241,11 @@ export const nl = {
       filesFailedPlural: '{count} bestanden konden niet verwerkt worden. Zie details hieronder.',
       uploadErrorFallback: 'Kon {name} niet uploaden. Controleer of het een geldige PDF/DOCX van minder dan 10 MB is.',
       uploadNetworkError: 'Netwerkfout bij het uploaden van {name}. Controleer je verbinding en probeer opnieuw.',
+      cvLabel: 'CV',
+      motivationOptional: 'Motivatiebrief (optioneel)',
+      addMotivation: 'Brief toevoegen',
+      removeMotivation: 'Verwijderen',
+      addMoreCvs: "Meer cv's toevoegen",
     },
     compare: {
       backToCandidates: 'Terug naar kandidaten',

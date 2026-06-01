@@ -33,6 +33,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Request must be multipart/form-data' }, { status: 400 })
     }
     const file = formData.get('file') as File
+    const motivationFile = formData.get('motivation') as File | null
     const vacancyId = formData.get('vacancyId') as string
     const gdprConsent = formData.get('gdprConsent') === 'true'
 
@@ -84,8 +85,28 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Could not extract text from document' }, { status: 400 })
     }
 
-    // Detect whether this file is a CV or a motivation letter before creating the record
-    const docType = await detectDocumentType(text)
+    // Optional paired motivation letter (multi-upload: one CV + one optional
+    // motivation per row). When present, the main file is ALWAYS the CV (no
+    // auto-detect) and the pair becomes a SINGLE candidate carrying both docs.
+    let pairedMotivationText: string | undefined
+    let pairedMotivDoc: Awaited<ReturnType<typeof persistDocument>> | null = null
+    let pairedMotivMime: string | undefined
+    if (motivationFile && motivationFile.size > 0) {
+      const mExt = motivationFile.name.toLowerCase().slice(motivationFile.name.lastIndexOf('.'))
+      if (allowedExtensions.includes(mExt) && motivationFile.size <= maxSize) {
+        const mBuffer = Buffer.from(await motivationFile.arrayBuffer())
+        const mText = await parseDocument(mBuffer, motivationFile.type)
+        if (mText && mText.trim().length >= 20) {
+          pairedMotivationText = mText
+          pairedMotivMime = motivationFile.type
+          pairedMotivDoc = await persistDocument(mBuffer, motivationFile.type, 'motivation')
+        }
+      }
+    }
+
+    // With a paired motivation the main file is the CV (skip auto-detect);
+    // otherwise detect whether this single upload is a CV or a motivation letter.
+    const docType = pairedMotivationText ? 'cv' : await detectDocumentType(text)
 
     // Create a placeholder candidate first so we have an ID for the analysis update.
     // Store the raw binary too so the recruiter can preview the original PDF/DOCX
@@ -102,10 +123,10 @@ export async function POST(req: Request) {
         cvFile: cvDoc?.fileBytes ?? undefined,
         cvStoragePath: cvDoc?.storagePath ?? undefined,
         cvMimeType: docType === 'cv' ? file.type : undefined,
-        motivationText: docType === 'motivation' ? text : undefined,
-        motivationFile: motivDoc?.fileBytes ?? undefined,
-        motivationStoragePath: motivDoc?.storagePath ?? undefined,
-        motivationMimeType: docType === 'motivation' ? file.type : undefined,
+        motivationText: docType === 'motivation' ? text : pairedMotivationText,
+        motivationFile: (motivDoc ?? pairedMotivDoc)?.fileBytes ?? undefined,
+        motivationStoragePath: (motivDoc ?? pairedMotivDoc)?.storagePath ?? undefined,
+        motivationMimeType: docType === 'motivation' ? file.type : (pairedMotivationText ? pairedMotivMime : undefined),
         status: 'new', source: 'upload',
         gdprConsent: true, gdprConsentDate: new Date(),
         vacancyId, userId,
