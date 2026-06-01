@@ -920,6 +920,7 @@ export const fr = {
       emailSubject: 'Objet',
       emailBody: 'Message',
       teamsLink: 'Lien Teams/Zoom (optionnel)',
+      calendarHint: 'Pour envoyer une invitation calendrier (.ics) que le candidat ajoute en un clic à Google/Outlook, utilisez l\'onglet « Entretien » → « Planifier l\'entretien ».',
       generateWithAI: 'Générer avec IA',
       send: 'Envoyer',
       sending: 'Envoi...',

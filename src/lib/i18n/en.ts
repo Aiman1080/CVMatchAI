@@ -860,6 +860,7 @@ export const en = {
       emailSubject: 'Subject',
       emailBody: 'Message',
       teamsLink: 'Teams/Zoom link (optional)',
+      calendarHint: 'To send a calendar invite (.ics) the candidate can add to Google/Outlook in one click, use the "Interview" tab → "Schedule interview".',
       generateWithAI: 'Generate with AI',
       send: 'Send',
       sending: 'Sending...',
