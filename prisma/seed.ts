@@ -60,10 +60,25 @@ async function main() {
   }
 
   const demoCandidates = ALL_CANDIDATES.filter(c => c.vacancyIndex < 3).slice(0, 12)
+  let di = 0
   for (const c of demoCandidates) {
     const { vacancyIndex, strengths, weaknesses, skills, ...rest } = c
     const vacancyId = demoVacancyIds[vacancyIndex]
     const vacancyTitle = demoVacancies[vacancyIndex].title
+    // Schedule an interview for ~every 3rd demo candidate so the dashboard
+    // calendar shows data on the read-only demo account too.
+    let interviewAt: Date | null = null
+    let interviewDuration: number | null = null
+    let interviewLocation: string | null = null
+    if (di % 3 === 1) {
+      const base = new Date()
+      base.setDate(base.getDate() + 1 + (di % 14))
+      base.setHours(10 + (di % 6), (di % 2) * 30, 0, 0)
+      interviewAt = base
+      interviewDuration = [30, 45, 60][di % 3]
+      interviewLocation = di % 2 === 0 ? 'https://meet.google.com/demo-interview' : 'Office — Meeting room B'
+    }
+    di++
     await prisma.candidate.create({
       data: {
         ...rest,
@@ -73,6 +88,9 @@ async function main() {
         weaknesses: JSON.stringify(weaknesses),
         skills: JSON.stringify(skills),
         matchScore: hashScore(rest.cvContent, vacancyTitle),
+        interviewAt,
+        interviewDuration,
+        interviewLocation,
         analyzedAt: new Date(),
         gdprConsent: true,
         gdprConsentDate: new Date(),
@@ -166,6 +184,21 @@ async function main() {
     const sources = ['upload', 'upload', 'email_scan', 'ats', 'ats', 'manual']
     const source = sources[i % sources.length]
 
+    // Give some shortlisted/interviewing candidates a SCHEDULED interview so the
+    // dashboard calendar has visible data on the demo accounts. Spread the dates
+    // across the next ~3 weeks at business hours (09:00–16:00).
+    let interviewAt: Date | null = null
+    let interviewDuration: number | null = null
+    let interviewLocation: string | null = null
+    if ((status === 'shortlisted' || status === 'interviewing') && i % 3 === 0) {
+      const base = new Date()
+      base.setDate(base.getDate() + 1 + (i % 18)) // tomorrow .. +18 days
+      base.setHours(9 + (i % 8), (i % 2) * 30, 0, 0) // 09:00–16:30, on the hour/half-hour
+      interviewAt = base
+      interviewDuration = [30, 45, 60][i % 3]
+      interviewLocation = i % 2 === 0 ? 'https://meet.google.com/demo-interview' : 'Office — Meeting room A'
+    }
+
     const candidate = await prisma.candidate.create({
       data: {
         ...rest,
@@ -184,6 +217,9 @@ async function main() {
         priority,
         savedToPool,
         source,
+        interviewAt,
+        interviewDuration,
+        interviewLocation,
         analyzedAt: createdAt,
         createdAt,
         updatedAt: createdAt,

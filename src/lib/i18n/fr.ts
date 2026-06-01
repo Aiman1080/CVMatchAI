@@ -139,6 +139,8 @@ export const fr = {
   dashboard: {
     calendar: {
       upcomingTitle: 'Entretiens à venir',
+      calendarTitle: 'Calendrier des entretiens',
+      noneThisDay: 'Aucun entretien ce jour-là.',
       loading: 'Chargement…',
       empty: 'Aucun entretien planifié. Planifiez-en un depuis l’onglet Entretien d’un candidat.',
       video: 'Appel vidéo',
