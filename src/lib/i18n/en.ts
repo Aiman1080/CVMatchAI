@@ -594,7 +594,7 @@ export const en = {
       type: 'Type',
       language: 'Language',
       salary: 'Salary',
-      salaryPlaceholder: 'e.g. €50k–€70k',
+      salaryPlaceholder: 'e.g. €50k-€70k',
       description: 'Job Description',
       descriptionPlaceholder: 'Describe the role, responsibilities and company culture...',
       requirements: 'Requirements',
@@ -920,7 +920,7 @@ export const en = {
       toLabel: 'To',
     },
     candidateInterview: {
-      interviewTab: 'Interview',
+      interviewTab: 'AI Questions',
       reportTab: 'Report',
       motivationTab: 'Motivation',
       cvTab: 'CV',

@@ -65,7 +65,7 @@ model User {
 }
 
 // Personal calendar events (not tied to a candidate) the recruiter adds in the
-// dashboard calendar — meetings, reminders, blocked time, etc.
+// dashboard calendar - meetings, reminders, blocked time, etc.
 model CalendarEvent {
   id          String   @id @default(cuid())
   title       String
@@ -137,7 +137,7 @@ model Candidate {
   cvUrl           String?
   cvContent       String?
   // Raw original document (PDF or DOCX bytes) so the recruiter can view the
-  // real file — not just the extracted text — in the candidate detail page.
+  // real file - not just the extracted text - in the candidate detail page.
   // Stored in Postgres bytea; large but bounded (CVs typically 100-300 KB).
   cvFile          Bytes?
   cvMimeType      String?
@@ -185,7 +185,7 @@ model Candidate {
   emailSource     EmailScan?
   activities      CandidateActivity[]
 
-  // One candidate per email per vacancy — prevents duplicates from repeated demo scans or uploads
+  // One candidate per email per vacancy - prevents duplicates from repeated demo scans or uploads
   @@unique([email, vacancyId])
   @@unique([externalId, externalSource, userId])
   @@index([vacancyId])

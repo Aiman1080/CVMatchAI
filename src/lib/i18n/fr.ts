@@ -594,7 +594,7 @@ export const fr = {
       type: 'Type',
       language: 'Langue',
       salary: 'Salaire',
-      salaryPlaceholder: 'ex. €50k–€70k',
+      salaryPlaceholder: 'ex. €50k-€70k',
       description: 'Description du poste',
       descriptionPlaceholder: "Décrivez le rôle, les responsabilités et la culture d'entreprise...",
       requirements: 'Exigences',
@@ -736,7 +736,7 @@ export const fr = {
       merging: 'Fusion en cours...',
     },
     candidateInterview: {
-      interviewTab: 'Entretien',
+      interviewTab: 'Questions IA',
       reportTab: 'Rapport',
       motivationTab: 'Motivation',
       cvTab: 'CV',

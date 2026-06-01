@@ -18,7 +18,7 @@ import { persistDocument } from '@/lib/storage'
 
 const log = createLogger('email/scan')
 
-// Allow up to 5 minutes - IMAP + multiple AI calls can easily take 2–3 min
+// Allow up to 5 minutes - IMAP + multiple AI calls can easily take 2-3 min
 export const maxDuration = 300
 
 export async function POST(req: Request) {

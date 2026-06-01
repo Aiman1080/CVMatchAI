@@ -22,13 +22,13 @@ const DEMO_EMAILS = [
 alex.johnson@gmail.com | +32 471 555 001 | Leuven, Belgium
 
 EXPERIENCE
-Senior Software Engineer - FinTech Brussels (2019–present)
+Senior Software Engineer - FinTech Brussels (2019-present)
 - Built React/TypeScript frontend for banking dashboard serving 150,000 users
 - Designed Node.js microservices communicating via REST and gRPC
 - Managed PostgreSQL databases with 10M+ records; optimized slow queries 60%
 - Set up Docker + Kubernetes deployment on AWS EKS
 
-Software Engineer - Consulting Firm Bruges (2016–2019)
+Software Engineer - Consulting Firm Bruges (2016-2019)
 - Developed custom ERP modules in Vue.js and PHP/Laravel
 - Integrated third-party APIs (payment, logistics, CRM)
 
@@ -56,13 +56,13 @@ Alex Johnson`,
 maya.patel@outlook.com | +44 7911 234 567 | London, UK (open to remote)
 
 EXPERIENCE
-Lead UX Designer - EdTech Startup London (2020–present)
+Lead UX Designer - EdTech Startup London (2020-present)
 - Redesigned core learning platform - user retention improved 45%
 - Built Figma design system with 180+ components used across 5 products
 - Led weekly design critique sessions and mentored 2 junior designers
 - Conducted quarterly usability studies with 20+ participants
 
-UX/UI Designer - Digital Product Agency (2018–2020)
+UX/UI Designer - Digital Product Agency (2018-2020)
 - End-to-end design for iOS and Android apps in health and finance sectors
 - Created accessible designs meeting WCAG 2.1 AA standards
 
@@ -95,13 +95,13 @@ Maya Patel`,
 julien.bernard@free.fr | +33 6 88 77 66 55 | Paris, France
 
 EXPÉRIENCE
-Data Engineer Senior - Startup SaaS Paris (2021–present)
+Data Engineer Senior - Startup SaaS Paris (2021-present)
 - Architecture et maintenance de pipelines dbt + Airflow en production
 - Migration data warehouse Oracle → BigQuery - réduction coûts 35%
 - Implémentation monitoring qualité données (Great Expectations, dbt tests)
 - Développement API Python/FastAPI pour exposition des données BI
 
-Data Analyst - Société de Conseil Lyon (2018–2021)
+Data Analyst - Société de Conseil Lyon (2018-2021)
 - Développement tableaux de bord Looker, Power BI, Tableau
 - Automatisation rapports Python/pandas, SQL avancé
 
@@ -130,12 +130,12 @@ Julien Bernard`,
 nina.schmidt@web.de | +49 176 999 888 | Berlin, Germany
 
 EXPERIENCE
-Full-Stack Developer - Berlin SaaS Company (2022–present)
+Full-Stack Developer - Berlin SaaS Company (2022-present)
 - React/Next.js frontend development with TypeScript
 - Node.js REST API development and PostgreSQL database management
 - Deployed applications on AWS using Docker containers
 
-Junior Developer - Web Agency Hamburg (2020–2022)
+Junior Developer - Web Agency Hamburg (2020-2022)
 - Built responsive websites using React and Vue.js
 - WordPress theme development and plugin customization
 

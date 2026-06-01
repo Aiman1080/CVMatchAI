@@ -93,7 +93,7 @@ export async function POST(req: Request) {
       data: {
         title: String(title).slice(0, 200),
         startAt: start,
-        // Clamp to a sane 5min–24h range so a crafted huge/float value can't
+        // Clamp to a sane 5min-24h range so a crafted huge/float value can't
         // overflow Postgres int4 and 500 the request.
         durationMinutes: Math.min(Math.max(Math.round(Number(durationMinutes)) || 30, 5), 1440),
         location: location ? String(location).slice(0, 300) : null,
