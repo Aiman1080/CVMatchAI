@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/use-toast'
 import { useLanguage } from '@/contexts/LanguageContext'
 
-const CONTACT_EMAIL = 'contactcvmatchia@gmail.com'
+const CONTACT_EMAIL = 'support@mydeltamatch.com'
 
 export function FeedbackButton() {
   const { t } = useLanguage()

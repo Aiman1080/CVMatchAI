@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { sendEmail, isEmailConfigured } from '@/lib/email'
 
-const ADMIN_EMAIL = process.env.CONTACT_EMAIL || 'contactcvmatchia@gmail.com'
+const ADMIN_EMAIL = process.env.CONTACT_EMAIL || 'support@mydeltamatch.com'
 const MAX_MESSAGE_LENGTH = 3000
 
 export async function POST(req: Request) {

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { sendEmail, isEmailConfigured } from '@/lib/email'
 
-const ADMIN_EMAIL = process.env.CONTACT_EMAIL || 'contactcvmatchia@gmail.com'
+const ADMIN_EMAIL = process.env.CONTACT_EMAIL || 'contact@mydeltamatch.com'
 
 // Max lengths for contact form fields — prevents abuse via giant payloads
 const MAX_NAME_LENGTH = 100

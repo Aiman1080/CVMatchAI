@@ -25,8 +25,8 @@ export default function ContactPage() {
         placeholder_message: 'How can we help you?',
       },
       cards: [
-        { icon: Mail, title: 'General enquiries', value: 'contactcvmatchia@gmail.com', href: 'mailto:contactcvmatchia@gmail.com' },
-        { icon: MessageSquare, title: 'Support', value: 'contactcvmatchia@gmail.com', href: 'mailto:contactcvmatchia@gmail.com' },
+        { icon: Mail, title: 'General enquiries', value: 'contact@mydeltamatch.com', href: 'mailto:contact@mydeltamatch.com' },
+        { icon: MessageSquare, title: 'Support', value: 'support@mydeltamatch.com', href: 'mailto:support@mydeltamatch.com' },
         { icon: Clock, title: 'Response time', value: 'Within 24h (business days)', href: null },
         { icon: MapPin, title: 'Headquarters', value: 'Brussels, Belgium 🇧🇪', href: null },
       ],
@@ -44,8 +44,8 @@ export default function ContactPage() {
         placeholder_message: 'Hoe kunnen we u helpen?',
       },
       cards: [
-        { icon: Mail, title: 'Algemene vragen', value: 'contactcvmatchia@gmail.com', href: 'mailto:contactcvmatchia@gmail.com' },
-        { icon: MessageSquare, title: 'Ondersteuning', value: 'contactcvmatchia@gmail.com', href: 'mailto:contactcvmatchia@gmail.com' },
+        { icon: Mail, title: 'Algemene vragen', value: 'contact@mydeltamatch.com', href: 'mailto:contact@mydeltamatch.com' },
+        { icon: MessageSquare, title: 'Ondersteuning', value: 'support@mydeltamatch.com', href: 'mailto:support@mydeltamatch.com' },
         { icon: Clock, title: 'Reactietijd', value: 'Binnen 24u (werkdagen)', href: null },
         { icon: MapPin, title: 'Hoofdkantoor', value: 'Brussel, België 🇧🇪', href: null },
       ],
@@ -63,8 +63,8 @@ export default function ContactPage() {
         placeholder_message: 'Comment pouvons-nous vous aider ?',
       },
       cards: [
-        { icon: Mail, title: 'Renseignements généraux', value: 'contactcvmatchia@gmail.com', href: 'mailto:contactcvmatchia@gmail.com' },
-        { icon: MessageSquare, title: 'Support', value: 'contactcvmatchia@gmail.com', href: 'mailto:contactcvmatchia@gmail.com' },
+        { icon: Mail, title: 'Renseignements généraux', value: 'contact@mydeltamatch.com', href: 'mailto:contact@mydeltamatch.com' },
+        { icon: MessageSquare, title: 'Support', value: 'support@mydeltamatch.com', href: 'mailto:support@mydeltamatch.com' },
         { icon: Clock, title: 'Délai de réponse', value: 'Sous 24h (jours ouvrables)', href: null },
         { icon: MapPin, title: 'Siège social', value: 'Bruxelles, Belgique 🇧🇪', href: null },
       ],

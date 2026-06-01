@@ -5,7 +5,7 @@ import prisma from '@/lib/prisma'
 import { sendEmail, isEmailConfigured } from '@/lib/email'
 import { isDemoAccount } from '@/lib/demo-guard'
 
-const ADMIN_EMAIL = process.env.CONTACT_EMAIL || 'contactcvmatchia@gmail.com'
+const ADMIN_EMAIL = process.env.CONTACT_EMAIL || 'support@mydeltamatch.com'
 
 // Limits to prevent abusive payloads
 const MAX_SUBJECT_LENGTH = 200

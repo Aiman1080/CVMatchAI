@@ -217,7 +217,7 @@ export function AdminClient({
   const [sendingEmail, setSendingEmail] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
 
-  const [senderEmail, setSenderEmail] = useState('contactcvmatchia@gmail.com')
+  const [senderEmail, setSenderEmail] = useState('contact@mydeltamatch.com')
 
   const handleSendBulkEmail = async () => {
     if (!emailSubject.trim() || !emailBody.trim()) return
@@ -1458,7 +1458,7 @@ export function AdminClient({
                 <input
                   value={senderEmail}
                   onChange={e => setSenderEmail(e.target.value)}
-                  placeholder="contactcvmatchia@gmail.com"
+                  placeholder="contact@mydeltamatch.com"
                   className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <p className="text-xs text-gray-400">This must match your configured SMTP email address</p>

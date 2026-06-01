@@ -50,7 +50,7 @@ export default function LoginPage() {
         </div>
         {isSuspended && (
           <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm">
-            🚫 Your account has been suspended. Please contact <a href="mailto:contactcvmatchia@gmail.com" className="underline font-medium">support</a> if you think this is an error.
+            🚫 Your account has been suspended. Please contact <a href="mailto:support@mydeltamatch.com" className="underline font-medium">support</a> if you think this is an error.
           </div>
         )}
         {/* SSO buttons — only show when env vars are configured AND not demo flow */}
