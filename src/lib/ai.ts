@@ -145,20 +145,18 @@ ${cvText.slice(0, 6000)}` +
     log.warn('analyzeCVAgainstVacancy returned no structured result, falling back to demo')
     return generateDemoAnalysis(cvText, vacancyTitle)
   } catch (error: any) {
-    if (error?.status === 429) {
-      log.error('Rate limit hit on Gemini API', { message: error?.message })
-    } else if (error?.status === 401 || error?.status === 403) {
-      log.error('Invalid Gemini API key / permission denied', { message: error?.message })
-    } else if (error?.status === 400) {
-      log.error('Bad request to Gemini API', { message: error?.message })
-    } else {
-      log.error('analyzeCVAgainstVacancy error', { message: error?.message })
-    }
-
-    // Always fall back to demo data so the app keeps working when the AI call
-    // fails (rate limit, quota, network, etc.). A working app with demo data is
-    // preferable to a "correctly broken" page that crashes for the user.
-    log.warn('Falling back to demo analysis after AI failure')
+    // Capture the FULL error so we can finally see why analysis falls back to
+    // demo despite a valid key (the UI shows "demo mode" because this catch
+    // returns generateDemoAnalysis). Logs the status, code, and full message.
+    log.error('analyzeCVAgainstVacancy FAILED', {
+      status: error?.status,
+      code: error?.code || error?.errorDetails?.[0]?.reason,
+      name: error?.name,
+      message: String(error?.message || error).slice(0, 500),
+      hasKey: !!process.env.GEMINI_API_KEY,
+      keyPrefix: process.env.GEMINI_API_KEY?.slice(0, 6) || 'none',
+    })
+    // Fall back to demo data so the app keeps working rather than crashing.
     return generateDemoAnalysis(cvText, vacancyTitle)
   }
 }

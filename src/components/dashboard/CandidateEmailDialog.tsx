@@ -64,6 +64,7 @@ interface Props {
   onSendEmail: () => void
   generatingEmail: boolean
   sendingEmail: boolean
+  hasSignature?: boolean
   labels: Labels
 }
 
@@ -78,6 +79,7 @@ export function CandidateEmailDialog({
   interviewDuration, onInterviewDurationChange,
   onGenerateEmail, onSendEmail,
   generatingEmail, sendingEmail,
+  hasSignature = true,
   labels,
 }: Props) {
   const typeOptions = [
@@ -194,6 +196,15 @@ export function CandidateEmailDialog({
                   className="text-sm"
                 />
               </div>
+            </div>
+          )}
+
+          {!hasSignature && (
+            <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+              <span className="text-amber-500 shrink-0 mt-0.5">⚠</span>
+              <p className="text-xs text-amber-700 dark:text-amber-300 leading-snug">
+                {(labels as any).noSignatureTitle || 'No email signature set'} — {(labels as any).noSignatureDesc || 'Add a signature in the Email tab so your emails look professional.'}
+              </p>
             </div>
           )}
 

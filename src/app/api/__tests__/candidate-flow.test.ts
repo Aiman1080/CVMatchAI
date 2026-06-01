@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+// Mock next/headers (cookies) — routes read the locale cookie for AI output lang
+vi.mock('next/headers', () => ({
+  cookies: async () => ({ get: () => undefined }),
+}))
+
 // Mock next/server
 vi.mock('next/server', () => ({
   NextResponse: {

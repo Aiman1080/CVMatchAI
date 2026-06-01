@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
@@ -31,12 +32,17 @@ export async function POST(req: Request) {
   if (!candidate.cvContent) return NextResponse.json({ error: 'No CV content available' }, { status: 400 })
   if (!candidate.vacancy) return NextResponse.json({ error: 'Vacancy not found' }, { status: 404 })
 
+  // Output language follows the app's UI locale (cookie), not the CV's language,
+  // so questions are generated in the recruiter's chosen interface language.
+  const cookieLocale = (await cookies()).get('deltamatch-locale')?.value
+  const outputLocale = ['en', 'nl', 'fr', 'de'].includes(cookieLocale || '') ? cookieLocale! : (candidate.language || 'fr')
+
   const result = await generateInterviewQuestions(
     candidate.cvContent,
     candidate.vacancy.title,
     candidate.vacancy.description,
     candidate.vacancy.requirements,
-    candidate.language || 'en',
+    outputLocale,
   )
 
   return NextResponse.json(result)

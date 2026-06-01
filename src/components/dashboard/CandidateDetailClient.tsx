@@ -66,6 +66,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
   const [showEmail, setShowEmail] = useState(false)
   const [emailFrom, setEmailFrom] = useState('')
   const [connectedInboxes, setConnectedInboxes] = useState<Array<{ id: string; email: string }>>([])
+  const [hasSignature, setHasSignature] = useState(true) // assume true until checked, to avoid flashing the warning
   const [emailType, setEmailType] = useState('rejection')
   const [emailSubject, setEmailSubject] = useState('')
   const [emailBody, setEmailBody] = useState('')
@@ -140,6 +141,12 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
           setEmailFrom(prev => prev || data[0].email)
         }
       })
+      .catch(() => {})
+    // Load whether the user has an email signature, to warn inside the email
+    // dialog (before sending) if it's empty.
+    fetch('/api/user')
+      .then(res => (res.ok ? res.json() : null))
+      .then((u: any) => { if (u) setHasSignature(!!(u.emailSignature && String(u.emailSignature).trim())) })
       .catch(() => {})
   }, [])
 
@@ -311,14 +318,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
           } catch { /* email already sent; scheduling is best-effort */ }
         }
         setShowEmail(false)
-        // Nudge: the email went out without a signature — invite them to add one
-        // in the Email tab so future emails look professional.
-        if (data.noSignature) {
-          toast({
-            title: (cd as any).noSignatureTitle || 'No email signature set',
-            description: (cd as any).noSignatureDesc || 'Add a signature in the Email tab so your emails look professional.',
-          })
-        }
+        // (signature warning now shown inside the dialog, before sending)
         if (emailType === 'rejection') setCandidate((p: any) => ({ ...p, status: 'rejected' }))
         if (emailType === 'interview') setCandidate((p: any) => ({ ...p, status: 'shortlisted' }))
       } else {
@@ -824,10 +824,18 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                     <CardTitle className="text-sm flex items-center gap-2">
                       <MessageSquareText className="w-4 h-4 text-purple-500" /> {ci.aiInterviewQuestions}
                     </CardTitle>
-                    <Button onClick={handleGenerateQuestions} disabled={loadingQuestions || !candidate.cvContent} size="sm" className="gap-2 gradient-bg">
-                      {loadingQuestions ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                      {loadingQuestions ? ci.generatingQuestions : interviewQuestions ? ci.regenerate : ci.generateQuestions}
-                    </Button>
+                    <div className="flex flex-wrap gap-2 justify-end">
+                      {interviewQuestions && (
+                        <Button onClick={handleAssessAnswers} disabled={assessing} size="sm" variant="outline" className="gap-2 whitespace-normal text-center leading-tight h-auto py-1.5">
+                          {assessing ? <Loader2 size={14} className="animate-spin shrink-0" /> : <Sparkles size={14} className="shrink-0" />}
+                          {assessing ? ((ci as any).assessing || 'Analyzing…') : ((ci as any).assessAnswers || 'Analyze answers')}
+                        </Button>
+                      )}
+                      <Button onClick={handleGenerateQuestions} disabled={loadingQuestions || !candidate.cvContent} size="sm" className="gap-2 gradient-bg whitespace-normal text-center leading-tight h-auto py-1.5">
+                        {loadingQuestions ? <Loader2 size={14} className="animate-spin shrink-0" /> : <Sparkles size={14} className="shrink-0" />}
+                        {loadingQuestions ? ci.generatingQuestions : interviewQuestions ? ci.regenerate : ci.generateQuestions}
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -894,12 +902,8 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                         </div>
                       ))}
 
-                      {/* Assess the recorded answers with AI */}
+                      {/* AI assessment of the recorded answers (button is in the header) */}
                       <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
-                        <Button onClick={handleAssessAnswers} disabled={assessing} size="sm" variant="outline" className="gap-2 w-full">
-                          {assessing ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                          {assessing ? ((ci as any).assessing || 'Analyzing answers…') : ((ci as any).assessAnswers || 'Analyze answers (AI summary)')}
-                        </Button>
                         {assessment && (
                           <div className={`mt-3 p-4 rounded-xl border ${
                             assessment.verdict === 'strong' ? 'bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800'
@@ -1110,6 +1114,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
         onSendEmail={handleSendEmail}
         generatingEmail={generatingEmail}
         sendingEmail={sendingEmail}
+        hasSignature={hasSignature}
         labels={{ ...cd, emailPlaceholder: t.dashboard?.settingsProfile?.email } as any}
       />
     </div>
