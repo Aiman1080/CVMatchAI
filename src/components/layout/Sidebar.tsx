@@ -115,7 +115,7 @@ export function Sidebar() {
         )}
       </nav>
 
-      {/* Theme toggle — manual light/dark, ignores OS setting */}
+      {/* Theme toggle - manual light/dark, ignores OS setting */}
       <div className="px-4 pb-2">
         <button
           onClick={() => setTheme(isDark ? 'light' : 'dark')}

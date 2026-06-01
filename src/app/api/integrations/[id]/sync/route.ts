@@ -27,7 +27,7 @@ export async function POST(_req: Request, context: { params: Promise<{ id: strin
   }
   if (!integration) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  // Re-check the Pro gate at sync time, not just at connect time — otherwise a
+  // Re-check the Pro gate at sync time, not just at connect time - otherwise a
   // user who connected while Pro then downgraded could keep syncing for free.
   const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { subscription: true, subscriptionEnd: true } })
   const limits = getPlanLimits(getEffectiveSubscription(dbUser?.subscription || 'free', dbUser?.subscriptionEnd || null))

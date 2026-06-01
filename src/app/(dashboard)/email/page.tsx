@@ -42,7 +42,7 @@ export default async function EmailPage() {
           <EmailClient />
         ) : (
           <UpgradePrompt
-            feature="Email Inbox — Pro Feature"
+            feature="Email Inbox - Pro Feature"
             description="Connect your recruitment inboxes, automatically scan applications and centralize all your communication. Available from the Pro plan."
           />
         )}

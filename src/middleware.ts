@@ -2,13 +2,13 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 
-// ── Rate limiter — Upstash Redis when configured, in-memory fallback otherwise
+// ── Rate limiter - Upstash Redis when configured, in-memory fallback otherwise
 //
 // Why two backends:
 // - **Upstash** (UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN set): the
 //   limit is shared across every Vercel instance, every edge region, every
 //   cold start. This is the only correct behaviour in production once Vercel
-//   scales to >1 instance — without it your "5/h" becomes "5×N/h".
+//   scales to >1 instance - without it your "5/h" becomes "5×N/h".
 // - **In-memory**: per-instance Map<string, {count, resetAt}>. Fine for local
 //   dev and for tiny single-instance deployments. Falls back automatically
 //   when the Upstash env vars aren't set so we don't break dev.
@@ -113,7 +113,7 @@ export async function middleware(req: NextRequest) {
         const result = await limiter.limit(ip)
         allowed = result.success
       } catch {
-        // Upstash unreachable — fail open to in-memory rather than block users.
+        // Upstash unreachable - fail open to in-memory rather than block users.
         // This is the right trade-off: a transient Redis outage shouldn't
         // cause a hard 429 to every request.
         allowed = checkMem(`${ruleKey}:${ip}`, rule.maxRequests, rule.windowSec)

@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useLanguage } from '@/contexts/LanguageContext'
 
-// Lightweight RFC 5322-ish check — good enough for UX feedback, server validates strictly
+// Lightweight RFC 5322-ish check - good enough for UX feedback, server validates strictly
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export default function ForgotPasswordPage() {
@@ -48,7 +48,7 @@ export default function ForgotPasswordPage() {
         body: JSON.stringify({ email }),
       })
     } catch {
-      // Silently handle — we show the same message regardless
+      // Silently handle - we show the same message regardless
     }
     setLoading(false)
     setSubmitted(true)

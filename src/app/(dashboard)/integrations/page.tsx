@@ -56,7 +56,7 @@ export default async function IntegrationsPage() {
           <IntegrationsClient initialIntegrations={integrations} isDemo={isDemoAccount(user?.email)} />
         ) : (
           <UpgradePrompt
-            feature="ATS Integrations — Pro Feature"
+            feature="ATS Integrations - Pro Feature"
             description="Automatically sync candidates from Teamtailor, Recruitee, SmartRecruiters and other ATS platforms. Available from the Pro plan."
           />
         )}

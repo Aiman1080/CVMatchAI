@@ -27,7 +27,7 @@ export async function parseDOCX(buffer: Buffer): Promise<string> {
 }
 
 // Strip characters Postgres can't store in a text/utf8 column. The big one is
-// the NUL byte (0x00) — pdf-parse sometimes emits it, and Postgres rejects it
+// the NUL byte (0x00) - pdf-parse sometimes emits it, and Postgres rejects it
 // with: invalid byte sequence for encoding "UTF8": 0x00. We also drop other C0
 // control chars except tab/newline/carriage-return, and lone surrogates.
 export function sanitizeText(text: string): string {
@@ -86,7 +86,7 @@ export async function parseDocument(buffer: Buffer, mimeType: string): Promise<s
 }
 
 // Generates a safe filename for the upload. On Vercel/serverless the filesystem
-// is read-only outside of /tmp, so we no longer persist the raw file — we only
+// is read-only outside of /tmp, so we no longer persist the raw file - we only
 // store the parsed text content in the DB (which is what the AI analyzes anyway).
 // The returned name is stored in the candidate record for reference only.
 export function saveUploadedFile(buffer: Buffer, filename: string): string {

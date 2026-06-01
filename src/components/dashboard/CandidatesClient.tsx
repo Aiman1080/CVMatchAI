@@ -161,14 +161,14 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
     fetchPage(1, { sortBy: value })
   }
 
-  // Debounced search — avoid hitting the API on every keystroke
+  // Debounced search - avoid hitting the API on every keystroke
   const handleSearchChange = (value: string) => {
     setSearch(value)
     setSelectedIds(new Set())
   }
   const isFirstSearchRender = useRef(true)
   useEffect(() => {
-    // Skip the initial render — initial data already came from the server
+    // Skip the initial render - initial data already came from the server
     if (isFirstSearchRender.current) { isFirstSearchRender.current = false; return }
     const handle = setTimeout(() => {
       setPage(1)
@@ -396,7 +396,7 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
         toast({ title: (tc as any).csvDownloaded || 'CSV export downloaded!' })
         setShowExport(false)
       } else {
-        // PDF — open in new tab for print/save
+        // PDF - open in new tab for print/save
         window.open('/api/candidates/pdf', '_blank')
         toast({ title: (tc as any).pdfOpened || 'PDF report opened', description: (tc as any).pdfOpenedDesc || 'Use Ctrl+P to save as PDF.' })
         setShowExport(false)
@@ -406,7 +406,7 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
     } finally { setExporting(false) }
   }
 
-  // Filtering and sorting now happen server-side via fetchPage — the candidates
+  // Filtering and sorting now happen server-side via fetchPage - the candidates
   // array already reflects the current search/filter/sort state for this page.
   const filtered = candidates
 
@@ -428,7 +428,7 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
             <SelectContent>
               <SelectItem value="all">All vacancies</SelectItem>
               {vacancies.map(v => (
-                <SelectItem key={v.id} value={v.id}>{v.title} — {v.company}</SelectItem>
+                <SelectItem key={v.id} value={v.id}>{v.title} - {v.company}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -715,7 +715,7 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
                         </div>
                         <div className="flex flex-col items-end gap-1 shrink-0">
                           <div className={`text-base font-bold leading-none ${score >= 75 ? 'text-green-600' : score >= 50 ? 'text-amber-600' : score > 0 ? 'text-red-500' : 'text-gray-300'}`}>
-                            {score > 0 ? `${score.toFixed(0)}%` : '—'}
+                            {score > 0 ? `${score.toFixed(0)}%` : '-'}
                           </div>
                           {score > 0 && <Progress value={score} className="w-12 h-1" />}
                           <div className="flex items-center gap-0 mt-1">

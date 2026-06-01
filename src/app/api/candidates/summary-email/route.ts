@@ -67,7 +67,7 @@ export async function POST(req: Request) {
       })
 
       const candidateList = shortlisted.map((c, i) => {
-        let info = `${i + 1}. ${c.firstName} ${c.lastName} — Match score: ${c.matchScore?.toFixed(0) || 'N/A'}%`
+        let info = `${i + 1}. ${c.firstName} ${c.lastName} - Match score: ${c.matchScore?.toFixed(0) || 'N/A'}%`
         info += `\n   Summary: ${c.summary?.slice(0, 200) || 'N/A'}`
         info += `\n   Strengths: ${c.strengths?.slice(0, 200) || 'N/A'}`
         info += `\n   Weaknesses: ${c.weaknesses?.slice(0, 200) || 'N/A'}`
@@ -85,16 +85,16 @@ For EACH candidate include all of the following:
 - Top 3 strengths (as bullet points with brief explanation)
 - Top 2 areas of concern (as bullet points with brief explanation)
 - Key skills relevant to the role
-- Recruiter notes / interview feedback (if available) — these may contain interview observations like "answered well on X" or "struggled with Y"
+- Recruiter notes / interview feedback (if available) - these may contain interview observations like "answered well on X" or "struggled with Y"
 - Individual recommendation for this candidate
 
 At the END of the email, include:
-1. **Overall Comparison Summary** — a brief comparison table-style summary showing all candidates side by side (name, score, recommendation)
-2. **Clear Recommendation** — who should be interviewed first and a clear explanation of why
-3. **Suggested Interview Order** — rank all candidates in the order they should be interviewed, with brief justification
-4. **Red Flags to Discuss** — any concerns or gaps across candidates that the hiring team should discuss before proceeding
+1. **Overall Comparison Summary** - a brief comparison table-style summary showing all candidates side by side (name, score, recommendation)
+2. **Clear Recommendation** - who should be interviewed first and a clear explanation of why
+3. **Suggested Interview Order** - rank all candidates in the order they should be interviewed, with brief justification
+4. **Red Flags to Discuss** - any concerns or gaps across candidates that the hiring team should discuss before proceeding
 
-Write in ${language}. Use a professional, thorough tone suitable for a hiring manager making final interview decisions. Aim for a complete, detailed report — do not cut corners.
+Write in ${language}. Use a professional, thorough tone suitable for a hiring manager making final interview decisions. Aim for a complete, detailed report - do not cut corners.
 
 CANDIDATES:
 ${candidateList}
@@ -114,7 +114,7 @@ Write only the email body (no subject line).`
   }
 
   try {
-    const subject = `Candidate Summary — ${vacancy.title}`
+    const subject = `Candidate Summary - ${vacancy.title}`
     await sendEmail(recipientEmail, subject, emailBody)
     return NextResponse.json({ success: true })
   } catch (error: any) {
@@ -158,30 +158,30 @@ function generateTemplateSummary(
     let entry = `${i + 1}. ${c.firstName} ${c.lastName}${contactInfo}\n   Match Score: ${c.matchScore?.toFixed(0) || 'N/A'}% (${scoreInterpretation(c.matchScore)})\n   Recommendation: ${recLabel(c.recommendation)}${skillsList}\n\n   Top Strengths:\n${strengths}`
     if (weaknesses) entry += `\n\n   Areas of Concern:\n${weaknesses}`
     if (c.notes) entry += `\n\n   Recruiter Notes / Interview Feedback:\n   ${c.notes.slice(0, 300)}`
-    entry += `\n\n   Individual Recommendation: ${recLabel(c.recommendation)} — ${c.matchScore && c.matchScore >= 70 ? 'Strong candidate for interview round.' : c.matchScore && c.matchScore >= 50 ? 'Worth considering; explore gaps during interview.' : 'Review carefully before proceeding.'}`
+    entry += `\n\n   Individual Recommendation: ${recLabel(c.recommendation)} - ${c.matchScore && c.matchScore >= 70 ? 'Strong candidate for interview round.' : c.matchScore && c.matchScore >= 50 ? 'Worth considering; explore gaps during interview.' : 'Review carefully before proceeding.'}`
     return entry
   })
 
   // Overall comparison summary
   const comparisonHeader = `\n${'='.repeat(60)}\nOVERALL COMPARISON SUMMARY\n${'='.repeat(60)}\n`
   const comparisonLines = candidates.map((c, i) =>
-    `  ${i + 1}. ${c.firstName} ${c.lastName} — ${c.matchScore?.toFixed(0) || 'N/A'}% (${scoreInterpretation(c.matchScore)}) — ${recLabel(c.recommendation)}`
+    `  ${i + 1}. ${c.firstName} ${c.lastName} - ${c.matchScore?.toFixed(0) || 'N/A'}% (${scoreInterpretation(c.matchScore)}) - ${recLabel(c.recommendation)}`
   ).join('\n')
 
   // Interview order
   const sorted = [...candidates].sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0))
   const interviewOrder = `\nSUGGESTED INTERVIEW ORDER:\n` + sorted.map((c, i) =>
-    `  ${i + 1}. ${c.firstName} ${c.lastName} (${c.matchScore?.toFixed(0) || 'N/A'}%) — ${i === 0 ? 'Highest match; prioritize first.' : `Strong profile; schedule after top candidate${i > 1 ? 's' : ''}.`}`
+    `  ${i + 1}. ${c.firstName} ${c.lastName} (${c.matchScore?.toFixed(0) || 'N/A'}%) - ${i === 0 ? 'Highest match; prioritize first.' : `Strong profile; schedule after top candidate${i > 1 ? 's' : ''}.`}`
   ).join('\n')
 
   // Red flags
   const lowScoreCandidates = candidates.filter(c => c.matchScore && c.matchScore < 50)
   const redFlags = lowScoreCandidates.length > 0
-    ? `\nRED FLAGS TO DISCUSS:\n${lowScoreCandidates.map(c => `  ! ${c.firstName} ${c.lastName} scored below 50% — review whether their profile warrants an interview given the gap.`).join('\n')}`
+    ? `\nRED FLAGS TO DISCUSS:\n${lowScoreCandidates.map(c => `  ! ${c.firstName} ${c.lastName} scored below 50% - review whether their profile warrants an interview given the gap.`).join('\n')}`
     : `\nRED FLAGS TO DISCUSS:\n  No major red flags identified among shortlisted candidates.`
 
   const topCandidate = sorted[0]
-  const recommendation = `\nCLEAR RECOMMENDATION:\nWe recommend prioritizing ${topCandidate.firstName} ${topCandidate.lastName} (${topCandidate.matchScore?.toFixed(0) || 'N/A'}% match — ${scoreInterpretation(topCandidate.matchScore)}) for the first interview. ${sorted.length > 1 ? `${sorted[1].firstName} ${sorted[1].lastName} should be scheduled as the second interview.` : ''} This ordering is based on overall match score, strengths alignment, and fewer areas of concern.`
+  const recommendation = `\nCLEAR RECOMMENDATION:\nWe recommend prioritizing ${topCandidate.firstName} ${topCandidate.lastName} (${topCandidate.matchScore?.toFixed(0) || 'N/A'}% match - ${scoreInterpretation(topCandidate.matchScore)}) for the first interview. ${sorted.length > 1 ? `${sorted[1].firstName} ${sorted[1].lastName} should be scheduled as the second interview.` : ''} This ordering is based on overall match score, strengths alignment, and fewer areas of concern.`
 
   const footer = `\n\nBest regards,\nDeltaMatch`
 

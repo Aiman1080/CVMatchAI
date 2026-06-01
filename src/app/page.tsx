@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useTheme } from 'next-themes'
 import {
   Sun, Moon, ArrowRight, CheckCircle, Sparkles,
-  Brain, FileText, MessageSquareText, Trophy, ClipboardList, Mail,
+  Brain, FileText, MessageSquareText, Trophy, ClipboardList, Mail, MailSearch,
   Upload, Plug, Shield, Users, BarChart3, Kanban, Send, Bot, CalendarClock
 } from 'lucide-react'
 import { Logo } from '@/components/Logo'
@@ -143,6 +143,13 @@ export default function LandingPage() {
       color: 'from-blue-500 to-cyan-500',
     },
     {
+      icon: MailSearch,
+      title: t.landing.aiFeatures.emailScanning.title,
+      desc: t.landing.aiFeatures.emailScanning.desc,
+      tag: t.landing.aiFeatures.emailScanning.tag,
+      color: 'from-purple-500 to-fuchsia-500',
+    },
+    {
       icon: MessageSquareText,
       title: t.landing.aiFeatures.interviewQuestions.title,
       desc: t.landing.aiFeatures.interviewQuestions.desc,
@@ -195,10 +202,9 @@ export default function LandingPage() {
 
   const PLATFORM_FEATURES = [
     { icon: Upload, title: t.landing.platformFeatures.bulkUpload.title, desc: t.landing.platformFeatures.bulkUpload.desc, color: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400' },
-    { icon: Mail, title: t.landing.platformFeatures.emailScanning.title, desc: t.landing.platformFeatures.emailScanning.desc, color: 'bg-purple-100 text-purple-600 dark:bg-purple-950 dark:text-purple-400' },
     { icon: Plug, title: t.landing.platformFeatures.atsIntegrations.title, desc: t.landing.platformFeatures.atsIntegrations.desc, color: 'bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400' },
     { icon: Users, title: t.landing.platformFeatures.pipeline.title, desc: t.landing.platformFeatures.pipeline.desc, color: 'bg-green-100 text-green-600 dark:bg-green-950 dark:text-green-400' },
-    { icon: CalendarClock, title: (t.landing.platformFeatures as any).interviewScheduling?.title || 'Interview scheduling', desc: (t.landing.platformFeatures as any).interviewScheduling?.desc || 'Schedule interviews and send candidates a calendar invite (.ics) they add in one click — works with Google, Outlook and Apple. See all upcoming interviews on your dashboard.', color: 'bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400' },
+    { icon: CalendarClock, title: (t.landing.platformFeatures as any).interviewScheduling?.title || 'Interview scheduling', desc: (t.landing.platformFeatures as any).interviewScheduling?.desc || 'Schedule interviews and send candidates a calendar invite (.ics) they add in one click - works with Google, Outlook and Apple. See all upcoming interviews on your dashboard.', color: 'bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400' },
     { icon: BarChart3, title: t.landing.platformFeatures.analytics.title, desc: t.landing.platformFeatures.analytics.desc, color: 'bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400' },
     { icon: Shield, title: t.landing.platformFeatures.gdpr.title, desc: t.landing.platformFeatures.gdpr.desc, color: 'bg-teal-100 text-teal-600 dark:bg-teal-950 dark:text-teal-400' },
   ]

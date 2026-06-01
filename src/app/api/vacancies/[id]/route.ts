@@ -1,4 +1,4 @@
-// Single vacancy CRUD — GET loads the vacancy with all its ranked candidates,
+// Single vacancy CRUD - GET loads the vacancy with all its ranked candidates,
 // PATCH updates the vacancy fields, DELETE removes it with cascade to candidates.
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
@@ -7,7 +7,7 @@ import prisma from '@/lib/prisma'
 import { isDemoAccount } from '@/lib/demo-guard'
 import { deleteDocuments } from '@/lib/storage'
 
-// Next.js 15 requires params to be awaited — it's a Promise in the App Router
+// Next.js 15 requires params to be awaited - it's a Promise in the App Router
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

@@ -48,7 +48,7 @@ function getRecommendationLabel(rec: string | null | undefined): string {
 
 /**
  * Export candidates to a CSV file (opens in Excel, Google Sheets, etc.).
- * No external dependency needed — pure browser API.
+ * No external dependency needed - pure browser API.
  */
 export async function exportCandidatesToExcel(
   candidates: ExportCandidate[],
@@ -173,7 +173,7 @@ export async function exportHiringReportPDF(
   reportMarkdown: string,
   candidateName: string,
   vacancyTitle?: string,
-  // Optional Q&A section appended at the bottom — only includes questions with non-empty answers
+  // Optional Q&A section appended at the bottom - only includes questions with non-empty answers
   interviewQA?: Array<{ question: string; category: string; answer: string }>
 ): Promise<void> {
   const { jsPDF } = await import('jspdf')
@@ -229,7 +229,7 @@ export async function exportHiringReportPDF(
     y += 5
   }
 
-  // Append Q&A section — only include questions that have an actual answer typed
+  // Append Q&A section - only include questions that have an actual answer typed
   const answeredQA = (interviewQA || []).filter(qa => qa.answer && qa.answer.trim().length > 0)
   if (answeredQA.length > 0) {
     // Always start the Q&A on a new page for clarity

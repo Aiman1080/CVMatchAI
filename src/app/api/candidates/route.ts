@@ -1,4 +1,4 @@
-// Candidates list — returns the current user's candidates sorted by AI match score.
+// Candidates list - returns the current user's candidates sorted by AI match score.
 // Supports optional ?vacancyId, ?status, ?search, ?scoreFilter, ?sortBy, ?page, and ?limit query filters.
 // Admins can query across all users by omitting the userId scope.
 import { NextResponse } from 'next/server'
@@ -33,7 +33,7 @@ export async function GET(req: Request) {
     else where.status = status
   }
 
-  // Free-text search across name/email/vacancy title — case-insensitive via lowercased contains
+  // Free-text search across name/email/vacancy title - case-insensitive via lowercased contains
   if (search) {
     where.OR = [
       { firstName: { contains: search } },
@@ -43,12 +43,12 @@ export async function GET(req: Request) {
     ]
   }
 
-  // Score range filter — 75+, 50-74, 0-49
+  // Score range filter - 75+, 50-74, 0-49
   if (scoreFilter === 'high') where.matchScore = { gte: 75 }
   else if (scoreFilter === 'medium') where.matchScore = { gte: 50, lt: 75 }
   else if (scoreFilter === 'low') where.matchScore = { gte: 0, lt: 50 }
 
-  // Sort order — score desc default, supports name and creation date
+  // Sort order - score desc default, supports name and creation date
   let orderBy: any
   if (sortBy === 'name') orderBy = [{ firstName: 'asc' }, { lastName: 'asc' }]
   else if (sortBy === 'date') orderBy = { createdAt: 'desc' }

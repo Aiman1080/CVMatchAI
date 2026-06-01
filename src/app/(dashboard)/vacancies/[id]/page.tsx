@@ -16,7 +16,7 @@ export default async function VacancyDetailPage({ params }: { params: Promise<{ 
     include: { candidates: { orderBy: { matchScore: 'desc' }, include: { vacancy: { select: { title: true } } } } },
   })
   if (!vacancy) notFound()
-  // Export is a Pro-only feature — compute server-side so the client can't just
+  // Export is a Pro-only feature - compute server-side so the client can't just
   // render the buttons (the export helpers run entirely client-side otherwise).
   const isAdmin = (session.user as any).role === 'admin'
   const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { subscription: true, subscriptionEnd: true } })

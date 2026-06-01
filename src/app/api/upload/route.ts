@@ -1,4 +1,4 @@
-// CV/document upload endpoint — accepts a PDF or DOCX via multipart form,
+// CV/document upload endpoint - accepts a PDF or DOCX via multipart form,
 // detects whether it's a CV or a motivation letter, runs AI analysis against
 // the requested vacancy, and creates a Candidate record in the database.
 import { NextResponse } from 'next/server'
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     if (file.size === 0) return NextResponse.json({ error: 'Empty file uploaded' }, { status: 400 })
     if (!vacancyId) return NextResponse.json({ error: 'Vacancy ID required' }, { status: 400 })
 
-    // Validate file type — only allow PDF, DOCX, and TXT
+    // Validate file type - only allow PDF, DOCX, and TXT
     const allowedExtensions = ['.pdf', '.docx', '.txt']
     const allowedMimeTypes = [
       'application/pdf',
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: `Monthly candidate limit (${limits.maxCandidatesPerMonth}) reached. Upgrade for more.`, upgrade: true }, { status: 403 })
       }
     }
-    // findFirst with userId prevents IDOR — users can only upload to their own vacancies
+    // findFirst with userId prevents IDOR - users can only upload to their own vacancies
     const vacancy = await prisma.vacancy.findFirst({ where: { id: vacancyId, userId } })
     if (!vacancy) return NextResponse.json({ error: 'Vacancy not found' }, { status: 404 })
 
@@ -79,7 +79,7 @@ export async function POST(req: Request) {
     const fileName = saveUploadedFile(buffer, file.name)
     const text = await parseDocument(buffer, file.type)
 
-    // Reject files that parsed to mostly whitespace — likely scanned images without OCR
+    // Reject files that parsed to mostly whitespace - likely scanned images without OCR
     if (!text || text.trim().length < 50) {
       return NextResponse.json({ error: 'Could not extract text from document' }, { status: 400 })
     }
@@ -120,7 +120,7 @@ export async function POST(req: Request) {
       try {
         // Output language: follow the APP's language (the recruiter's UI locale,
         // from the deltamatch-locale cookie) rather than the CV's own language or
-        // the vacancy's — the recruiter reads the analysis, so it should be in
+        // the vacancy's - the recruiter reads the analysis, so it should be in
         // their interface language. Fall back to the vacancy language.
         const cookieLocale = (await cookies()).get('deltamatch-locale')?.value
         const outputLocale = (['en', 'nl', 'fr', 'de'].includes(cookieLocale || '') ? cookieLocale : vacancy.language) || 'fr'
@@ -162,7 +162,7 @@ export async function POST(req: Request) {
         // Duplicate guard: if the AI extracted an email that already exists for
         // this vacancy (i.e. the same CV was uploaded before), the update above
         // hits the @@unique([email, vacancyId]) constraint. That's a DUPLICATE,
-        // not an AI failure — delete the placeholder and return 409 instead of
+        // not an AI failure - delete the placeholder and return 409 instead of
         // leaving an "Unknown Candidate" orphan with no score.
         if (aiError instanceof Prisma.PrismaClientKnownRequestError && aiError.code === 'P2002') {
           if (placeholderCandidateId) {
@@ -177,7 +177,7 @@ export async function POST(req: Request) {
         candidate = await prisma.candidate.update({
           where: { id: candidate.id },
           data: {
-            summary: 'AI analysis failed — please retry. The CV is stored but has not been scored yet.',
+            summary: 'AI analysis failed - please retry. The CV is stored but has not been scored yet.',
             cvContent: docType === 'cv' ? text : candidate.cvContent,
             motivationText: docType === 'motivation' ? text : candidate.motivationText,
           },
@@ -186,7 +186,7 @@ export async function POST(req: Request) {
         return NextResponse.json({
           success: true,
           candidate,
-          warning: 'AI analysis failed. Candidate was saved without a match score — please retry analysis later.',
+          warning: 'AI analysis failed. Candidate was saved without a match score - please retry analysis later.',
         }, { status: 201 })
       }
     }

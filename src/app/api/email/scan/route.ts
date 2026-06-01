@@ -1,4 +1,4 @@
-// Real IMAP email scan — connects to the recruiter's inbox via ImapFlow,
+// Real IMAP email scan - connects to the recruiter's inbox via ImapFlow,
 // fetches unseen emails from the last 30 days (capped at 20), uses AI to classify
 // each email, downloads and parses PDF/DOCX attachments, detects whether each
 // document is a CV or motivation letter, then runs AI CV analysis and creates
@@ -18,7 +18,7 @@ import { persistDocument } from '@/lib/storage'
 
 const log = createLogger('email/scan')
 
-// Allow up to 5 minutes — IMAP + multiple AI calls can easily take 2–3 min
+// Allow up to 5 minutes - IMAP + multiple AI calls can easily take 2–3 min
 export const maxDuration = 300
 
 export async function POST(req: Request) {
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
 
   let inbox: any, vacancies: any[]
   try {
-    // Ownership check — users can only scan their own inboxes
+    // Ownership check - users can only scan their own inboxes
     inbox = await prisma.emailInbox.findFirst({ where: { id: inboxId, userId } })
     if (!inbox) return NextResponse.json({ error: 'Inbox not found' }, { status: 404 })
 
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
   }
 
   const results = { scanned: 0, relevant: 0, processed: 0, errors: [] as string[] }
-  // Per-message decision logger — writes to Vercel logs AND collects a short
+  // Per-message decision logger - writes to Vercel logs AND collects a short
   // trace returned in the response so a "found nothing" scan can be diagnosed
   // (which emails were seen, why each was skipped) without digging in Vercel.
   const trace: string[] = []
@@ -83,7 +83,7 @@ export async function POST(req: Request) {
 
     try {
       // Only look at emails from the last 15 days to keep scans focused and fast.
-      // Include BOTH read and unread emails — recruiters often open emails
+      // Include BOTH read and unread emails - recruiters often open emails
       // before scanning.
       const since = new Date()
       since.setDate(since.getDate() - 15)
@@ -127,7 +127,7 @@ export async function POST(req: Request) {
           .trim()
 
       // IMPORTANT: imapflow returns part.type as the FULL mime type ("text/plain"),
-      // not separate type/subtype. So checking p.type === 'text' never matches —
+      // not separate type/subtype. So checking p.type === 'text' never matches -
       // we must use startsWith('text/').
       const isTextPart = (p: { type: string }) => p.type.startsWith('text/')
 
@@ -183,7 +183,7 @@ export async function POST(req: Request) {
           }
           collectAllParts(msg.bodyStructure)
 
-          // Download body — prefer text/plain, fallback to text/html stripped
+          // Download body - prefer text/plain, fallback to text/html stripped
           // (imapflow stores the full mime in `type`, not split into type/subtype)
           let bodyText = ''
           const textPart = allParts.find(p => p.type === 'text/plain')
@@ -221,7 +221,7 @@ export async function POST(req: Request) {
             where: { inboxId: inbox.id, sender, receivedAt: new Date(receivedAt), subject: uidTag ? { contains: uidTag } : subject },
           })
           if (previousScan && previousScan.candidateId) {
-            // Verify the linked candidate STILL EXISTS — if it was deleted (e.g. the
+            // Verify the linked candidate STILL EXISTS - if it was deleted (e.g. the
             // recruiter deleted it to re-import), the EmailScan still points at the
             // gone id, and skipping here would make re-import impossible forever.
             const stillExists = await prisma.candidate.findUnique({ where: { id: previousScan.candidateId }, select: { id: true } })
@@ -372,7 +372,7 @@ export async function POST(req: Request) {
 
           // Duplicate guard: candidate records are unique per (email, vacancyId).
           // If this person already applied to THIS vacancy, link the scan to the
-          // existing candidate and move on — never overwrite. The SAME person
+          // existing candidate and move on - never overwrite. The SAME person
           // applying to a DIFFERENT vacancy creates a new record (intended).
           const existing = await prisma.candidate.findFirst({
             where: { email: sender, vacancyId: vacancy.id, userId },
@@ -456,11 +456,11 @@ export async function POST(req: Request) {
     // Surface a useful hint to the user
     let hint = ''
     if (error?.code === 'ETIMEOUT' || error?.message?.includes('timeout')) {
-      hint = ' — The IMAP server took too long to respond. Check your host/port settings or try a smaller scan window.'
+      hint = ' - The IMAP server took too long to respond. Check your host/port settings or try a smaller scan window.'
     } else if (error?.code === 'EAUTH' || error?.message?.includes('AUTHENTICATIONFAILED')) {
-      hint = ' — Authentication failed. For Gmail, you need an App Password (not your regular password).'
+      hint = ' - Authentication failed. For Gmail, you need an App Password (not your regular password).'
     } else if (error?.code === 'ECONNREFUSED' || error?.message?.includes('connect')) {
-      hint = ' — Could not reach the IMAP server. Check your host and port are correct.'
+      hint = ' - Could not reach the IMAP server. Check your host and port are correct.'
     }
     return NextResponse.json({ error: `Scan failed: ${error.message}${hint}` }, { status: 500 })
   }
@@ -475,9 +475,9 @@ export async function POST(req: Request) {
       nl: 'Geen e-mails gevonden in de laatste 15 dagen. Controleer of uw inbox recente berichten bevat.',
     },
     norelevant: {
-      en: `Found ${results.scanned} email(s), but AI determined none are job applications. Recruiters typically receive CVs as PDF/DOCX attachments — check that your applicants are sending attachments.`,
-      fr: `${results.scanned} e-mail(s) analysé(s), mais l'IA n'a détecté aucune candidature. Les candidats envoient généralement leur CV en pièce jointe (PDF/DOCX) — vérifiez qu'il y a bien des pièces jointes.`,
-      nl: `${results.scanned} e-mail(s) gescand, maar de AI vond geen sollicitaties. Kandidaten sturen hun cv meestal als bijlage (PDF/DOCX) — controleer of er bijlagen zijn.`,
+      en: `Found ${results.scanned} email(s), but AI determined none are job applications. Recruiters typically receive CVs as PDF/DOCX attachments - check that your applicants are sending attachments.`,
+      fr: `${results.scanned} e-mail(s) analysé(s), mais l'IA n'a détecté aucune candidature. Les candidats envoient généralement leur CV en pièce jointe (PDF/DOCX) - vérifiez qu'il y a bien des pièces jointes.`,
+      nl: `${results.scanned} e-mail(s) gescand, maar de AI vond geen sollicitaties. Kandidaten sturen hun cv meestal als bijlage (PDF/DOCX) - controleer of er bijlagen zijn.`,
     },
     noprocessed: {
       en: `Found ${results.relevant} relevant email(s), but couldn't extract CV text. The attachments may be empty, image-only PDFs, or already-imported messages.`,

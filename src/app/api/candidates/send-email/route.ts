@@ -61,7 +61,7 @@ export async function POST(req: Request) {
     // If the recruiter provided a `fromEmail` (typically their connected inbox
     // address), use it in the visible From header so replies land back in their
     // inbox. The envelope-from stays SMTP_USER because that's the authenticated
-    // account — sending with a mismatched envelope-from fails SPF.
+    // account - sending with a mismatched envelope-from fails SPF.
     const senderAddress = fromEmail || smtpUser
     const fromHeader = `${session.user.name || 'DeltaMatch'} <${senderAddress}>`
     await transporter.sendMail({

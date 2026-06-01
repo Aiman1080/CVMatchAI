@@ -41,7 +41,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       return NextResponse.json({ error: 'No file stored for this candidate' }, { status: 404 })
     }
 
-    // Filename for the Content-Disposition header — falls back to a safe default
+    // Filename for the Content-Disposition header - falls back to a safe default
     const ext = mimeType === 'application/pdf' ? 'pdf'
       : mimeType.includes('wordprocessingml') ? 'docx'
       : 'bin'

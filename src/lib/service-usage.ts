@@ -26,7 +26,7 @@ export interface UpstashUsage {
 }
 
 // Rate-limit data lives in Redis as a handful of short-lived keys. We read the
-// key count (DBSIZE) via the REST API — the per-month command quota that drives
+// key count (DBSIZE) via the REST API - the per-month command quota that drives
 // the free-tier ceiling isn't exposed here, so we surface keys + link to console.
 export async function getUpstashUsage(): Promise<UpstashUsage> {
   const url = process.env.UPSTASH_REDIS_REST_URL?.replace(/\/+$/, '')

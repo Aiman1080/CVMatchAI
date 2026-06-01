@@ -3,9 +3,9 @@ import crypto from 'crypto'
 const ALGORITHM = 'aes-256-gcm'
 
 // Validate the secret and derive the key LAZILY (on first encrypt/decrypt),
-// never at module load. A top-level throw runs during `next build` — Next
+// never at module load. A top-level throw runs during `next build` - Next
 // imports every route handler to collect page data, which evaluates this module
-// — so a build environment without NEXTAUTH_SECRET would crash the whole build
+// - so a build environment without NEXTAUTH_SECRET would crash the whole build
 // with a cryptic "Failed to collect page data" error, even though the secret is
 // only ever needed at runtime. Failing fast on first use keeps the security
 // guarantee (no silent public-default fallback) without coupling it to the build.

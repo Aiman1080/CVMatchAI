@@ -186,7 +186,7 @@ const PLATFORM_STATIC = [
 
 type PlatformId = 'teamtailor' | 'recruitee' | 'smartrecruiters' | 'greenhouse' | 'lever' | 'bullhorn' | 'workable' | 'flatchr' | 'ashby' | 'breezyhr' | 'homerun' | 'personio' | 'icims' | 'softgarden'
 
-/** Collapsible guide with numbered steps — shown inline inside the connection form */
+/** Collapsible guide with numbered steps - shown inline inside the connection form */
 function HowToGuide({ steps, docsUrl, openLabel, title }: { steps: readonly string[]; docsUrl: string; openLabel: string; title: string }) {
   const [open, setOpen] = useState(false)
   return (
@@ -307,13 +307,13 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
         toast({
           title: (ti as any).connectSuccessTitle?.replace('{name}', p?.name ?? '') || `${p?.name} ${ti.connected}`,
           description: data.company
-            ? `${ti.companyFound}${data.company} — ${(ti as any).connectSuccessDesc?.replace('{name}', p?.name ?? '') || 'Click Sync to import candidates.'}`
+            ? `${ti.companyFound}${data.company} - ${(ti as any).connectSuccessDesc?.replace('{name}', p?.name ?? '') || 'Click Sync to import candidates.'}`
             : (ti as any).connectSuccessDesc?.replace('{name}', p?.name ?? '') || ti.connectionSuccess,
         })
       } else {
         // Provide actionable error description
         const errorDesc = data.error
-          ? ((ti as any).connectionFailedDescWithError || '{error} — Double-check the API key in your ATS settings and try again.').replace('{error}', data.error)
+          ? ((ti as any).connectionFailedDescWithError || '{error} - Double-check the API key in your ATS settings and try again.').replace('{error}', data.error)
           : ((ti as any).connectionFailedDesc || 'Could not reach the ATS. Please verify your API key has the right permissions and try again.')
         toast({ title: ti.connectionFailed, description: errorDesc, variant: 'destructive' })
       }
@@ -358,7 +358,7 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
           toast({
             title: ti.syncError,
             description: data.error
-              ? ((ti as any).syncErrorDescWithError || '{error} — Verify your ATS connection and try again.').replace('{error}', data.error)
+              ? ((ti as any).syncErrorDescWithError || '{error} - Verify your ATS connection and try again.').replace('{error}', data.error)
               : ((ti as any).syncErrorDesc || 'Could not sync. Check your network and the ATS status, then retry.'),
             variant: 'destructive',
           })
@@ -400,7 +400,7 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
     }
   }
 
-  // Opens the confirm dialog — actual deletion happens in performDisconnect
+  // Opens the confirm dialog - actual deletion happens in performDisconnect
   const handleDisconnect = (integrationId: string, platformId: string) => {
     const p = PLATFORM_STATIC.find(p => p.id === platformId)
     setDisconnectDialog({ open: true, integrationId, platformId, platformName: p?.name ?? '' })
@@ -426,7 +426,7 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
   return (
     <div className="space-y-6">
 
-      {/* ATS duplicate tip banner — dismissible */}
+      {/* ATS duplicate tip banner - dismissible */}
       {!atsTipDismissed && (
         <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 flex gap-3 items-start">
           <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
@@ -449,7 +449,7 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
         </div>
       </div>
 
-      {/* Empty state — when no ATS is connected, give a friendly nudge */}
+      {/* Empty state - when no ATS is connected, give a friendly nudge */}
       {connectedCount === 0 && (
         <div className="p-6 rounded-xl bg-white dark:bg-gray-900 border border-dashed border-gray-200 dark:border-gray-700 text-center">
           <div className="w-12 h-12 mx-auto rounded-xl bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/40 dark:to-purple-950/40 flex items-center justify-center mb-3">
@@ -464,7 +464,7 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
         </div>
       )}
 
-      {/* Sync All button — only shown when at least 1 is connected */}
+      {/* Sync All button - only shown when at least 1 is connected */}
       {connectedCount > 0 && (
         <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border border-indigo-100 dark:border-indigo-900 flex flex-wrap items-center gap-4">
           <div className="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center shrink-0">
@@ -617,7 +617,7 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
                                 <Clock size={11} />
                                 {connected.lastSyncAt
                                   ? formatRelativeTime(new Date(connected.lastSyncAt))
-                                  : ti.neverSynced.split(' — ')[0]}
+                                  : ti.neverSynced.split(' - ')[0]}
                               </span>
                             </TooltipTrigger>
                             <TooltipContent>{ti.autoSyncTooltip}</TooltipContent>

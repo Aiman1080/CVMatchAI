@@ -33,7 +33,7 @@ function detectShortLocale(): 'en' | 'nl' | 'fr' {
 
 // Shows human-readable relative time for recent events, falls back to formatDate after 7 days.
 // Optional locale param accepts either a short code ('en'|'nl'|'fr') for translation or
-// a BCP-47 tag for the formatDate fallback — short codes are normalized to BCP-47 internally.
+// a BCP-47 tag for the formatDate fallback - short codes are normalized to BCP-47 internally.
 export function formatRelativeTime(date: Date | string, locale?: string): string {
   const d = new Date(date)
   const diff = Date.now() - d.getTime()
@@ -66,7 +66,7 @@ export function formatRelativeTime(date: Date | string, locale?: string): string
   return formatDate(date, locale)
 }
 
-// Returns Tailwind color classes for status badges — unknown statuses get neutral grey
+// Returns Tailwind color classes for status badges - unknown statuses get neutral grey
 export function getStatusColor(status: string): string {
   const colors: Record<string, string> = {
     new: 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-400',
@@ -96,7 +96,7 @@ export function parseJsonSafe<T>(str: string | null | undefined, fallback: T): T
   try { return JSON.parse(str) as T } catch { return fallback }
 }
 
-// Truncates at word boundaries is not required here — just hard-cut with ellipsis
+// Truncates at word boundaries is not required here - just hard-cut with ellipsis
 export function truncate(str: string, length: number): string {
   if (str.length <= length) return str
   return str.slice(0, length) + '...'

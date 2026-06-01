@@ -13,11 +13,11 @@ export function useDemoMode() {
 
 export function showDemoToast(action?: string) {
   const messages: Record<string, { title: string; description: string }> = {
-    delete: { title: 'Demo account — read only', description: 'Deletion is disabled in demo mode. Create a real account to use all features.' },
-    upload: { title: 'Demo account — read only', description: 'CV upload is disabled in demo mode. Create a real account to upload CVs.' },
-    email: { title: 'Demo account — read only', description: 'Sending emails is disabled in demo mode. Create a real account to send emails.' },
-    modify: { title: 'Demo account — read only', description: 'Modification is disabled in demo mode. Create a real account to modify data.' },
-    default: { title: 'Demo account — read only', description: 'This action is disabled in demo mode. Create a real account to access all features.' },
+    delete: { title: 'Demo account - read only', description: 'Deletion is disabled in demo mode. Create a real account to use all features.' },
+    upload: { title: 'Demo account - read only', description: 'CV upload is disabled in demo mode. Create a real account to upload CVs.' },
+    email: { title: 'Demo account - read only', description: 'Sending emails is disabled in demo mode. Create a real account to send emails.' },
+    modify: { title: 'Demo account - read only', description: 'Modification is disabled in demo mode. Create a real account to modify data.' },
+    default: { title: 'Demo account - read only', description: 'This action is disabled in demo mode. Create a real account to access all features.' },
   }
   const msg = messages[action || 'default'] || messages.default
   toast({ title: msg.title, description: msg.description, variant: 'destructive' })

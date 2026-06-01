@@ -53,7 +53,7 @@ export async function register() {
       )
     }
   } catch {
-    // Tables not created yet — run: npx prisma db push
+    // Tables not created yet - run: npx prisma db push
   }
 }
 

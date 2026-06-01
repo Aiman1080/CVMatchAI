@@ -13,7 +13,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const isAdmin = (session.user as any).role === 'admin'
 
   try {
-    // Ownership check — admins can view any candidate's activity
+    // Ownership check - admins can view any candidate's activity
     const candidate = await prisma.candidate.findFirst({
       where: isAdmin ? { id } : { id, userId },
       select: { id: true },

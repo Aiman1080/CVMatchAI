@@ -1,4 +1,4 @@
-// Recruiter registration — validates input with Zod, checks for duplicate email,
+// Recruiter registration - validates input with Zod, checks for duplicate email,
 // hashes the password with bcrypt (cost 12) and creates the account with
 // subscription: 'free' and role: 'recruiter'. Login goes through NextAuth.
 // After registration, sends a verification email with a unique token.
@@ -9,7 +9,7 @@ import prisma from '@/lib/prisma'
 import { z } from 'zod'
 import { sendEmail, isEmailConfigured } from '@/lib/email'
 
-// Input schema — Zod validates and type-narrows in one step
+// Input schema - Zod validates and type-narrows in one step
 const schema = z.object({
   name: z.string().min(2),
   email: z.string().email(),
@@ -24,14 +24,14 @@ export async function POST(req: Request) {
     const { name, email, password, company, plan } = schema.parse(body)
     const normalizedEmail = email.toLowerCase()
 
-    // Prevent duplicate accounts before hashing — hashing is expensive (bcrypt cost 12)
+    // Prevent duplicate accounts before hashing - hashing is expensive (bcrypt cost 12)
     const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } })
     if (existing) return NextResponse.json({ error: 'Email already registered' }, { status: 400 })
 
     const hashed = await bcrypt.hash(password, 12)
     // ALWAYS create as Free. Pro is granted only after a successful Stripe payment
     // (handled by the /api/stripe/checkout flow + webhook). Selecting "Pro" at
-    // registration only marks the user as wanting to upgrade — it doesn't grant access.
+    // registration only marks the user as wanting to upgrade - it doesn't grant access.
     const user = await prisma.user.create({
       data: {
         name,
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
       },
     })
 
-    // Send verification email — non-blocking so registration succeeds even if email fails
+    // Send verification email - non-blocking so registration succeeds even if email fails
     if (isEmailConfigured()) {
       try {
         const token = crypto.randomBytes(32).toString('hex')
@@ -58,7 +58,7 @@ export async function POST(req: Request) {
 
         await sendEmail(
           normalizedEmail,
-          'Verify your email — DeltaMatch',
+          'Verify your email - DeltaMatch',
           `Hi ${name},\n\nPlease verify your email address by clicking the link below:\n\n${verifyUrl}\n\nThis link expires in 24 hours.\n\nIf you didn't create this account, you can safely ignore this email.`
         )
       } catch (emailError) {

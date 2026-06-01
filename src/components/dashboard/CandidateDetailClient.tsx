@@ -32,7 +32,7 @@ const RECOMMENDATION_COLORS: Record<string, string> = {
 
 const EMAIL_TEMPLATES: Record<string, { subject: string; body: string }> = {
   rejection: {
-    subject: 'Your application — Next steps',
+    subject: 'Your application - Next steps',
     body: `Hello {name},\n\nThank you for your interest in our position and the time you invested in your application.\n\nAfter careful review, we regret to inform you that your application has not been selected for the next stage.\n\nWe wish you every success in your search.\n\nKind regards`,
   },
   interview: {
@@ -76,7 +76,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
   const [sendingEmail, setSendingEmail] = useState(false)
   const [generatingEmail, setGeneratingEmail] = useState(false)
   const [interviewQuestions, setInterviewQuestions] = useState<Array<{ question: string; category: string; rationale: string; expectedAnswer: string }> | null>(null)
-  // Recruiter's actual answers per question — persisted to the database so they survive
+  // Recruiter's actual answers per question - persisted to the database so they survive
   // logout/re-login from any device. Initialized from the candidate record on first render.
   const [questionAnswers, setQuestionAnswers] = useState<Record<number, string>>(() => {
     if (!initial.interviewAnswers) return {}
@@ -116,7 +116,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
   const [activitiesLoaded, setActivitiesLoaded] = useState(false)
   const notesTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Persist interview answers to the DB with 800ms debounce — survives reload, logout, days off
+  // Persist interview answers to the DB with 800ms debounce - survives reload, logout, days off
   const saveAnswersToDb = (answers: Record<number, string>) => {
     if (answersSaveTimer.current) clearTimeout(answersSaveTimer.current)
     answersSaveTimer.current = setTimeout(async () => {
@@ -131,7 +131,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
   }
 
   // Pre-fill the "From" field of the email dialog with the user's connected
-  // inbox address — the most natural sender for replies to candidates.
+  // inbox address - the most natural sender for replies to candidates.
   useEffect(() => {
     fetch('/api/email/connect')
       .then(res => (res.ok ? res.json() : []))
@@ -389,7 +389,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
         setActivities(data)
       }
     } catch {
-      // Silent fail — activity is non-critical
+      // Silent fail - activity is non-critical
     } finally {
       setLoadingActivities(false)
       setActivitiesLoaded(true)
@@ -472,7 +472,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
             <div className="flex items-center gap-3 sm:gap-4 w-full lg:w-auto">
               {/* Score circle */}
               <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br ${scoreBg} flex flex-col items-center justify-center shadow-lg shrink-0`}>
-                <span className="text-base sm:text-xl font-bold text-white">{score > 0 ? `${score.toFixed(0)}%` : '—'}</span>
+                <span className="text-base sm:text-xl font-bold text-white">{score > 0 ? `${score.toFixed(0)}%` : '-'}</span>
                 <span className="text-[10px] sm:text-xs text-white/80">{cd.match}</span>
               </div>
 
@@ -858,7 +858,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                             }`}>{ci.categories[q.category as keyof typeof ci.categories] || q.category}</span>
                           </div>
                           <p className="text-xs text-gray-500 dark:text-gray-400 italic">{q.rationale}</p>
-                          {/* Recruiter's answer field — saved automatically to localStorage */}
+                          {/* Recruiter's answer field - saved automatically to localStorage */}
                           <div className="pt-2">
                             <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">
                               {(cd as any).candidateAnswerLabel || "Candidate's answer"}
@@ -959,7 +959,7 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                             onClick={async () => {
                               setDownloadingReportPdf(true)
                               try {
-                                // Build Q&A list — only include questions that have a typed answer
+                                // Build Q&A list - only include questions that have a typed answer
                                 const interviewQA = interviewQuestions
                                   ? interviewQuestions.map((q, i) => ({
                                       question: q.question,
@@ -1140,7 +1140,7 @@ function DocumentViewer({ candidateId, type, hasFile, mimeType, fallbackText, no
   const [fullscreen, setFullscreen] = useState(false)
   const fileSrc = `/api/candidates/${candidateId}/file?type=${type}`
   const downloadSrc = `${fileSrc}&download=1`
-  // Browsers can render PDFs inline in an <iframe>, but NOT .docx/.doc — those
+  // Browsers can render PDFs inline in an <iframe>, but NOT .docx/.doc - those
   // would show a blank frame (or silently download). So only PDFs get the inline
   // viewer; other formats get a clear download/open card.
   const isPdf = !mimeType || mimeType.includes('pdf')
@@ -1273,7 +1273,7 @@ function DocumentViewer({ candidateId, type, hasFile, mimeType, fallbackText, no
     )
   }
 
-  // No file stored — show extracted text in a card (with optional fullscreen for text too)
+  // No file stored - show extracted text in a card (with optional fullscreen for text too)
   return (
     <>
       <Card className="border border-gray-200 shadow-sm dark:border-gray-800">

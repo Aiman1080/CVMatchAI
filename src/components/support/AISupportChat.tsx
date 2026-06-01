@@ -183,7 +183,7 @@ export function AISupportChat({ onCreateTicket }: AISupportChatProps) {
 
           {messages.length >= MAX_MESSAGES && (
             <p className="text-xs text-center text-amber-600 dark:text-amber-400 mt-2">
-              {(ts as any).limitReached || 'Conversation limit reached — create a support ticket below to continue.'}
+              {(ts as any).limitReached || 'Conversation limit reached - create a support ticket below to continue.'}
             </p>
           )}
 

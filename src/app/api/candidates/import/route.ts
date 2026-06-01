@@ -1,4 +1,4 @@
-// CSV import endpoint — accepts FormData with a CSV file and vacancyId.
+// CSV import endpoint - accepts FormData with a CSV file and vacancyId.
 // Parses the CSV and creates Candidate records for each valid row.
 // Expected columns: firstName, lastName, email, phone, linkedIn, status
 import { NextResponse } from 'next/server'
@@ -14,7 +14,7 @@ function parseCSV(text: string): Record<string, string>[] {
   const lines = text.split(/\r?\n/).filter(line => line.trim().length > 0)
   if (lines.length < 2) return []
 
-  // Parse header row — handle quoted fields
+  // Parse header row - handle quoted fields
   const parseRow = (row: string): string[] => {
     const fields: string[] = []
     let current = ''
@@ -116,7 +116,7 @@ export async function POST(req: Request) {
 
       if (!firstName.trim()) {
         skipped++
-        errors.push(`Row ${rowNum}: skipped — missing firstName`)
+        errors.push(`Row ${rowNum}: skipped - missing firstName`)
         continue
       }
 
@@ -132,7 +132,7 @@ export async function POST(req: Request) {
           })
           if (existing) {
             skipped++
-            errors.push(`Row ${rowNum}: skipped — duplicate candidate "${firstName.trim()} ${lastName.trim()}" for this vacancy`)
+            errors.push(`Row ${rowNum}: skipped - duplicate candidate "${firstName.trim()} ${lastName.trim()}" for this vacancy`)
             continue
           }
         }
@@ -155,7 +155,7 @@ export async function POST(req: Request) {
         skipped++
         // Unique constraint violation (duplicate email+vacancy)
         if (err?.code === 'P2002') {
-          errors.push(`Row ${rowNum}: skipped — duplicate email "${email}" for this vacancy`)
+          errors.push(`Row ${rowNum}: skipped - duplicate email "${email}" for this vacancy`)
         } else {
           errors.push(`Row ${rowNum}: ${err.message || 'Failed to create candidate'}`)
         }

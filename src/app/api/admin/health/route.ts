@@ -1,4 +1,4 @@
-// Admin health-check endpoint — pings the DB, reports latency, AI key presence,
+// Admin health-check endpoint - pings the DB, reports latency, AI key presence,
 // and live entity counts. Used by the admin dashboard status panel.
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'

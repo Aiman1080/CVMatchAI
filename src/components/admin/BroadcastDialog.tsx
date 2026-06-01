@@ -1,6 +1,6 @@
 'use client'
 
-// Self-contained broadcast notification dialog — was inlined inside
+// Self-contained broadcast notification dialog - was inlined inside
 // AdminClient.tsx (which is north of 2000 lines). Extracted here so the
 // parent is easier to navigate and this concern (compose+send announcement
 // to all users) can be tested in isolation.

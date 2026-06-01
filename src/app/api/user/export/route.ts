@@ -32,8 +32,8 @@ export async function GET() {
       vacancies,
       candidates: candidates.map(c => ({
         ...c,
-        cvContent: c.cvContent ? '[CV text — omitted for file size]' : null,
-        motivationText: c.motivationText ? '[Motivation text — omitted for file size]' : null,
+        cvContent: c.cvContent ? '[CV text - omitted for file size]' : null,
+        motivationText: c.motivationText ? '[Motivation text - omitted for file size]' : null,
       })),
     }
 

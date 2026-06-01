@@ -23,7 +23,7 @@ interface Vacancy {
   _count: { candidates: number }
 }
 
-// Client component: manages optimistic vacancy list — new vacancies are prepended without a page reload
+// Client component: manages optimistic vacancy list - new vacancies are prepended without a page reload
 export function VacanciesClient({ initialVacancies, isDemo }: { initialVacancies: Vacancy[]; isDemo?: boolean }) {
   const { t } = useLanguage()
   const tv = t.dashboard.vacancies

@@ -8,7 +8,7 @@ export async function POST(req: Request) {
   const secretKey = process.env.STRIPE_SECRET_KEY
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
   if (!secretKey || !webhookSecret) {
-    log.error('Webhook not configured — missing STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET')
+    log.error('Webhook not configured - missing STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET')
     return NextResponse.json({ error: 'Stripe not configured' }, { status: 503 })
   }
 
@@ -75,7 +75,7 @@ export async function POST(req: Request) {
             })
             console.log(`[Stripe webhook ${event.id}] User ${userId} downgraded to free (subscription deleted)`)
           } else if (customerId) {
-            // Portal-initiated cancellations may lack our userId — resolve by email.
+            // Portal-initiated cancellations may lack our userId - resolve by email.
             const customer = await stripe.customers.retrieve(customerId) as any
             if (customer?.email) {
               const res = await prisma.user.updateMany({ where: { email: customer.email }, data: { subscription: 'free' } })
@@ -158,7 +158,7 @@ export async function POST(req: Request) {
       }
     }
   } catch (error: any) {
-    // Defensive fallback — should be unreachable thanks to per-handler try/catch,
+    // Defensive fallback - should be unreachable thanks to per-handler try/catch,
     // but if anything escapes we still return 200 so Stripe stops retrying. The
     // event is logged for manual investigation.
     console.error(`[Stripe webhook ${event.id}] unexpected outer error:`, error?.message || error)

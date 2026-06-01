@@ -23,7 +23,7 @@ export default async function AnalyticsPage() {
         <AnalyticsHeader />
         <div className="p-4 sm:p-8">
           <UpgradePrompt
-            feature="Analytics — Pro Feature"
+            feature="Analytics - Pro Feature"
             description="Visualize your recruitment performance, track match scores, analyze candidate sources and optimize your process. Available from the Pro plan."
           />
         </div>

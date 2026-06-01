@@ -51,7 +51,7 @@ export function ScheduleInterview({
     const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
     const params = new URLSearchParams({
       action: 'TEMPLATE',
-      text: `Interview — ${candidateName}${vacancyTitle ? ` (${vacancyTitle})` : ''}`,
+      text: `Interview - ${candidateName}${vacancyTitle ? ` (${vacancyTitle})` : ''}`,
       dates: `${fmt(start)}/${fmt(end)}`,
       location: location || '',
     })
@@ -59,7 +59,7 @@ export function ScheduleInterview({
   }
 
   const save = async () => {
-    if (isDemo) { toast({ title: c.demoBlocked || 'Demo mode — cannot schedule', variant: 'destructive' }); return }
+    if (isDemo) { toast({ title: c.demoBlocked || 'Demo mode - cannot schedule', variant: 'destructive' }); return }
     if (!when) { toast({ title: c.pickDate || 'Pick a date and time', variant: 'destructive' }); return }
     setSaving(true)
     try {
@@ -78,7 +78,7 @@ export function ScheduleInterview({
       setScheduled(true)
       toast({
         title: c.scheduled || 'Interview scheduled',
-        description: data.emailed ? (c.invitedSent || 'Invitation emailed to the candidate.') : (notify ? (c.emailSkipped || 'Saved (email could not be sent — check SMTP).') : (c.savedNoEmail || 'Saved.')),
+        description: data.emailed ? (c.invitedSent || 'Invitation emailed to the candidate.') : (notify ? (c.emailSkipped || 'Saved (email could not be sent - check SMTP).') : (c.savedNoEmail || 'Saved.')),
       })
     } catch (e: any) {
       toast({ title: c.scheduleFailed || 'Could not schedule', description: e.message, variant: 'destructive' })
@@ -88,7 +88,7 @@ export function ScheduleInterview({
   }
 
   const cancel = async () => {
-    if (isDemo) { toast({ title: c.demoBlocked || 'Demo mode — cannot schedule', variant: 'destructive' }); return }
+    if (isDemo) { toast({ title: c.demoBlocked || 'Demo mode - cannot schedule', variant: 'destructive' }); return }
     setSaving(true)
     try {
       const res = await fetch(`/api/candidates/${candidateId}/schedule`, { method: 'DELETE' })

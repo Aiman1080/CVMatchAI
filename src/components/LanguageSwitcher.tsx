@@ -14,7 +14,7 @@ interface LanguageSwitcherProps {
   dark?: boolean
 }
 
-// Context-based switcher — reads locale/setLocale from LanguageContext
+// Context-based switcher - reads locale/setLocale from LanguageContext
 export function LanguageSwitcher({ dark = false }: LanguageSwitcherProps) {
   const { locale, setLocale } = useLanguage()
   return (

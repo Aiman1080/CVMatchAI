@@ -22,7 +22,7 @@ export default function TermsPage() {
         },
         {
           icon: Globe,
-          title: '2. Description of service — provided "as is"',
+          title: '2. Description of service - provided "as is"',
           text: 'DeltaMatch is an AI-assisted recruitment platform that helps recruiters analyse CVs, manage candidates, and match applicants to vacancies. THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE", WITHOUT WARRANTIES OF ANY KIND, whether express or implied, including but not limited to fitness for a particular purpose, accuracy, reliability, or non-infringement. We do not warrant that the service will be uninterrupted, error-free, secure, or that AI outputs will be accurate or complete. We may add, modify, suspend or discontinue any feature at any time, with reasonable notice where practicable.',
         },
         {
@@ -42,7 +42,7 @@ export default function TermsPage() {
         },
         {
           icon: ShieldOff,
-          title: '6. Disclaimer — outages, data loss & AI errors',
+          title: '6. Disclaimer - outages, data loss & AI errors',
           text: 'TO THE MAXIMUM EXTENT PERMITTED BY LAW, DeltaMatch is NOT liable for any loss or damage arising from: service interruptions, downtime, crashes, bugs, or maintenance; loss, corruption or unavailability of data (you are responsible for keeping your own backups/exports); errors, inaccuracies, omissions or bias in AI-generated scores, summaries, rankings, interview questions, reports or emails; reliance on any AI output; third-party services (e.g. AI providers, hosting, email/IMAP, ATS integrations, payment processor) being unavailable, changing, or failing; or any hiring, rejection or employment decision you make. AI outputs are decision-support only and must be reviewed by a human before use. No hiring decision is automated by DeltaMatch.',
         },
         {
@@ -84,7 +84,7 @@ export default function TermsPage() {
         },
         {
           icon: Globe,
-          title: '2. Beschrijving van de service — "zoals die is"',
+          title: '2. Beschrijving van de service - "zoals die is"',
           text: 'DeltaMatch is een AI-ondersteund wervingsplatform dat recruiters helpt cv\'s te analyseren, kandidaten te beheren en sollicitanten te matchen met vacatures. DE SERVICE WORDT GELEVERD "ZOALS DIE IS" EN "ZOALS BESCHIKBAAR", ZONDER ENIGE GARANTIE, expliciet of impliciet, met inbegrip van geschiktheid voor een bepaald doel, juistheid of betrouwbaarheid. Wij garanderen niet dat de service ononderbroken, foutloos of veilig is, noch dat AI-resultaten juist of volledig zijn. Wij kunnen functies te allen tijde toevoegen, wijzigen, opschorten of beëindigen, waar mogelijk met redelijke kennisgeving.',
         },
         {
@@ -104,7 +104,7 @@ export default function TermsPage() {
         },
         {
           icon: ShieldOff,
-          title: '6. Disclaimer — storingen, gegevensverlies & AI-fouten',
+          title: '6. Disclaimer - storingen, gegevensverlies & AI-fouten',
           text: 'VOOR ZOVER WETTELIJK TOEGESTAAN is DeltaMatch NIET aansprakelijk voor verlies of schade door: serviceonderbrekingen, downtime, crashes, bugs of onderhoud; verlies, beschadiging of onbeschikbaarheid van gegevens (u bent verantwoordelijk voor eigen back-ups/exports); fouten, onjuistheden of bias in door AI gegenereerde scores, samenvattingen, rankings, vragen, rapporten of e-mails; vertrouwen op AI-resultaten; uitval of wijziging van derde-partijdiensten (AI-providers, hosting, e-mail/IMAP, ATS-integraties, betalingsverwerker); of enige aanwervings-, afwijzings- of arbeidsbeslissing die u neemt. AI-resultaten dienen enkel als beslissingsondersteuning en moeten door een mens worden beoordeeld. DeltaMatch automatiseert geen aanwervingsbeslissingen.',
         },
         {
@@ -146,7 +146,7 @@ export default function TermsPage() {
         },
         {
           icon: Globe,
-          title: '2. Description du service — fourni « en l\'état »',
+          title: '2. Description du service - fourni « en l\'état »',
           text: "DeltaMatch est une plateforme de recrutement assistée par IA qui aide à analyser les CV, gérer les candidats et les faire correspondre aux offres. LE SERVICE EST FOURNI « EN L'ÉTAT » ET « SELON DISPONIBILITÉ », SANS GARANTIE D'AUCUNE SORTE, expresse ou implicite, y compris l'adéquation à un usage particulier, l'exactitude ou la fiabilité. Nous ne garantissons pas que le service sera ininterrompu, exempt d'erreurs ou sécurisé, ni que les résultats de l'IA seront exacts ou complets. Nous pouvons ajouter, modifier, suspendre ou interrompre toute fonctionnalité à tout moment, avec un préavis raisonnable lorsque c'est possible.",
         },
         {
@@ -166,7 +166,7 @@ export default function TermsPage() {
         },
         {
           icon: ShieldOff,
-          title: '6. Avertissement — pannes, perte de données & erreurs IA',
+          title: '6. Avertissement - pannes, perte de données & erreurs IA',
           text: "DANS LA MESURE MAXIMALE PERMISE PAR LA LOI, DeltaMatch n'est PAS responsable des pertes ou dommages résultant de : interruptions de service, indisponibilités, plantages, bugs ou maintenance ; perte, corruption ou indisponibilité de données (il vous appartient de conserver vos propres sauvegardes/exports) ; erreurs, inexactitudes, omissions ou biais dans les scores, résumés, classements, questions, rapports ou e-mails générés par l'IA ; confiance accordée à un résultat de l'IA ; indisponibilité, modification ou défaillance de services tiers (fournisseurs d'IA, hébergement, e-mail/IMAP, intégrations ATS, prestataire de paiement) ; ou toute décision d'embauche, de rejet ou d'emploi que vous prenez. Les résultats de l'IA constituent une aide à la décision uniquement et doivent être vérifiés par un humain. DeltaMatch n'automatise aucune décision d'embauche.",
         },
         {

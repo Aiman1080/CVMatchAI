@@ -103,7 +103,7 @@ export function CalendarWidget() {
   const goMonth = (delta: number) => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + delta, 1))
 
   const addEvent = async () => {
-    if (isDemo) { toast({ title: c.demoBlocked || 'Demo mode — cannot add', variant: 'destructive' }); return }
+    if (isDemo) { toast({ title: c.demoBlocked || 'Demo mode - cannot add', variant: 'destructive' }); return }
     if (!form.title.trim()) { toast({ title: c.titleRequired || 'Enter a title', variant: 'destructive' }); return }
     // Combine the selected day + the chosen time into a local datetime
     const [h, m] = form.time.split(':').map(Number)

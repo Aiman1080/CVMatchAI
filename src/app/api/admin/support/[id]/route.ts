@@ -1,4 +1,4 @@
-// Admin ticket management — GET a single ticket, PATCH to reply/update status.
+// Admin ticket management - GET a single ticket, PATCH to reply/update status.
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'

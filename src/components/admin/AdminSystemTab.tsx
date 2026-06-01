@@ -77,7 +77,7 @@ export function AdminSystemTab({
                     <div className="flex items-center justify-between flex-wrap gap-2">
                       <div>
                         <p className="text-xs uppercase font-semibold opacity-70">Current phase</p>
-                        <p className="text-lg font-bold">Phase {phase} — {phaseLabel}</p>
+                        <p className="text-lg font-bold">Phase {phase} - {phaseLabel}</p>
                         <p className="text-xs mt-1">{userCount} total accounts</p>
                       </div>
                       <div className="text-right text-xs">
@@ -167,7 +167,7 @@ export function AdminSystemTab({
 
               {/* Upgrade triggers */}
               <div>
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-2">When to upgrade — watch for these signs</p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-2">When to upgrade - watch for these signs</p>
                 <ul className="space-y-1.5 text-xs text-gray-700 dark:text-gray-300">
                   <li className="flex items-start gap-2">
                     <span className="text-amber-500 mt-0.5">⚠</span>
@@ -256,12 +256,12 @@ export function AdminSystemTab({
                   {
                     name: 'Supabase', purpose: 'Postgres database', active: true,
                     tier: 'Free', limit: '500 MB DB · 5 GB bandwidth', paid: 'Pro $25/mo',
-                    warn: 'CVs are stored as binary in Postgres — 500 MB fills fast (~2-4k CVs). Plan to move to Supabase Storage.',
+                    warn: 'CVs are stored as binary in Postgres - 500 MB fills fast (~2-4k CVs). Plan to move to Supabase Storage.',
                     url: 'https://supabase.com/dashboard/project/rlvxyzudngineksyftqv/settings/billing',
                   },
                   {
                     name: 'Google Gemini', purpose: 'AI analysis & matching', active: hasAiKey,
-                    tier: 'Pay-as-you-go', limit: 'Free tier has rate limits', paid: '~$0.30 / 1M tokens (2.5 Flash) — see AI Usage tab',
+                    tier: 'Pay-as-you-go', limit: 'Free tier has rate limits', paid: '~$0.30 / 1M tokens (2.5 Flash) - see AI Usage tab',
                     warn: '', url: 'https://aistudio.google.com/app/apikey',
                   },
                   {
@@ -271,7 +271,7 @@ export function AdminSystemTab({
                   },
                   {
                     name: 'Upstash', purpose: 'Rate limiting (Redis)', active: hasUpstash,
-                    tier: 'Free', limit: '10,000 commands/day · 256 MB', paid: 'Pay-as-you-go beyond — rate limiting barely touches it',
+                    tier: 'Free', limit: '10,000 commands/day · 256 MB', paid: 'Pay-as-you-go beyond - rate limiting barely touches it',
                     warn: '', url: 'https://console.upstash.com/',
                   },
                   {
@@ -321,7 +321,7 @@ export function AdminSystemTab({
               </div>
 
               <p className="text-[11px] text-gray-400 dark:text-gray-500">
-                ● configured (env vars set) · ○ inactive. Prices are indicative (early 2026) — always confirm on each billing page. This panel links out to billing dashboards; it cannot change external plans for you.
+                ● configured (env vars set) · ○ inactive. Prices are indicative (early 2026) - always confirm on each billing page. This panel links out to billing dashboards; it cannot change external plans for you.
               </p>
             </CardContent>
           </Card>
@@ -330,7 +330,7 @@ export function AdminSystemTab({
           <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
-                <Network className="w-5 h-5 text-cyan-500" /> Rate limiting & monitoring — usage
+                <Network className="w-5 h-5 text-cyan-500" /> Rate limiting & monitoring - usage
               </CardTitle>
               <CardDescription>Live readings where available, with the free-tier ceiling and when it starts costing</CardDescription>
             </CardHeader>
@@ -347,7 +347,7 @@ export function AdminSystemTab({
                 </div>
                 <div className="mt-1.5 ml-6 text-xs text-gray-600 dark:text-gray-400">
                   {!upstashUsage.configured
-                    ? <span>Not configured — rate limiting runs in-memory (per-instance).</span>
+                    ? <span>Not configured - rate limiting runs in-memory (per-instance).</span>
                     : upstashUsage.available
                       ? <span><span className="font-semibold text-gray-900 dark:text-white">{upstashUsage.keys?.toLocaleString()}</span> active keys stored.</span>
                       : <span>Configured, but the live reading is unavailable right now.</span>}
@@ -367,7 +367,7 @@ export function AdminSystemTab({
                 </div>
                 <div className="mt-1.5 ml-6 text-xs text-gray-600 dark:text-gray-400">
                   {!sentryUsage.configured
-                    ? <span>Not configured — set SENTRY_DSN to capture production errors.</span>
+                    ? <span>Not configured - set SENTRY_DSN to capture production errors.</span>
                     : sentryUsage.available
                       ? (() => {
                           const n = sentryUsage.errors30d || 0
@@ -384,7 +384,7 @@ export function AdminSystemTab({
                             </div>
                           )
                         })()
-                      : <span>Configured — live error count is in the Sentry dashboard (set SENTRY_AUTH_TOKEN + SENTRY_ORG to show it here).</span>}
+                      : <span>Configured - live error count is in the Sentry dashboard (set SENTRY_AUTH_TOKEN + SENTRY_ORG to show it here).</span>}
                   <span className="block mt-0.5 text-gray-400">Free: 5,000 errors/month · 1 user → Team ~$26/mo beyond.</span>
                 </div>
               </div>
