@@ -1,6 +1,6 @@
 // Removes duplicate Candidate rows for the current user.
-// A duplicate is any row that shares the same sender email with an older row.
-// Keeps the newest record, deletes the rest.
+// A duplicate = same email within the SAME vacancy. Among duplicates we keep the
+// one with the BEST matchScore (ties → the most recent) and delete the rest.
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -17,24 +17,35 @@ export async function POST() {
   const userId = (session.user as any).id
 
   try {
-    // Fetch all candidates for this user ordered newest first
     const all = await prisma.candidate.findMany({
       where: { userId },
-      orderBy: { createdAt: 'desc' },
-      select: { id: true, email: true, cvStoragePath: true, motivationStoragePath: true },
+      select: { id: true, email: true, vacancyId: true, matchScore: true, createdAt: true, cvStoragePath: true, motivationStoragePath: true },
     })
 
-    const seenEmails = new Set<string>()
-    const toDelete: string[] = []
-    const pathsToDelete: Array<string | null> = []
-
+    // Group by (email + vacancyId) — duplicates only count within the same vacancy.
+    const groups = new Map<string, typeof all>()
     for (const c of all) {
       if (!c.email) continue
-      if (seenEmails.has(c.email)) {
+      const key = `${c.email.toLowerCase()}::${c.vacancyId}`
+      const g = groups.get(key)
+      if (g) g.push(c); else groups.set(key, [c])
+    }
+
+    const toDelete: string[] = []
+    const pathsToDelete: Array<string | null> = []
+    for (const group of groups.values()) {
+      if (group.length < 2) continue
+      // Keep the best: highest matchScore, then most recent on ties.
+      const keep = group.reduce((best, c) => {
+        const bs = best.matchScore ?? -1, cs = c.matchScore ?? -1
+        if (cs > bs) return c
+        if (cs === bs && c.createdAt > best.createdAt) return c
+        return best
+      })
+      for (const c of group) {
+        if (c.id === keep.id) continue
         toDelete.push(c.id)
         pathsToDelete.push(c.cvStoragePath, c.motivationStoragePath)
-      } else {
-        seenEmails.add(c.email)
       }
     }
 
