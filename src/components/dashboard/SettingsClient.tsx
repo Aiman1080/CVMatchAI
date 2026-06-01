@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { User, Shield, Save, Trash2, Lock, Eye, EyeOff, Camera } from 'lucide-react'
+import { User, Shield, Save, Trash2, Lock, Eye, EyeOff, Camera, CreditCard, Loader2, ExternalLink } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -38,6 +38,28 @@ export function SettingsClient({ user, isDemo }: Props) {
   const [showNew, setShowNew] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [deletingAll, setDeletingAll] = useState(false)
+  const [openingPortal, setOpeningPortal] = useState(false)
+
+  // Opens the Stripe Customer Portal where the user can update payment details,
+  // see invoices, and cancel their subscription. The portal route resolves the
+  // Stripe customer by email; Stripe handles cancellation securely on their side.
+  const openBillingPortal = async () => {
+    if (isDemo) { toast({ title: (sp as any)?.demoBlocked || 'Demo accounts cannot manage billing', variant: 'destructive' }); return }
+    setOpeningPortal(true)
+    try {
+      const res = await fetch('/api/stripe/portal', { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok && data.url) {
+        window.location.href = data.url
+        return
+      }
+      toast({ title: data.error || 'Could not open billing portal', variant: 'destructive' })
+    } catch {
+      toast({ title: 'Could not open billing portal', variant: 'destructive' })
+    } finally {
+      setOpeningPortal(false)
+    }
+  }
   // Confirm dialog for the destructive "delete all candidates" action
   const [deleteAllDialog, setDeleteAllDialog] = useState(false)
 
@@ -375,6 +397,28 @@ export function SettingsClient({ user, isDemo }: Props) {
               </Card>
             ))}
           </div>
+
+          {/* Manage / cancel subscription — only for paying (pro) users.
+              Opens the Stripe Customer Portal (update card, invoices, cancel). */}
+          {(user.subscription === 'pro') && (
+            <Card className="border-0 shadow-sm mt-6 max-w-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+                  <CreditCard className="w-4 h-4 shrink-0" />
+                  {(t.dashboard as any).settingsPage?.manageBillingTitle || 'Manage subscription'}
+                </CardTitle>
+                <CardDescription>
+                  {(t.dashboard as any).settingsPage?.manageBillingDesc || 'Update your payment method, download invoices, or cancel your subscription via Stripe.'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button onClick={openBillingPortal} disabled={openingPortal || isDemo} variant="outline" className="gap-2 dark:border-gray-700">
+                  {openingPortal ? <Loader2 size={14} className="animate-spin" /> : <ExternalLink size={14} />}
+                  {(t.dashboard as any).settingsPage?.manageBillingBtn || 'Manage / cancel subscription'}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </TabsContent>
 
