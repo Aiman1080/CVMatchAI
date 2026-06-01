@@ -14,6 +14,28 @@ const isDemoMode = () =>
 
 const getClient = () => new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
+// Retry a Gemini call on 429 (rate limit) with exponential backoff. The free
+// tier has a low req/min limit, so transient 429s are common under bursts (e.g.
+// several CV operations at once). Retrying a couple of times smooths those out.
+// Non-429 errors are rethrown immediately. (Raise the quota via Google AI Studio
+// billing for a real fix; this just makes the app resilient to short spikes.)
+async function callWithRetry<T>(fn: () => Promise<T>, attempts = 3): Promise<T> {
+  let lastErr: any
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fn()
+    } catch (err: any) {
+      lastErr = err
+      const is429 = err?.status === 429 || /429|too many requests|rate limit|quota/i.test(err?.message || '')
+      if (!is429 || i === attempts - 1) throw err
+      const waitMs = 1500 * Math.pow(2, i) // 1.5s, 3s, 6s
+      log.warn(`Gemini 429 — retrying in ${waitMs}ms (attempt ${i + 1}/${attempts})`)
+      await new Promise(r => setTimeout(r, waitMs))
+    }
+  }
+  throw lastErr
+}
+
 export interface CVAnalysisResult {
   matchScore: number
   summary: string
@@ -111,7 +133,7 @@ ${cvText.slice(0, 6000)}` +
       toolConfig: { functionCallingConfig: { mode: FunctionCallingMode.ANY } },
     })
 
-    const result = await model.generateContent(userContent)
+    const result = await callWithRetry(() => model.generateContent(userContent))
     const usage = result.response.usageMetadata
     const call = result.response.functionCalls()?.[0]
     if (call) {
