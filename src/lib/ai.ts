@@ -14,22 +14,27 @@ const isDemoMode = () =>
 
 const getClient = () => new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
-// Retry a Gemini call on 429 (rate limit) with exponential backoff. The free
-// tier has a low req/min limit, so transient 429s are common under bursts (e.g.
-// several CV operations at once). Retrying a couple of times smooths those out.
-// Non-429 errors are rethrown immediately. (Raise the quota via Google AI Studio
-// billing for a real fix; this just makes the app resilient to short spikes.)
-async function callWithRetry<T>(fn: () => Promise<T>, attempts = 3): Promise<T> {
+// Retry a Gemini call on transient errors with exponential backoff:
+//  - 429 = rate limit / quota (common under bursts of CV operations)
+//  - 503 = "model is currently experiencing high demand" / overloaded (Google-side)
+//  - 500/502/504 = transient gateway/server blips
+// All of these are temporary and usually clear within a second or two, so we
+// retry a few times before giving up. Other errors are rethrown immediately.
+async function callWithRetry<T>(fn: () => Promise<T>, attempts = 4): Promise<T> {
   let lastErr: any
   for (let i = 0; i < attempts; i++) {
     try {
       return await fn()
     } catch (err: any) {
       lastErr = err
-      const is429 = err?.status === 429 || /429|too many requests|rate limit|quota/i.test(err?.message || '')
-      if (!is429 || i === attempts - 1) throw err
-      const waitMs = 1500 * Math.pow(2, i) // 1.5s, 3s, 6s
-      log.warn(`Gemini 429 - retrying in ${waitMs}ms (attempt ${i + 1}/${attempts})`)
+      const status = err?.status
+      const msg = String(err?.message || '')
+      const transient =
+        status === 429 || status === 500 || status === 502 || status === 503 || status === 504 ||
+        /\b(429|500|502|503|504)\b|too many requests|rate limit|quota|overload|high demand|unavailable|try again later/i.test(msg)
+      if (!transient || i === attempts - 1) throw err
+      const waitMs = 1000 * Math.pow(2, i) // 1s, 2s, 4s
+      log.warn(`Gemini transient error ${status || ''} - retrying in ${waitMs}ms (attempt ${i + 1}/${attempts})`)
       await new Promise(r => setTimeout(r, waitMs))
     }
   }

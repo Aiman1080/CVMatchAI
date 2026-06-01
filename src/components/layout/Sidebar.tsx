@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { useTheme } from 'next-themes'
 import { useState, useEffect } from 'react'
-import { LayoutDashboard, Briefcase, Users, BarChart3, Settings, Mail, LogOut, ShieldCheck, ChevronRight, LifeBuoy, Sun, Moon, Plug, Lock, Menu, X } from 'lucide-react'
+import { LayoutDashboard, Briefcase, Users, BarChart3, Settings, Mail, LogOut, ShieldCheck, ChevronRight, LifeBuoy, Sun, Moon, Plug, Lock, Menu, X, Columns } from 'lucide-react'
 import { Logo } from '@/components/Logo'
 import { NotificationBell } from '@/components/NotificationBell'
 import { cn } from '@/lib/utils'
@@ -47,6 +47,7 @@ export function Sidebar() {
     { href: '/dashboard', icon: LayoutDashboard, label: t.dashboard.nav.dashboard },
     { href: '/vacancies', icon: Briefcase, label: t.dashboard.nav.vacancies },
     { href: '/candidates', icon: Users, label: t.dashboard.nav.candidates },
+    { href: '/pipeline', icon: Columns, label: (t.dashboard.nav as any).pipeline || 'Pipeline' },
     { href: '/email', icon: Mail, label: t.dashboard.nav.email, locked: isFree },
     { href: '/integrations', icon: Plug, label: t.dashboard.nav.integrations, locked: isFree },
     { href: '/analytics', icon: BarChart3, label: t.dashboard.nav.analytics, locked: isFree },
