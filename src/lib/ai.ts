@@ -87,6 +87,7 @@ export async function analyzeCVAgainstVacancy(
   const langInstruction = outputLocale === 'fr' ? '\n\nIMPORTANT: Write ALL text fields (summary, strengths, weaknesses, experience, education) in French.'
     : outputLocale === 'nl' ? '\n\nIMPORTANT: Write ALL text fields (summary, strengths, weaknesses, experience, education) in Dutch.'
     : outputLocale === 'de' ? '\n\nIMPORTANT: Write ALL text fields (summary, strengths, weaknesses, experience, education) in German.'
+    : outputLocale === 'en' ? '\n\nIMPORTANT: Write ALL text fields (summary, strengths, weaknesses, experience, education) in English.'
     : ''
 
   const userContent =

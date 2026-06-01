@@ -2,6 +2,7 @@
 // detects whether it's a CV or a motivation letter, runs AI analysis against
 // the requested vacancy, and creates a Candidate record in the database.
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
@@ -117,7 +118,13 @@ export async function POST(req: Request) {
 
     if (cvText) {
       try {
-        const analysis = await analyzeCVAgainstVacancy(cvText, vacancy.title, vacancy.description, vacancy.requirements, motivationText, vacancy.language)
+        // Output language: follow the APP's language (the recruiter's UI locale,
+        // from the deltamatch-locale cookie) rather than the CV's own language or
+        // the vacancy's — the recruiter reads the analysis, so it should be in
+        // their interface language. Fall back to the vacancy language.
+        const cookieLocale = (await cookies()).get('deltamatch-locale')?.value
+        const outputLocale = (['en', 'nl', 'fr', 'de'].includes(cookieLocale || '') ? cookieLocale : vacancy.language) || 'fr'
+        const analysis = await analyzeCVAgainstVacancy(cvText, vacancy.title, vacancy.description, vacancy.requirements, motivationText, outputLocale)
         candidate = await prisma.candidate.update({
           where: { id: candidate.id },
           data: {
