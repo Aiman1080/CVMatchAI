@@ -48,21 +48,33 @@ export function sanitizeText(text: string): string {
   return out
 }
 
+// Heuristic: does pdf-parse output look like a garbled multi-column / design CV?
+// Such PDFs (Canva-style, columns, name in a banner) extract LOTS of text but in
+// the wrong order, so pdf-parse "succeeds" yet the result is unusable. Signs:
+// many very short lines (column fragments), and few real sentence-length lines.
+function looksGarbled(text: string): boolean {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean)
+  if (lines.length < 8) return false // too little to judge; the <100 check handles empties
+  const shortLines = lines.filter(l => l.length <= 3).length
+  const longLines = lines.filter(l => l.length >= 40).length
+  // >40% of lines are tiny fragments AND almost no sentence-length lines → garbled layout
+  return (shortLines / lines.length > 0.4) && (longLines / lines.length < 0.1)
+}
+
 // Dispatches to the correct parser based on MIME type; falls back to raw UTF-8 for plain text
 export async function parseDocument(buffer: Buffer, mimeType: string): Promise<string> {
   if (mimeType === 'application/pdf') {
     const text = await parsePDF(buffer)
-    // OCR fallback: scanned/image-only PDFs yield little or no text from
-    // pdf-parse. When that happens, ask Gemini to read the PDF directly (it
-    // handles PDFs natively — no Tesseract/system dependency, no Vercel
-    // memory/timeout risk). No-op in demo mode / on failure, so behaviour is
-    // unchanged when normal extraction already works. Dynamic import keeps the
-    // AI layer out of contexts that only need plain parsing.
-    if (text.trim().length < 100) {
+    // Use Gemini Vision (reads the PDF visually, respecting layout) when pdf-parse
+    // returns almost nothing (scanned/image PDF) OR returns garbled text (design /
+    // multi-column CVs where the reading order is scrambled). Gemini handles both
+    // far better. No-op in demo mode / on failure → falls back to pdf-parse output.
+    if (text.trim().length < 100 || looksGarbled(text)) {
       try {
         const { extractTextWithGemini } = await import('./ai')
         const ocr = await extractTextWithGemini(buffer, mimeType)
-        if (ocr.trim().length > text.trim().length) return sanitizeText(ocr)
+        // Prefer the OCR result when it produced a reasonable amount of text.
+        if (ocr.trim().length >= 100) return sanitizeText(ocr)
       } catch (error) {
         console.error('OCR fallback error:', error)
       }
