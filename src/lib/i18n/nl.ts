@@ -1136,6 +1136,8 @@ export const nl = {
       selectAll: 'Alles selecteren',
       deselectAll: 'Alles deselecteren',
       changeStatusTo: 'Status wijzigen naar...',
+      allVacancies: 'Alle vacatures',
+      uploadCvBtn: 'Cv uploaden',
       compare: 'Vergelijken',
       deleteCandidate: 'Kandidaat verwijderen',
       deleteCandidateDesc: '{name} verwijderen? Deze actie kan niet ongedaan worden gemaakt.',
@@ -1161,6 +1163,7 @@ export const nl = {
     },
     settingsPage: {
       errorSaving: 'Kon instellingen niet opslaan. Controleer uw verbinding en probeer opnieuw.',
+      billingPortalError: 'Kon facturatieportaal niet openen',
       errorChangingPassword: 'Kon wachtwoord niet wijzigen. Controleer uw huidige wachtwoord en probeer opnieuw.',
       checkConnectionRetry: 'Controleer je verbinding en probeer opnieuw.',
       refreshRetry: 'Vernieuw de pagina en probeer opnieuw.',

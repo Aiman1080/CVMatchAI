@@ -44,6 +44,7 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
   const router = useRouter()
   const { t } = useLanguage()
   const tc = t.dashboard.candidates
+  const tcp = t.dashboard.candidatesPage
   const [candidates, setCandidates] = useState(initialCandidates)
   const [search, setSearch] = useState('')
   const [vacancyFilter, setVacancyFilter] = useState('all')
@@ -423,10 +424,10 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
         {vacancies.length > 0 && (
           <Select value={vacancyFilter} onValueChange={handleVacancyFilterChange}>
             <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="All vacancies" />
+              <SelectValue placeholder={tcp.allVacancies} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All vacancies</SelectItem>
+              <SelectItem value="all">{tcp.allVacancies}</SelectItem>
               {vacancies.map(v => (
                 <SelectItem key={v.id} value={v.id}>{v.title} - {v.company}</SelectItem>
               ))}
@@ -452,13 +453,13 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
           </Select>
           <Select value={scoreFilter} onValueChange={handleScoreFilterChange}>
             <SelectTrigger className="w-full sm:w-36">
-              <SelectValue placeholder="Score" />
+              <SelectValue placeholder={tc.score} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{tc.all}</SelectItem>
-              <SelectItem value="high">75+ Strong</SelectItem>
-              <SelectItem value="medium">50-74 Medium</SelectItem>
-              <SelectItem value="low">0-49 Low</SelectItem>
+              <SelectItem value="high">{tcp.scoreHigh}</SelectItem>
+              <SelectItem value="medium">{tcp.scoreMedium}</SelectItem>
+              <SelectItem value="low">{tcp.scoreLow}</SelectItem>
             </SelectContent>
           </Select>
           <Select value={sortBy} onValueChange={handleSortChange}>
@@ -466,24 +467,24 @@ export function CandidatesClient({ initialCandidates, initialTotal, isPro = fals
               <SelectValue placeholder={tc.sortBy} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="score">{tc.score} (desc)</SelectItem>
-              <SelectItem value="name">{tc.name} (A-Z)</SelectItem>
-              <SelectItem value="date">{tc.date} (newest)</SelectItem>
-              <SelectItem value="date_oldest">{tc.date} (oldest)</SelectItem>
+              <SelectItem value="score">{tcp.scoreDesc}</SelectItem>
+              <SelectItem value="name">{tcp.nameAz}</SelectItem>
+              <SelectItem value="date">{tcp.dateNewest}</SelectItem>
+              <SelectItem value="date_oldest">{tcp.dateOldest}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="flex items-center justify-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 self-start sm:self-auto">
-          <button onClick={() => setView('grid')} className={`p-1.5 rounded-md transition-colors ${view === 'grid' ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-800 dark:text-gray-200' : 'text-gray-400 hover:text-gray-600'}`} title="Grid view">
+          <button onClick={() => setView('grid')} className={`p-1.5 rounded-md transition-colors ${view === 'grid' ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-800 dark:text-gray-200' : 'text-gray-400 hover:text-gray-600'}`} title={tcp.gridView}>
             <LayoutGrid size={16} />
           </button>
-          <button onClick={() => setView('kanban')} className={`p-1.5 rounded-md transition-colors ${view === 'kanban' ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-800 dark:text-gray-200' : 'text-gray-400 hover:text-gray-600'}`} title="Kanban view">
+          <button onClick={() => setView('kanban')} className={`p-1.5 rounded-md transition-colors ${view === 'kanban' ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-800 dark:text-gray-200' : 'text-gray-400 hover:text-gray-600'}`} title={tcp.kanbanView}>
             <Columns size={16} />
           </button>
         </div>
         <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2 sm:contents">
           <Button size="sm" onClick={() => setShowUploadCV(true)} className="gap-1.5 h-auto py-2 gradient-bg whitespace-normal text-center leading-tight">
-            <Upload size={15} className="shrink-0" /> Upload CV
+            <Upload size={15} className="shrink-0" /> {tcp.uploadCvBtn}
           </Button>
           <Button variant="outline" size="sm" onClick={() => setShowImportCSV(true)} className="gap-1.5 h-auto py-2 whitespace-normal text-center leading-tight">
             <FileText size={15} className="shrink-0" /> Import CSV

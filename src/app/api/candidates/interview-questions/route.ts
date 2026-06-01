@@ -21,7 +21,7 @@ export async function POST(req: Request) {
   if (!limits.interviewQuestions) {
     return NextResponse.json({ error: 'Interview questions require Pro plan' }, { status: 403 })
   }
-  const { candidateId } = await req.json()
+  const { candidateId, locale } = await req.json()
   if (!candidateId) return NextResponse.json({ error: 'candidateId required' }, { status: 400 })
 
   const candidate = await prisma.candidate.findFirst({
@@ -32,10 +32,12 @@ export async function POST(req: Request) {
   if (!candidate.cvContent) return NextResponse.json({ error: 'No CV content available' }, { status: 400 })
   if (!candidate.vacancy) return NextResponse.json({ error: 'Vacancy not found' }, { status: 404 })
 
-  // Output language follows the app's UI locale (cookie), not the CV's language,
-  // so questions are generated in the recruiter's chosen interface language.
+  // Output language: an explicit choice from the UI wins, then the app's UI
+  // locale (cookie), then the CV's detected language. The recruiter can pick the
+  // generation language with the FR/NL/EN/DE selector next to the button.
   const cookieLocale = (await cookies()).get('deltamatch-locale')?.value
-  const outputLocale = ['en', 'nl', 'fr', 'de'].includes(cookieLocale || '') ? cookieLocale! : (candidate.language || 'fr')
+  const chosen = locale || cookieLocale
+  const outputLocale = ['en', 'nl', 'fr', 'de'].includes(chosen || '') ? chosen! : (candidate.language || 'fr')
 
   const result = await generateInterviewQuestions(
     candidate.cvContent,
