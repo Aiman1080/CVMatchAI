@@ -82,6 +82,7 @@ export async function POST(req: Request) {
         break
       }
 
+      case 'customer.subscription.created':
       case 'customer.subscription.updated': {
         try {
           const subscription = event.data.object as any
