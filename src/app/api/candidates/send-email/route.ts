@@ -83,7 +83,9 @@ export async function POST(req: Request) {
     const emailLabel = type === 'interview' ? 'Interview email sent' : type === 'rejection' ? 'Rejection email sent' : 'Follow-up email sent'
     await logActivity(candidateId, 'email_sent', emailLabel, { emailType: type, subject, to: candidate.email })
 
-    return NextResponse.json({ success: true })
+    // Flag when the email went out WITHOUT a signature, so the UI can nudge the
+    // recruiter to set one up in the Email tab (it makes outbound mail look pro).
+    return NextResponse.json({ success: true, noSignature: !signatureHtml.trim() })
   } catch (err: any) {
     return NextResponse.json({ error: `Failed to send email: ${err.message}` }, { status: 500 })
   }

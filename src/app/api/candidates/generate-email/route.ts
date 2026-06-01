@@ -7,6 +7,18 @@ import { getEffectiveSubscription } from '@/lib/plans'
 
 const isDemoMode = () => !process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY.trim() === ''
 
+// The recruiter's email signature is appended automatically when the email is
+// sent, so the generated body must NOT carry its own closing salutation +
+// name/company (that would double up). Strip everything from the closing line
+// onward (Cordialement / Kind regards / Met vriendelijke groeten, etc.).
+function stripFooter(body: string): string {
+  const closingRe = /\n+\s*(cordialement|bien (à|a) vous|kind regards|warm regards|with kind regards|best regards|met (vriendelijke|hartelijke) groeten|mit freundlichen)\b[\s\S]*$/i
+  return body.replace(closingRe, '').trimEnd()
+}
+function withoutFooter(payload: { subject: string; body: string }) {
+  return { subject: payload.subject, body: stripFooter(payload.body) }
+}
+
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -71,7 +83,7 @@ export async function POST(req: Request) {
       },
     }
     const localeKey = ['en', 'nl', 'fr'].includes(locale) ? locale : 'fr'
-    return NextResponse.json((demos[localeKey][type] || demos[localeKey].interview))
+    return NextResponse.json(withoutFooter(demos[localeKey][type] || demos[localeKey].interview))
   }
 
   const wordCounts: Record<string, string> = {
@@ -88,7 +100,7 @@ export async function POST(req: Request) {
   }
   const typeInstruction = typeInstructions[type] || typeInstructions.interview
 
-  const prompt = `Write a professional, detailed recruitment email in ${langName} for ${candidate.firstName} ${candidate.lastName} regarding "${vacancyTitle}" at ${company}. Type: ${type}. Recruiter: ${recruiterName}. ${wordCount}. ${typeInstruction} Return JSON: {"subject":"...","body":"..."}`
+  const prompt = `Write a professional, detailed recruitment email in ${langName} for ${candidate.firstName} ${candidate.lastName} regarding "${vacancyTitle}" at ${company}. Type: ${type}. Recruiter: ${recruiterName}. ${wordCount}. ${typeInstruction} IMPORTANT: Do NOT include any sign-off, closing salutation (e.g. "Kind regards", "Cordialement", "Met vriendelijke groeten"), signature, recruiter name, or company name at the end — the email signature is appended automatically. End the body with the last content sentence. Return JSON: {"subject":"...","body":"..."}`
 
   try {
     const { GoogleGenerativeAI } = await import('@google/generative-ai')
@@ -99,7 +111,8 @@ export async function POST(req: Request) {
     const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (jsonMatch) {
       try {
-        return NextResponse.json(JSON.parse(jsonMatch[0]))
+        const parsed = JSON.parse(jsonMatch[0])
+        return NextResponse.json(withoutFooter({ subject: parsed.subject || '', body: parsed.body || '' }))
       } catch {
         return NextResponse.json({ error: 'Could not parse AI response' }, { status: 500 })
       }
@@ -113,6 +126,6 @@ export async function POST(req: Request) {
       nl: { subject: `${type === 'interview' ? 'Uitnodiging' : type === 'rejection' ? 'Sollicitatie update' : 'Opvolging'} — ${vacancyTitle}`, body: `Beste ${candidate.firstName},\n\nHartelijk dank voor uw sollicitatie voor de functie ${vacancyTitle} bij ${company}. Wij waarderen de moeite die u in uw kandidatuur hebt gestoken.\n\n${type === 'interview' ? `Na beoordeling van uw profiel waren wij onder de indruk van uw achtergrond en nodigen u graag uit voor een gesprek. Gelieve ons uw beschikbaarheid voor de komende week mee te delen.\n\nWij kijken ernaar uit u te ontmoeten.` : type === 'rejection' ? `Na zorgvuldige afweging hebben wij besloten verder te gaan met een andere kandidaat. Uw ervaring heeft indruk op ons gemaakt en wij moedigen u aan om toekomstige vacatures te volgen.\n\nWij wensen u veel succes.` : `Uw kandidatuur wordt momenteel actief beoordeeld. Wij verwachten u binnen 5-7 werkdagen een update te kunnen geven. Aarzel niet om contact op te nemen bij vragen.`}\n\nMet vriendelijke groeten,\n${recruiterName}\n${company}` },
       fr: { subject: `${type === 'interview' ? 'Invitation entretien' : type === 'rejection' ? 'Suite candidature' : 'Suivi'} — ${vacancyTitle}`, body: `Bonjour ${candidate.firstName},\n\nMerci pour votre candidature au poste de ${vacancyTitle} chez ${company}. Nous apprécions le temps que vous avez consacré à votre dossier.\n\n${type === 'interview' ? `Après examen de votre profil, nous avons été impressionnés par votre parcours et souhaitons vous inviter à un entretien. Pourriez-vous nous communiquer vos disponibilités pour la semaine prochaine ?\n\nNous nous réjouissons de vous rencontrer.` : type === 'rejection' ? `Après mûre réflexion, nous avons décidé de poursuivre avec un autre candidat. Votre expérience nous a impressionnés et nous vous encourageons à postuler à nos futures offres.\n\nNous vous souhaitons beaucoup de succès.` : `Votre candidature est en cours d'examen actif. Nous prévoyons de vous donner une mise à jour dans les 5 à 7 jours ouvrables. N'hésitez pas à nous contacter pour toute question.`}\n\nCordialement,\n${recruiterName}\n${company}` },
     }
-    return NextResponse.json(demos[localeKey])
+    return NextResponse.json(withoutFooter(demos[localeKey]))
   }
 }
