@@ -7,16 +7,8 @@ const log = createLogger('stripe/webhook')
 export async function POST(req: Request) {
   const secretKey = process.env.STRIPE_SECRET_KEY
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
-  // Detailed diagnostics: which Stripe config is present (without leaking values),
-  // and whether the keys look like TEST vs LIVE — a common mismatch source.
-  log.info('Webhook hit', {
-    hasSecretKey: !!secretKey,
-    secretKeyMode: secretKey?.startsWith('sk_live') ? 'live' : secretKey?.startsWith('sk_test') ? 'test' : 'unknown',
-    hasWebhookSecret: !!webhookSecret,
-    webhookSecretPrefix: webhookSecret ? webhookSecret.slice(0, 8) : 'none',
-  })
   if (!secretKey || !webhookSecret) {
-    log.error('Webhook NOT configured — missing STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET on Vercel')
+    log.error('Webhook not configured — missing STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET')
     return NextResponse.json({ error: 'Stripe not configured' }, { status: 503 })
   }
 
@@ -27,7 +19,6 @@ export async function POST(req: Request) {
   const signature = req.headers.get('stripe-signature')
 
   if (!signature) {
-    log.error('Webhook rejected — no stripe-signature header on the request')
     return NextResponse.json({ error: 'Missing signature' }, { status: 400 })
   }
 
@@ -35,13 +26,11 @@ export async function POST(req: Request) {
   try {
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
   } catch (err: any) {
-    // The #1 cause: the STRIPE_WEBHOOK_SECRET on Vercel doesn't match THIS
-    // endpoint's signing secret (e.g. live vs test, or a regenerated secret).
-    log.error('Webhook SIGNATURE verification FAILED — the STRIPE_WEBHOOK_SECRET on Vercel does not match this endpoint', { message: err.message })
+    // Most common cause: STRIPE_WEBHOOK_SECRET doesn't match this endpoint's
+    // signing secret (e.g. test vs live, or a regenerated secret).
+    log.error('Webhook signature verification failed', { message: err.message })
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
-
-  log.info(`Webhook verified OK → event=${event.type} id=${event.id}`)
 
   // Idempotency & retry guard: Stripe retries on 5xx responses, so once the
   // signature is verified we always respond 200 even if internal processing
