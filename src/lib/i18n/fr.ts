@@ -1241,6 +1241,11 @@ export const fr = {
       filesFailedPlural: "{count} fichiers n'ont pas pu être traités. Voir les détails ci-dessous.",
       uploadErrorFallback: "Impossible d'uploader {name}. Assurez-vous que c'est un PDF/DOCX valide de moins de 10 Mo.",
       uploadNetworkError: "Erreur réseau lors de l'upload de {name}. Vérifiez votre connexion et réessayez.",
+      cvLabel: 'CV',
+      motivationOptional: 'Lettre de motivation (optionnel)',
+      addMotivation: 'Ajouter la lettre',
+      removeMotivation: 'Retirer',
+      addMoreCvs: 'Ajouter d\'autres CV',
     },
     compare: {
       backToCandidates: 'Retour aux candidats',

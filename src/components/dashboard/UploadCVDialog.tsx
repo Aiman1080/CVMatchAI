@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Upload, FileText, Loader2, CheckCircle, X } from 'lucide-react'
+import { Upload, FileText, Loader2, CheckCircle, X, Plus, Paperclip } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
@@ -17,31 +17,48 @@ interface Props {
   onUploaded: (candidate: any) => void
 }
 
-// Handles multi-file CV/motivation letter uploads with per-file progress and GDPR consent gate
+// One row = one CV + an OPTIONAL motivation letter that get paired into a single candidate.
+interface CvRow {
+  id: string
+  cv: File
+  motivation: File | null
+}
+
+const ACCEPT = {
+  'application/pdf': ['.pdf'],
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+  'application/msword': ['.doc'],
+  'text/plain': ['.txt'],
+}
+
+// Multi-CV upload: drop several CVs, attach an optional motivation letter to each,
+// pick GDPR consent, then upload sequentially (one candidate per CV row).
 export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploaded }: Props) {
   const { t } = useLanguage()
   const u = t.dashboard.upload
-  const [files, setFiles] = useState<File[]>([])
+  const [rows, setRows] = useState<CvRow[]>([])
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [gdprConsent, setGdprConsent] = useState(false)
   const [results, setResults] = useState<any[]>([])
 
-  // Cap at 10 files per session to avoid overwhelming the AI analysis queue
+  // Each dropped file becomes its own CV row (cap at 10 to protect the AI queue)
   const onDrop = useCallback((accepted: File[]) => {
-    setFiles(prev => [...prev, ...accepted].slice(0, 10))
+    setRows(prev => [
+      ...prev,
+      ...accepted.map(f => ({ id: crypto.randomUUID(), cv: f, motivation: null as File | null })),
+    ].slice(0, 10))
   }, [])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: {
-      'application/pdf': ['.pdf'],
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-      'application/msword': ['.doc'],
-      'text/plain': ['.txt'],
-    },
+    accept: ACCEPT,
     maxSize: 10 * 1024 * 1024,
   })
+
+  const setRowMotivation = (id: string, file: File | null) =>
+    setRows(prev => prev.map(r => (r.id === id ? { ...r, motivation: file } : r)))
+  const removeRow = (id: string) => setRows(prev => prev.filter(r => r.id !== id))
 
   const handleUpload = async () => {
     if (!gdprConsent) {
@@ -51,13 +68,14 @@ export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploa
     setUploading(true)
     const uploaded: any[] = []
 
-    // Upload files sequentially - parallel uploads could saturate the AI analysis API
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i]
-      setProgress(Math.round(((i) / files.length) * 100))
+    // Upload rows sequentially - parallel uploads could saturate the AI analysis API
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i]
+      setProgress(Math.round((i / rows.length) * 100))
 
       const formData = new FormData()
-      formData.append('file', file)
+      formData.append('file', row.cv)
+      if (row.motivation) formData.append('motivation', row.motivation)
       formData.append('vacancyId', vacancyId)
       formData.append('gdprConsent', 'true')
 
@@ -65,15 +83,14 @@ export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploa
         const res = await fetch('/api/upload', { method: 'POST', body: formData })
         const data = await res.json()
         if (res.ok && data.success) {
-          uploaded.push({ file: file.name, success: true, candidate: data.candidate, score: data.candidate.matchScore })
+          uploaded.push({ file: row.cv.name, success: true, candidate: data.candidate, score: data.candidate.matchScore })
           onUploaded(data.candidate)
         } else {
-          // Use server-provided detailed error if available, else a clear instruction
-          const fallback = ((u as any).uploadErrorFallback || 'Could not upload {name}. Make sure it is a valid PDF/DOCX under 10MB.').replace('{name}', file.name)
-          uploaded.push({ file: file.name, success: false, error: data.error || fallback })
+          const fallback = ((u as any).uploadErrorFallback || 'Could not upload {name}. Make sure it is a valid PDF/DOCX under 10MB.').replace('{name}', row.cv.name)
+          uploaded.push({ file: row.cv.name, success: false, error: data.error || fallback })
         }
       } catch {
-        uploaded.push({ file: file.name, success: false, error: ((u as any).uploadNetworkError || 'Network error uploading {name}. Please check your connection and try again.').replace('{name}', file.name) })
+        uploaded.push({ file: row.cv.name, success: false, error: ((u as any).uploadNetworkError || 'Network error uploading {name}. Please check your connection and try again.').replace('{name}', row.cv.name) })
       }
     }
 
@@ -83,14 +100,14 @@ export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploa
 
     const successes = uploaded.filter(r => r.success).length
     toast({
-      title: u.filesProcessed.replace('{success}', String(successes)).replace('{total}', String(files.length)),
+      title: u.filesProcessed.replace('{success}', String(successes)).replace('{total}', String(rows.length)),
       description: u.aiAnalysisComplete.replace('{count}', String(successes)),
     })
   }
 
   // Reset all state on close so the dialog is fresh when reopened
   const handleClose = () => {
-    setFiles([])
+    setRows([])
     setResults([])
     setProgress(0)
     setGdprConsent(false)
@@ -110,7 +127,6 @@ export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploa
           const failedCount = results.length - successCount
           return (
             <div className="space-y-3">
-              {/* Prominent success summary */}
               {successCount > 0 && (
                 <div className="p-4 rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/40 dark:to-emerald-950/40 border border-green-200 dark:border-green-800">
                   <div className="flex items-center gap-3 mb-1">
@@ -167,24 +183,65 @@ export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploa
               <input {...getInputProps()} />
               <Upload className={`w-8 h-8 mx-auto mb-3 ${isDragActive ? 'text-blue-500' : 'text-gray-400'}`} />
               <p className="text-sm font-medium text-gray-700 break-words">
-                {isDragActive ? u.dropFiles : u.dragDrop}
+                {isDragActive ? u.dropFiles : (rows.length > 0 ? ((u as any).addMoreCvs || u.dragDrop) : u.dragDrop)}
               </p>
               <p className="text-xs text-gray-400 mt-1 break-words">{u.fileFormats}</p>
             </div>
 
-            {files.length > 0 && (
-              <div className="space-y-2 max-h-32 overflow-y-auto">
-                {files.map((f, i) => (
-                  <div key={i} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <FileText className="w-4 h-4 text-blue-500 shrink-0" />
-                    <span className="text-xs text-gray-700 dark:text-gray-300 flex-1 truncate min-w-0">{f.name}</span>
-                    <span className="text-xs text-gray-400 shrink-0">{(f.size / 1024).toFixed(0)}KB</span>
-                    <button onClick={() => setFiles(prev => prev.filter((_, j) => j !== i))} className="text-gray-400 hover:text-red-500 shrink-0">
-                      <X size={13} />
-                    </button>
-                  </div>
-                ))}
-              </div>
+            {rows.length > 0 && (
+              <>
+                {/* Column hint: CV on the left, optional motivation on the right */}
+                <div className="flex items-center justify-between px-1 text-[11px] font-medium text-gray-400">
+                  <span>{(u as any).cvLabel || 'CV'}</span>
+                  <span>{(u as any).motivationOptional || 'Motivation letter (optional)'}</span>
+                </div>
+                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                  {rows.map(row => (
+                    <div key={row.id} className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-2.5">
+                      <div className="flex items-center gap-2">
+                        {/* CV (left) */}
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <div className="w-7 h-7 rounded-md bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center shrink-0">
+                            <FileText className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">{row.cv.name}</p>
+                            <p className="text-[10px] text-gray-400">{(row.cv.size / 1024).toFixed(0)}KB</p>
+                          </div>
+                        </div>
+
+                        {/* Motivation (right) */}
+                        <div className="shrink-0">
+                          {row.motivation ? (
+                            <div className="flex items-center gap-1.5 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 rounded-md px-2 py-1">
+                              <Paperclip className="w-3 h-3 text-purple-500 shrink-0" />
+                              <span className="text-[11px] text-purple-700 dark:text-purple-300 max-w-[100px] truncate">{row.motivation.name}</span>
+                              <button onClick={() => setRowMotivation(row.id, null)} className="text-purple-400 hover:text-red-500 shrink-0" title={(u as any).removeMotivation || 'Remove'}>
+                                <X size={12} />
+                              </button>
+                            </div>
+                          ) : (
+                            <label className="flex items-center gap-1 text-[11px] text-purple-600 dark:text-purple-400 border border-dashed border-purple-300 dark:border-purple-700 rounded-md px-2 py-1 cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-950/30 transition-colors">
+                              <input
+                                type="file"
+                                accept=".pdf,.docx,.doc,.txt"
+                                className="hidden"
+                                onChange={e => setRowMotivation(row.id, e.target.files?.[0] || null)}
+                              />
+                              <Plus size={12} /> {(u as any).addMotivation || 'Add letter'}
+                            </label>
+                          )}
+                        </div>
+
+                        {/* Remove row */}
+                        <button onClick={() => removeRow(row.id)} className="text-gray-300 hover:text-red-500 shrink-0" title="✕">
+                          <X size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
 
             {uploading && (
@@ -215,7 +272,7 @@ export function UploadCVDialog({ open, onClose, vacancyId, vacancyTitle, onUploa
               <Button variant="outline" onClick={handleClose} className="flex-1 h-auto py-2 whitespace-normal text-center leading-tight">{u.cancelBtn}</Button>
               <Button
                 onClick={handleUpload}
-                disabled={files.length === 0 || uploading || !gdprConsent}
+                disabled={rows.length === 0 || uploading || !gdprConsent}
                 className="flex-1 gradient-bg h-auto py-2 whitespace-normal text-center leading-tight"
               >
                 {uploading ? (

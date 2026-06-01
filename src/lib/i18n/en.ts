@@ -1250,6 +1250,11 @@ export const en = {
       filesFailedPlural: '{count} files could not be processed. See details below.',
       uploadErrorFallback: 'Could not upload {name}. Make sure it is a valid PDF/DOCX under 10MB.',
       uploadNetworkError: 'Network error uploading {name}. Please check your connection and try again.',
+      cvLabel: 'CV',
+      motivationOptional: 'Motivation letter (optional)',
+      addMotivation: 'Add letter',
+      removeMotivation: 'Remove',
+      addMoreCvs: 'Add more CVs',
     },
     compare: {
       backToCandidates: 'Back to candidates',
