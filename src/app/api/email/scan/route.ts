@@ -4,6 +4,7 @@
 // document is a CV or motivation letter, then runs AI CV analysis and creates
 // a Candidate record linked to the best matching active vacancy.
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
@@ -464,17 +465,36 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: `Scan failed: ${error.message}${hint}` }, { status: 500 })
   }
 
-  // Add a diagnostic message so the recruiter knows why nothing was added
-  let diagnostic = ''
-  if (results.scanned === 0) {
-    diagnostic = 'No emails found in the last 15 days. Make sure your inbox has recent messages.'
-  } else if (results.relevant === 0) {
-    diagnostic = `Found ${results.scanned} email(s), but AI determined none are job applications. Recruiters typically receive CVs as PDF/DOCX attachments — check that your applicants are sending attachments.`
-  } else if (results.processed === 0) {
-    diagnostic = `Found ${results.relevant} relevant email(s), but couldn't extract CV text. The attachments may be empty, image-only PDFs, or already-imported messages.`
-  } else {
-    diagnostic = `Successfully imported ${results.processed} new candidate(s).`
+  // Localized diagnostic so the recruiter understands the result in their language.
+  const loc = (await cookies()).get('deltamatch-locale')?.value
+  const lang = ['en', 'nl', 'fr'].includes(loc || '') ? loc! : 'fr'
+  const D = {
+    none: {
+      en: 'No emails found in the last 15 days. Make sure your inbox has recent messages.',
+      fr: 'Aucun e-mail trouvé sur les 15 derniers jours. Vérifiez que votre boîte contient des messages récents.',
+      nl: 'Geen e-mails gevonden in de laatste 15 dagen. Controleer of uw inbox recente berichten bevat.',
+    },
+    norelevant: {
+      en: `Found ${results.scanned} email(s), but AI determined none are job applications. Recruiters typically receive CVs as PDF/DOCX attachments — check that your applicants are sending attachments.`,
+      fr: `${results.scanned} e-mail(s) analysé(s), mais l'IA n'a détecté aucune candidature. Les candidats envoient généralement leur CV en pièce jointe (PDF/DOCX) — vérifiez qu'il y a bien des pièces jointes.`,
+      nl: `${results.scanned} e-mail(s) gescand, maar de AI vond geen sollicitaties. Kandidaten sturen hun cv meestal als bijlage (PDF/DOCX) — controleer of er bijlagen zijn.`,
+    },
+    noprocessed: {
+      en: `Found ${results.relevant} relevant email(s), but couldn't extract CV text. The attachments may be empty, image-only PDFs, or already-imported messages.`,
+      fr: `${results.relevant} e-mail(s) pertinent(s) trouvé(s), mais impossible d'extraire le texte du CV. Les pièces jointes sont peut-être vides, des PDF image, ou déjà importées.`,
+      nl: `${results.relevant} relevante e-mail(s) gevonden, maar kon de cv-tekst niet extraheren. De bijlagen zijn mogelijk leeg, alleen-afbeelding-PDF's, of al geïmporteerd.`,
+    },
+    ok: {
+      en: `Successfully imported ${results.processed} new candidate(s).`,
+      fr: `${results.processed} nouveau(x) candidat(s) importé(s) avec succès.`,
+      nl: `${results.processed} nieuwe kandidaat/kandidaten succesvol geïmporteerd.`,
+    },
   }
+  let diagnostic = ''
+  if (results.scanned === 0) diagnostic = D.none[lang as 'en' | 'fr' | 'nl']
+  else if (results.relevant === 0) diagnostic = D.norelevant[lang as 'en' | 'fr' | 'nl']
+  else if (results.processed === 0) diagnostic = D.noprocessed[lang as 'en' | 'fr' | 'nl']
+  else diagnostic = D.ok[lang as 'en' | 'fr' | 'nl']
 
   T(`DONE scanned=${results.scanned} relevant=${results.relevant} processed=${results.processed} errors=${results.errors.length}`)
   return NextResponse.json({ ...results, diagnostic, trace })

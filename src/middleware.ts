@@ -28,14 +28,17 @@ const RATE_LIMIT_RULES: Record<RuleKey, { path: string; maxRequests: number; win
   auth_register:        { path: '/api/auth/register',                  maxRequests: 5,  windowSec: ONE_MIN_SEC },
   auth_forgot:          { path: '/api/auth/forgot-password',           maxRequests: 3,  windowSec: ONE_MIN_SEC },
   contact:              { path: '/api/contact',                        maxRequests: 5,  windowSec: ONE_MIN_SEC },
-  upload:               { path: '/api/upload',                         maxRequests: 10, windowSec: ONE_HOUR_SEC },
-  analyze:              { path: '/api/analyze',                        maxRequests: 10, windowSec: ONE_HOUR_SEC },
-  interview_questions:  { path: '/api/candidates/interview-questions', maxRequests: 10, windowSec: ONE_HOUR_SEC },
-  hiring_report:        { path: '/api/candidates/hiring-report',       maxRequests: 10, windowSec: ONE_HOUR_SEC },
-  generate_email:       { path: '/api/candidates/generate-email',      maxRequests: 10, windowSec: ONE_HOUR_SEC },
-  generate_description: { path: '/api/vacancies/generate-description', maxRequests: 10, windowSec: ONE_HOUR_SEC },
-  ranking:              { path: '/api/vacancies/ranking',              maxRequests: 10, windowSec: ONE_HOUR_SEC },
-  email_scan:           { path: '/api/email/scan',                     maxRequests: 5,  windowSec: ONE_HOUR_SEC },
+  // Recruiters routinely upload/analyze many CVs in a session, so these caps are
+  // generous (abuse protection, not a usage limit). Gemini billing handles the
+  // real cost ceiling. Previously 10/h, which blocked normal bulk usage.
+  upload:               { path: '/api/upload',                         maxRequests: 200, windowSec: ONE_HOUR_SEC },
+  analyze:              { path: '/api/analyze',                        maxRequests: 200, windowSec: ONE_HOUR_SEC },
+  interview_questions:  { path: '/api/candidates/interview-questions', maxRequests: 100, windowSec: ONE_HOUR_SEC },
+  hiring_report:        { path: '/api/candidates/hiring-report',       maxRequests: 100, windowSec: ONE_HOUR_SEC },
+  generate_email:       { path: '/api/candidates/generate-email',      maxRequests: 100, windowSec: ONE_HOUR_SEC },
+  generate_description: { path: '/api/vacancies/generate-description', maxRequests: 60,  windowSec: ONE_HOUR_SEC },
+  ranking:              { path: '/api/vacancies/ranking',              maxRequests: 60,  windowSec: ONE_HOUR_SEC },
+  email_scan:           { path: '/api/email/scan',                     maxRequests: 20,  windowSec: ONE_HOUR_SEC },
 }
 
 // ── Upstash backend ────────────────────────────────────────────────────
