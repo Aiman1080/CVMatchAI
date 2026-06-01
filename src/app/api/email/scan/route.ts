@@ -60,9 +60,11 @@ export async function POST(req: Request) {
   }
 
   const results = { scanned: 0, relevant: 0, processed: 0, errors: [] as string[] }
-  // Per-message decision logger — writes to the Vercel runtime logs (info level)
-  // so a scan can be debugged server-side without exposing internals to the client.
-  const T = (line: string) => { log.info(line) }
+  // Per-message decision logger — writes to Vercel logs AND collects a short
+  // trace returned in the response so a "found nothing" scan can be diagnosed
+  // (which emails were seen, why each was skipped) without digging in Vercel.
+  const trace: string[] = []
+  const T = (line: string) => { log.info(line); trace.push(line) }
   T(`START inbox=${inbox.email} host=${inbox.host}:${inbox.port} activeVacancies=${vacancies.length}`)
 
   try {
@@ -148,6 +150,10 @@ export async function POST(req: Request) {
       }
       const withAttachments = messages.filter(m => hasAttachmentPart(m.bodyStructure))
       T(`FILTERED ${withAttachments.length}/${messages.length} messages have an attachment`)
+      // Log the senders of the most-recent messages so a "missing" application is
+      // easy to spot in the trace (is it even in the fetched window?).
+      const recentSenders = [...messages].reverse().slice(0, 15).map(m => m.envelope?.from?.[0]?.address || '?')
+      T(`RECENT SENDERS (newest 15): ${recentSenders.join(', ')}`)
 
       // Process the 25 most recent messages that HAVE an attachment (newest
       // first). IMAP fetch returns ascending UID (oldest first), so reverse.
@@ -471,5 +477,5 @@ export async function POST(req: Request) {
   }
 
   T(`DONE scanned=${results.scanned} relevant=${results.relevant} processed=${results.processed} errors=${results.errors.length}`)
-  return NextResponse.json({ ...results, diagnostic })
+  return NextResponse.json({ ...results, diagnostic, trace })
 }
