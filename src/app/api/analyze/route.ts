@@ -2,6 +2,7 @@
 // Called from the candidate detail page when the recruiter wants a fresh assessment
 // after editing the vacancy requirements or uploading additional documents.
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
@@ -28,14 +29,28 @@ export async function POST(req: Request) {
     if (!candidate || !candidate.cvContent) return NextResponse.json({ error: 'Candidate or CV not found' }, { status: 404 })
     if (!candidate.vacancy) return NextResponse.json({ error: 'Vacancy not found' }, { status: 404 })
 
+    // Output language follows the app's UI locale (same as upload), falling back
+    // to the vacancy language — keeps re-analysis consistent with the first run.
+    const cookieLocale = (await cookies()).get('deltamatch-locale')?.value
+    const outputLocale = (['en', 'nl', 'fr', 'de'].includes(cookieLocale || '') ? cookieLocale : candidate.vacancy?.language) || 'fr'
+
     const analysis = await analyzeCVAgainstVacancy(
       candidate.cvContent,
       candidate.vacancy?.title ?? 'Open position',
       candidate.vacancy?.description ?? '',
       candidate.vacancy?.requirements ?? '',
       candidate.motivationText || undefined,
-      candidate.vacancy?.language || undefined,
+      outputLocale,
     )
+
+    // If the AI call silently fell back to demo data (rate limit / timeout /
+    // empty response), don't overwrite a good existing analysis with placeholder
+    // junk — that's the "re-analyze made it worse" bug. The demo summary is
+    // recognizable; refuse to persist it and ask the user to retry.
+    const isDemoResult = typeof analysis.summary === 'string' && analysis.summary.includes('demo mode')
+    if (isDemoResult && candidate.analyzedAt) {
+      return NextResponse.json({ error: 'AI is temporarily unavailable, please retry in a moment.' }, { status: 503 })
+    }
 
     // Also update contact fields extracted from the CV (only overwrite if currently unknown/empty)
     const contactPatch: any = {}

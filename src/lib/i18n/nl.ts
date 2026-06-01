@@ -1376,7 +1376,7 @@ export const nl = {
     invalidVerificationLink: 'Ongeldige verificatielink. Token of e-mailadres ontbreekt.',
     verificationError: 'Er is iets misgegaan. Probeer het opnieuw.',
     verification: {
-      bannerMessage: 'Verifieer uw e-mailadres. Controleer uw inbox voor een verificatielink.',
+      bannerMessage: 'Verifieer uw e-mailadres. Controleer uw inbox (en uw spam-/ongewenste map) voor een verificatielink.',
       resend: 'Opnieuw versturen',
       sent: 'Verzonden!',
       resending: 'Opnieuw versturen...',

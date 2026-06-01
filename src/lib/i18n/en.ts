@@ -1385,7 +1385,7 @@ export const en = {
     invalidVerificationLink: 'Invalid verification link. Missing token or email.',
     verificationError: 'Something went wrong. Please try again.',
     verification: {
-      bannerMessage: 'Please verify your email address. Check your inbox for a verification link.',
+      bannerMessage: 'Please verify your email address. Check your inbox (and your spam/junk folder) for a verification link.',
       resend: 'Resend',
       sent: 'Sent!',
       resending: 'Resending...',
