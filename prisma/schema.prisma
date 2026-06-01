@@ -50,6 +50,9 @@ model User {
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
   lastSeenAt       DateTime?
+  // Private, unguessable token for the personal iCal subscription feed
+  // (/api/calendar/feed/[token].ics) the user adds to Google/Outlook/Apple.
+  calendarFeedToken String?        @unique
   accounts        Account[]
   sessions        Session[]
   vacancies       Vacancy[]
@@ -58,6 +61,23 @@ model User {
   supportTickets  SupportTicket[]
   integrations    Integration[]
   notifications   Notification[]
+  calendarEvents  CalendarEvent[]
+}
+
+// Personal calendar events (not tied to a candidate) the recruiter adds in the
+// dashboard calendar — meetings, reminders, blocked time, etc.
+model CalendarEvent {
+  id          String   @id @default(cuid())
+  title       String
+  startAt     DateTime
+  durationMinutes Int  @default(30)
+  location    String?
+  notes       String?
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@index([userId, startAt])
 }
 
 model VerificationToken {
