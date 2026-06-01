@@ -22,7 +22,6 @@ import { getStatusColor, parseJsonSafe, formatDate } from '@/lib/utils'
 import { exportHiringReportPDF } from '@/lib/export'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { CandidateEmailDialog } from './CandidateEmailDialog'
-import { ScheduleInterview } from './ScheduleInterview'
 
 const RECOMMENDATION_COLORS: Record<string, string> = {
   strong_yes: 'bg-green-100 text-green-800 border border-green-200',
@@ -85,6 +84,29 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
   const answersSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [visibleAnswers, setVisibleAnswers] = useState<Set<number>>(new Set())
   const [loadingQuestions, setLoadingQuestions] = useState(false)
+  const [assessment, setAssessment] = useState<{ verdict: string; score: number; summary: string; strengths: string[]; concerns: string[] } | null>(null)
+  const [assessing, setAssessing] = useState(false)
+
+  const handleAssessAnswers = async () => {
+    if (!interviewQuestions) return
+    const qa = interviewQuestions.map((q, i) => ({ question: q.question, expectedAnswer: q.expectedAnswer, answer: questionAnswers[i] || '' }))
+    if (qa.every(x => !x.answer.trim())) {
+      toast({ title: (ci as any).noAnswersYet || 'Type the candidate answers first', variant: 'destructive' })
+      return
+    }
+    setAssessing(true)
+    try {
+      const res = await fetch(`/api/candidates/${candidate.id}/assess-answers`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ qa }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok && data.summary) setAssessment(data)
+      else toast({ title: data.error || (ci as any).assessFailed || 'Could not assess answers', variant: 'destructive' })
+    } catch {
+      toast({ title: (ci as any).assessFailed || 'Could not assess answers', variant: 'destructive' })
+    } finally { setAssessing(false) }
+  }
   const [hiringReport, setHiringReport] = useState<string | null>(null)
   const [loadingReport, setLoadingReport] = useState(false)
   const [downloadingReportPdf, setDownloadingReportPdf] = useState(false)
@@ -796,14 +818,6 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
 
             {/* ── Interview Questions tab ── */}
             <TabsContent value="interview" className="mt-4">
-              <ScheduleInterview
-                candidateId={candidate.id}
-                candidateName={`${candidate.firstName || ''} ${candidate.lastName || ''}`.trim() || 'Candidate'}
-                vacancyTitle={candidate.vacancy?.title}
-                initialInterviewAt={candidate.interviewAt}
-                initialDuration={candidate.interviewDuration}
-                initialLocation={candidate.interviewLocation}
-              />
               <Card className="border border-gray-200 shadow-sm dark:border-gray-800">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
@@ -879,6 +893,34 @@ export function CandidateDetailClient({ candidate: initial }: { candidate: any }
                           )}
                         </div>
                       ))}
+
+                      {/* Assess the recorded answers with AI */}
+                      <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
+                        <Button onClick={handleAssessAnswers} disabled={assessing} size="sm" variant="outline" className="gap-2 w-full">
+                          {assessing ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                          {assessing ? ((ci as any).assessing || 'Analyzing answers…') : ((ci as any).assessAnswers || 'Analyze answers (AI summary)')}
+                        </Button>
+                        {assessment && (
+                          <div className={`mt-3 p-4 rounded-xl border ${
+                            assessment.verdict === 'strong' ? 'bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800'
+                            : assessment.verdict === 'good' ? 'bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800'
+                            : assessment.verdict === 'weak' ? 'bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800'
+                            : 'bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800'
+                          }`}>
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm font-semibold text-gray-900 dark:text-white capitalize">{assessment.verdict}</span>
+                              <span className="text-lg font-bold text-gray-900 dark:text-white">{Math.round(assessment.score)}<span className="text-xs text-gray-400">/100</span></span>
+                            </div>
+                            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed mb-2">{assessment.summary}</p>
+                            {assessment.strengths?.length > 0 && (
+                              <ul className="space-y-1 mb-2">{assessment.strengths.map((s, i) => <li key={i} className="text-xs text-green-700 dark:text-green-400 flex items-start gap-1.5"><span className="mt-0.5">✓</span><span>{s}</span></li>)}</ul>
+                            )}
+                            {assessment.concerns?.length > 0 && (
+                              <ul className="space-y-1">{assessment.concerns.map((s, i) => <li key={i} className="text-xs text-red-700 dark:text-red-400 flex items-start gap-1.5"><span className="mt-0.5">⚠</span><span>{s}</span></li>)}</ul>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ) : (
                     <div className="py-12 text-center">

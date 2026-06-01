@@ -653,6 +653,84 @@ Call submit_interview_questions now.`
   }
 }
 
+// ── Interview answers assessment ─────────────────────────────────────────────
+// Given the interview questions + the recruiter's typed answers, produce a short
+// verdict: how well the candidate answered overall + a per-area note.
+
+const ANSWERS_ASSESSMENT_TOOL: FunctionDeclaration = {
+  name: 'submit_answers_assessment',
+  description: 'Submit a concise assessment of how well the candidate answered the interview questions.',
+  parameters: {
+    type: SchemaType.OBJECT,
+    properties: {
+      verdict: { type: SchemaType.STRING, description: 'One of: strong, good, mixed, weak' },
+      score: { type: SchemaType.NUMBER, description: 'Overall answer quality 0-100' },
+      summary: { type: SchemaType.STRING, description: '2-4 sentence overall summary of how well they answered' },
+      strengths: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING }, description: 'Up to 3 things they answered well' },
+      concerns: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING }, description: 'Up to 3 weak/missing/unconvincing answers' },
+    },
+    required: ['verdict', 'score', 'summary', 'strengths', 'concerns'],
+  },
+}
+
+export interface AnswersAssessment {
+  verdict: 'strong' | 'good' | 'mixed' | 'weak'
+  score: number
+  summary: string
+  strengths: string[]
+  concerns: string[]
+}
+
+export async function analyzeInterviewAnswers(
+  qa: Array<{ question: string; expectedAnswer?: string; answer: string }>,
+  vacancyTitle: string,
+  outputLocale?: string,
+): Promise<AnswersAssessment> {
+  const answered = qa.filter(x => x.answer && x.answer.trim().length > 0)
+  if (answered.length === 0) {
+    return { verdict: 'weak', score: 0, summary: 'No answers were recorded yet.', strengths: [], concerns: ['No answers to assess.'] }
+  }
+  if (isDemoMode()) {
+    return {
+      verdict: 'good', score: 72,
+      summary: `Demo mode — add a GEMINI_API_KEY for a real assessment. ${answered.length} of ${qa.length} questions answered.`,
+      strengths: ['Provided answers to most questions'],
+      concerns: ['Enable AI for a detailed evaluation'],
+    }
+  }
+  const langInstruction = outputLocale === 'fr' ? 'Write all text in French.'
+    : outputLocale === 'nl' ? 'Write all text in Dutch.'
+    : outputLocale === 'de' ? 'Write all text in German.'
+    : 'Write all text in English.'
+  try {
+    const genAI = getClient()
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash',
+      systemInstruction: `You are an expert interviewer evaluating a candidate's answers for the "${vacancyTitle}" role. Be honest and specific: judge each answer against the expected answer where provided. ${langInstruction}`,
+      generationConfig: { temperature: 0.3 },
+      tools: [{ functionDeclarations: [ANSWERS_ASSESSMENT_TOOL] }],
+      toolConfig: { functionCallingConfig: { mode: FunctionCallingMode.ANY } },
+    })
+    const content = answered.map((x, i) =>
+      `Q${i + 1}: ${x.question}\n${x.expectedAnswer ? `Expected: ${x.expectedAnswer}\n` : ''}Candidate answered: ${x.answer}`,
+    ).join('\n\n')
+    const result = await model.generateContent(
+      `Assess how well the candidate answered these interview questions, then call submit_answers_assessment.\n\n${content}`,
+    )
+    const usage = result.response.usageMetadata
+    const call = result.response.functionCalls()?.[0]
+    if (call) {
+      logAiUsage('system', 'interview_questions', usage?.promptTokenCount || 0, usage?.candidatesTokenCount || 0).catch(() => {})
+      return call.args as unknown as AnswersAssessment
+    }
+    log.warn('analyzeInterviewAnswers returned no structured result')
+  } catch (error) {
+    log.error('analyzeInterviewAnswers error', { error: String(error) })
+  }
+  // Graceful fallback (do not block the UI)
+  return { verdict: 'mixed', score: 50, summary: 'Could not generate an AI assessment right now — please retry.', strengths: [], concerns: [] }
+}
+
 // ── Job Description Generation ───────────────────────────────────────────────
 
 const JOB_DESCRIPTION_TOOL: FunctionDeclaration = {
