@@ -268,7 +268,7 @@ export function AdminClient({
   const arr = mrr * 12
   const nextPaymentDate = realProUsers.length > 0
     ? new Date(Math.min(...realProUsers.filter(u => u.subscriptionEnd).map(u => new Date(u.subscriptionEnd!).getTime()))).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-    : 'No active subscriptions'
+    : (ta.overview?.noActiveSubscriptions || 'No active subscriptions')
 
   // Tickets that still need attention (drives the alerts counter in the sidebar
   // and the "Open Tickets" cards). Includes both `open` AND `in_progress` so
@@ -464,48 +464,49 @@ export function AdminClient({
 
   // ── Plan limits (mirrored from plans.ts for display) ───────────────────
   const planLimits = [
-    { plan: 'Free', price: '0', maxVacancies: '3', maxCandidates: '25/mo', aiAnalysis: true, emailInbox: false, atsIntegrations: false, analytics: false },
-    { plan: 'Pro', price: '55', maxVacancies: 'Unlimited', maxCandidates: 'Unlimited', aiAnalysis: true, emailInbox: true, atsIntegrations: true, analytics: true },
+    { plan: 'Free', price: '0', maxVacancies: '3', maxCandidates: `25${ta.actions?.perMonthShort || '/mo'}`, aiAnalysis: true, emailInbox: false, atsIntegrations: false, analytics: false },
+    { plan: 'Pro', price: '55', maxVacancies: ta.actions?.unlimited || 'Unlimited', maxCandidates: ta.actions?.unlimited || 'Unlimited', aiAnalysis: true, emailInbox: true, atsIntegrations: true, analytics: true },
   ]
 
   // ── AI features definition (static) ───────────────────────────────────────
 
+  const taf = ta.aiTab?.features || {}
   const aiFeatures = [
     {
-      name: 'CV Analysis & Scoring', icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/30',
-      status: hasAiKey ? 'live' : 'demo', model: 'gemini-2.5-flash', thinking: 'Function calling mode',
-      details: ['Extraction of skills, experience, degrees', 'Match score 0-100 against the job posting', 'Detailed strengths & weaknesses', 'Executive summary of the candidate', 'Automatic language detection from CV'],
-      stat: `${aiAnalysesCount} analysis${aiAnalysesCount !== 1 ? 'es' : ''} performed`,
+      name: taf.cvAnalysisName || 'CV Analysis & Scoring', icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/30',
+      status: hasAiKey ? 'live' : 'demo', model: 'gemini-2.5-flash', thinking: taf.cvAnalysisThinking || 'Function calling mode',
+      details: [taf.cvAnalysisD1 || 'Extraction of skills, experience, degrees', taf.cvAnalysisD2 || 'Match score 0-100 against the job posting', taf.cvAnalysisD3 || 'Detailed strengths & weaknesses', taf.cvAnalysisD4 || 'Executive summary of the candidate', taf.cvAnalysisD5 || 'Automatic language detection from CV'],
+      stat: ((aiAnalysesCount !== 1 ? (taf.analysesPerformed || '{count} analyses performed') : (taf.oneAnalysisPerformed || '{count} analysis performed')).replace('{count}', String(aiAnalysesCount))),
     },
     {
-      name: 'AI Email Generator', icon: Mail, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-950/30',
-      status: hasAiKey ? 'live' : 'demo', model: 'gemini-2.5-flash', thinking: 'Fast inference',
-      details: ['Interview invitation', 'Rejection - worded with respect', 'Follow-up - re-engagement after interview', 'Language auto-detected from candidate CV', 'Personalized with name, position and company'],
-      stat: '3 email types supported',
+      name: taf.emailGenName || 'AI Email Generator', icon: Mail, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-950/30',
+      status: hasAiKey ? 'live' : 'demo', model: 'gemini-2.5-flash', thinking: taf.emailGenThinking || 'Fast inference',
+      details: [taf.emailGenD1 || 'Interview invitation', taf.emailGenD2 || 'Rejection - worded with respect', taf.emailGenD3 || 'Follow-up - re-engagement after interview', taf.emailGenD4 || 'Language auto-detected from candidate CV', taf.emailGenD5 || 'Personalized with name, position and company'],
+      stat: taf.emailGenStat || '3 email types supported',
     },
     {
-      name: 'IMAP Email Scanner', icon: Inbox, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-950/30',
-      status: emailInboxesCount > 0 ? 'live' : 'configured', model: 'Rule-based detection + AI', thinking: 'Heuristics first, Gemini as fallback',
-      details: ['Secure IMAP/IMAPS connection', 'Automatic CV attachment detection', 'Anti-spam filtering by subject analysis', 'Candidate name extraction from email', 'Automatic candidate profile creation'],
-      stat: `${emailInboxesCount} inbox${emailInboxesCount !== 1 ? 'es' : ''} connected`,
+      name: taf.imapName || 'IMAP Email Scanner', icon: Inbox, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-950/30',
+      status: emailInboxesCount > 0 ? 'live' : 'configured', model: taf.imapModel || 'Rule-based detection + AI', thinking: taf.imapThinking || 'Heuristics first, Gemini as fallback',
+      details: [taf.imapD1 || 'Secure IMAP/IMAPS connection', taf.imapD2 || 'Automatic CV attachment detection', taf.imapD3 || 'Anti-spam filtering by subject analysis', taf.imapD4 || 'Candidate name extraction from email', taf.imapD5 || 'Automatic candidate profile creation'],
+      stat: (taf.inboxesConnected || '{count} inbox(es) connected').replace('{count}', String(emailInboxesCount)),
     },
     {
-      name: 'ATS Integrations', icon: Network, color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-950/30',
-      status: integrationsCount > 0 ? 'live' : 'available', model: 'REST API + synchronization', thinking: 'Sync one-way to DeltaMatch',
-      details: ['Teamtailor: import candidates & jobs via API', 'Recruitee: sync applications and statuses', 'SmartRecruiters: bulk import', 'AI analyzes each imported CV automatically', 'Intelligent deduplication of candidates'],
-      stat: `${integrationsCount} integration${integrationsCount !== 1 ? 's' : ''}`,
+      name: taf.atsName || 'ATS Integrations', icon: Network, color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-950/30',
+      status: integrationsCount > 0 ? 'live' : 'available', model: taf.atsModel || 'REST API + synchronization', thinking: taf.atsThinking || 'Sync one-way to DeltaMatch',
+      details: [taf.atsD1 || 'Teamtailor: import candidates & jobs via API', taf.atsD2 || 'Recruitee: sync applications and statuses', taf.atsD3 || 'SmartRecruiters: bulk import', taf.atsD4 || 'AI analyzes each imported CV automatically', taf.atsD5 || 'Intelligent deduplication of candidates'],
+      stat: (taf.integrations || '{count} integration(s)').replace('{count}', String(integrationsCount)),
     },
     {
-      name: 'Document Parser', icon: GitBranch, color: 'text-teal-600', bg: 'bg-teal-50 dark:bg-teal-950/30',
-      status: 'live', model: 'pdf-parse + mammoth', thinking: 'Text extraction pre-AI',
-      details: ['PDF: extraction via pdf-parse (native)', 'DOCX/DOC: extraction via mammoth', 'TXT/paste: direct', 'Automatic formatting artifact cleanup', 'Sends raw text to Gemini for analysis'],
-      stat: 'PDF, DOCX, TXT supported',
+      name: taf.parserName || 'Document Parser', icon: GitBranch, color: 'text-teal-600', bg: 'bg-teal-50 dark:bg-teal-950/30',
+      status: 'live', model: taf.parserModel || 'pdf-parse + mammoth', thinking: taf.parserThinking || 'Text extraction pre-AI',
+      details: [taf.parserD1 || 'PDF: extraction via pdf-parse (native)', taf.parserD2 || 'DOCX/DOC: extraction via mammoth', taf.parserD3 || 'TXT/paste: direct', taf.parserD4 || 'Automatic formatting artifact cleanup', taf.parserD5 || 'Sends raw text to Gemini for analysis'],
+      stat: taf.parserStat || 'PDF, DOCX, TXT supported',
     },
     {
-      name: 'Pipeline & Kanban', icon: BarChart3, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-950/30',
-      status: 'live', model: 'Application logic (no AI)', thinking: 'No AI - manual management',
-      details: ['List view and drag-and-drop Kanban view', 'Statuses: New, Reviewing, Shortlisted, Hired, Rejected', 'Talent pool: keep the best candidates', 'Filters by score, status, source, language', 'CSV / PDF export of candidate list'],
-      stat: `${counts.candidates} candidates on the platform`,
+      name: taf.pipelineName || 'Pipeline & Kanban', icon: BarChart3, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-950/30',
+      status: 'live', model: taf.pipelineModel || 'Application logic (no AI)', thinking: taf.pipelineThinking || 'No AI - manual management',
+      details: [taf.pipelineD1 || 'List view and drag-and-drop Kanban view', taf.pipelineD2 || 'Statuses: New, Reviewing, Shortlisted, Hired, Rejected', taf.pipelineD3 || 'Talent pool: keep the best candidates', taf.pipelineD4 || 'Filters by score, status, source, language', taf.pipelineD5 || 'CSV / PDF export of candidate list'],
+      stat: (taf.candidatesOnPlatform || '{count} candidates on the platform').replace('{count}', String(counts.candidates)),
     },
   ]
 
@@ -520,13 +521,13 @@ export function AdminClient({
       {/* ── KPI Row ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3">
         {[
-          { label: 'Real users', value: realUsers.length, icon: Building2, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950' },
-          { label: 'Active today', value: activeToday, icon: Eye, color: 'text-cyan-600', bg: 'bg-cyan-50 dark:bg-cyan-950' },
-          { label: 'Paying Pro', value: proCount, icon: Zap, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-950' },
-          { label: 'MRR', value: `€${mrr}`, icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950' },
-          { label: 'AI Analyses', value: aiAnalysesCount, icon: Brain, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-950' },
-          { label: 'New users 7d', value: newUsersThisWeek, icon: UserPlus, color: 'text-cyan-600', bg: 'bg-cyan-50 dark:bg-cyan-950' },
-          { label: 'Open tickets', value: openCount, icon: MessageSquare, color: openCount > 0 ? 'text-red-600' : 'text-gray-400', bg: openCount > 0 ? 'bg-red-50 dark:bg-red-950' : 'bg-gray-50 dark:bg-gray-800' },
+          { label: ta.kpi?.realUsers || 'Real users', value: realUsers.length, icon: Building2, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950' },
+          { label: ta.kpi?.activeToday || 'Active today', value: activeToday, icon: Eye, color: 'text-cyan-600', bg: 'bg-cyan-50 dark:bg-cyan-950' },
+          { label: ta.kpi?.payingPro || 'Paying Pro', value: proCount, icon: Zap, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-950' },
+          { label: ta.kpi?.mrr || 'MRR', value: `€${mrr}`, icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950' },
+          { label: ta.kpi?.aiAnalyses || 'AI Analyses', value: aiAnalysesCount, icon: Brain, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-950' },
+          { label: ta.kpi?.newUsers7d || 'New users 7d', value: newUsersThisWeek, icon: UserPlus, color: 'text-cyan-600', bg: 'bg-cyan-50 dark:bg-cyan-950' },
+          { label: ta.kpi?.openTickets || 'Open tickets', value: openCount, icon: MessageSquare, color: openCount > 0 ? 'text-red-600' : 'text-gray-400', bg: openCount > 0 ? 'bg-red-50 dark:bg-red-950' : 'bg-gray-50 dark:bg-gray-800' },
         ].map(s => (
           <Card key={s.label} className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <CardContent className="p-3 flex items-center gap-2">
@@ -546,15 +547,15 @@ export function AdminClient({
       <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
         <CardContent className="p-4">
           <div className="flex flex-wrap gap-x-6 gap-y-2 items-center">
-            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">System Status</span>
+            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{ta.health?.title || 'System Status'}</span>
             {[
-              { label: 'Database', ok: true },
-              { label: `AI - ${hasAiKey ? 'Live (gemini-2.5-flash)' : 'Demo mode'}`, ok: hasAiKey },
-              { label: `SMTP - ${hasSmtp ? 'Configured' : 'Not configured'}`, ok: hasSmtp },
-              { label: `Email - ${emailInboxesCount} inbox${emailInboxesCount !== 1 ? 'es' : ''}`, ok: true },
-              { label: `Support - ${openCount} open`, ok: openCount === 0 },
-              { label: `ATS - ${integrationsCount} connection${integrationsCount !== 1 ? 's' : ''}`, ok: true },
-              { label: `${activeVacanciesCount} active job${activeVacanciesCount !== 1 ? 's' : ''}`, ok: true },
+              { label: ta.health?.database || 'Database', ok: true },
+              { label: hasAiKey ? (ta.health?.aiLive || 'AI - Live (gemini-2.5-flash)') : (ta.health?.aiDemo || 'AI - Demo mode'), ok: hasAiKey },
+              { label: hasSmtp ? (ta.health?.smtpConfigured || 'SMTP - Configured') : (ta.health?.smtpNotConfigured || 'SMTP - Not configured'), ok: hasSmtp },
+              { label: (ta.health?.emailInboxes || 'Email - {count} inbox(es)').replace('{count}', String(emailInboxesCount)), ok: true },
+              { label: (ta.health?.supportOpen || 'Support - {count} open').replace('{count}', String(openCount)), ok: openCount === 0 },
+              { label: (ta.health?.atsConnections || 'ATS - {count} connection(s)').replace('{count}', String(integrationsCount)), ok: true },
+              { label: (ta.health?.activeJobs || '{count} active job(s)').replace('{count}', String(activeVacanciesCount)), ok: true },
             ].map(item => (
               <div key={item.label} className="flex items-center gap-1.5">
                 <div className={`w-2 h-2 rounded-full ${item.ok ? 'bg-green-400' : 'bg-amber-400'}`} />
@@ -568,14 +569,14 @@ export function AdminClient({
       {/* ── Main Tabs (controlled by sidebar) ── */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="hidden">
-          <TabsTrigger value="accounts">Accounts</TabsTrigger>
-          <TabsTrigger value="support">Support</TabsTrigger>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="ai">AI</TabsTrigger>
-          <TabsTrigger value="stats">Statistics</TabsTrigger>
-          <TabsTrigger value="email">Email Users</TabsTrigger>
-          <TabsTrigger value="actions">Admin Actions</TabsTrigger>
-          <TabsTrigger value="system">System</TabsTrigger>
+          <TabsTrigger value="accounts">{ta.tabs?.accounts || 'Accounts'}</TabsTrigger>
+          <TabsTrigger value="support">{ta.tabs?.support || 'Support'}</TabsTrigger>
+          <TabsTrigger value="overview">{ta.tabs?.overview || 'Overview'}</TabsTrigger>
+          <TabsTrigger value="ai">{ta.tabs?.ai || 'AI'}</TabsTrigger>
+          <TabsTrigger value="stats">{ta.tabs?.stats || 'Statistics'}</TabsTrigger>
+          <TabsTrigger value="email">{ta.tabs?.email || 'Email Users'}</TabsTrigger>
+          <TabsTrigger value="actions">{ta.tabs?.actions || 'Admin Actions'}</TabsTrigger>
+          <TabsTrigger value="system">{ta.tabs?.system || 'System'}</TabsTrigger>
         </TabsList>
 
         {/* ══ Accounts tab ══ */}
@@ -583,9 +584,9 @@ export function AdminClient({
           {/* User stats bar */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { label: 'Total users', value: users.length, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/30' },
-              { label: 'Active today', value: activeToday, icon: Activity, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-950/30' },
-              { label: 'Pro users', value: proCount, icon: Zap, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-950/30' },
+              { label: ta.kpi?.totalUsers || 'Total users', value: users.length, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/30' },
+              { label: ta.kpi?.activeToday || 'Active today', value: activeToday, icon: Activity, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-950/30' },
+              { label: ta.kpi?.proUsers || 'Pro users', value: proCount, icon: Zap, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-950/30' },
             ].map(s => (
               <div key={s.label} className={`flex items-center gap-3 p-3 rounded-xl ${s.bg}`}>
                 <s.icon className={`w-5 h-5 shrink-0 ${s.color}`} />
@@ -601,14 +602,14 @@ export function AdminClient({
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input
-              placeholder="Search users by name, email, or company..."
+              placeholder={ta.users?.searchPlaceholder || 'Search users by name, email, or company...'}
               value={userSearch}
               onChange={e => setUserSearch(e.target.value)}
               className="pl-10 h-10"
             />
             {userSearch && (
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
-                {filteredUsers.length} of {users.length} users
+                {(ta.users?.searchResults || '{filtered} of {total} users').replace('{filtered}', String(filteredUsers.length)).replace('{total}', String(users.length))}
               </span>
             )}
           </div>
@@ -653,13 +654,13 @@ export function AdminClient({
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Name</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Email</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">Company</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Plan</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden xl:table-cell">Role</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">Created</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">{ta.users?.colName || 'Name'}</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">{ta.users?.colEmail || 'Email'}</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">{ta.users?.colCompany || 'Company'}</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">{ta.users?.colPlan || 'Plan'}</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden xl:table-cell">{ta.users?.colRole || 'Role'}</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">{ta.users?.colStatus || 'Status'}</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">{ta.users?.colCreated || 'Created'}</th>
                       <th className="px-4 py-3 w-8" />
                     </tr>
                   </thead>
@@ -691,7 +692,7 @@ export function AdminClient({
                               </span>
                               {user.subscriptionEnd && (
                                 <div className={`text-xs mt-1 ${subEndColor(user.subscriptionEnd)}`}>
-                                  Exp. {formatDate(user.subscriptionEnd)}
+                                  {ta.users?.expPrefix || 'Exp.'} {formatDate(user.subscriptionEnd)}
                                 </div>
                               )}
                               {/* Quick action buttons for fast plan changes - admin only */}
@@ -700,7 +701,7 @@ export function AdminClient({
                                   <button
                                     onClick={(e) => { e.stopPropagation(); updateUser(user.id, { subscription: 'pro' }) }}
                                     className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900 font-medium"
-                                    title="Manually upgrade to Pro (no payment)"
+                                    title={ta.users?.upgradeToProTitle || 'Manually upgrade to Pro (no payment)'}
                                   >
                                     ↑ Pro
                                   </button>
@@ -709,7 +710,7 @@ export function AdminClient({
                                   <button
                                     onClick={(e) => { e.stopPropagation(); updateUser(user.id, { subscription: 'free' }) }}
                                     className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 font-medium"
-                                    title="Manually downgrade to Free"
+                                    title={ta.users?.downgradeToFreeTitle || 'Manually downgrade to Free'}
                                   >
                                     ↓ Free
                                   </button>
@@ -718,14 +719,14 @@ export function AdminClient({
                             </td>
                             <td className="px-4 py-3.5 hidden xl:table-cell">
                               <span className={`text-xs px-2 py-0.5 rounded-full w-fit ${user.role === 'admin' ? 'bg-purple-100 text-purple-600' : 'bg-gray-100 text-gray-500'}`}>
-                                {user.role === 'admin' ? 'Admin' : 'Recruiter'}
+                                {user.role === 'admin' ? (ta.users?.roleAdmin || 'Admin') : (ta.users?.roleRecruiter || 'Recruiter')}
                               </span>
                             </td>
                             <td className="px-4 py-3.5">
                               {user.suspended ? (
-                                <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full w-fit">Suspended</span>
+                                <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full w-fit">{ta.users?.statusSuspended || 'Suspended'}</span>
                               ) : (
-                                <span className="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full w-fit">Active</span>
+                                <span className="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full w-fit">{ta.users?.statusActive || 'Active'}</span>
                               )}
                             </td>
                             <td className="px-4 py-3.5 hidden lg:table-cell">
@@ -745,23 +746,23 @@ export function AdminClient({
                                   {/* Col 1: Subscription */}
                                   <div className="space-y-3">
                                     <p className="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wide flex items-center gap-1.5">
-                                      <CalendarDays size={12} /> Subscription
+                                      <CalendarDays size={12} /> {ta.users?.subscriptionHeading || 'Subscription'}
                                     </p>
                                     <div className="space-y-2.5">
                                       <div>
-                                        <label className="text-xs text-gray-500 block mb-1">Plan</label>
+                                        <label className="text-xs text-gray-500 block mb-1">{ta.users?.planLabel || 'Plan'}</label>
                                         <Select value={user.subscription} onValueChange={val => updateUser(user.id, { subscription: val })}>
                                           <SelectTrigger className="h-8 text-xs w-44 dark:bg-gray-800 dark:border-gray-700">
                                             <SelectValue />
                                           </SelectTrigger>
                                           <SelectContent>
-                                            <SelectItem value="free">Free - EUR 0/mo</SelectItem>
-                                            <SelectItem value="pro">Pro - EUR 55/mo</SelectItem>
+                                            <SelectItem value="free">{ta.users?.planFree || 'Free - EUR 0/mo'}</SelectItem>
+                                            <SelectItem value="pro">{ta.users?.planPro || 'Pro - EUR 55/mo'}</SelectItem>
                                           </SelectContent>
                                         </Select>
                                       </div>
                                       <div>
-                                        <label className="text-xs text-gray-500 block mb-1">Expiry</label>
+                                        <label className="text-xs text-gray-500 block mb-1">{ta.users?.expiryLabel || 'Expiry'}</label>
                                         <div className="flex gap-2 items-center">
                                           <input
                                             type="date"
@@ -770,49 +771,49 @@ export function AdminClient({
                                             className="h-8 text-xs border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-md px-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                           />
                                           {subEndEdit[user.id] !== undefined && (
-                                            <Button size="sm" className="h-8 text-xs gradient-bg px-3" onClick={() => saveSubEnd(user.id)}>Save</Button>
+                                            <Button size="sm" className="h-8 text-xs gradient-bg px-3" onClick={() => saveSubEnd(user.id)}>{ta.users?.save || 'Save'}</Button>
                                           )}
                                         </div>
                                         {user.subscriptionEnd && new Date(user.subscriptionEnd) < new Date() && (
-                                          <p className="text-xs text-red-500 mt-1">Expired</p>
+                                          <p className="text-xs text-red-500 mt-1">{ta.users?.expired || 'Expired'}</p>
                                         )}
                                       </div>
                                       <div>
-                                        <label className="text-xs text-gray-500 block mb-1">Company</label>
+                                        <label className="text-xs text-gray-500 block mb-1">{ta.users?.companyLabel || 'Company'}</label>
                                         <Input
                                           className="h-8 text-xs w-44 dark:bg-gray-800 dark:border-gray-700"
                                           defaultValue={user.company || ''}
-                                          placeholder="Company name"
+                                          placeholder={ta.users?.companyPlaceholder || 'Company name'}
                                           onBlur={e => {
                                             const val = e.target.value.trim()
                                             if (val !== (user.company || '')) updateUser(user.id, { company: val || null })
                                           }}
                                         />
                                       </div>
-                                      <p className="text-xs text-gray-400">Joined on {formatDate(user.createdAt)}</p>
+                                      <p className="text-xs text-gray-400">{(ta.users?.joinedOn || 'Joined on {date}').replace('{date}', formatDate(user.createdAt))}</p>
                                     </div>
                                   </div>
 
                                   {/* Col 2: Role */}
                                   <div className="space-y-3">
                                     <p className="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wide flex items-center gap-1.5">
-                                      <Shield size={12} /> Role & Access
+                                      <Shield size={12} /> {ta.users?.roleAccessHeading || 'Role & Access'}
                                     </p>
                                     <div className="space-y-2.5">
                                       <div>
-                                        <label className="text-xs text-gray-500 block mb-1">Account Role</label>
+                                        <label className="text-xs text-gray-500 block mb-1">{ta.users?.accountRoleLabel || 'Account Role'}</label>
                                         <Select value={user.role} onValueChange={val => updateUser(user.id, { role: val })}>
                                           <SelectTrigger className="h-8 text-xs w-44 dark:bg-gray-800 dark:border-gray-700">
                                             <SelectValue />
                                           </SelectTrigger>
                                           <SelectContent>
-                                            <SelectItem value="recruiter">Recruiter</SelectItem>
-                                            <SelectItem value="admin">Administrator</SelectItem>
+                                            <SelectItem value="recruiter">{ta.users?.roleSelectRecruiter || 'Recruiter'}</SelectItem>
+                                            <SelectItem value="admin">{ta.users?.roleSelectAdmin || 'Administrator'}</SelectItem>
                                           </SelectContent>
                                         </Select>
                                       </div>
                                       <div className="pt-1">
-                                        <label className="text-xs text-gray-500 block mb-1">Account Status</label>
+                                        <label className="text-xs text-gray-500 block mb-1">{ta.users?.accountStatusLabel || 'Account Status'}</label>
                                         <Button
                                           size="sm"
                                           variant="outline"
@@ -824,8 +825,8 @@ export function AdminClient({
                                           onClick={() => updateUser(user.id, { suspended: !user.suspended })}
                                         >
                                           {user.suspended
-                                            ? <><CheckCircle size={12} /> Reactivate account</>
-                                            : <><XCircle size={12} /> Suspend account</>
+                                            ? <><CheckCircle size={12} /> {ta.users?.reactivateAccount || 'Reactivate account'}</>
+                                            : <><XCircle size={12} /> {ta.users?.suspendAccount || 'Suspend account'}</>
                                           }
                                         </Button>
                                       </div>
@@ -835,13 +836,13 @@ export function AdminClient({
                                   {/* Col 3: Utilisation */}
                                   <div className="space-y-3">
                                     <p className="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wide flex items-center gap-1.5">
-                                      <BarChart3 size={12} /> Utilisation
+                                      <BarChart3 size={12} /> {ta.users?.utilisationHeading || 'Utilisation'}
                                     </p>
                                     <div className="space-y-2">
                                       {[
-                                        { label: 'Vacancies posted', value: user._count.vacancies, icon: Briefcase },
-                                        { label: 'Candidates', value: user._count.candidates, icon: UserCheck },
-                                        { label: 'Support tickets', value: user._count.supportTickets, icon: MessageSquare },
+                                        { label: ta.users?.vacanciesPosted || 'Vacancies posted', value: user._count.vacancies, icon: Briefcase },
+                                        { label: ta.users?.candidates || 'Candidates', value: user._count.candidates, icon: UserCheck },
+                                        { label: ta.users?.supportTickets || 'Support tickets', value: user._count.supportTickets, icon: MessageSquare },
                                       ].map(item => (
                                         <div key={item.label} className="flex items-center justify-between text-xs">
                                           <span className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
@@ -856,7 +857,7 @@ export function AdminClient({
                                   {/* Col 4: Actions */}
                                   <div className="space-y-3">
                                     <p className="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wide flex items-center gap-1.5">
-                                      <Cpu size={12} /> Admin Actions
+                                      <Cpu size={12} /> {ta.users?.adminActionsHeading || 'Admin Actions'}
                                     </p>
                                     <div className="space-y-2">
                                       <Button
@@ -867,11 +868,11 @@ export function AdminClient({
                                         disabled={loading[user.id]}
                                       >
                                         <KeyRound size={12} />
-                                        {loading[user.id] ? 'Generating...' : 'Reset password'}
+                                        {loading[user.id] ? (ta.users?.generating || 'Generating...') : (ta.users?.resetPassword || 'Reset password')}
                                       </Button>
                                       {tempPasswords[user.id] && (
                                         <div className="p-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
-                                          <p className="text-xs text-amber-700 dark:text-amber-400 font-semibold mb-1">Temporary password:</p>
+                                          <p className="text-xs text-amber-700 dark:text-amber-400 font-semibold mb-1">{ta.users?.tempPasswordLabel || 'Temporary password:'}</p>
                                           <code className="text-sm font-mono text-amber-900 dark:text-amber-300 select-all break-all">{tempPasswords[user.id]}</code>
                                         </div>
                                       )}
@@ -881,7 +882,7 @@ export function AdminClient({
                                         className="h-8 text-xs gap-1.5 w-full justify-start border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/30"
                                         onClick={() => deleteUser(user.id)}
                                       >
-                                        <Trash2 size={12} /> Delete permanently
+                                        <Trash2 size={12} /> {ta.users?.deletePermanently || 'Delete permanently'}
                                       </Button>
                                     </div>
                                   </div>
@@ -895,7 +896,7 @@ export function AdminClient({
                     {filteredUsers.length === 0 && (
                       <tr>
                         <td colSpan={8} className="px-5 py-8 text-center text-gray-400 text-sm">
-                          {userSearch ? 'No users match your search' : 'No users found'}
+                          {userSearch ? (ta.users?.noMatch || 'No users match your search') : (ta.users?.noUsers || 'No users found')}
                         </td>
                       </tr>
                     )}
@@ -912,30 +913,30 @@ export function AdminClient({
           <div className="flex flex-wrap gap-3 items-center">
             <div className="flex items-center gap-2">
               <Filter className="w-4 h-4 text-gray-400" />
-              <span className="text-xs font-medium text-gray-500">Filter:</span>
+              <span className="text-xs font-medium text-gray-500">{ta.support?.filter || 'Filter:'}</span>
             </div>
             <Select value={ticketStatusFilter} onValueChange={setTicketStatusFilter}>
               <SelectTrigger className="h-8 text-xs w-36 dark:bg-gray-800 dark:border-gray-700">
-                <SelectValue placeholder="Status" />
+                <SelectValue placeholder={ta.support?.statusPlaceholder || 'Status'} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
-                <SelectItem value="open">Open</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="resolved">Resolved</SelectItem>
-                <SelectItem value="closed">Closed</SelectItem>
+                <SelectItem value="all">{ta.support?.allStatuses || 'All statuses'}</SelectItem>
+                <SelectItem value="open">{ta.support?.statusOpen || 'Open'}</SelectItem>
+                <SelectItem value="in_progress">{ta.support?.statusInProgress || 'In Progress'}</SelectItem>
+                <SelectItem value="resolved">{ta.support?.statusResolved || 'Resolved'}</SelectItem>
+                <SelectItem value="closed">{ta.support?.statusClosed || 'Closed'}</SelectItem>
               </SelectContent>
             </Select>
             <Select value={ticketPriorityFilter} onValueChange={setTicketPriorityFilter}>
               <SelectTrigger className="h-8 text-xs w-36 dark:bg-gray-800 dark:border-gray-700">
-                <SelectValue placeholder="Priority" />
+                <SelectValue placeholder={ta.support?.priorityPlaceholder || 'Priority'} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All priorities</SelectItem>
-                <SelectItem value="low">Low</SelectItem>
-                <SelectItem value="normal">Normal</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="urgent">Urgent</SelectItem>
+                <SelectItem value="all">{ta.support?.allPriorities || 'All priorities'}</SelectItem>
+                <SelectItem value="low">{ta.support?.priorityLow || 'Low'}</SelectItem>
+                <SelectItem value="normal">{ta.support?.priorityNormal || 'Normal'}</SelectItem>
+                <SelectItem value="high">{ta.support?.priorityHigh || 'High'}</SelectItem>
+                <SelectItem value="urgent">{ta.support?.priorityUrgent || 'Urgent'}</SelectItem>
               </SelectContent>
             </Select>
             <Button
@@ -954,7 +955,7 @@ export function AdminClient({
                   : (ta.resolveAllDoneAll || 'All resolved')}
             </Button>
             <span className="text-xs text-gray-400">
-              {filteredTickets.length} of {tickets.length} tickets
+              {(ta.support?.ticketCount || '{filtered} of {total} tickets').replace('{filtered}', String(filteredTickets.length)).replace('{total}', String(tickets.length))}
             </span>
           </div>
 
@@ -963,7 +964,7 @@ export function AdminClient({
               <CardContent className="py-12 text-center">
                 <MessageSquare className="w-8 h-8 text-gray-200 mx-auto mb-2" />
                 <p className="text-gray-400 text-sm">
-                  {tickets.length === 0 ? 'No support tickets' : 'No tickets match your filters'}
+                  {tickets.length === 0 ? (ta.support?.noTickets || 'No support tickets') : (ta.support?.noMatch || 'No tickets match your filters')}
                 </p>
               </CardContent>
             </Card>
@@ -997,7 +998,7 @@ export function AdminClient({
                     {ticket.user && (
                       <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
                         <Users size={10} />
-                        <span>{ticket.user.name || 'Unknown'}</span>
+                        <span>{ticket.user.name || (ta.support?.unknownUser || 'Unknown')}</span>
                         {ticket.user.email && (
                           <span className="text-gray-300 dark:text-gray-600">({ticket.user.email})</span>
                         )}
@@ -1011,7 +1012,7 @@ export function AdminClient({
                     <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 leading-relaxed">{ticket.message}</p>
                     {ticket.adminReply && (
                       <div className="mt-2 p-2.5 bg-blue-50 dark:bg-blue-950/30 rounded-lg border-l-2 border-blue-300">
-                        <p className="text-xs font-semibold text-blue-600 mb-1">Admin reply {ticket.repliedAt ? `- ${formatDate(ticket.repliedAt)}` : ''}</p>
+                        <p className="text-xs font-semibold text-blue-600 mb-1">{ta.support?.adminReply || 'Admin reply'} {ticket.repliedAt ? `- ${formatDate(ticket.repliedAt)}` : ''}</p>
                         <p className="text-xs text-blue-800 dark:text-blue-300">{ticket.adminReply}</p>
                       </div>
                     )}
@@ -1034,13 +1035,13 @@ export function AdminClient({
                       ))}
                     </div>
                     <div className="flex gap-2">
-                      <textarea rows={2} placeholder="Reply to this ticket..." value={replyText[ticket.id] || ''}
+                      <textarea rows={2} placeholder={ta.support?.replyPlaceholder || 'Reply to this ticket...'} value={replyText[ticket.id] || ''}
                         onChange={e => setReplyText(p => ({ ...p, [ticket.id]: e.target.value }))}
                         className="flex-1 text-sm border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                       <Button size="sm" onClick={() => updateTicket(ticket.id, { adminReply: replyText[ticket.id], status: 'in_progress' })}
                         disabled={!replyText[ticket.id]?.trim()} className="gradient-bg gap-1.5 self-end">
-                        <Send size={13} /> Reply
+                        <Send size={13} /> {ta.support?.reply || 'Reply'}
                       </Button>
                     </div>
                   </div>
@@ -1057,42 +1058,42 @@ export function AdminClient({
             <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-emerald-500" /> Revenue & Payments
+                  <TrendingUp className="w-4 h-4 text-emerald-500" /> {ta.overview?.revenueTitle || 'Revenue & Payments'}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500 dark:text-gray-400">Paying Pro users</span>
+                  <span className="text-gray-500 dark:text-gray-400">{ta.overview?.payingProUsers || 'Paying Pro users'}</span>
                   <span className="font-semibold text-gray-700 dark:text-gray-300">{proCount} x €55/mo</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500 dark:text-gray-400">Free users (real)</span>
+                  <span className="text-gray-500 dark:text-gray-400">{ta.overview?.freeUsersReal || 'Free users (real)'}</span>
                   <span className="font-semibold text-gray-700 dark:text-gray-300">{realUsers.length - realProUsers.length}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500 dark:text-gray-400">Demo accounts (excluded)</span>
-                  <span className="text-gray-400">{demoCount} (not counted)</span>
+                  <span className="text-gray-500 dark:text-gray-400">{ta.overview?.demoAccountsExcluded || 'Demo accounts (excluded)'}</span>
+                  <span className="text-gray-400">{(ta.overview?.notCounted || '{count} (not counted)').replace('{count}', String(demoCount))}</span>
                 </div>
 
                 <div className="pt-3 border-t border-gray-100 dark:border-gray-800">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">MRR (Monthly)</span>
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{ta.overview?.mrrMonthly || 'MRR (Monthly)'}</span>
                     <span className="text-2xl font-bold text-emerald-600">€{mrr}/mo</span>
                   </div>
                   <div className="flex items-center justify-between mt-1">
-                    <span className="text-xs text-gray-400">ARR (Annual)</span>
+                    <span className="text-xs text-gray-400">{ta.overview?.arrAnnual || 'ARR (Annual)'}</span>
                     <span className="text-sm font-semibold text-emerald-500">€{arr}/yr</span>
                   </div>
                 </div>
 
                 <div className="pt-3 border-t border-gray-100 dark:border-gray-800 space-y-2">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-500 dark:text-gray-400">Next payment expected</span>
+                    <span className="text-gray-500 dark:text-gray-400">{ta.overview?.nextPaymentExpected || 'Next payment expected'}</span>
                     <span className="font-medium text-gray-700 dark:text-gray-300">{nextPaymentDate}</span>
                   </div>
                   {realProUsers.length > 0 && (
                     <div className="space-y-1.5">
-                      <p className="text-xs font-semibold text-gray-500 uppercase">Active Pro subscriptions</p>
+                      <p className="text-xs font-semibold text-gray-500 uppercase">{ta.overview?.activeProSubscriptions || 'Active Pro subscriptions'}</p>
                       {realProUsers.map(u => (
                         <div key={u.id} className="flex items-center justify-between text-xs bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">
                           <div>
@@ -1102,7 +1103,7 @@ export function AdminClient({
                           <div className="text-right">
                             <span className="text-emerald-600 font-medium">€55/mo</span>
                             {u.subscriptionEnd && (
-                              <span className="text-gray-400 ml-2">until {new Date(u.subscriptionEnd).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
+                              <span className="text-gray-400 ml-2">{(ta.overview?.until || 'until {date}').replace('{date}', new Date(u.subscriptionEnd).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }))}</span>
                             )}
                           </div>
                         </div>
@@ -1117,7 +1118,7 @@ export function AdminClient({
             <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <UserPlus className="w-4 h-4 text-blue-500" /> Signups (Last 4 Weeks)
+                  <UserPlus className="w-4 h-4 text-blue-500" /> {ta.overview?.signupsTitle || 'Signups (Last 4 Weeks)'}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -1147,20 +1148,20 @@ export function AdminClient({
             <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <Brain className="w-4 h-4 text-violet-500" /> AI Usage
+                  <Brain className="w-4 h-4 text-violet-500" /> {ta.overview?.aiUsageTitle || 'AI Usage'}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Total CV analyses</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">{ta.overview?.totalCvAnalyses || 'Total CV analyses'}</span>
                   <span className="text-2xl font-bold text-violet-600">{aiAnalysesCount}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Total candidates</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">{ta.overview?.totalCandidates || 'Total candidates'}</span>
                   <span className="text-lg font-semibold text-gray-700 dark:text-gray-300">{counts.candidates}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Analysis rate</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">{ta.overview?.analysisRate || 'Analysis rate'}</span>
                   <span className="text-lg font-semibold text-gray-700 dark:text-gray-300">
                     {counts.candidates > 0 ? Math.round((aiAnalysesCount / counts.candidates) * 100) : 0}%
                   </span>
@@ -1168,7 +1169,7 @@ export function AdminClient({
                 <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
                   <div className="flex items-center gap-2 text-xs text-gray-500">
                     <div className={`w-2 h-2 rounded-full ${hasAiKey ? 'bg-green-400' : 'bg-amber-400'}`} />
-                    {hasAiKey ? 'AI Engine: Live (gemini-2.5-flash)' : 'AI Engine: Demo mode'}
+                    {hasAiKey ? (ta.overview?.aiEngineLive || 'AI Engine: Live (gemini-2.5-flash)') : (ta.overview?.aiEngineDemo || 'AI Engine: Demo mode')}
                   </div>
                 </div>
               </CardContent>
@@ -1178,15 +1179,15 @@ export function AdminClient({
             <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-green-500" /> System Health
+                  <Activity className="w-4 h-4 text-green-500" /> {ta.overview?.systemHealthTitle || 'System Health'}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {[
-                  { label: 'Database', status: 'Connected', ok: true, icon: Database },
-                  { label: 'AI API Key', status: hasAiKey ? 'Configured' : 'Missing', ok: hasAiKey, icon: Brain },
-                  { label: 'SMTP Email', status: hasSmtp ? 'Configured' : 'Not configured', ok: hasSmtp, icon: Mail },
-                  { label: 'Open Tickets', status: `${openCount} pending`, ok: openCount === 0, icon: MessageSquare },
+                  { label: ta.overview?.hcDatabase || 'Database', status: ta.overview?.hcConnected || 'Connected', ok: true, icon: Database },
+                  { label: ta.overview?.hcAiKey || 'AI API Key', status: hasAiKey ? (ta.overview?.hcConfigured || 'Configured') : (ta.overview?.hcMissing || 'Missing'), ok: hasAiKey, icon: Brain },
+                  { label: ta.overview?.hcSmtp || 'SMTP Email', status: hasSmtp ? (ta.overview?.hcConfigured || 'Configured') : (ta.overview?.hcNotConfigured || 'Not configured'), ok: hasSmtp, icon: Mail },
+                  { label: ta.overview?.hcOpenTickets || 'Open Tickets', status: (ta.overview?.hcPending || '{count} pending').replace('{count}', String(openCount)), ok: openCount === 0, icon: MessageSquare },
                 ].map(item => (
                   <div key={item.label} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -1207,7 +1208,7 @@ export function AdminClient({
           <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
-                <Clock className="w-4 h-4 text-indigo-500" /> Recent Activity
+                <Clock className="w-4 h-4 text-indigo-500" /> {ta.overview?.recentActivityTitle || 'Recent Activity'}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
@@ -1241,16 +1242,16 @@ export function AdminClient({
           <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
-                <Bot className="w-4 h-4 text-violet-500" /> AI Model in production
+                <Bot className="w-4 h-4 text-violet-500" /> {ta.aiTab?.modelInProduction || 'AI Model in production'}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                  { label: 'Model', value: 'gemini-2.5-flash', icon: Brain, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-950/30' },
-                  { label: 'Mode', value: 'Function calling', icon: Cpu, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/30' },
-                  { label: 'Gemini API Key', value: hasAiKey ? 'Configured' : 'Missing', icon: hasAiKey ? CheckCircle2 : AlertCircle, color: hasAiKey ? 'text-green-600' : 'text-red-500', bg: hasAiKey ? 'bg-green-50 dark:bg-green-950/30' : 'bg-red-50 dark:bg-red-950/30' },
-                  { label: 'Operational mode', value: hasAiKey ? 'Live AI' : 'Simulated demo', icon: hasAiKey ? ToggleRight : ToggleLeft, color: hasAiKey ? 'text-green-600' : 'text-amber-600', bg: hasAiKey ? 'bg-green-50 dark:bg-green-950/30' : 'bg-amber-50 dark:bg-amber-950/30' },
+                  { label: ta.aiTab?.model || 'Model', value: 'gemini-2.5-flash', icon: Brain, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-950/30' },
+                  { label: ta.aiTab?.mode || 'Mode', value: ta.aiTab?.modeFunctionCalling || 'Function calling', icon: Cpu, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/30' },
+                  { label: ta.aiTab?.geminiApiKey || 'Gemini API Key', value: hasAiKey ? (ta.aiTab?.configured || 'Configured') : (ta.aiTab?.missing || 'Missing'), icon: hasAiKey ? CheckCircle2 : AlertCircle, color: hasAiKey ? 'text-green-600' : 'text-red-500', bg: hasAiKey ? 'bg-green-50 dark:bg-green-950/30' : 'bg-red-50 dark:bg-red-950/30' },
+                  { label: ta.aiTab?.operationalMode || 'Operational mode', value: hasAiKey ? (ta.aiTab?.liveAi || 'Live AI') : (ta.aiTab?.simulatedDemo || 'Simulated demo'), icon: hasAiKey ? ToggleRight : ToggleLeft, color: hasAiKey ? 'text-green-600' : 'text-amber-600', bg: hasAiKey ? 'bg-green-50 dark:bg-green-950/30' : 'bg-amber-50 dark:bg-amber-950/30' },
                 ].map(item => (
                   <div key={item.label} className={`flex items-center gap-3 p-3 rounded-xl ${item.bg}`}>
                     <item.icon className={`w-5 h-5 shrink-0 ${item.color}`} />
@@ -1263,16 +1264,16 @@ export function AdminClient({
               </div>
               <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Total AI analyses performed on the platform</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">{ta.aiTab?.totalAnalysesPerformed || 'Total AI analyses performed on the platform'}</span>
                   <span className="text-2xl font-bold text-violet-600">{aiAnalysesCount}</span>
                 </div>
               </div>
               <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
-                  { label: 'Provider', value: 'Google AI' },
-                  { label: 'Model', value: 'gemini-2.5-flash' },
-                  { label: 'Rate limit', value: '15 req/min (free tier)' },
-                  { label: 'Cost', value: 'Free tier / ~$0.01/1M tokens' },
+                  { label: ta.aiTab?.provider || 'Provider', value: 'Google AI' },
+                  { label: ta.aiTab?.model || 'Model', value: 'gemini-2.5-flash' },
+                  { label: ta.aiTab?.rateLimit || 'Rate limit', value: ta.aiTab?.rateLimitValue || '15 req/min (free tier)' },
+                  { label: ta.aiTab?.cost || 'Cost', value: ta.aiTab?.costValue || 'Free tier / ~$0.01/1M tokens' },
                 ].map(item => (
                   <div key={item.label} className="p-2.5 rounded-lg border border-gray-100 dark:border-gray-700">
                     <div className="text-xs text-gray-400 dark:text-gray-500">{item.label}</div>
@@ -1299,17 +1300,17 @@ export function AdminClient({
                       feature.status === 'demo' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400' :
                       'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400'
                     }`}>
-                      {feature.status === 'live' ? 'Live' : feature.status === 'demo' ? 'Demo' : feature.status === 'configured' ? 'Configured' : 'Available'}
+                      {feature.status === 'live' ? (ta.aiTab?.statusLive || 'Live') : feature.status === 'demo' ? (ta.aiTab?.statusDemo || 'Demo') : feature.status === 'configured' ? (ta.aiTab?.statusConfigured || 'Configured') : (ta.aiTab?.statusAvailable || 'Available')}
                     </span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="space-y-1">
                     <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                      <Cpu size={10} /> <span className="font-medium">Engine:</span> {feature.model}
+                      <Cpu size={10} /> <span className="font-medium">{ta.aiTab?.engine || 'Engine:'}</span> {feature.model}
                     </div>
                     <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                      <Brain size={10} /> <span className="font-medium">Thinking:</span> {feature.thinking}
+                      <Brain size={10} /> <span className="font-medium">{ta.aiTab?.thinking || 'Thinking:'}</span> {feature.thinking}
                     </div>
                   </div>
                   <ul className="space-y-1">
@@ -1336,7 +1337,7 @@ export function AdminClient({
             <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-blue-500" /> Subscription Distribution
+                  <TrendingUp className="w-4 h-4 text-blue-500" /> {ta.stats?.subscriptionDistribution || 'Subscription Distribution'}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -1348,7 +1349,7 @@ export function AdminClient({
                     <div key={s.subscription} className="space-y-1">
                       <div className="flex items-center justify-between text-xs">
                         <span className={`px-2 py-0.5 rounded-full font-medium ${PLAN_COLORS[s.subscription]}`}>{s.subscription}</span>
-                        <span className="text-gray-500 dark:text-gray-400">{s._count} accounts - {pct}% - EUR {prices[s.subscription] * s._count}/month</span>
+                        <span className="text-gray-500 dark:text-gray-400">{(ta.stats?.accountsPctMonth || '{count} accounts - {pct}% - EUR {amount}/month').replace('{count}', String(s._count)).replace('{pct}', String(pct)).replace('{amount}', String(prices[s.subscription] * s._count))}</span>
                       </div>
                       <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2">
                         <div className={`h-2 rounded-full ${s.subscription === 'free' ? 'bg-gray-400' : 'bg-blue-500'}`} style={{ width: `${pct}%` }} />
@@ -1357,8 +1358,8 @@ export function AdminClient({
                   )
                 })}
                 <div className="pt-2 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
-                  <span className="text-xs text-gray-500">Estimated MRR</span>
-                  <span className="font-bold text-emerald-600 text-lg">EUR {mrr}/month</span>
+                  <span className="text-xs text-gray-500">{ta.stats?.estimatedMrr || 'Estimated MRR'}</span>
+                  <span className="font-bold text-emerald-600 text-lg">{(ta.stats?.mrrPerMonth || 'EUR {amount}/month').replace('{amount}', String(mrr))}</span>
                 </div>
               </CardContent>
             </Card>
@@ -1366,7 +1367,7 @@ export function AdminClient({
             <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4 text-green-500" /> Candidate Pipeline
+                  <BarChart3 className="w-4 h-4 text-green-500" /> {ta.stats?.candidatePipeline || 'Candidate Pipeline'}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
@@ -1394,7 +1395,7 @@ export function AdminClient({
             <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <RefreshCw className="w-4 h-4 text-orange-500" /> Candidate Sources
+                  <RefreshCw className="w-4 h-4 text-orange-500" /> {ta.stats?.candidateSources || 'Candidate Sources'}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
@@ -1422,15 +1423,15 @@ export function AdminClient({
             <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-indigo-500" /> Recent Activity
+                  <Activity className="w-4 h-4 text-indigo-500" /> {ta.stats?.recentActivity || 'Recent Activity'}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-3 gap-3">
                   {[
-                    { label: 'Candidates today', value: candidatesToday, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-950/30' },
-                    { label: 'Candidates this week', value: candidatesThisWeek, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-950/30' },
-                    { label: 'New accounts 7d', value: newUsersThisWeek, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/30' },
+                    { label: ta.stats?.candidatesToday || 'Candidates today', value: candidatesToday, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-950/30' },
+                    { label: ta.stats?.candidatesThisWeek || 'Candidates this week', value: candidatesThisWeek, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-950/30' },
+                    { label: ta.stats?.newAccounts7d || 'New accounts 7d', value: newUsersThisWeek, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/30' },
                   ].map(item => (
                     <div key={item.label} className={`text-center p-3 rounded-xl ${item.bg} min-w-0`}>
                       <div className={`text-2xl font-bold ${item.color} break-words`}>{item.value}</div>
@@ -1449,27 +1450,27 @@ export function AdminClient({
           <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">
-                <Mail className="w-4 h-4 text-blue-500" /> Send Email to Users
+                <Mail className="w-4 h-4 text-blue-500" /> {ta.emailUsers?.title || 'Send Email to Users'}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Send from</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{ta.emailUsers?.sendFrom || 'Send from'}</label>
                 <input
                   value={senderEmail}
                   onChange={e => setSenderEmail(e.target.value)}
                   placeholder="contact@mydeltamatch.com"
                   className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                <p className="text-xs text-gray-400">This must match your configured SMTP email address</p>
+                <p className="text-xs text-gray-400">{ta.emailUsers?.sendFromHint || 'This must match your configured SMTP email address'}</p>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter recipients (demo accounts excluded)</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{ta.emailUsers?.filterRecipients || 'Filter recipients (demo accounts excluded)'}</label>
                 <div className="flex gap-2">
                   {[
-                    { id: 'all' as const, label: `All users (${users.length})`, color: 'border-blue-300 text-blue-700 bg-blue-50 dark:bg-blue-950/30' },
-                    { id: 'free' as const, label: `Free (${users.filter(u => u.subscription === 'free').length})`, color: 'border-gray-300 text-gray-700 bg-gray-50 dark:bg-gray-800' },
-                    { id: 'pro' as const, label: `Pro (${users.filter(u => u.subscription === 'pro').length})`, color: 'border-green-300 text-green-700 bg-green-50 dark:bg-green-950/30' },
+                    { id: 'all' as const, label: (ta.emailUsers?.allUsers || 'All users ({count})').replace('{count}', String(users.length)), color: 'border-blue-300 text-blue-700 bg-blue-50 dark:bg-blue-950/30' },
+                    { id: 'free' as const, label: (ta.emailUsers?.free || 'Free ({count})').replace('{count}', String(users.filter(u => u.subscription === 'free').length)), color: 'border-gray-300 text-gray-700 bg-gray-50 dark:bg-gray-800' },
+                    { id: 'pro' as const, label: (ta.emailUsers?.pro || 'Pro ({count})').replace('{count}', String(users.filter(u => u.subscription === 'pro').length)), color: 'border-green-300 text-green-700 bg-green-50 dark:bg-green-950/30' },
                   ].map(f => (
                     <button
                       key={f.id}
@@ -1486,7 +1487,7 @@ export function AdminClient({
               </div>
 
               <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Recipients ({filteredEmailUsers.length})</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{(ta.emailUsers?.recipients || 'Recipients ({count})').replace('{count}', String(filteredEmailUsers.length))}</p>
                 <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
                   {filteredEmailUsers.slice(0, 20).map(u => (
                     <span key={u.id} className="text-xs bg-white dark:bg-gray-700 px-2 py-0.5 rounded-full text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
@@ -1494,35 +1495,35 @@ export function AdminClient({
                     </span>
                   ))}
                   {filteredEmailUsers.length > 20 && (
-                    <span className="text-xs text-gray-400">+{filteredEmailUsers.length - 20} more</span>
+                    <span className="text-xs text-gray-400">{(ta.emailUsers?.more || '+{count} more').replace('{count}', String(filteredEmailUsers.length - 20))}</span>
                   )}
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Subject</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{ta.emailUsers?.subject || 'Subject'}</label>
                 <input
                   value={emailSubject}
                   onChange={e => { setEmailSubject(e.target.value); setEmailSent(false) }}
-                  placeholder="e.g. New feature: AI Interview Questions"
+                  placeholder={ta.emailUsers?.subjectPlaceholder || 'e.g. New feature: AI Interview Questions'}
                   className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Message</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{ta.emailUsers?.message || 'Message'}</label>
                 <textarea
                   value={emailBody}
                   onChange={e => { setEmailBody(e.target.value); setEmailSent(false) }}
                   rows={6}
-                  placeholder="Write your email message here..."
+                  placeholder={ta.emailUsers?.messagePlaceholder || 'Write your email message here...'}
                   className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
                 />
               </div>
 
               {emailSent ? (
                 <div className="p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg text-center">
-                  <p className="text-sm text-green-700 dark:text-green-400 font-medium">Email sent to {filteredEmailUsers.length} user(s)</p>
+                  <p className="text-sm text-green-700 dark:text-green-400 font-medium">{(ta.emailUsers?.sentTo || 'Email sent to {count} user(s)').replace('{count}', String(filteredEmailUsers.length))}</p>
                 </div>
               ) : (
                 <Button
@@ -1530,7 +1531,7 @@ export function AdminClient({
                   disabled={sendingEmail || !emailSubject.trim() || !emailBody.trim() || filteredEmailUsers.length === 0}
                   className="w-full gradient-bg gap-2"
                 >
-                  {sendingEmail ? <><Loader2 className="w-4 h-4 animate-spin" /> Sending...</> : <><Mail className="w-4 h-4" /> Send to {filteredEmailUsers.length} user(s)</>}
+                  {sendingEmail ? <><Loader2 className="w-4 h-4 animate-spin" /> {ta.emailUsers?.sending || 'Sending...'}</> : <><Mail className="w-4 h-4" /> {(ta.emailUsers?.sendTo || 'Send to {count} user(s)').replace('{count}', String(filteredEmailUsers.length))}</>}
                 </Button>
               )}
             </CardContent>
@@ -1543,15 +1544,15 @@ export function AdminClient({
             <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <Megaphone className="w-4 h-4 text-orange-500" /> Broadcast Notification
+                  <Megaphone className="w-4 h-4 text-orange-500" /> {ta.actions?.broadcastTitle || 'Broadcast Notification'}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Send a notification to all active (non-suspended) users on the platform.
+                  {ta.actions?.broadcastDesc || 'Send a notification to all active (non-suspended) users on the platform.'}
                 </p>
                 <Button variant="outline" className="gap-2 w-full" onClick={() => setBroadcastOpen(true)}>
-                  <Bell size={14} /> Compose Broadcast
+                  <Bell size={14} /> {ta.actions?.composeBroadcast || 'Compose Broadcast'}
                 </Button>
               </CardContent>
             </Card>
@@ -1560,15 +1561,15 @@ export function AdminClient({
             <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <Download className="w-4 h-4 text-blue-500" /> Export Users
+                  <Download className="w-4 h-4 text-blue-500" /> {ta.actions?.exportUsers || 'Export Users'}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Download a CSV file with all users, their subscriptions, and usage stats.
+                  {ta.actions?.exportUsersDesc || 'Download a CSV file with all users, their subscriptions, and usage stats.'}
                 </p>
                 <Button variant="outline" className="gap-2 w-full" onClick={exportUsersCSV}>
-                  <Download size={14} /> Download CSV
+                  <Download size={14} /> {ta.actions?.downloadCsv || 'Download CSV'}
                 </Button>
               </CardContent>
             </Card>
@@ -1578,7 +1579,7 @@ export function AdminClient({
           <Card className="border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
-                <Table2 className="w-4 h-4 text-purple-500" /> Plan Limits
+                <Table2 className="w-4 h-4 text-purple-500" /> {ta.actions?.planLimits || 'Plan Limits'}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
@@ -1586,7 +1587,7 @@ export function AdminClient({
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Feature</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">{ta.actions?.feature || 'Feature'}</th>
                       {planLimits.map(p => (
                         <th key={p.plan} className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase">{p.plan}</th>
                       ))}
@@ -1594,28 +1595,28 @@ export function AdminClient({
                   </thead>
                   <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
                     <tr>
-                      <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-400 font-medium">Price/month</td>
+                      <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-400 font-medium">{ta.actions?.pricePerMonth || 'Price/month'}</td>
                       {planLimits.map(p => (
                         <td key={p.plan} className="px-4 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-300">EUR {p.price}</td>
                       ))}
                     </tr>
                     <tr>
-                      <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-400 font-medium">Max Vacancies</td>
+                      <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-400 font-medium">{ta.actions?.maxVacancies || 'Max Vacancies'}</td>
                       {planLimits.map(p => (
                         <td key={p.plan} className="px-4 py-3 text-center text-xs text-gray-700 dark:text-gray-300">{p.maxVacancies}</td>
                       ))}
                     </tr>
                     <tr>
-                      <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-400 font-medium">Max Candidates</td>
+                      <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-400 font-medium">{ta.actions?.maxCandidates || 'Max Candidates'}</td>
                       {planLimits.map(p => (
                         <td key={p.plan} className="px-4 py-3 text-center text-xs text-gray-700 dark:text-gray-300">{p.maxCandidates}</td>
                       ))}
                     </tr>
                     {([
-                      { label: 'AI Analysis', key: 'aiAnalysis' },
-                      { label: 'Email Inbox', key: 'emailInbox' },
-                      { label: 'ATS Integrations', key: 'atsIntegrations' },
-                      { label: 'Analytics', key: 'analytics' },
+                      { label: ta.actions?.aiAnalysis || 'AI Analysis', key: 'aiAnalysis' },
+                      { label: ta.actions?.emailInbox || 'Email Inbox', key: 'emailInbox' },
+                      { label: ta.actions?.atsIntegrations || 'ATS Integrations', key: 'atsIntegrations' },
+                      { label: ta.actions?.analytics || 'Analytics', key: 'analytics' },
                     ] as const).map(feature => (
                       <tr key={feature.key}>
                         <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-400 font-medium">{feature.label}</td>
@@ -1631,7 +1632,7 @@ export function AdminClient({
                       </tr>
                     ))}
                     <tr className="bg-gray-50/50 dark:bg-gray-800/30">
-                      <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-400 font-semibold">Current users</td>
+                      <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-400 font-semibold">{ta.actions?.currentUsers || 'Current users'}</td>
                       {['free', 'pro'].map(plan => {
                         const count = subscriptions.find(s => s.subscription === plan)?._count || 0
                         return (
