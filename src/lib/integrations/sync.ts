@@ -13,7 +13,7 @@ import {
 } from './recruitee'
 import {
   smartrecruitersFetchJobs, smartrecruitersFetchCandidates,
-  smartrecruitersFetchCandidateCV,
+  smartrecruitersFetchCandidate, smartrecruitersDownloadCV,
 } from './smartrecruiters'
 import {
   greenhouseFetchJobs, greenhouseFetchCandidates, greenhouseDownloadCV,
@@ -426,7 +426,7 @@ export async function syncSmartRecruiters(userId: string, apiKey: string, since?
   const result: SyncResult = { imported: 0, updated: 0, skipped: 0, errors: [], duplicatesDetected: 0 }
   try {
     const [jobs, candidates] = await Promise.all([
-      smartrecruitersFetchJobs(apiKey),
+      smartrecruitersFetchJobs(apiKey).catch(() => [] as Awaited<ReturnType<typeof smartrecruitersFetchJobs>>),
       smartrecruitersFetchCandidates(apiKey, since),
     ])
 
@@ -435,41 +435,39 @@ export async function syncSmartRecruiters(userId: string, apiKey: string, since?
     for (const candidate of candidates) {
       try {
         const assignment = candidate.primaryAssignment
-        if (!assignment) continue
+        const jobId = assignment?.job?.id
+        if (!jobId) { result.skipped++; continue }
 
-        const jobId = assignment.job?.id
-        if (!jobId) continue
-
+        // The /jobs list carries no description; use it for the title/location,
+        // falling back to the title carried on the candidate's assignment so a
+        // candidate is never skipped just because its job wasn't in the page.
         const job = jobMap.get(jobId)
-        if (!job) continue
+        const title = job?.title || assignment?.job?.title || 'Position'
 
         const vacancyResult = await upsertVacancy(userId, jobId, 'smartrecruiters', {
-          title: job.title,
-          description: job.jobDescription?.text || job.title,
-          requirements: job.qualifications?.text || '',
-          company: 'Company',
-          location: job.location?.city,
+          title,
+          description: title,
+          requirements: '',
+          company: 'SmartRecruiters',
+          location: job?.location?.city,
         })
         const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
 
-        const cvBuffer = await smartrecruitersFetchCandidateCV(apiKey, candidate.id)
-
-        const motivationText = assignment.activeApplication?.answers
-          ?.map(a => `${a.questionText}: ${a.answerText}`)
-          .join('\n') || undefined
+        // Phone, LinkedIn and the attachments link are only on the detail.
+        const detail = await smartrecruitersFetchCandidate(apiKey, candidate.id)
+        const cv = await smartrecruitersDownloadCV(apiKey, detail?.actions?.attachments?.url)
 
         const status = await upsertCandidate(userId, 'smartrecruiters', {
           externalId: candidate.id,
           firstName: candidate.firstName || 'Unknown',
           lastName: candidate.lastName || 'Candidate',
-          email: candidate.email,
-          phone: candidate.phoneNumber,
-          linkedIn: candidate.web?.linkedIn,
-          cvBuffer,
-          cvFileName: cvBuffer ? 'cv.pdf' : undefined,
-          motivationText,
+          email: candidate.email || detail?.email,
+          phone: detail?.phoneNumber,
+          linkedIn: detail?.web?.linkedin,
+          cvBuffer: cv?.buffer || null,
+          cvFileName: cv?.filename,
           vacancyId,
-          atsStatus: assignment.status?.label,
+          atsStatus: assignment?.status,
         })
 
         if (status === 'imported') result.imported++

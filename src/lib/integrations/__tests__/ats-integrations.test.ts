@@ -290,13 +290,14 @@ describe('Recruitee integration', () => {
 // 3. SMARTRECRUITERS
 // ════════════════════════════════════════════════════════════════════════════
 describe('SmartRecruiters integration', () => {
-  it('smartrecruitersFetchJobs: uses X-SmartToken header and the /jobs path (no /v1)', async () => {
+  it('smartrecruitersFetchJobs: uses X-SmartToken + /jobs (no /v1) + cursor sort', async () => {
     const { smartrecruitersFetchJobs } = await import('../smartrecruiters')
     vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ content: [] }))
     await smartrecruitersFetchJobs('tok')
     const call = vi.mocked(fetch).mock.calls[0]
     expect(call[0]).toContain('api.smartrecruiters.com/jobs')
     expect(call[0]).not.toContain('/v1/')
+    expect(call[0]).toContain('sort=job_id')
     expect((call[1] as any).headers['X-SmartToken']).toBe('tok')
   })
 
@@ -311,16 +312,24 @@ describe('SmartRecruiters integration', () => {
     expect((call[1] as any).headers['X-SmartToken']).toBe('tok')
   })
 
-  it('smartrecruitersFetchJobs: parses content array', async () => {
+  it('smartrecruitersFetchJobs: parses content array (summary fields)', async () => {
     const { smartrecruitersFetchJobs } = await import('../smartrecruiters')
     vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({
-      content: [
-        { id: '1', title: 'PM', jobDescription: { text: 'desc' }, status: 'PUBLISHED', createdon: '2024' },
-      ],
+      content: [{ id: '1', title: 'PM', status: 'SOURCING', createdOn: '2024', location: { city: 'Paris' } }],
     }))
     const jobs = await smartrecruitersFetchJobs('k')
     expect(jobs[0].title).toBe('PM')
-    expect(jobs[0].jobDescription?.text).toBe('desc')
+    expect(jobs[0].location?.city).toBe('Paris')
+  })
+
+  it('smartrecruitersFetchCandidates: paginates via nextPageId (cursor, not offset)', async () => {
+    const { smartrecruitersFetchCandidates } = await import('../smartrecruiters')
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(jsonResponse({ content: [{ id: 'c1', firstName: 'A', lastName: 'B' }], nextPageId: 'PAGE2' }))
+      .mockResolvedValueOnce(jsonResponse({ content: [{ id: 'c2', firstName: 'C', lastName: 'D' }] }))
+    const r = await smartrecruitersFetchCandidates('k')
+    expect(r.map(c => c.id)).toEqual(['c1', 'c2'])
+    expect(vi.mocked(fetch).mock.calls[1][0]).toContain('pageId=PAGE2')
   })
 
   it('smartrecruitersFetchCandidates: passes updatedAfter when since provided', async () => {
@@ -336,11 +345,33 @@ describe('SmartRecruiters integration', () => {
     await expect(smartrecruitersFetchCandidates('k')).rejects.toThrow(/429/)
   })
 
-  it('smartrecruitersFetchCandidateCV: returns null on 404', async () => {
-    const { smartrecruitersFetchCandidateCV } = await import('../smartrecruiters')
-    vi.mocked(fetch).mockResolvedValueOnce(errorResponse(404))
-    const r = await smartrecruitersFetchCandidateCV('k', 'cand-1')
-    expect(r).toBeNull()
+  it('smartrecruitersFetchCandidate: GETs /candidates/:id (phone + web.linkedin lowercase)', async () => {
+    const { smartrecruitersFetchCandidate } = await import('../smartrecruiters')
+    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({
+      id: 'c1', phoneNumber: '+33', web: { linkedin: 'http://lnkd.in/x' },
+      actions: { attachments: { url: 'https://api.smartrecruiters.com/candidates/c1/attachments', method: 'GET' } },
+    }))
+    const d = await smartrecruitersFetchCandidate('k', 'c1')
+    expect(vi.mocked(fetch).mock.calls[0][0]).toContain('/candidates/c1')
+    expect(d?.web?.linkedin).toBe('http://lnkd.in/x')
+  })
+
+  it('smartrecruitersDownloadCV: follows the attachments url, picks the résumé, downloads it', async () => {
+    const { smartrecruitersDownloadCV } = await import('../smartrecruiters')
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(jsonResponse({ content: [
+        { id: 'a1', name: 'photo.png', mimeType: 'image/png' },
+        { id: 'a2', name: 'jane_cv.pdf', mimeType: 'application/pdf' },
+      ] }))
+      .mockResolvedValueOnce(jsonResponse('binary'))
+    const r = await smartrecruitersDownloadCV('k', 'https://api.smartrecruiters.com/candidates/c1/attachments')
+    expect(r?.filename).toBe('jane_cv.pdf')
+    expect(vi.mocked(fetch).mock.calls[1][0]).toContain('/candidates/c1/attachments/a2')
+  })
+
+  it('smartrecruitersDownloadCV: returns null when there is no attachments url', async () => {
+    const { smartrecruitersDownloadCV } = await import('../smartrecruiters')
+    expect(await smartrecruitersDownloadCV('k', undefined)).toBeNull()
   })
 })
 
@@ -1095,22 +1126,43 @@ describe('Sync orchestration (sync.ts)', () => {
 
   // ── SmartRecruiters sync ─────────────────────────────────────────────────
   describe('syncSmartRecruiters', () => {
-    it('imports candidates with primaryAssignment', async () => {
+    it('imports candidates with primaryAssignment (status is a string enum)', async () => {
       const { syncSmartRecruiters } = await import('../sync')
       vi.mocked(fetch)
         .mockResolvedValueOnce(jsonResponse({ // jobs
-          content: [{ id: 'j1', title: 'PM', status: 'PUBLISHED', createdon: '2024', jobDescription: { text: 'd' } }],
+          content: [{ id: 'j1', title: 'PM', status: 'SOURCING', createdOn: '2024', location: { city: 'Paris' } }],
         }))
         .mockResolvedValueOnce(jsonResponse({ // candidates
           content: [{
-            id: 'c1', firstName: 'A', lastName: 'B', email: 'a@b.com', createdon: '2024',
-            primaryAssignment: { job: { id: 'j1', title: 'PM' }, status: { id: 'NEW', label: 'New' } },
+            id: 'c1', firstName: 'A', lastName: 'B', email: 'a@b.com', createdOn: '2024',
+            primaryAssignment: { job: { id: 'j1', title: 'PM' }, status: 'NEW' },
           }],
         }))
-        .mockResolvedValueOnce(errorResponse(404)) // CV fetch returns null
+        .mockResolvedValueOnce(jsonResponse({ id: 'c1', phoneNumber: '+33', web: { linkedin: 'http://x' } })) // detail (no attachments)
 
       const r = await syncSmartRecruiters('u', 'k')
       expect(r.imported).toBe(1)
+    })
+
+    it('pulls phone + LinkedIn + CV from the candidate detail', async () => {
+      const { syncSmartRecruiters } = await import('../sync')
+      vi.mocked(fetch)
+        .mockResolvedValueOnce(jsonResponse({ content: [{ id: 'j1', title: 'PM' }] }))
+        .mockResolvedValueOnce(jsonResponse({
+          content: [{ id: 'c1', firstName: 'Jane', lastName: 'Doe', email: 'j@d.com', primaryAssignment: { job: { id: 'j1' }, status: 'IN_REVIEW' } }],
+        }))
+        .mockResolvedValueOnce(jsonResponse({ // detail
+          id: 'c1', phoneNumber: '+33', web: { linkedin: 'http://lnkd/jane' },
+          actions: { attachments: { url: 'https://api.smartrecruiters.com/candidates/c1/attachments', method: 'GET' } },
+        }))
+        .mockResolvedValueOnce(jsonResponse({ content: [{ id: 'a2', name: 'jane_cv.pdf', mimeType: 'application/pdf' }] })) // attachments list
+        .mockResolvedValueOnce(jsonResponse('binary')) // download
+      const r = await syncSmartRecruiters('u', 'k')
+      expect(r.imported).toBe(1)
+      const data = prismaMock.candidate.create.mock.calls[0][0].data
+      expect(data.linkedIn).toBe('http://lnkd/jane')
+      expect(data.phone).toBe('+33')
+      expect(data.cvFileName).toBe('jane_cv.pdf')
     })
 
     it('skips candidates without primaryAssignment', async () => {
@@ -1118,7 +1170,7 @@ describe('Sync orchestration (sync.ts)', () => {
       vi.mocked(fetch)
         .mockResolvedValueOnce(jsonResponse({ content: [] }))
         .mockResolvedValueOnce(jsonResponse({
-          content: [{ id: 'c1', firstName: 'A', lastName: 'B', email: 'a@b.com', createdon: '2024' }],
+          content: [{ id: 'c1', firstName: 'A', lastName: 'B', email: 'a@b.com', createdOn: '2024' }],
         }))
       const r = await syncSmartRecruiters('u', 'k')
       expect(r.imported).toBe(0)
