@@ -28,8 +28,8 @@ export interface TTJob {
   attributes: {
     title: string
     body?: string
-    'human-requirements'?: string
     status: string
+    'human-status'?: string
     'created-at': string
   }
 }
@@ -37,13 +37,16 @@ export interface TTJob {
 export interface TTJobApplication {
   id: string
   attributes: {
-    stage: string
     'created-at': string
+    'cover-letter'?: string
   }
   relationships: {
     job: { data: { id: string } }
     candidate: { data: { id: string } }
+    stage?: { data?: { id: string } }
   }
+  // Resolved from the included `stages` (the stage is a relationship, not an attribute).
+  stageName?: string
 }
 
 const TT_BASE = 'https://api.teamtailor.com/v1'
@@ -85,25 +88,39 @@ export async function teamtailorFetchCompanyName(apiKey: string): Promise<string
 
 export async function teamtailorFetchJobs(apiKey: string): Promise<TTJob[]> {
   const jobs: TTJob[] = []
-  let url = '/jobs?filter[status]=published&page[size]=50'
+  // page[size] max is 30. There is no `filter[status]=published` - "published" is the
+  // human-status; the raw `status` is open/draft/archived/etc. So fetch and filter
+  // to published jobs client-side.
+  let url = '/jobs?page[size]=30'
   while (url) {
     const data = await ttFetch(url, apiKey)
     jobs.push(...(data.data || []))
     url = data.links?.next ? data.links.next.replace(TT_BASE, '') : null
   }
-  return jobs
+  return jobs.filter(j => j.attributes['human-status'] === 'published')
 }
 
 export async function teamtailorFetchApplications(apiKey: string, since?: Date): Promise<TTJobApplication[]> {
   const apps: TTJobApplication[] = []
-  let url = '/job-applications?include=candidate,job&page[size]=50'
-  if (since) url += `&filter[created-at][gte]=${since.toISOString()}`
+  const stageNames = new Map<string, string>() // stageId -> name (from `included`)
+  let url = '/job-applications?include=candidate,job,stage&page[size]=30'
   while (url) {
     const data = await ttFetch(url, apiKey)
+    for (const inc of (data.included || [])) {
+      if (inc?.type === 'stages') stageNames.set(inc.id, inc.attributes?.name || inc.attributes?.title || '')
+    }
     apps.push(...(data.data || []))
     url = data.links?.next ? data.links.next.replace(TT_BASE, '') : null
   }
-  return apps
+  // The stage is a relationship, not an attribute - resolve its name from the includes.
+  for (const app of apps) {
+    const stageId = app.relationships?.stage?.data?.id
+    if (stageId) app.stageName = stageNames.get(stageId)
+  }
+  // The API has no documented created-at filter, so apply `since` client-side.
+  return since
+    ? apps.filter(a => !a.attributes['created-at'] || new Date(a.attributes['created-at']) >= since)
+    : apps
 }
 
 export async function teamtailorFetchCandidate(apiKey: string, candidateId: string): Promise<TTCandidate | null> {

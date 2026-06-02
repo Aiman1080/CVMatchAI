@@ -112,7 +112,7 @@ describe('Teamtailor integration', () => {
 
     const call = vi.mocked(fetch).mock.calls[0]
     expect(call[0]).toContain('api.teamtailor.com/v1/jobs')
-    expect(call[0]).toContain('filter[status]=published')
+    expect(call[0]).toContain('page[size]=30')
     expect((call[1] as any).headers.Authorization).toBe('Token token=test-key')
     expect((call[1] as any).headers['X-Api-Version']).toBeTruthy()
   })
@@ -121,8 +121,8 @@ describe('Teamtailor integration', () => {
     const { teamtailorFetchJobs } = await import('../teamtailor')
     vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({
       data: [
-        { id: '1', attributes: { title: 'Engineer', body: 'desc', 'human-requirements': 'react', status: 'published', 'created-at': '2024-01-01' } },
-        { id: '2', attributes: { title: 'Designer', status: 'published', 'created-at': '2024-01-02' } },
+        { id: '1', attributes: { title: 'Engineer', body: 'desc', status: 'open', 'human-status': 'published', 'created-at': '2024-01-01' } },
+        { id: '2', attributes: { title: 'Designer', status: 'open', 'human-status': 'published', 'created-at': '2024-01-02' } },
       ],
       links: {},
     }))
@@ -136,8 +136,8 @@ describe('Teamtailor integration', () => {
   it('teamtailorFetchJobs: follows pagination via links.next', async () => {
     const { teamtailorFetchJobs } = await import('../teamtailor')
     vi.mocked(fetch)
-      .mockResolvedValueOnce(jsonResponse({ data: [{ id: '1', attributes: { title: 'A', status: 'p', 'created-at': '2024' } }], links: { next: 'https://api.teamtailor.com/v1/jobs?page=2' } }))
-      .mockResolvedValueOnce(jsonResponse({ data: [{ id: '2', attributes: { title: 'B', status: 'p', 'created-at': '2024' } }], links: {} }))
+      .mockResolvedValueOnce(jsonResponse({ data: [{ id: '1', attributes: { title: 'A', status: 'open', 'human-status': 'published', 'created-at': '2024' } }], links: { next: 'https://api.teamtailor.com/v1/jobs?page=2' } }))
+      .mockResolvedValueOnce(jsonResponse({ data: [{ id: '2', attributes: { title: 'B', status: 'open', 'human-status': 'published', 'created-at': '2024' } }], links: {} }))
 
     const jobs = await teamtailorFetchJobs('k')
     expect(jobs).toHaveLength(2)
@@ -166,11 +166,18 @@ describe('Teamtailor integration', () => {
     expect(r.error).toBeTruthy()
   })
 
-  it('teamtailorFetchApplications: passes since filter when provided', async () => {
+  it('teamtailorFetchApplications: filters by since client-side', async () => {
     const { teamtailorFetchApplications } = await import('../teamtailor')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ data: [], links: {} }))
-    await teamtailorFetchApplications('k', new Date('2024-01-15'))
-    expect(vi.mocked(fetch).mock.calls[0][0]).toContain('filter[created-at][gte]=')
+    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({
+      data: [
+        { id: 'old', attributes: { 'created-at': '2024-01-01' }, relationships: {} },
+        { id: 'new', attributes: { 'created-at': '2024-02-01' }, relationships: {} },
+      ],
+      links: {},
+    }))
+    const apps = await teamtailorFetchApplications('k', new Date('2024-01-15'))
+    expect(apps).toHaveLength(1)
+    expect(apps[0].id).toBe('new')
   })
 
   it('teamtailorDownloadCV: returns null on failure (does not crash)', async () => {
@@ -854,7 +861,7 @@ describe('Sync orchestration (sync.ts)', () => {
       // Order: jobs, applications, companyName, then candidate fetch
       vi.mocked(fetch)
         .mockResolvedValueOnce(jsonResponse({ // jobs
-          data: [{ id: 'job1', attributes: { title: 'Engineer', body: 'desc', 'human-requirements': 'r', status: 'published', 'created-at': '2024' } }],
+          data: [{ id: 'job1', attributes: { title: 'Engineer', body: 'desc', status: 'open', 'human-status': 'published', 'created-at': '2024' } }],
           links: {},
         }))
         .mockResolvedValueOnce(jsonResponse({ // applications
@@ -901,10 +908,11 @@ describe('Sync orchestration (sync.ts)', () => {
 
       await syncTeamtailor('u', 'k', new Date('2024-05-01'))
 
-      // Find the applications call (URL contains job-applications)
+      // Find the applications call (URL contains job-applications). `since` is now
+      // applied client-side, so it is no longer a URL filter; the call includes the stage.
       const appsCall = vi.mocked(fetch).mock.calls.find(c => (c[0] as string).includes('job-applications'))
       expect(appsCall).toBeTruthy()
-      expect(appsCall![0]).toContain('filter[created-at][gte]=')
+      expect(appsCall![0]).toContain('include=candidate,job,stage')
     })
   })
 

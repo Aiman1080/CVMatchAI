@@ -292,7 +292,7 @@ export async function syncTeamtailor(userId: string, apiKey: string, since?: Dat
         const vacancyResult = await upsertVacancy(userId, jobId, 'teamtailor', {
           title: job.attributes.title,
           description: job.attributes.body || job.attributes.title,
-          requirements: job.attributes['human-requirements'] || '',
+          requirements: '',
           company,
         })
         const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
@@ -317,9 +317,9 @@ export async function syncTeamtailor(userId: string, apiKey: string, since?: Dat
           linkedIn: candidate.attributes['linkedin-url'],
           cvBuffer,
           cvFileName,
-          motivationText: candidate.attributes.pitch,
+          motivationText: app.attributes['cover-letter'] || candidate.attributes.pitch,
           vacancyId,
-          atsStatus: app.attributes.stage,
+          atsStatus: app.stageName,
         })
 
         if (status === 'imported') result.imported++
