@@ -84,17 +84,6 @@ const PLATFORM_STATIC = [
     needsSlug: false,
   },
   {
-    id: 'bullhorn' as const,
-    name: 'Bullhorn',
-    color: 'from-red-500 to-orange-500',
-    textColor: 'text-red-600 dark:text-red-400',
-    bgColor: 'bg-red-50 dark:bg-red-950/30',
-    borderColor: 'border-red-200 dark:border-red-800',
-    docsUrl: 'https://bullhorn.github.io/rest-api-docs/',
-    apiKeyPlaceholder: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
-    needsSlug: true,
-  },
-  {
     id: 'workable' as const,
     name: 'Workable',
     color: 'from-blue-600 to-blue-700',
@@ -104,17 +93,6 @@ const PLATFORM_STATIC = [
     docsUrl: 'https://workable.readme.io/reference',
     apiKeyPlaceholder: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
     needsSlug: true,
-  },
-  {
-    id: 'flatchr' as const,
-    name: 'Flatchr',
-    color: 'from-purple-500 to-purple-700',
-    textColor: 'text-purple-600 dark:text-purple-400',
-    bgColor: 'bg-purple-50 dark:bg-purple-950/30',
-    borderColor: 'border-purple-200 dark:border-purple-800',
-    docsUrl: 'https://developers.flatchr.io/',
-    apiKeyPlaceholder: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-    needsSlug: false,
   },
   {
     id: 'ashby' as const,
@@ -128,17 +106,6 @@ const PLATFORM_STATIC = [
     needsSlug: false,
   },
   {
-    id: 'breezyhr' as const,
-    name: 'Breezy HR',
-    color: 'from-sky-400 to-sky-600',
-    textColor: 'text-sky-600 dark:text-sky-400',
-    bgColor: 'bg-sky-50 dark:bg-sky-950/30',
-    borderColor: 'border-sky-200 dark:border-sky-800',
-    docsUrl: 'https://developer.breezy.hr',
-    apiKeyPlaceholder: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-    needsSlug: true,
-  },
-  {
     id: 'homerun' as const,
     name: 'Homerun',
     color: 'from-orange-400 to-orange-600',
@@ -149,31 +116,9 @@ const PLATFORM_STATIC = [
     apiKeyPlaceholder: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
     needsSlug: false,
   },
-  {
-    id: 'personio' as const,
-    name: 'Personio',
-    color: 'from-rose-400 to-pink-600',
-    textColor: 'text-rose-600 dark:text-rose-400',
-    bgColor: 'bg-rose-50 dark:bg-rose-950/30',
-    borderColor: 'border-rose-200 dark:border-rose-800',
-    docsUrl: 'https://developer.personio.de/reference',
-    apiKeyPlaceholder: 'papi-xxxxxxxxxxxxxxxx',
-    needsSlug: false,
-  },
-  {
-    id: 'icims' as const,
-    name: 'iCIMS',
-    color: 'from-blue-700 to-blue-900',
-    textColor: 'text-blue-700 dark:text-blue-400',
-    bgColor: 'bg-blue-50 dark:bg-blue-950/30',
-    borderColor: 'border-blue-200 dark:border-blue-800',
-    docsUrl: 'https://developer.icims.com',
-    apiKeyPlaceholder: 'xxxx-xxxx-xxxx',
-    needsSlug: true,
-  },
 ]
 
-type PlatformId = 'teamtailor' | 'recruitee' | 'smartrecruiters' | 'greenhouse' | 'lever' | 'bullhorn' | 'workable' | 'flatchr' | 'ashby' | 'breezyhr' | 'homerun' | 'personio' | 'icims'
+type PlatformId = 'teamtailor' | 'recruitee' | 'smartrecruiters' | 'greenhouse' | 'lever' | 'workable' | 'ashby' | 'homerun'
 
 /** Collapsible guide with numbered steps - shown inline inside the connection form */
 function HowToGuide({ steps, docsUrl, openLabel, title }: { steps: readonly string[]; docsUrl: string; openLabel: string; title: string }) {
@@ -743,7 +688,7 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
                           <InfoTooltip text={slugTooltip} />
                         </div>
                         <Input
-                          placeholder={platform.id === 'bullhorn' ? 'https://rest.bullhornstaffing.com/rest-services/...' : platform.id === 'workable' ? 'your-company' : platform.id === 'breezyhr' ? 'your-company-id' : platform.id === 'icims' ? '12345' : 'acme-corp'}
+                          placeholder={platform.id === 'workable' ? 'your-company' : 'acme-corp'}
                           value={f.companySlug}
                           onChange={e => setForm(prev => ({ ...prev, [platform.id]: { ...f, companySlug: e.target.value } }))}
                           className="text-sm h-9"

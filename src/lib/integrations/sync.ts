@@ -25,30 +25,15 @@ import {
   type LeverApplication,
 } from './lever'
 import {
-  bullhornFetchJobs, bullhornFetchCandidates, bullhornFetchJobSubmissions,
-} from './bullhorn'
-import {
   workableFetchJobs, workableFetchJob, workableFetchCandidates, workableFetchCandidate, workableDownloadCV,
 } from './workable'
-import {
-  flatchrFetchJobs, flatchrFetchCandidates, flatchrDownloadCV,
-} from './flatchr'
 import {
   ashbyFetchJobs, ashbyFetchCandidates, ashbyFetchApplications, ashbyFileUrl, ashbyDownloadCV,
   type AshbyJobPosting, type AshbyApplication,
 } from './ashby'
 import {
-  breezyFetchPositions, breezyFetchCandidates, breezyDownloadCV,
-} from './breezyhr'
-import {
   homerunFetchJobs, homerunFetchApplications, homerunDownloadCV,
 } from './homerun'
-import {
-  personioFetchJobs, personioFetchApplications, personioDownloadCV,
-} from './personio'
-import {
-  icimsFetchJobs, icimsFetchCandidates, icimsDownloadCV,
-} from './icims'
 
 export interface SyncResult {
   imported: number
@@ -648,83 +633,6 @@ export async function syncLever(apiKey: string, userId: string, since?: Date): P
   return result
 }
 
-// ── Bullhorn ─────────────────────────────────────────────────────────────────
-
-export async function syncBullhorn(apiKey: string, restUrl: string, userId: string, since?: Date): Promise<SyncResult> {
-  const result: SyncResult = { imported: 0, updated: 0, skipped: 0, errors: [], duplicatesDetected: 0 }
-  try {
-    const [jobs, candidates, submissions] = await Promise.all([
-      bullhornFetchJobs(apiKey, restUrl),
-      bullhornFetchCandidates(apiKey, restUrl, since),
-      bullhornFetchJobSubmissions(apiKey, restUrl, since),
-    ])
-
-    // Create vacancies for all open jobs
-    const jobVacancyMap = new Map<number, string>()
-    for (const job of jobs) {
-      const vacancyResult = await upsertVacancy(userId, `${job.id}`, 'bullhorn', {
-        title: job.title,
-        description: job.publicDescription || job.title,
-        requirements: job.skillList || '',
-        company: job.clientCorporation?.name || 'Bullhorn',
-        location: job.address?.city,
-      })
-      const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
-      jobVacancyMap.set(job.id, vacancyId)
-    }
-
-    // Build candidateId -> most recent jobId mapping from submissions
-    // If a candidate has multiple submissions, pick the most recent (highest dateAdded)
-    const candidateJobMap = new Map<number, { jobId: number; dateAdded: number; status?: string }>()
-    for (const sub of submissions) {
-      const candId = sub.candidate?.id
-      const jobId = sub.jobOrder?.id
-      if (!candId || !jobId) continue
-      const existing = candidateJobMap.get(candId)
-      if (!existing || sub.dateAdded > existing.dateAdded) {
-        candidateJobMap.set(candId, { jobId, dateAdded: sub.dateAdded, status: sub.status })
-      }
-    }
-
-    for (const candidate of candidates) {
-      try {
-        const link = candidateJobMap.get(candidate.id)
-        if (!link) {
-          // No job submission for this candidate - skip rather than incorrectly link to first job
-          result.skipped++
-          continue
-        }
-        const vacancyId = jobVacancyMap.get(link.jobId)
-        if (!vacancyId) {
-          // Candidate's job isn't in our synced list (e.g. closed job) - skip
-          result.skipped++
-          continue
-        }
-
-        const status = await upsertCandidate(userId, 'bullhorn', {
-          externalId: `${candidate.id}`,
-          firstName: candidate.firstName || 'Unknown',
-          lastName: candidate.lastName || 'Candidate',
-          email: candidate.email,
-          phone: candidate.phone,
-          cvBuffer: null,
-          vacancyId,
-          atsStatus: link.status || candidate.status,
-        })
-
-        if (status === 'imported') result.imported++
-        else if (status === 'updated') result.updated++
-        else result.skipped++
-      } catch (e: any) {
-        result.errors.push(`Candidate ${candidate.id}: ${e.message}`)
-      }
-    }
-  } catch (e: any) {
-    result.errors.push(e.message)
-  }
-  return result
-}
-
 // ── Workable ─────────────────────────────────────────────────────────────────
 
 export async function syncWorkable(apiKey: string, subdomain: string, userId: string, since?: Date): Promise<SyncResult> {
@@ -780,63 +688,6 @@ export async function syncWorkable(apiKey: string, subdomain: string, userId: st
               motivationText,
               vacancyId,
               atsStatus: candidate.disqualified ? 'disqualified' : candidate.stage,
-            })
-
-            if (status === 'imported') result.imported++
-            else if (status === 'updated') result.updated++
-            else result.skipped++
-          } catch (e: any) {
-            result.errors.push(`Candidate ${candidate.id}: ${e.message}`)
-          }
-        }
-      } catch (e: any) {
-        result.errors.push(`Job ${job.id}: ${e.message}`)
-      }
-    }
-  } catch (e: any) {
-    result.errors.push(e.message)
-  }
-  return result
-}
-
-// ── Flatchr ──────────────────────────────────────────────────────────────────
-
-export async function syncFlatchr(apiKey: string, userId: string, since?: Date): Promise<SyncResult> {
-  const result: SyncResult = { imported: 0, updated: 0, skipped: 0, errors: [], duplicatesDetected: 0 }
-  try {
-    const jobs = await flatchrFetchJobs(apiKey)
-
-    for (const job of jobs) {
-      try {
-        const vacancyResult = await upsertVacancy(userId, job.id, 'flatchr', {
-          title: job.title,
-          description: job.description || job.title,
-          requirements: job.requirements || '',
-          company: 'Flatchr',
-          location: job.location,
-        })
-        const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
-
-        const candidates = await flatchrFetchCandidates(apiKey, job.id)
-
-        for (const candidate of candidates) {
-          try {
-            if (since && new Date(candidate.created_at) < since) continue
-
-            const cvBuffer = candidate.cv_url
-              ? await flatchrDownloadCV(candidate.cv_url, apiKey)
-              : null
-
-            const status = await upsertCandidate(userId, 'flatchr', {
-              externalId: candidate.id,
-              firstName: candidate.first_name || 'Unknown',
-              lastName: candidate.last_name || 'Candidate',
-              email: candidate.email,
-              phone: candidate.phone,
-              cvBuffer,
-              cvFileName: cvBuffer ? 'cv.pdf' : undefined,
-              vacancyId,
-              atsStatus: candidate.status,
             })
 
             if (status === 'imported') result.imported++
@@ -953,69 +804,6 @@ export async function syncAshby(apiKey: string, userId: string, since?: Date): P
   return result
 }
 
-// ── Breezy HR ───────────────────────────────────────────────────────────────
-
-export async function syncBreezy(apiKey: string, companyId: string, userId: string, since?: Date): Promise<SyncResult> {
-  const result: SyncResult = { imported: 0, updated: 0, skipped: 0, errors: [], duplicatesDetected: 0 }
-  try {
-    const positions = await breezyFetchPositions(apiKey, companyId)
-
-    for (const position of positions) {
-      try {
-        const vacancyResult = await upsertVacancy(userId, position._id, 'breezyhr', {
-          title: position.name,
-          description: position.description || position.name,
-          requirements: '',
-          company: companyId,
-          location: position.location?.city,
-        })
-        const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
-
-        const candidates = await breezyFetchCandidates(apiKey, companyId, position._id)
-
-        for (const candidate of candidates) {
-          try {
-            if (since && candidate.creation_date && new Date(candidate.creation_date) < since) continue
-
-            const nameParts = candidate.name?.split(' ') || []
-            const firstName = nameParts[0] || 'Unknown'
-            const lastName = nameParts.slice(1).join(' ') || 'Candidate'
-
-            const cvBuffer = candidate.resume?.url
-              ? await breezyDownloadCV(candidate.resume.url, apiKey)
-              : null
-
-            const status = await upsertCandidate(userId, 'breezyhr', {
-              externalId: candidate._id,
-              firstName,
-              lastName,
-              email: candidate.email_address,
-              phone: candidate.phone_number,
-              linkedIn: candidate.profile_url,
-              cvBuffer,
-              cvFileName: candidate.resume?.file_name || (cvBuffer ? 'cv.pdf' : undefined),
-              motivationText: candidate.summary,
-              vacancyId,
-              atsStatus: candidate.stage?.name,
-            })
-
-            if (status === 'imported') result.imported++
-            else if (status === 'updated') result.updated++
-            else result.skipped++
-          } catch (e: any) {
-            result.errors.push(`Candidate ${candidate._id}: ${e.message}`)
-          }
-        }
-      } catch (e: any) {
-        result.errors.push(`Position ${position._id}: ${e.message}`)
-      }
-    }
-  } catch (e: any) {
-    result.errors.push(e.message)
-  }
-  return result
-}
-
 // ── Homerun ─────────────────────────────────────────────────────────────────
 
 export async function syncHomerun(apiKey: string, userId: string, since?: Date): Promise<SyncResult> {
@@ -1063,114 +851,6 @@ export async function syncHomerun(apiKey: string, userId: string, since?: Date):
             else result.skipped++
           } catch (e: any) {
             result.errors.push(`Application ${app.id}: ${e.message}`)
-          }
-        }
-      } catch (e: any) {
-        result.errors.push(`Job ${job.id}: ${e.message}`)
-      }
-    }
-  } catch (e: any) {
-    result.errors.push(e.message)
-  }
-  return result
-}
-
-// ── Personio ───────────────────────────────────────────────────────────────
-
-export async function syncPersonio(apiKey: string, userId: string, since?: Date): Promise<SyncResult> {
-  const result: SyncResult = { imported: 0, updated: 0, skipped: 0, errors: [], duplicatesDetected: 0 }
-  try {
-    const jobs = await personioFetchJobs(apiKey)
-
-    for (const job of jobs) {
-      try {
-        const vacancyResult = await upsertVacancy(userId, `${job.id}`, 'personio', {
-          title: job.name,
-          description: job.description || job.name,
-          requirements: '',
-          company: 'Personio',
-          location: job.office,
-        })
-        const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
-
-        const applications = await personioFetchApplications(apiKey, job.id)
-
-        for (const app of applications) {
-          try {
-            if (since && new Date(app.created_at) < since) continue
-
-            const cv = await personioDownloadCV(apiKey, app.id)
-
-            const status = await upsertCandidate(userId, 'personio', {
-              externalId: `${app.id}`,
-              firstName: app.first_name || 'Unknown',
-              lastName: app.last_name || 'Candidate',
-              email: app.email,
-              phone: app.phone,
-              cvBuffer: cv?.buffer || null,
-              cvFileName: cv?.filename || (cv ? 'cv.pdf' : undefined),
-              vacancyId,
-              atsStatus: app.status,
-            })
-
-            if (status === 'imported') result.imported++
-            else if (status === 'updated') result.updated++
-            else result.skipped++
-          } catch (e: any) {
-            result.errors.push(`Application ${app.id}: ${e.message}`)
-          }
-        }
-      } catch (e: any) {
-        result.errors.push(`Job ${job.id}: ${e.message}`)
-      }
-    }
-  } catch (e: any) {
-    result.errors.push(e.message)
-  }
-  return result
-}
-
-// ── iCIMS ─────────────────────────────────────────────────────────────────
-
-export async function syncIcims(apiKey: string, customerId: string, userId: string, since?: Date): Promise<SyncResult> {
-  const result: SyncResult = { imported: 0, updated: 0, skipped: 0, errors: [], duplicatesDetected: 0 }
-  try {
-    const jobs = await icimsFetchJobs(apiKey, customerId)
-
-    for (const job of jobs) {
-      try {
-        const vacancyResult = await upsertVacancy(userId, `${job.id}`, 'icims', {
-          title: job.title,
-          description: job.description || job.title,
-          requirements: '',
-          company: 'iCIMS',
-          location: job.jobLocation,
-        })
-        const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
-
-        const workflows = await icimsFetchCandidates(apiKey, customerId, job.id)
-
-        for (const wf of workflows) {
-          try {
-            if (since && new Date(wf.createdDate) < since) continue
-
-            const cv = await icimsDownloadCV(apiKey, customerId, wf.person.id)
-
-            const status = await upsertCandidate(userId, 'icims', {
-              externalId: `${wf.id}`,
-              firstName: 'Unknown',
-              lastName: 'Candidate',
-              cvBuffer: cv?.buffer || null,
-              cvFileName: cv?.filename || (cv ? 'cv.pdf' : undefined),
-              vacancyId,
-              atsStatus: wf.status,
-            })
-
-            if (status === 'imported') result.imported++
-            else if (status === 'updated') result.updated++
-            else result.skipped++
-          } catch (e: any) {
-            result.errors.push(`Workflow ${wf.id}: ${e.message}`)
           }
         }
       } catch (e: any) {

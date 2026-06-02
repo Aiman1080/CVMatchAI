@@ -537,52 +537,6 @@ describe('Lever integration', () => {
 })
 
 // ════════════════════════════════════════════════════════════════════════════
-// 6. BULLHORN
-// ════════════════════════════════════════════════════════════════════════════
-describe('Bullhorn integration', () => {
-  it('bullhornFetchJobs: uses BhRestToken header', async () => {
-    const { bullhornFetchJobs } = await import('../bullhorn')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ data: [] }))
-    await bullhornFetchJobs('tok', 'https://rest.bullhorn.com/e1')
-    const call = vi.mocked(fetch).mock.calls[0]
-    expect((call[1] as any).headers.BhRestToken).toBe('tok')
-    expect(call[0]).toContain('rest.bullhorn.com/e1/search/JobOrder')
-  })
-
-  it('bullhornFetchJobs: parses data array', async () => {
-    const { bullhornFetchJobs } = await import('../bullhorn')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({
-      data: [{ id: 1, title: 'Eng', publicDescription: 'd', isOpen: true, dateAdded: 123 }],
-    }))
-    const jobs = await bullhornFetchJobs('k', 'https://r')
-    expect(jobs[0].title).toBe('Eng')
-  })
-
-  it('bullhornFetchCandidates: uses since-based query', async () => {
-    const { bullhornFetchCandidates } = await import('../bullhorn')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ data: [] }))
-    await bullhornFetchCandidates('k', 'https://r', new Date('2024-01-01'))
-    expect(decodeURIComponent(vi.mocked(fetch).mock.calls[0][0] as string)).toMatch(/dateAdded:\[\d+ TO \*\]/)
-  })
-
-  it('bullhornFetchJobSubmissions: parses submission entries', async () => {
-    const { bullhornFetchJobSubmissions } = await import('../bullhorn')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({
-      data: [{ id: 1, candidate: { id: 10 }, jobOrder: { id: 100 }, status: 'New', dateAdded: 1 }],
-    }))
-    const s = await bullhornFetchJobSubmissions('k', 'https://r')
-    expect(s[0].candidate?.id).toBe(10)
-    expect(s[0].jobOrder?.id).toBe(100)
-  })
-
-  it('bullhornFetchJobs: throws on 500', async () => {
-    const { bullhornFetchJobs } = await import('../bullhorn')
-    vi.mocked(fetch).mockResolvedValueOnce(errorResponse(500))
-    await expect(bullhornFetchJobs('k', 'https://r')).rejects.toThrow(/500/)
-  })
-})
-
-// ════════════════════════════════════════════════════════════════════════════
 // 7. WORKABLE
 // ════════════════════════════════════════════════════════════════════════════
 describe('Workable integration', () => {
@@ -702,51 +656,6 @@ describe('Workable integration', () => {
 })
 
 // ════════════════════════════════════════════════════════════════════════════
-// 8. FLATCHR
-// ════════════════════════════════════════════════════════════════════════════
-describe('Flatchr integration', () => {
-  it('flatchrFetchJobs: uses Bearer auth', async () => {
-    const { flatchrFetchJobs } = await import('../flatchr')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ data: [] }))
-    await flatchrFetchJobs('tk')
-    const call = vi.mocked(fetch).mock.calls[0]
-    expect(call[0]).toContain('api.flatchr.io/v2/jobs')
-    expect((call[1] as any).headers.Authorization).toBe('Bearer tk')
-  })
-
-  it('flatchrFetchJobs: supports both data.data and data.jobs response shape', async () => {
-    const { flatchrFetchJobs } = await import('../flatchr')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({
-      jobs: [{ id: '1', title: 'Eng', status: 'published', created_at: '2024' }],
-    }))
-    const r = await flatchrFetchJobs('k')
-    expect(r).toHaveLength(1)
-  })
-
-  it('flatchrFetchCandidates: uses jobId in URL', async () => {
-    const { flatchrFetchCandidates } = await import('../flatchr')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ data: [] }))
-    await flatchrFetchCandidates('k', 'JOB42')
-    expect(vi.mocked(fetch).mock.calls[0][0]).toContain('/jobs/JOB42/applications')
-  })
-
-  it('flatchrDownloadCV: returns null on network failure', async () => {
-    const { flatchrDownloadCV } = await import('../flatchr')
-    vi.mocked(fetch).mockRejectedValueOnce(new Error('network down'))
-    const r = await flatchrDownloadCV('https://x/y', 'k')
-    expect(r).toBeNull()
-  })
-
-  it('flatchrTestConnection: returns company name', async () => {
-    const { flatchrTestConnection } = await import('../flatchr')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ name: 'Flatchr Co' }))
-    const r = await flatchrTestConnection('k')
-    expect(r.ok).toBe(true)
-    expect(r.company).toBe('Flatchr Co')
-  })
-})
-
-// ════════════════════════════════════════════════════════════════════════════
 // 9. ASHBY
 // ════════════════════════════════════════════════════════════════════════════
 describe('Ashby integration', () => {
@@ -829,49 +738,6 @@ describe('Ashby integration', () => {
 })
 
 // ════════════════════════════════════════════════════════════════════════════
-// 10. BREEZY HR
-// ════════════════════════════════════════════════════════════════════════════
-describe('Breezy HR integration', () => {
-  it('breezyFetchPositions: uses Bearer auth and company URL', async () => {
-    const { breezyFetchPositions } = await import('../breezyhr')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse([]))
-    await breezyFetchPositions('tk', 'COMP1')
-    const call = vi.mocked(fetch).mock.calls[0]
-    expect(call[0]).toContain('api.breezy.hr/v3/company/COMP1/positions')
-    expect((call[1] as any).headers.Authorization).toBe('Bearer tk')
-  })
-
-  it('breezyFetchPositions: parses array response', async () => {
-    const { breezyFetchPositions } = await import('../breezyhr')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse([
-      { _id: 'p1', name: 'Dev', description: 'd', state: 'published' },
-    ]))
-    const r = await breezyFetchPositions('k', 'co')
-    expect(r[0]._id).toBe('p1')
-  })
-
-  it('breezyFetchPositions: returns empty array if response not array', async () => {
-    const { breezyFetchPositions } = await import('../breezyhr')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ error: 'unexpected' }))
-    const r = await breezyFetchPositions('k', 'co')
-    expect(r).toEqual([])
-  })
-
-  it('breezyFetchCandidates: uses position id in URL', async () => {
-    const { breezyFetchCandidates } = await import('../breezyhr')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse([]))
-    await breezyFetchCandidates('k', 'CO', 'POS9')
-    expect(vi.mocked(fetch).mock.calls[0][0]).toContain('/company/CO/position/POS9/candidates')
-  })
-
-  it('breezyFetchPositions: throws on 403', async () => {
-    const { breezyFetchPositions } = await import('../breezyhr')
-    vi.mocked(fetch).mockResolvedValueOnce(errorResponse(403))
-    await expect(breezyFetchPositions('k', 'co')).rejects.toThrow(/403/)
-  })
-})
-
-// ════════════════════════════════════════════════════════════════════════════
 // 11. HOMERUN
 // ════════════════════════════════════════════════════════════════════════════
 describe('Homerun integration', () => {
@@ -915,99 +781,6 @@ describe('Homerun integration', () => {
     const { homerunFetchJobs } = await import('../homerun')
     vi.mocked(fetch).mockResolvedValueOnce(errorResponse(429))
     await expect(homerunFetchJobs('k')).rejects.toThrow(/429/)
-  })
-})
-
-// ════════════════════════════════════════════════════════════════════════════
-// 12. PERSONIO
-// ════════════════════════════════════════════════════════════════════════════
-describe('Personio integration', () => {
-  it('personioFetchJobs: uses Bearer auth', async () => {
-    const { personioFetchJobs } = await import('../personio')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ data: [] }))
-    await personioFetchJobs('tk')
-    const call = vi.mocked(fetch).mock.calls[0]
-    expect(call[0]).toContain('api.personio.de/v1/recruiting/positions')
-    expect((call[1] as any).headers.Authorization).toBe('Bearer tk')
-  })
-
-  it('personioFetchJobs: parses data array', async () => {
-    const { personioFetchJobs } = await import('../personio')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({
-      data: [{ id: 1, name: 'Dev', status: 'active', created_at: '2024' }],
-    }))
-    const r = await personioFetchJobs('k')
-    expect(r[0].name).toBe('Dev')
-  })
-
-  it('personioFetchJobs: returns empty array when response is malformed object', async () => {
-    const { personioFetchJobs } = await import('../personio')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ unexpected: 'shape' }))
-    const r = await personioFetchJobs('k')
-    expect(r).toEqual([])
-  })
-
-  it('personioFetchApplications: uses position id in URL', async () => {
-    const { personioFetchApplications } = await import('../personio')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ data: [] }))
-    await personioFetchApplications('k', 42)
-    expect(vi.mocked(fetch).mock.calls[0][0]).toContain('/recruiting/positions/42/applications')
-  })
-
-  it('personioFetchJobs: throws on 401', async () => {
-    const { personioFetchJobs } = await import('../personio')
-    vi.mocked(fetch).mockResolvedValueOnce(errorResponse(401))
-    await expect(personioFetchJobs('bad')).rejects.toThrow(/401/)
-  })
-
-  it('personioDownloadCV: returns null when no documents', async () => {
-    const { personioDownloadCV } = await import('../personio')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ data: [] }))
-    const r = await personioDownloadCV('k', 1)
-    expect(r).toBeNull()
-  })
-})
-
-// ════════════════════════════════════════════════════════════════════════════
-// 13. iCIMS
-// ════════════════════════════════════════════════════════════════════════════
-describe('iCIMS integration', () => {
-  it('icimsFetchJobs: uses Bearer auth with customer id in URL', async () => {
-    const { icimsFetchJobs } = await import('../icims')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ data: [] }))
-    await icimsFetchJobs('tk', 'CUST1')
-    const call = vi.mocked(fetch).mock.calls[0]
-    expect(call[0]).toContain('api.icims.com/customers/CUST1/jobs')
-    expect((call[1] as any).headers.Authorization).toBe('Bearer tk')
-  })
-
-  it('icimsFetchJobs: parses data array', async () => {
-    const { icimsFetchJobs } = await import('../icims')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({
-      data: [{ id: 1, title: 'Dev', status: 'open' }],
-    }))
-    const r = await icimsFetchJobs('k', 'c')
-    expect(r[0].title).toBe('Dev')
-  })
-
-  it('icimsFetchCandidates: uses job id in URL', async () => {
-    const { icimsFetchCandidates } = await import('../icims')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ data: [] }))
-    await icimsFetchCandidates('k', 'c', 555)
-    expect(vi.mocked(fetch).mock.calls[0][0]).toContain('/jobs/555/candidateworkflows')
-  })
-
-  it('icimsFetchJobs: throws on 403', async () => {
-    const { icimsFetchJobs } = await import('../icims')
-    vi.mocked(fetch).mockResolvedValueOnce(errorResponse(403))
-    await expect(icimsFetchJobs('k', 'c')).rejects.toThrow(/403/)
-  })
-
-  it('icimsFetchJobs: returns [] when response shape unknown', async () => {
-    const { icimsFetchJobs } = await import('../icims')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ randomKey: 'noise' }))
-    const r = await icimsFetchJobs('k', 'c')
-    expect(r).toEqual([])
   })
 })
 
@@ -1281,37 +1054,6 @@ describe('Sync orchestration (sync.ts)', () => {
     })
   })
 
-  // ── Bullhorn sync ─────────────────────────────────────────────────────────
-  describe('syncBullhorn', () => {
-    it('links candidates to jobs via submissions, picks most recent', async () => {
-      const { syncBullhorn } = await import('../sync')
-      vi.mocked(fetch)
-        .mockResolvedValueOnce(jsonResponse({ // jobs
-          data: [{ id: 1, title: 'Eng', isOpen: true, publicDescription: 'd', dateAdded: 1 }],
-        }))
-        .mockResolvedValueOnce(jsonResponse({ // candidates
-          data: [{ id: 10, firstName: 'A', lastName: 'B', email: 'a@b.com', dateAdded: 1 }],
-        }))
-        .mockResolvedValueOnce(jsonResponse({ // submissions
-          data: [{ id: 100, candidate: { id: 10 }, jobOrder: { id: 1 }, status: 'New', dateAdded: 5 }],
-        }))
-
-      const r = await syncBullhorn('k', 'https://r', 'u')
-      expect(r.imported).toBe(1)
-    })
-
-    it('skips candidates with no submission', async () => {
-      const { syncBullhorn } = await import('../sync')
-      vi.mocked(fetch)
-        .mockResolvedValueOnce(jsonResponse({ data: [{ id: 1, title: 'Eng', isOpen: true, dateAdded: 1 }] }))
-        .mockResolvedValueOnce(jsonResponse({ data: [{ id: 10, firstName: 'A', lastName: 'B', dateAdded: 1 }] }))
-        .mockResolvedValueOnce(jsonResponse({ data: [] }))
-      const r = await syncBullhorn('k', 'https://r', 'u')
-      expect(r.imported).toBe(0)
-      expect(r.skipped).toBe(1)
-    })
-  })
-
   // ── Workable sync ─────────────────────────────────────────────────────────
   describe('syncWorkable', () => {
     it('imports candidates for each job (enriching the vacancy from /jobs/:shortcode)', async () => {
@@ -1399,29 +1141,6 @@ describe('Sync orchestration (sync.ts)', () => {
     })
   })
 
-  // ── Flatchr sync ──────────────────────────────────────────────────────────
-  describe('syncFlatchr', () => {
-    it('imports candidates per job', async () => {
-      const { syncFlatchr } = await import('../sync')
-      vi.mocked(fetch)
-        .mockResolvedValueOnce(jsonResponse({ // jobs
-          data: [{ id: 'j1', title: 'Eng', description: 'd', status: 'published', created_at: '2024' }],
-        }))
-        .mockResolvedValueOnce(jsonResponse({ // candidates
-          data: [{ id: 'c1', first_name: 'A', last_name: 'B', email: 'a@b.com', created_at: '2024' }],
-        }))
-      const r = await syncFlatchr('k', 'u')
-      expect(r.imported).toBe(1)
-    })
-
-    it('reports network error in errors[]', async () => {
-      const { syncFlatchr } = await import('../sync')
-      vi.mocked(fetch).mockRejectedValue(new Error('timeout'))
-      const r = await syncFlatchr('k', 'u')
-      expect(r.errors.length).toBeGreaterThan(0)
-    })
-  })
-
   // ── Ashby sync ────────────────────────────────────────────────────────────
   describe('syncAshby', () => {
     // syncAshby fetches in this order: candidate.list, application.list, jobPosting.list
@@ -1455,30 +1174,6 @@ describe('Sync orchestration (sync.ts)', () => {
     })
   })
 
-  // ── Breezy sync ───────────────────────────────────────────────────────────
-  describe('syncBreezy', () => {
-    it('imports candidates per position', async () => {
-      const { syncBreezy } = await import('../sync')
-      vi.mocked(fetch)
-        .mockResolvedValueOnce(jsonResponse([ // positions
-          { _id: 'p1', name: 'Eng', description: 'd', state: 'published' },
-        ]))
-        .mockResolvedValueOnce(jsonResponse([ // candidates
-          { _id: 'c1', name: 'A B', email_address: 'a@b.com', creation_date: '2024' },
-        ]))
-      const r = await syncBreezy('k', 'COMP', 'u')
-      expect(r.imported).toBe(1)
-    })
-
-    it('handles empty positions', async () => {
-      const { syncBreezy } = await import('../sync')
-      vi.mocked(fetch).mockResolvedValueOnce(jsonResponse([]))
-      const r = await syncBreezy('k', 'COMP', 'u')
-      expect(r.imported).toBe(0)
-      expect(r.errors).toEqual([])
-    })
-  })
-
   // ── Homerun sync ──────────────────────────────────────────────────────────
   describe('syncHomerun', () => {
     it('imports applications per job', async () => {
@@ -1502,55 +1197,6 @@ describe('Sync orchestration (sync.ts)', () => {
     })
   })
 
-  // ── Personio sync ─────────────────────────────────────────────────────────
-  describe('syncPersonio', () => {
-    it('imports applications per position', async () => {
-      const { syncPersonio } = await import('../sync')
-      vi.mocked(fetch)
-        .mockResolvedValueOnce(jsonResponse({ // jobs
-          data: [{ id: 1, name: 'Eng', description: 'd', status: 'active', created_at: '2024' }],
-        }))
-        .mockResolvedValueOnce(jsonResponse({ // applications
-          data: [{ id: 100, first_name: 'A', last_name: 'B', email: 'a@b.com', status: 'pending', created_at: '2024' }],
-        }))
-        .mockResolvedValueOnce(jsonResponse({ data: [] })) // documents (no CV)
-
-      const r = await syncPersonio('k', 'u')
-      expect(r.imported).toBe(1)
-    })
-
-    it('captures top-level error', async () => {
-      const { syncPersonio } = await import('../sync')
-      vi.mocked(fetch).mockResolvedValue(errorResponse(401))
-      const r = await syncPersonio('k', 'u')
-      expect(r.errors.length).toBeGreaterThan(0)
-    })
-  })
-
-  // ── iCIMS sync ────────────────────────────────────────────────────────────
-  describe('syncIcims', () => {
-    it('imports workflows per job', async () => {
-      const { syncIcims } = await import('../sync')
-      vi.mocked(fetch)
-        .mockResolvedValueOnce(jsonResponse({ // jobs
-          data: [{ id: 1, title: 'Eng', description: 'd', status: 'open' }],
-        }))
-        .mockResolvedValueOnce(jsonResponse({ // workflows
-          data: [{ id: 100, person: { id: 200 }, status: 'New', createdDate: '2024-06-01' }],
-        }))
-        .mockResolvedValueOnce(jsonResponse({ data: [] })) // attachments empty
-
-      const r = await syncIcims('k', 'cust', 'u')
-      expect(r.imported).toBe(1)
-    })
-
-    it('captures error on auth failure', async () => {
-      const { syncIcims } = await import('../sync')
-      vi.mocked(fetch).mockResolvedValue(errorResponse(401))
-      const r = await syncIcims('k', 'c', 'u')
-      expect(r.errors.length).toBeGreaterThan(0)
-    })
-  })
 })
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1619,42 +1265,10 @@ describe('Cross-cutting edge cases', () => {
     expect(r).toEqual([])
   })
 
-  it('Personio: handles position with no description', async () => {
-    const { personioFetchJobs } = await import('../personio')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({
-      data: [{ id: 1, name: 'Eng', status: 'active', created_at: '2024' }],
-    }))
-    const r = await personioFetchJobs('k')
-    expect(r[0].description).toBeUndefined()
-  })
-
-  it('iCIMS: handles attachments shape variations', async () => {
-    const { icimsDownloadCV } = await import('../icims')
-    vi.mocked(fetch)
-      .mockResolvedValueOnce(jsonResponse({ data: [{ id: 1, filename: 'resume.pdf', url: 'https://x/y', type: 'Resume' }] }))
-      .mockResolvedValueOnce(jsonResponse('content'))
-    const r = await icimsDownloadCV('k', 'c', 1)
-    expect(r?.filename).toBe('resume.pdf')
-  })
-
-  it('Breezy: candidate without resume returns null (no crash)', async () => {
-    const { breezyDownloadCV } = await import('../breezyhr')
-    vi.mocked(fetch).mockResolvedValueOnce(errorResponse(404))
-    const r = await breezyDownloadCV('https://x/y', 'k')
-    expect(r).toBeNull()
-  })
-
   it('Homerun: download CV failure returns null', async () => {
     const { homerunDownloadCV } = await import('../homerun')
     vi.mocked(fetch).mockRejectedValueOnce(new Error('socket hang up'))
     const r = await homerunDownloadCV('https://x/y', 'k')
     expect(r).toBeNull()
-  })
-
-  it('Flatchr: empty job list returns empty array', async () => {
-    const { flatchrFetchJobs } = await import('../flatchr')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ data: [] }))
-    const r = await flatchrFetchJobs('k')
-    expect(r).toEqual([])
   })
 })

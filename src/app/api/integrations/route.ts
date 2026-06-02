@@ -9,14 +9,9 @@ import { recruiteeTestConnection } from '@/lib/integrations/recruitee'
 import { smartrecruitersTestConnection } from '@/lib/integrations/smartrecruiters'
 import { greenhouseTestConnection } from '@/lib/integrations/greenhouse'
 import { leverTestConnection } from '@/lib/integrations/lever'
-import { bullhornTestConnection } from '@/lib/integrations/bullhorn'
 import { workableTestConnection } from '@/lib/integrations/workable'
-import { flatchrTestConnection } from '@/lib/integrations/flatchr'
 import { ashbyTestConnection } from '@/lib/integrations/ashby'
-import { breezyTestConnection } from '@/lib/integrations/breezyhr'
 import { homerunTestConnection } from '@/lib/integrations/homerun'
-import { personioTestConnection } from '@/lib/integrations/personio'
-import { icimsTestConnection } from '@/lib/integrations/icims'
 
 export async function GET() {
   const session = await getServerSession(authOptions)
@@ -52,7 +47,7 @@ export async function POST(req: Request) {
   const { platform, apiKey, companySlug } = body
   if (!platform || !apiKey) return NextResponse.json({ error: 'Missing platform or apiKey' }, { status: 400 })
 
-  const allowed = ['teamtailor', 'recruitee', 'smartrecruiters', 'greenhouse', 'lever', 'bullhorn', 'workable', 'flatchr', 'ashby', 'breezyhr', 'homerun', 'personio', 'icims']
+  const allowed = ['teamtailor', 'recruitee', 'smartrecruiters', 'greenhouse', 'lever', 'workable', 'ashby', 'homerun']
   if (!allowed.includes(platform)) return NextResponse.json({ error: 'Unknown platform' }, { status: 400 })
 
   if (platform === 'recruitee' && !companySlug) {
@@ -61,17 +56,8 @@ export async function POST(req: Request) {
   if (platform === 'greenhouse' && !companySlug) {
     return NextResponse.json({ error: 'Client Secret required for Greenhouse' }, { status: 400 })
   }
-  if (platform === 'bullhorn' && !companySlug) {
-    return NextResponse.json({ error: 'REST URL required for Bullhorn' }, { status: 400 })
-  }
   if (platform === 'workable' && !companySlug) {
     return NextResponse.json({ error: 'Subdomain required for Workable' }, { status: 400 })
-  }
-  if (platform === 'breezyhr' && !companySlug) {
-    return NextResponse.json({ error: 'Company ID required for Breezy HR' }, { status: 400 })
-  }
-  if (platform === 'icims' && !companySlug) {
-    return NextResponse.json({ error: 'Customer ID required for iCIMS' }, { status: 400 })
   }
 
   // Test the connection before saving
@@ -81,14 +67,9 @@ export async function POST(req: Request) {
   else if (platform === 'smartrecruiters') testResult = await smartrecruitersTestConnection(apiKey)
   else if (platform === 'greenhouse') testResult = await greenhouseTestConnection(apiKey, companySlug)
   else if (platform === 'lever') testResult = await leverTestConnection(apiKey)
-  else if (platform === 'bullhorn') testResult = await bullhornTestConnection(apiKey, companySlug)
   else if (platform === 'workable') testResult = await workableTestConnection(apiKey, companySlug)
-  else if (platform === 'flatchr') testResult = await flatchrTestConnection(apiKey)
   else if (platform === 'ashby') testResult = await ashbyTestConnection(apiKey)
-  else if (platform === 'breezyhr') testResult = await breezyTestConnection(apiKey)
   else if (platform === 'homerun') testResult = await homerunTestConnection(apiKey)
-  else if (platform === 'personio') testResult = await personioTestConnection(apiKey)
-  else if (platform === 'icims') testResult = await icimsTestConnection(apiKey, companySlug)
   else testResult = { ok: false, error: 'Unknown platform' }
 
   if (!testResult.ok) {
