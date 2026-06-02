@@ -1181,3 +1181,165 @@ export async function syncSoftgarden(apiKey: string, userId: string, since?: Dat
   }
   return result
 }
+
+// ============================================================================
+// Demo ATS sync - fabricates a couple of realistic jobs + candidates so a user
+// (or a sales demo) can see the full ATS pipeline (import -> AI analysis -> kanban)
+// WITHOUT any external ATS account or API key. It runs through the SAME upsert
+// path as a real sync, so it genuinely exercises the integration code. Idempotent:
+// dedup by externalId means re-running just skips rows that already exist.
+// ============================================================================
+
+const DEMO_ATS_PLATFORM = 'demo'
+
+const DEMO_ATS_JOBS = [
+  {
+    externalId: 'demo-job-dev',
+    title: 'Senior Full-Stack Developer',
+    company: 'DemoTech (demo)',
+    location: 'Brussels, BE',
+    description: 'We are looking for a senior full-stack developer to help build and scale our SaaS platform. You will own features end to end across a React/TypeScript frontend and a Node.js backend, and mentor junior engineers.',
+    requirements: 'React, TypeScript, Node.js, PostgreSQL, REST APIs, Docker, AWS. 5+ years of experience.',
+  },
+  {
+    externalId: 'demo-job-mkt',
+    title: 'Marketing Manager',
+    company: 'DemoTech (demo)',
+    location: 'Amsterdam, NL',
+    description: 'Own our B2B marketing: demand generation, content, paid acquisition and product marketing. Define the strategy and run campaigns across channels.',
+    requirements: 'B2B SaaS marketing, demand generation, Google Ads, Meta Ads, SEO, HubSpot, analytics. 4+ years of experience.',
+  },
+]
+
+const DEMO_ATS_CANDIDATES = [
+  {
+    externalId: 'demo-cand-alex', jobExternalId: 'demo-job-dev', status: 'shortlisted',
+    firstName: 'Alex', lastName: 'Janssens', email: 'alex.janssens@demo-ats.example', phone: '+32 471 00 00 01',
+    cvText: `Alex Janssens
+alex.janssens@demo-ats.example | +32 471 00 00 01 | Leuven, Belgium
+
+EXPERIENCE
+Senior Software Engineer - FinTech Brussels (2019-present)
+- Built a React/TypeScript frontend for a banking dashboard serving 150,000 users
+- Designed Node.js microservices (REST + gRPC), PostgreSQL with 10M+ records
+- Deployed on AWS EKS with Docker and Kubernetes
+
+Software Engineer - Consulting Bruges (2016-2019)
+- Vue.js + PHP/Laravel ERP modules, third-party API integrations
+
+EDUCATION
+MSc Software Engineering - KU Leuven (2016)
+
+SKILLS
+React, TypeScript, Node.js, PostgreSQL, Docker, Kubernetes, AWS, Redis`,
+    motivationText: 'I would love to bring my 7+ years of React/Node experience to your team and help scale your platform.',
+  },
+  {
+    externalId: 'demo-cand-nina', jobExternalId: 'demo-job-dev', status: 'reviewing',
+    firstName: 'Nina', lastName: 'Schmidt', email: 'nina.schmidt@demo-ats.example', phone: '+49 176 99 98 88',
+    cvText: `Nina Schmidt
+nina.schmidt@demo-ats.example | Berlin, Germany
+
+EXPERIENCE
+Full-Stack Developer - Berlin SaaS (2022-present)
+- React/Next.js + TypeScript frontend, Node.js REST APIs, PostgreSQL
+- Deployed on AWS with Docker
+
+Junior Developer - Web Agency Hamburg (2020-2022)
+- React and Vue.js websites, WordPress
+
+EDUCATION
+BSc Computer Science - TU Berlin (2020)
+
+SKILLS
+React, Next.js, TypeScript, Node.js, PostgreSQL, Docker, AWS`,
+    motivationText: '',
+  },
+  {
+    externalId: 'demo-cand-maya', jobExternalId: 'demo-job-mkt', status: 'new',
+    firstName: 'Maya', lastName: 'Patel', email: 'maya.patel@demo-ats.example', phone: '+44 7911 23 45 67',
+    cvText: `Maya Patel
+maya.patel@demo-ats.example | London, UK
+
+EXPERIENCE
+B2B Marketing Manager - SaaS Scale-up London (2020-present)
+- Owned demand generation: Google Ads, Meta Ads, LinkedIn; tripled pipeline in 2 years
+- Built a content + SEO engine and marketing automation in HubSpot
+- Managed a team of 3 and a EUR 1.2M annual budget
+
+Growth Marketer - Startup (2017-2020)
+- Paid acquisition, landing pages, A/B testing, analytics
+
+EDUCATION
+BA Marketing - University of Manchester (2017)
+
+SKILLS
+Demand generation, Google Ads, Meta Ads, SEO, HubSpot, analytics, content`,
+    motivationText: 'Your product marketing role is exactly the B2B SaaS challenge I am looking for.',
+  },
+  {
+    externalId: 'demo-cand-tom', jobExternalId: 'demo-job-mkt', status: 'reviewing',
+    firstName: 'Tom', lastName: 'De Vos', email: 'tom.devos@demo-ats.example', phone: '+32 478 11 22 33',
+    cvText: `Tom De Vos
+tom.devos@demo-ats.example | Antwerp, Belgium
+
+EXPERIENCE
+Marketing Assistant - Retail Brand Antwerp (2022-present)
+- Social media content, email newsletters (Mailchimp), basic Google Ads
+- Helped organize trade shows and events
+
+EDUCATION
+Bachelor Communication - AP Hogeschool Antwerp (2022)
+
+SKILLS
+Social media, Mailchimp, Canva, basic Google Ads, content writing, Dutch/English`,
+    motivationText: 'I am eager to grow into a B2B marketing role and learn from an experienced team.',
+  },
+]
+
+// Run a fake ATS sync for the given user: creates the demo jobs + candidates
+// through the real upsert pipeline (CV text -> parsing -> AI analysis -> kanban).
+export async function syncDemoAts(userId: string): Promise<SyncResult> {
+  const result: SyncResult = { imported: 0, updated: 0, skipped: 0, errors: [], duplicatesDetected: 0 }
+  const jobIdByExternal: Record<string, string> = {}
+  try {
+    for (const job of DEMO_ATS_JOBS) {
+      const v = await upsertVacancy(userId, job.externalId, DEMO_ATS_PLATFORM, {
+        title: job.title,
+        description: job.description,
+        requirements: job.requirements,
+        company: job.company,
+        location: job.location,
+      })
+      jobIdByExternal[job.externalId] = v.id
+      if (v.similarMatch) result.duplicatesDetected++
+    }
+
+    for (const c of DEMO_ATS_CANDIDATES) {
+      const vacancyId = jobIdByExternal[c.jobExternalId]
+      if (!vacancyId) continue
+      try {
+        const status = await upsertCandidate(userId, DEMO_ATS_PLATFORM, {
+          externalId: c.externalId,
+          firstName: c.firstName,
+          lastName: c.lastName,
+          email: c.email,
+          phone: c.phone,
+          cvBuffer: Buffer.from(c.cvText, 'utf-8'),
+          cvFileName: 'cv.txt',
+          motivationText: c.motivationText || undefined,
+          vacancyId,
+          atsStatus: c.status,
+        })
+        if (status === 'imported') result.imported++
+        else if (status === 'updated') result.updated++
+        else result.skipped++
+      } catch (e: any) {
+        result.errors.push(`${c.externalId}: ${e.message}`)
+      }
+    }
+  } catch (e: any) {
+    result.errors.push(e.message)
+  }
+  return result
+}

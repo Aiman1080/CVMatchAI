@@ -282,6 +282,13 @@ export const en = {
       planPro: 'Pro Plan',
     },
     integrations: {
+      demoTitle: 'No ATS account? Try it with demo data',
+      demoDesc: 'Import sample jobs and candidates (analyzed by AI) without connecting a real ATS. Perfect for a quick test or a client demo.',
+      demoBtn: 'Import demo data',
+      demoLoading: 'Importing...',
+      demoDone: 'Demo data imported',
+      demoCheck: 'Open the Candidates and Kanban tabs to see them.',
+      demoAlready: 'Demo data was already imported - check the Candidates tab.',
       apiKeyRequired: 'API key required',
       connected: 'connected!',
       companyFound: 'Company found: ',

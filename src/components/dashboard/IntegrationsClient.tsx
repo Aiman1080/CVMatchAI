@@ -5,7 +5,7 @@ import { useMemo } from 'react'
 import {
   Loader2, CheckCircle, XCircle, RefreshCw, Trash2, Link2,
   ExternalLink, AlertCircle, Info, Plug, Users, Briefcase,
-  HelpCircle, ChevronDown, ChevronUp, Clock, X,
+  HelpCircle, ChevronDown, ChevronUp, Clock, X, Sparkles,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -250,6 +250,7 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
   const [expanded, setExpanded] = useState<string | null>(null)
   const [form, setForm] = useState<Record<string, { apiKey: string; companySlug: string }>>({})
   const [syncAll, setSyncAll] = useState(false)
+  const [demoSyncing, setDemoSyncing] = useState(false)
   const [atsTipDismissed, setAtsTipDismissed] = useState(true) // default true to avoid flash
   // Confirm dialog state for destructive disconnect action
   const [disconnectDialog, setDisconnectDialog] = useState<{ open: boolean; integrationId: string; platformId: string; platformName: string }>(
@@ -369,6 +370,33 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
     } finally { setSyncing(null) }
   }
 
+  // Fabricated ATS sync - no external account/key needed. Lets the user see the
+  // whole pipeline (jobs + candidates + AI analysis) and demo it to prospects.
+  const handleDemoSync = async () => {
+    setDemoSyncing(true)
+    try {
+      const res = await fetch('/api/integrations/demo-sync', { method: 'POST' })
+      const data = await res.json()
+      if (res.ok) {
+        const counts = [
+          data.imported ? `${data.imported} ${ti.imported}` : null,
+          data.updated ? `${data.updated} ${ti.updated}` : null,
+          data.skipped ? `${data.skipped} ${ti.skipped}` : null,
+        ].filter(Boolean).join(' · ')
+        toast({
+          title: (ti as any).demoDone || 'Demo data imported',
+          description: counts
+            ? `${counts} - ${(ti as any).demoCheck || 'Open the Candidates and Kanban tabs to see them.'}`
+            : ((ti as any).demoAlready || 'Demo data was already imported - check the Candidates tab.'),
+        })
+      } else {
+        toast({ title: ti.syncError, description: data.error || ((ti as any).syncErrorDesc || ''), variant: 'destructive' })
+      }
+    } catch {
+      toast({ title: ti.syncError, description: (ti as any).networkErrorDesc || 'Network error. Please check your connection and try again.', variant: 'destructive' })
+    } finally { setDemoSyncing(false) }
+  }
+
   const handleSyncAll = async () => {
     setSyncAll(true)
     let totalImported = 0
@@ -448,6 +476,28 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
           <p className="text-sm text-blue-600 dark:text-blue-400 mt-0.5 break-words">{ti.bannerDesc}</p>
         </div>
       </div>
+
+      {/* Demo data - try the whole ATS pipeline without a real account or key */}
+      {!isDemo && (
+        <div className="p-4 rounded-xl bg-gradient-to-r from-amber-50 to-purple-50 dark:from-amber-950/20 dark:to-purple-950/20 border border-amber-200 dark:border-amber-900 flex flex-wrap items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center shrink-0">
+            <Sparkles className="w-5 h-5 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-amber-800 dark:text-amber-300 break-words">{(ti as any).demoTitle || 'No ATS account? Try it with demo data'}</p>
+            <p className="text-sm text-amber-700 dark:text-amber-400 mt-0.5 break-words">{(ti as any).demoDesc || 'Import sample jobs and candidates (analyzed by AI) without connecting a real ATS. Perfect for a quick test or a client demo.'}</p>
+          </div>
+          <Button
+            onClick={handleDemoSync}
+            disabled={demoSyncing}
+            className="gap-1.5 bg-amber-500 hover:bg-amber-600 text-white h-auto py-2 whitespace-normal text-center leading-tight shrink-0"
+          >
+            {demoSyncing
+              ? <><Loader2 size={14} className="animate-spin shrink-0" /> {(ti as any).demoLoading || 'Importing...'}</>
+              : <><Sparkles size={14} className="shrink-0" /> {(ti as any).demoBtn || 'Import demo data'}</>}
+          </Button>
+        </div>
+      )}
 
       {/* Empty state - when no ATS is connected, give a friendly nudge */}
       {connectedCount === 0 && (
