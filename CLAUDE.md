@@ -53,7 +53,7 @@ npm run db:check     # detect schema<->DB drift before deploy (non-zero exit if 
 npm run db:migrate-cv # backfill legacy bytea CVs into Supabase Storage (one-off)
 npm run db:studio    # Prisma Studio
 npm run db:seed      # seed demo data (tsx prisma/seed.ts)
-npx vitest run       # tests (249 currently, all passing)
+npx vitest run       # tests (228 currently, all passing)
 npx tsc --noEmit     # type check (must be 0 errors)
 ```
 
@@ -94,7 +94,7 @@ src/components/         layout/, dashboard/, admin/, support/, ui/ (shadcn)
 src/lib/                ai.ts, ai-usage.ts, auth.ts, plans.ts, demo-guard.ts,
                         crypto.ts, logger.ts, email.ts, pdf-parser.ts, prisma.ts,
                         activity.ts, notifications.ts, export.ts, i18n(.ts + /en|nl|fr)
-src/lib/integrations/   sync.ts + 13 ATS adapters
+src/lib/integrations/   sync.ts + 8 ATS adapters
 src/middleware.ts       rate limiting
 prisma/schema.prisma    14 models
 ```
@@ -210,15 +210,14 @@ check **Vercel Runtime Logs** to debug a scan; the final
 
 ## ATS integrations (`src/lib/integrations/`, Pro-only)
 
-`sync.ts` orchestrates **13 adapters**: teamtailor, recruitee, smartrecruiters,
-greenhouse, lever, bullhorn, workable, flatchr, ashby, breezyhr, homerun,
-personio, icims. Per platform: fetch jobs → candidates → CV binary
+`sync.ts` orchestrates **8 adapters**: teamtailor, recruitee, smartrecruiters,
+greenhouse, lever, homerun, workable, ashby. Per platform: fetch jobs →
+candidates → CV binary
 (MIME sniffed by extension then magic bytes `%PDF` / `504b0304`) → AI analysis →
 upsert. Dedup by `(externalId, externalSource, userId)`; manual-vacancy
 duplicate detection by Jaccard similarity > 0.7 (`upsertVacancy`). Status strings
 mapped (multilingual) → `new|reviewing|shortlisted|rejected|hired`.
-Note: bullhorn is the only adapter that does NOT download a CV binary (no
-usable resume endpoint); every other adapter fetches the CV. For Workable the
+Note: every adapter fetches the CV. For Workable the
 CV is not inline — it comes from `/candidates/:id/files` (pre-signed URLs);
 LinkedIn / cover letter / summary come from `GET /candidates/:id` (the list
 omits them, and its `profile_url` is an internal Workable link, NOT LinkedIn);

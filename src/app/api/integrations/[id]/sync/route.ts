@@ -6,8 +6,8 @@ import { isDemoAccount } from '@/lib/demo-guard'
 import { getPlanLimits, getEffectiveSubscription } from '@/lib/plans'
 import {
   syncTeamtailor, syncRecruitee, syncSmartRecruiters,
-  syncGreenhouse, syncLever, syncBullhorn, syncWorkable, syncFlatchr,
-  syncAshby, syncBreezy, syncHomerun, syncPersonio, syncIcims,
+  syncGreenhouse, syncLever, syncWorkable,
+  syncAshby, syncHomerun,
 } from '@/lib/integrations/sync'
 
 export async function POST(_req: Request, context: { params: Promise<{ id: string }> }) {
@@ -51,26 +51,13 @@ export async function POST(_req: Request, context: { params: Promise<{ id: strin
       result = await syncGreenhouse(integration.apiKey, integration.companySlug, userId, since)
     } else if (integration.platform === 'lever') {
       result = await syncLever(integration.apiKey, userId, since)
-    } else if (integration.platform === 'bullhorn') {
-      if (!integration.companySlug) return NextResponse.json({ error: 'REST URL missing' }, { status: 400 })
-      result = await syncBullhorn(integration.apiKey, integration.companySlug, userId, since)
     } else if (integration.platform === 'workable') {
       if (!integration.companySlug) return NextResponse.json({ error: 'Subdomain missing' }, { status: 400 })
       result = await syncWorkable(integration.apiKey, integration.companySlug, userId, since)
-    } else if (integration.platform === 'flatchr') {
-      result = await syncFlatchr(integration.apiKey, userId, since)
     } else if (integration.platform === 'ashby') {
       result = await syncAshby(integration.apiKey, userId, since)
-    } else if (integration.platform === 'breezyhr') {
-      if (!integration.companySlug) return NextResponse.json({ error: 'Company ID missing' }, { status: 400 })
-      result = await syncBreezy(integration.apiKey, integration.companySlug, userId, since)
     } else if (integration.platform === 'homerun') {
       result = await syncHomerun(integration.apiKey, userId, since)
-    } else if (integration.platform === 'personio') {
-      result = await syncPersonio(integration.apiKey, userId, since)
-    } else if (integration.platform === 'icims') {
-      if (!integration.companySlug) return NextResponse.json({ error: 'Customer ID missing' }, { status: 400 })
-      result = await syncIcims(integration.apiKey, integration.companySlug, userId, since)
     } else {
       return NextResponse.json({ error: 'Unknown platform' }, { status: 400 })
     }
