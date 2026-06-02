@@ -300,19 +300,12 @@ export async function syncTeamtailor(userId: string, apiKey: string, since?: Dat
         const candidate = await teamtailorFetchCandidate(apiKey, candidateId)
         if (!candidate) continue
 
-        const cvBuffer = app.attributes['cv-url']
-          ? await teamtailorDownloadCV(app.attributes['cv-url'], apiKey)
-          : null
-
-        const coverLetter = app.attributes['cover-letter-url']
-          ? await (async () => {
-              try {
-                const buf = await teamtailorDownloadCV(app.attributes['cover-letter-url']!, apiKey)
-                if (!buf) return undefined
-                const text = await parseDocument(buf, 'application/pdf')
-                return text || undefined
-              } catch { return undefined }
-            })()
+        // The CV lives on the candidate (resume = converted PDF, original-resume =
+        // the original file), exposed as a short-lived pre-signed URL.
+        const resumeUrl = candidate.attributes.resume || candidate.attributes['original-resume']
+        const cvBuffer = resumeUrl ? await teamtailorDownloadCV(resumeUrl, apiKey) : null
+        const cvFileName = resumeUrl
+          ? (resumeUrl.split('?')[0].split('/').pop() || 'cv.pdf')
           : undefined
 
         const status = await upsertCandidate(userId, 'teamtailor', {
@@ -323,8 +316,8 @@ export async function syncTeamtailor(userId: string, apiKey: string, since?: Dat
           phone: candidate.attributes.phone,
           linkedIn: candidate.attributes['linkedin-url'],
           cvBuffer,
-          cvFileName: cvBuffer ? 'cv.pdf' : undefined,
-          motivationText: coverLetter || candidate.attributes.pitch,
+          cvFileName,
+          motivationText: candidate.attributes.pitch,
           vacancyId,
           atsStatus: app.attributes.stage,
         })

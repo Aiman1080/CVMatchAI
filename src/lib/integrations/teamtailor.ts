@@ -1,6 +1,9 @@
 // Teamtailor API integration
-// Docs: https://docs.teamtailor.com/
-// Auth: API key in header X-Api-Key, version header required
+// Docs: https://docs.teamtailor.com/ (JSON:API)
+// Auth: "Authorization: Token token=<apiKey>" header + the REQUIRED X-Api-Version header.
+// The CV is the candidate's `resume` (converted PDF) / `original-resume` (original
+// file), both exposed as short-lived pre-signed URLs - NOT a field on the
+// job-application.
 
 export interface TTCandidate {
   id: string
@@ -11,6 +14,8 @@ export interface TTCandidate {
     phone?: string
     'linkedin-url'?: string
     pitch?: string
+    resume?: string
+    'original-resume'?: string
     'created-at': string
   }
   relationships?: {
@@ -34,8 +39,6 @@ export interface TTJobApplication {
   attributes: {
     stage: string
     'created-at': string
-    'cv-url'?: string
-    'cover-letter-url'?: string
   }
   relationships: {
     job: { data: { id: string } }
@@ -44,7 +47,8 @@ export interface TTJobApplication {
 }
 
 const TT_BASE = 'https://api.teamtailor.com/v1'
-const TT_VERSION = '20240404'
+// The docs require an X-Api-Version header; 20240904 is the current required version.
+const TT_VERSION = '20240904'
 
 async function ttFetch(path: string, apiKey: string) {
   const res = await fetch(`${TT_BASE}${path}`, {
@@ -111,11 +115,16 @@ export async function teamtailorFetchCandidate(apiKey: string, candidateId: stri
   }
 }
 
-export async function teamtailorDownloadCV(cvUrl: string, apiKey: string): Promise<Buffer | null> {
+// Resume URLs are short-lived pre-signed (S3) URLs, so no auth is needed. We only
+// attach the API token if the file is unexpectedly served from Teamtailor's own host.
+export async function teamtailorDownloadCV(cvUrl: string, apiKey?: string): Promise<Buffer | null> {
   try {
-    const res = await fetch(cvUrl, {
-      headers: { Authorization: `Token token=${apiKey}`, 'X-Api-Version': TT_VERSION },
-    })
+    const headers: Record<string, string> = {}
+    if (apiKey && /api\.teamtailor\.com/.test(cvUrl)) {
+      headers.Authorization = `Token token=${apiKey}`
+      headers['X-Api-Version'] = TT_VERSION
+    }
+    const res = await fetch(cvUrl, { headers })
     if (!res.ok) return null
     return Buffer.from(await res.arrayBuffer())
   } catch {
