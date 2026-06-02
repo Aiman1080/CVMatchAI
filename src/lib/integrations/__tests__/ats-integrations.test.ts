@@ -607,6 +607,22 @@ describe('Workable integration', () => {
     expect(await workableDownloadCV('k', 's', 'c1')).toBeNull()
   })
 
+  it('workableFetchCandidate: GETs /candidates/:id and unwraps the candidate', async () => {
+    const { workableFetchCandidate } = await import('../workable')
+    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({
+      candidate: { id: 'c1', cover_letter: 'Hire me', social_profiles: [{ type: 'linkedin', url: 'http://linkedin.com/in/x' }] },
+    }))
+    const c = await workableFetchCandidate('k', 'acme', 'c1')
+    expect(vi.mocked(fetch).mock.calls[0][0]).toContain('acme.workable.com/spi/v3/candidates/c1')
+    expect(c?.social_profiles?.[0].url).toBe('http://linkedin.com/in/x')
+  })
+
+  it('workableFetchCandidate: returns null on failure (enrichment never aborts a sync)', async () => {
+    const { workableFetchCandidate } = await import('../workable')
+    vi.mocked(fetch).mockResolvedValueOnce(errorResponse(404))
+    expect(await workableFetchCandidate('k', 's', 'c1')).toBeNull()
+  })
+
   it('workableFetchJobs: throws on 401', async () => {
     const { workableFetchJobs } = await import('../workable')
     vi.mocked(fetch).mockResolvedValueOnce(errorResponse(401))
@@ -1210,11 +1226,39 @@ describe('Sync orchestration (sync.ts)', () => {
           candidates: [{ id: 'c1', name: 'A B', email: 'a@b.com', created_at: '2024-01-15' }],
           paging: {},
         }))
+        .mockResolvedValueOnce(jsonResponse({ candidate: { id: 'c1' } })) // /candidates/c1 detail (enrichment)
 
       const r = await syncWorkable('k', 'sub', 'u')
       expect(r.imported).toBe(1)
       // 2nd call is the per-job detail fetch.
       expect(vi.mocked(fetch).mock.calls[1][0]).toContain('/jobs/SC1')
+    })
+
+    it('enriches candidates with LinkedIn + cover letter from /candidates/:id', async () => {
+      const { syncWorkable } = await import('../sync')
+      vi.mocked(fetch)
+        .mockResolvedValueOnce(jsonResponse({
+          jobs: [{ id: 'j1', shortcode: 'SC1', title: 'Eng', state: 'published', created_at: '2024' }],
+          paging: {},
+        }))
+        .mockResolvedValueOnce(jsonResponse({ id: 'j1', shortcode: 'SC1', title: 'Eng', state: 'published', created_at: '2024' }))
+        .mockResolvedValueOnce(jsonResponse({
+          candidates: [{ id: 'c1', name: 'A B', email: 'a@b.com', created_at: '2024-01-15' }],
+          paging: {},
+        }))
+        .mockResolvedValueOnce(jsonResponse({ candidate: {
+          id: 'c1',
+          cover_letter: 'I would love this role',
+          social_profiles: [
+            { type: 'twitter', url: 'http://twitter.com/ab' },
+            { type: 'linkedin', url: 'http://www.linkedin.com/in/ab' },
+          ],
+        } }))
+      const r = await syncWorkable('k', 'sub', 'u')
+      expect(r.imported).toBe(1)
+      const data = prismaMock.candidate.create.mock.calls[0][0].data
+      expect(data.linkedIn).toBe('http://www.linkedin.com/in/ab')
+      expect(data.motivationText).toBe('I would love this role')
     })
 
     it('fetches the candidate files when a résumé exists', async () => {
@@ -1229,6 +1273,7 @@ describe('Sync orchestration (sync.ts)', () => {
           candidates: [{ id: 'c1', name: 'A B', email: 'a@b.com', created_at: '2024-01-15', resume_metadata: { filename: 'cv.pdf' } }],
           paging: {},
         }))
+        .mockResolvedValueOnce(jsonResponse({ candidate: { id: 'c1' } })) // detail (enrichment)
         .mockResolvedValueOnce(jsonResponse({ files: [] })) // /candidates/c1/files -> no downloadable file
       const r = await syncWorkable('k', 'sub', 'u')
       expect(r.imported).toBe(1)

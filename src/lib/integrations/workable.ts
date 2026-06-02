@@ -40,6 +40,16 @@ export interface WKCandidate {
   resume_metadata?: { filename?: string; filetype?: string }
 }
 
+// The single-candidate record (GET /candidates/:id) carries fields the list omits:
+// the cover letter, the profile summary and the social profiles (incl. the real
+// LinkedIn URL - profile_url is only an internal Workable backend link).
+export interface WKCandidateDetail extends WKCandidate {
+  cover_letter?: string | null
+  summary?: string | null
+  resume_url?: string | null
+  social_profiles?: Array<{ type?: string; url?: string }>
+}
+
 export interface WKFile {
   name?: string
   preview_url?: string
@@ -109,6 +119,18 @@ export async function workableFetchCandidates(apiKey: string, subdomain: string,
     url = data.paging?.next
   }
   return candidates
+}
+
+// Single candidate (GET /candidates/:id) - the only place the cover letter,
+// summary and social profiles (real LinkedIn URL) are exposed. Returns null on
+// failure so enrichment never aborts a sync. Response is wrapped in { candidate }.
+export async function workableFetchCandidate(apiKey: string, subdomain: string, id: string): Promise<WKCandidateDetail | null> {
+  try {
+    const data = await wkFetch(`/candidates/${id}`, apiKey, subdomain)
+    return data.candidate || null
+  } catch {
+    return null
+  }
 }
 
 // CVs are not inline in the candidate payload. /candidates/:id/files lists the

@@ -219,8 +219,10 @@ duplicate detection by Jaccard similarity > 0.7 (`upsertVacancy`). Status string
 mapped (multilingual) → `new|reviewing|shortlisted|rejected|hired`.
 Note: bullhorn is the only adapter that does NOT download a CV binary (no
 usable resume endpoint); every other adapter fetches the CV. For Workable the
-CV is not inline — it comes from `/candidates/:id/files` (pre-signed URLs), and
-candidates are listed via `GET /candidates?shortcode=` (the `/jobs/:shortcode/
+CV is not inline — it comes from `/candidates/:id/files` (pre-signed URLs);
+LinkedIn / cover letter / summary come from `GET /candidates/:id` (the list
+omits them, and its `profile_url` is an internal Workable link, NOT LinkedIn);
+and candidates are listed via `GET /candidates?shortcode=` (the `/jobs/:shortcode/
 candidates` path is the POST *create* endpoint), paginating on `paging.next`.
 
 ---

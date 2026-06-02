@@ -26,7 +26,7 @@ import {
   bullhornFetchJobs, bullhornFetchCandidates, bullhornFetchJobSubmissions,
 } from './bullhorn'
 import {
-  workableFetchJobs, workableFetchJob, workableFetchCandidates, workableDownloadCV,
+  workableFetchJobs, workableFetchJob, workableFetchCandidates, workableFetchCandidate, workableDownloadCV,
 } from './workable'
 import {
   flatchrFetchJobs, flatchrFetchCandidates, flatchrDownloadCV,
@@ -745,6 +745,13 @@ export async function syncWorkable(apiKey: string, subdomain: string, userId: st
             const firstName = candidate.firstname || nameParts[0] || 'Unknown'
             const lastName = candidate.lastname || nameParts.slice(1).join(' ') || 'Candidate'
 
+            // LinkedIn / cover letter / summary are only on the single-candidate
+            // record (the list's profile_url is an internal Workable link, not
+            // LinkedIn). Best-effort enrichment - null on failure.
+            const detail = await workableFetchCandidate(apiKey, subdomain, candidate.id)
+            const linkedIn = detail?.social_profiles?.find(p => p.type === 'linkedin')?.url || undefined
+            const motivationText = detail?.cover_letter || detail?.summary || undefined
+
             // CV is not inline; pull it from the candidate's files (only when the
             // candidate actually has a résumé, to avoid a wasted request).
             const cv = candidate.resume_metadata?.filename
@@ -755,10 +762,12 @@ export async function syncWorkable(apiKey: string, subdomain: string, userId: st
               externalId: candidate.id,
               firstName,
               lastName,
-              email: candidate.email,
-              phone: candidate.phone,
+              email: candidate.email || detail?.email,
+              phone: candidate.phone || detail?.phone,
+              linkedIn,
               cvBuffer: cv?.buffer || null,
               cvFileName: cv?.filename,
+              motivationText,
               vacancyId,
               atsStatus: candidate.disqualified ? 'disqualified' : candidate.stage,
             })
