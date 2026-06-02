@@ -213,15 +213,16 @@ describe('Recruitee integration', () => {
     expect(offers[0].title).toBe('Dev')
   })
 
-  it('recruiteeFetchCandidates: paginates while batch size full', async () => {
+  it('recruiteeFetchCandidates: paginates via offset while batch size full', async () => {
     const { recruiteeFetchCandidates } = await import('../recruitee')
-    const big = Array.from({ length: 100 }, (_, i) => ({ id: i, name: 'A B', emails: [{ address: `a${i}@x.com` }], phones: [], created_at: '2024' }))
+    const big = Array.from({ length: 100 }, (_, i) => ({ id: i, name: 'A B', emails: [`a${i}@x.com`], phones: [], created_at: '2024' }))
     vi.mocked(fetch)
       .mockResolvedValueOnce(jsonResponse({ candidates: big }))
       .mockResolvedValueOnce(jsonResponse({ candidates: [{ id: 999, name: 'C D', emails: [], phones: [], created_at: '2024' }] }))
-    const cands = await recruiteeFetchCandidates('k', 'co')
-    expect(cands).toHaveLength(101)
+    const { candidates } = await recruiteeFetchCandidates('k', 'co')
+    expect(candidates).toHaveLength(101)
     expect(fetch).toHaveBeenCalledTimes(2)
+    expect(vi.mocked(fetch).mock.calls[1][0]).toContain('offset=100')
   })
 
   it('recruiteeFetchCandidates: throws on 500', async () => {
@@ -234,7 +235,7 @@ describe('Recruitee integration', () => {
     const { recruiteeFetchCandidates } = await import('../recruitee')
     vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ candidates: [] }))
     const r = await recruiteeFetchCandidates('k', 'co')
-    expect(r).toEqual([])
+    expect(r.candidates).toEqual([])
   })
 
   it('recruiteeTestConnection: returns ok on success', async () => {
@@ -945,14 +946,15 @@ describe('Sync orchestration (sync.ts)', () => {
         .mockResolvedValueOnce(jsonResponse({ // offers
           offers: [{ id: 100, title: 'Dev', description: 'd', requirements: 'r', status: 'published', created_at: '2024' }],
         }))
-        .mockResolvedValueOnce(jsonResponse({ // candidates
+        .mockResolvedValueOnce(jsonResponse({ // candidates (emails/phones are strings; stage via references)
           candidates: [{
             id: 1, name: 'Jane Doe',
-            emails: [{ address: 'j@d.com' }],
-            phones: [{ number: '+1' }],
+            emails: ['j@d.com'],
+            phones: ['+1'],
             created_at: '2024',
-            placements: [{ id: 50, offer_id: 100, stage: { name: 'New' } }],
+            placements: [{ id: 50, offer_id: 100, stage_id: 7 }],
           }],
+          references: [{ id: 7, type: 'Stage', name: 'New' }],
         }))
       const r = await syncRecruitee('u', 'k', 'co')
       expect(r.imported).toBe(1)
@@ -1340,7 +1342,7 @@ describe('Cross-cutting edge cases', () => {
       candidates: [{ id: 1, name: 'A B', emails: [], phones: [], created_at: '2024' }],
     }))
     const r = await recruiteeFetchCandidates('k', 'co')
-    expect(r[0].emails).toEqual([])
+    expect(r.candidates[0].emails).toEqual([])
   })
 
   it('Greenhouse: handles candidate with no CV (returns null without crash)', async () => {

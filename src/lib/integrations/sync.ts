@@ -8,7 +8,8 @@ import {
   teamtailorDownloadCV, teamtailorFetchCompanyName,
 } from './teamtailor'
 import {
-  recruiteeFetchOffers, recruiteeFetchCandidates, recruiteeDownloadCV,
+  recruiteeFetchOffers, recruiteeFetchCandidates,
+  type RCOffer, type RCReference,
 } from './recruitee'
 import {
   smartrecruitersFetchJobs, smartrecruitersFetchCandidates,
@@ -341,42 +342,50 @@ export async function syncTeamtailor(userId: string, apiKey: string, since?: Dat
 export async function syncRecruitee(userId: string, apiKey: string, companySlug: string, since?: Date): Promise<SyncResult> {
   const result: SyncResult = { imported: 0, updated: 0, skipped: 0, errors: [], duplicatesDetected: 0 }
   try {
-    const [offers, candidates] = await Promise.all([
-      recruiteeFetchOffers(apiKey, companySlug),
+    const [offers, candidatesData] = await Promise.all([
+      recruiteeFetchOffers(apiKey, companySlug).catch(() => [] as RCOffer[]),
       recruiteeFetchCandidates(apiKey, companySlug, since),
     ])
+    const { candidates, references } = candidatesData
 
-    const offerMap = new Map(offers.map(o => [o.id, o]))
+    // Full offers (with description) by id; references give a verified fallback
+    // (title/location) plus the stage-id -> name map.
+    const offerMap = new Map<number, RCOffer>(offers.map(o => [o.id, o]))
+    const offerRefMap = new Map<number, RCReference>()
+    const stageMap = new Map<number, string>()
+    for (const ref of references) {
+      if (ref.type === 'Offer') offerRefMap.set(ref.id, ref)
+      else if (ref.type === 'Stage' && ref.name) stageMap.set(ref.id, ref.name)
+    }
 
     for (const candidate of candidates) {
       try {
         const placements = candidate.placements || []
-        if (placements.length === 0) continue
+        if (placements.length === 0) { result.skipped++; continue }
 
         for (const placement of placements) {
           const offer = offerMap.get(placement.offer_id)
-          if (!offer) continue
+          const ref = offerRefMap.get(placement.offer_id)
+          const title = offer?.title || ref?.title
+          if (!title) { result.skipped++; continue }
 
-          const vacancyResult = await upsertVacancy(userId, `${offer.id}`, 'recruitee', {
-            title: offer.title,
-            description: offer.description || offer.title,
-            requirements: offer.requirements || '',
+          const vacancyResult = await upsertVacancy(userId, `${placement.offer_id}`, 'recruitee', {
+            title,
+            description: offer?.description || title,
+            requirements: offer?.requirements || '',
             company: companySlug,
-            location: offer.location,
+            location: offer?.location || ref?.location,
           })
           const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
 
-          const cvBuffer = placement.cv?.url
-            ? await recruiteeDownloadCV(placement.cv.url, apiKey)
-            : null
-
-          const email = candidate.emails?.[0]?.address
-          const phone = candidate.phones?.[0]?.number
-          const linkedIn = candidate.social_links?.find(l => l.type === 'linkedin')?.url
-
+          // emails/phones are arrays of strings. The CV / linkedIn / cover letter
+          // are NOT in the list response (they live on GET /candidates/:id).
+          const email = candidate.emails?.[0]
+          const phone = candidate.phones?.[0]
           const nameParts = candidate.name?.split(' ') || []
           const firstName = nameParts[0] || 'Unknown'
           const lastName = nameParts.slice(1).join(' ') || 'Candidate'
+          const stageName = stageMap.get(placement.stage_id)
 
           const status = await upsertCandidate(userId, 'recruitee', {
             externalId: `${placement.id}`,
@@ -384,12 +393,9 @@ export async function syncRecruitee(userId: string, apiKey: string, companySlug:
             lastName,
             email,
             phone,
-            linkedIn,
-            cvBuffer,
-            cvFileName: placement.cv?.filename || (cvBuffer ? 'cv.pdf' : undefined),
-            motivationText: candidate.cover_letter,
+            cvBuffer: null,
             vacancyId,
-            atsStatus: placement.stage?.name,
+            atsStatus: stageName,
           })
 
           if (status === 'imported') result.imported++
