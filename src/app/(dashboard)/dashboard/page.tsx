@@ -81,14 +81,16 @@ export default async function DashboardPage() {
         <DashboardClient onboarding={onboarding} subscription={effectiveSubscription} />
         <CalendarWidget />
         <DashboardStats stats={stats} />
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
-          <div className="xl:col-span-2"><RecentCandidates candidates={recentCandidates} /></div>
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6 items-start">
+          <div className="xl:col-span-2 space-y-4 sm:space-y-6">
+            <RecentCandidates candidates={recentCandidates} />
+            <RecentVacancies vacancies={recentVacancies} />
+          </div>
           <div className="space-y-4 sm:space-y-6">
             <UpcomingInterviews />
             <AIInsightsPanel candidates={recentCandidates.map((c: any) => ({ name: `${c.firstName || ''} ${c.lastName || ''}`.trim(), matchScore: c.matchScore || 0, vacancyTitle: c.vacancy?.title || '' }))} totalCandidates={candidateCount} avgScore={stats.avgScore} />
           </div>
         </div>
-        <RecentVacancies vacancies={recentVacancies} />
       </div>
     </div>
   )
