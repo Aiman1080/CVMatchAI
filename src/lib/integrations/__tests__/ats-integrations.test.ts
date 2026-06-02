@@ -290,12 +290,24 @@ describe('Recruitee integration', () => {
 // 3. SMARTRECRUITERS
 // ════════════════════════════════════════════════════════════════════════════
 describe('SmartRecruiters integration', () => {
-  it('smartrecruitersFetchJobs: uses X-SmartToken header', async () => {
+  it('smartrecruitersFetchJobs: uses X-SmartToken header and the /jobs path (no /v1)', async () => {
     const { smartrecruitersFetchJobs } = await import('../smartrecruiters')
     vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ content: [] }))
     await smartrecruitersFetchJobs('tok')
     const call = vi.mocked(fetch).mock.calls[0]
-    expect(call[0]).toContain('api.smartrecruiters.com/v1/jobs')
+    expect(call[0]).toContain('api.smartrecruiters.com/jobs')
+    expect(call[0]).not.toContain('/v1/')
+    expect((call[1] as any).headers['X-SmartToken']).toBe('tok')
+  })
+
+  it('smartrecruitersTestConnection: validates via /candidates (no /v1) with X-SmartToken', async () => {
+    const { smartrecruitersTestConnection } = await import('../smartrecruiters')
+    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ content: [] }))
+    const r = await smartrecruitersTestConnection('tok')
+    expect(r.ok).toBe(true)
+    const call = vi.mocked(fetch).mock.calls[0]
+    expect(call[0]).toContain('api.smartrecruiters.com/candidates')
+    expect(call[0]).not.toContain('/v1/')
     expect((call[1] as any).headers['X-SmartToken']).toBe('tok')
   })
 
