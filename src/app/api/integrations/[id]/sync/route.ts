@@ -7,7 +7,7 @@ import { getPlanLimits, getEffectiveSubscription } from '@/lib/plans'
 import {
   syncTeamtailor, syncRecruitee, syncSmartRecruiters,
   syncGreenhouse, syncLever, syncBullhorn, syncWorkable, syncFlatchr,
-  syncAshby, syncBreezy, syncHomerun, syncPersonio, syncIcims, syncSoftgarden,
+  syncAshby, syncBreezy, syncHomerun, syncPersonio, syncIcims,
 } from '@/lib/integrations/sync'
 
 export async function POST(_req: Request, context: { params: Promise<{ id: string }> }) {
@@ -70,8 +70,6 @@ export async function POST(_req: Request, context: { params: Promise<{ id: strin
     } else if (integration.platform === 'icims') {
       if (!integration.companySlug) return NextResponse.json({ error: 'Customer ID missing' }, { status: 400 })
       result = await syncIcims(integration.apiKey, integration.companySlug, userId, since)
-    } else if (integration.platform === 'softgarden') {
-      result = await syncSoftgarden(integration.apiKey, userId, since)
     } else {
       return NextResponse.json({ error: 'Unknown platform' }, { status: 400 })
     }

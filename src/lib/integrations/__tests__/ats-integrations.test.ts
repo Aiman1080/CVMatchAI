@@ -829,49 +829,6 @@ describe('iCIMS integration', () => {
 })
 
 // ════════════════════════════════════════════════════════════════════════════
-// 14. SOFTGARDEN
-// ════════════════════════════════════════════════════════════════════════════
-describe('Softgarden integration', () => {
-  it('softgardenFetchJobs: uses Bearer auth', async () => {
-    const { softgardenFetchJobs } = await import('../softgarden')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ data: [] }))
-    await softgardenFetchJobs('tk')
-    const call = vi.mocked(fetch).mock.calls[0]
-    expect(call[0]).toContain('api.softgarden.de/api/rest/2.0/jobs')
-    expect((call[1] as any).headers.Authorization).toBe('Bearer tk')
-  })
-
-  it('softgardenFetchJobs: parses data array', async () => {
-    const { softgardenFetchJobs } = await import('../softgarden')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({
-      data: [{ id: 1, jobName: 'Dev', jobDescription: 'desc', status: 'ACTIVE' }],
-    }))
-    const r = await softgardenFetchJobs('k')
-    expect(r[0].jobName).toBe('Dev')
-  })
-
-  it('softgardenFetchApplications: uses job id in URL', async () => {
-    const { softgardenFetchApplications } = await import('../softgarden')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ data: [] }))
-    await softgardenFetchApplications('k', 77)
-    expect(vi.mocked(fetch).mock.calls[0][0]).toContain('/jobs/77/applications')
-  })
-
-  it('softgardenFetchJobs: throws on 500', async () => {
-    const { softgardenFetchJobs } = await import('../softgarden')
-    vi.mocked(fetch).mockResolvedValueOnce(errorResponse(500))
-    await expect(softgardenFetchJobs('k')).rejects.toThrow(/500/)
-  })
-
-  it('softgardenFetchJobs: handles empty array response', async () => {
-    const { softgardenFetchJobs } = await import('../softgarden')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse([]))
-    const r = await softgardenFetchJobs('k')
-    expect(r).toEqual([])
-  })
-})
-
-// ════════════════════════════════════════════════════════════════════════════
 // SYNC ORCHESTRATION
 // ════════════════════════════════════════════════════════════════════════════
 describe('Sync orchestration (sync.ts)', () => {
@@ -1295,31 +1252,6 @@ describe('Sync orchestration (sync.ts)', () => {
       expect(r.errors.length).toBeGreaterThan(0)
     })
   })
-
-  // ── Softgarden sync ──────────────────────────────────────────────────────
-  describe('syncSoftgarden', () => {
-    it('imports applications per job', async () => {
-      const { syncSoftgarden } = await import('../sync')
-      vi.mocked(fetch)
-        .mockResolvedValueOnce(jsonResponse({ // jobs
-          data: [{ id: 1, jobName: 'Eng', jobDescription: 'd', status: 'ACTIVE' }],
-        }))
-        .mockResolvedValueOnce(jsonResponse({ // applications
-          data: [{ id: 100, firstname: 'A', lastname: 'B', email: 'a@b.com', status: 'NEW', createdOn: '2024' }],
-        }))
-        .mockResolvedValueOnce(jsonResponse({ data: [] })) // docs (no CV)
-
-      const r = await syncSoftgarden('k', 'u')
-      expect(r.imported).toBe(1)
-    })
-
-    it('captures error on auth failure', async () => {
-      const { syncSoftgarden } = await import('../sync')
-      vi.mocked(fetch).mockResolvedValue(errorResponse(401))
-      const r = await syncSoftgarden('k', 'u')
-      expect(r.errors.length).toBeGreaterThan(0)
-    })
-  })
 })
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1405,15 +1337,6 @@ describe('Cross-cutting edge cases', () => {
       .mockResolvedValueOnce(jsonResponse('content'))
     const r = await icimsDownloadCV('k', 'c', 1)
     expect(r?.filename).toBe('resume.pdf')
-  })
-
-  it('Softgarden: handles document with .docx extension as fallback CV', async () => {
-    const { softgardenDownloadCV } = await import('../softgarden')
-    vi.mocked(fetch)
-      .mockResolvedValueOnce(jsonResponse({ data: [{ id: 1, filename: 'my-cv.docx', url: 'https://x', type: 'OTHER' }] }))
-      .mockResolvedValueOnce(jsonResponse('content'))
-    const r = await softgardenDownloadCV('k', 1)
-    expect(r?.filename).toBe('my-cv.docx')
   })
 
   it('Breezy: candidate without resume returns null (no crash)', async () => {

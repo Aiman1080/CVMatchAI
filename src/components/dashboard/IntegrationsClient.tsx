@@ -171,20 +171,9 @@ const PLATFORM_STATIC = [
     apiKeyPlaceholder: 'xxxx-xxxx-xxxx',
     needsSlug: true,
   },
-  {
-    id: 'softgarden' as const,
-    name: 'Softgarden',
-    color: 'from-lime-500 to-green-600',
-    textColor: 'text-lime-600 dark:text-lime-400',
-    bgColor: 'bg-lime-50 dark:bg-lime-950/30',
-    borderColor: 'border-lime-200 dark:border-lime-800',
-    docsUrl: 'https://dev.softgarden.de',
-    apiKeyPlaceholder: 'sg-xxxxxxxx',
-    needsSlug: false,
-  },
 ]
 
-type PlatformId = 'teamtailor' | 'recruitee' | 'smartrecruiters' | 'greenhouse' | 'lever' | 'bullhorn' | 'workable' | 'flatchr' | 'ashby' | 'breezyhr' | 'homerun' | 'personio' | 'icims' | 'softgarden'
+type PlatformId = 'teamtailor' | 'recruitee' | 'smartrecruiters' | 'greenhouse' | 'lever' | 'bullhorn' | 'workable' | 'flatchr' | 'ashby' | 'breezyhr' | 'homerun' | 'personio' | 'icims'
 
 /** Collapsible guide with numbered steps - shown inline inside the connection form */
 function HowToGuide({ steps, docsUrl, openLabel, title }: { steps: readonly string[]; docsUrl: string; openLabel: string; title: string }) {
