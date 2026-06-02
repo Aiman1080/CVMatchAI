@@ -1,40 +1,76 @@
 // SmartRecruiters API integration
 // Docs: https://developers.smartrecruiters.com/reference
-// Auth: X-SmartToken header
+// Auth: x-smarttoken header (company API key). Base: https://api.smartrecruiters.com
+//
+// Verified against the live Candidates API + Jobs API OpenAPI specs:
+//  - NO /v1 prefix. Both /jobs and /candidates paginate with a CURSOR
+//    (nextPageId in the body -> pageId query param), NOT offset.
+//  - GET /candidates returns { content, nextPageId, totalFound }; each item has
+//    primaryAssignment.job {id,title} + status (a STRING enum), but NOT the phone
+//    or LinkedIn - those only exist on GET /candidates/:id (where the field is
+//    web.linkedin, lowercase).
+//  - GET /jobs returns summaries only (id/title/location/status - no description).
+//    Cursor paging needs sort=job_id.
+//  - CVs: the candidate detail exposes actions.attachments (a URL to the
+//    candidate's attachments); the per-file download is
+//    GET /candidates/:id/attachments/:attachmentId.
+
+const SR_BASE = 'https://api.smartrecruiters.com'
+
+export interface SRLocation { city?: string; country?: string; countryCode?: string; region?: string }
+
+export interface SRJob {
+  id: string
+  title: string
+  refNumber?: string
+  createdOn?: string
+  updatedOn?: string
+  department?: { label?: string }
+  location?: SRLocation
+  status?: string
+  postingStatus?: string
+}
 
 export interface SRCandidate {
   id: string
   firstName: string
   lastName: string
-  email: string
-  phoneNumber?: string
-  web?: { linkedIn?: string }
-  location?: { city?: string; country?: string }
-  tags?: { label: string }[]
-  createdon: string
+  email?: string
+  createdOn?: string
+  updatedOn?: string
+  location?: SRLocation
+  tags?: string[]
   primaryAssignment?: {
-    job: { id: string; title: string }
-    status: { id: string; label: string }
-    activeApplication?: {
-      answers?: Array<{ questionText: string; answerText: string }>
-    }
+    job?: { id?: string; title?: string }
+    status?: string
+    subStatus?: string
   }
 }
 
-export interface SRJob {
+export interface SRAction { url?: string; method?: string }
+
+// GET /candidates/:id - much richer than the list (phone, web.linkedin,
+// education/experience, and the attachments link).
+export interface SRCandidateDetails {
   id: string
-  title: string
-  jobDescription?: { text?: string }
-  qualifications?: { text?: string }
-  status: string
-  location?: { city?: string; country?: string }
-  createdon: string
+  firstName?: string
+  lastName?: string
+  email?: string
+  phoneNumber?: string
+  location?: SRLocation
+  web?: { linkedin?: string; website?: string; facebook?: string; twitter?: string }
+  createdOn?: string
+  updatedOn?: string
+  tags?: string[]
+  primaryAssignment?: any
+  actions?: { attachments?: SRAction; properties?: SRAction; [k: string]: SRAction | undefined }
 }
 
-const SR_BASE = 'https://api.smartrecruiters.com'
-
 async function srFetch(path: string, apiKey: string) {
-  const res = await fetch(`${SR_BASE}${path}`, {
+  // Follow absolute URLs (e.g. an `actions` href) verbatim; otherwise resolve
+  // against the API base.
+  const url = path.startsWith('http') ? path : `${SR_BASE}${path}`
+  const res = await fetch(url, {
     headers: {
       'X-SmartToken': apiKey,
       'Content-Type': 'application/json',
@@ -49,50 +85,80 @@ async function srFetch(path: string, apiKey: string) {
 
 export async function smartrecruitersTestConnection(apiKey: string): Promise<{ ok: boolean; company?: string; error?: string }> {
   try {
-    const data = await srFetch('/v1/users/me', apiKey)
-    return { ok: true, company: data.companyIdentifier || data.firstName }
+    // Validate the key against an endpoint we actually use (no /v1 prefix).
+    await srFetch('/candidates?limit=1', apiKey)
+    return { ok: true, company: 'SmartRecruiters' }
   } catch (e: any) {
     return { ok: false, error: e.message }
   }
 }
 
+// Cursor pagination via nextPageId. sort=job_id is required to page jobs.
 export async function smartrecruitersFetchJobs(apiKey: string): Promise<SRJob[]> {
   const jobs: SRJob[] = []
-  let offset = 0
-  const limit = 100
+  let pageId: string | undefined
   while (true) {
-    const data = await srFetch(`/v1/jobs?status=PUBLISHED&limit=${limit}&offset=${offset}`, apiKey)
-    const batch: SRJob[] = data.content || []
-    jobs.push(...batch)
-    if (batch.length < limit) break
-    offset += limit
+    let url = `/jobs?limit=100&sort=job_id`
+    if (pageId) url += `&pageId=${encodeURIComponent(pageId)}`
+    const data = await srFetch(url, apiKey)
+    jobs.push(...(data.content || []))
+    pageId = data.nextPageId
+    if (!pageId) break
   }
   return jobs
 }
 
 export async function smartrecruitersFetchCandidates(apiKey: string, since?: Date): Promise<SRCandidate[]> {
   const candidates: SRCandidate[] = []
-  let offset = 0
-  const limit = 100
+  let pageId: string | undefined
   while (true) {
-    let url = `/v1/candidates?limit=${limit}&offset=${offset}`
-    if (since) url += `&updatedAfter=${since.toISOString()}`
+    let url = `/candidates?limit=100`
+    if (since) url += `&updatedAfter=${encodeURIComponent(since.toISOString())}`
+    if (pageId) url += `&pageId=${encodeURIComponent(pageId)}`
     const data = await srFetch(url, apiKey)
-    const batch: SRCandidate[] = data.content || []
-    candidates.push(...batch)
-    if (batch.length < limit) break
-    offset += limit
+    candidates.push(...(data.content || []))
+    pageId = data.nextPageId
+    if (!pageId) break
   }
   return candidates
 }
 
-export async function smartrecruitersFetchCandidateCV(apiKey: string, candidateId: string): Promise<Buffer | null> {
+// Phone, web.linkedin (lowercase) and the attachments link are only on the
+// single-candidate endpoint. Null on failure so enrichment never aborts a sync.
+export async function smartrecruitersFetchCandidate(apiKey: string, candidateId: string): Promise<SRCandidateDetails | null> {
   try {
-    const res = await fetch(`${SR_BASE}/v1/candidates/${candidateId}/documents/cv`, {
-      headers: { 'X-SmartToken': apiKey },
-    })
+    return await srFetch(`/candidates/${candidateId}`, apiKey)
+  } catch {
+    return null
+  }
+}
+
+// Download the candidate's CV. The candidate detail exposes actions.attachments
+// (a URL to GET /candidates/:id/attachments), which returns
+// { content: [{ id, name, type, contentType, actions: { download: { url } } }] }.
+// We pick the résumé (type "RESUME", else a PDF/Word file, else the first) and
+// download it via its actions.download.url. Returns null on anything unexpected
+// so a missing CV never aborts a sync.
+export async function smartrecruitersDownloadCV(apiKey: string, attachmentsUrl?: string): Promise<{ buffer: Buffer; filename: string } | null> {
+  if (!attachmentsUrl) return null
+  try {
+    const data = await srFetch(attachmentsUrl, apiKey)
+    const list: any[] = Array.isArray(data) ? data : (data.content || [])
+    if (!list.length) return null
+
+    const isDoc = (n?: string) => /\.(pdf|docx?|rtf|odt)$/i.test(n || '')
+    const isResumeMime = (m?: string) => /pdf|msword|officedocument|rtf/i.test(m || '')
+    const item =
+      list.find(a => /resume|cv|curriculum/i.test(`${a?.type || ''} ${a?.name || ''}`)) ||
+      list.find(a => isDoc(a?.name) || isResumeMime(a?.contentType)) ||
+      list[0]
+
+    const downloadUrl: string | undefined = item?.actions?.download?.url
+    if (!downloadUrl) return null
+
+    const res = await fetch(downloadUrl, { headers: { 'X-SmartToken': apiKey } })
     if (!res.ok) return null
-    return Buffer.from(await res.arrayBuffer())
+    return { buffer: Buffer.from(await res.arrayBuffer()), filename: item.name || 'cv.pdf' }
   } catch {
     return null
   }
