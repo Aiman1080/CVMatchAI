@@ -56,13 +56,16 @@ vi.mock('@/lib/ai', () => ({
 }))
 
 // Helper: build a fetch response stub
-function jsonResponse(body: any, status = 200): any {
+function jsonResponse(body: any, status = 200, headers: Record<string, string> = {}): any {
+  const lower: Record<string, string> = {}
+  for (const k in headers) lower[k.toLowerCase()] = headers[k]
   return {
     ok: status >= 200 && status < 300,
     status,
     json: async () => body,
     text: async () => (typeof body === 'string' ? body : JSON.stringify(body)),
     arrayBuffer: async () => new ArrayBuffer(8),
+    headers: { get: (k: string) => lower[k.toLowerCase()] ?? null },
   }
 }
 
@@ -73,6 +76,7 @@ function errorResponse(status: number, text = 'error'): any {
     json: async () => ({ error: text }),
     text: async () => text,
     arrayBuffer: async () => new ArrayBuffer(0),
+    headers: { get: () => null },
   }
 }
 
@@ -378,57 +382,81 @@ describe('SmartRecruiters integration', () => {
 // ════════════════════════════════════════════════════════════════════════════
 // 4. GREENHOUSE
 // ════════════════════════════════════════════════════════════════════════════
-describe('Greenhouse integration', () => {
-  it('greenhouseFetchJobs: uses Basic auth (key:)', async () => {
-    const { greenhouseFetchJobs } = await import('../greenhouse')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse([]))
-    await greenhouseFetchJobs('mykey')
+describe('Greenhouse integration (Harvest v3)', () => {
+  it('greenhouseGetToken: POSTs client_credentials with Basic auth', async () => {
+    const { greenhouseGetToken } = await import('../greenhouse')
+    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ token_type: 'Bearer', access_token: 'JWT123' }))
+    const tok = await greenhouseGetToken('cid', 'secret')
+    expect(tok).toBe('JWT123')
     const call = vi.mocked(fetch).mock.calls[0]
-    expect(call[0]).toContain('harvest.greenhouse.io/v1/jobs')
+    expect(call[0]).toContain('auth.greenhouse.io/token?grant_type=client_credentials')
+    expect((call[1] as any).method).toBe('POST')
     const auth = (call[1] as any).headers.Authorization as string
-    expect(auth).toMatch(/^Basic /)
-    const decoded = Buffer.from(auth.replace('Basic ', ''), 'base64').toString()
-    expect(decoded).toBe('mykey:')
+    expect(Buffer.from(auth.replace('Basic ', ''), 'base64').toString()).toBe('cid:secret')
   })
 
-  it('greenhouseFetchJobs: paginates until short page', async () => {
+  it('greenhouseFetchJobs: uses Bearer + /v3/jobs and follows the Link cursor', async () => {
     const { greenhouseFetchJobs } = await import('../greenhouse')
-    const fullPage = Array.from({ length: 100 }, (_, i) => ({ id: i, name: 'J' + i, status: 'open', created_at: '2024' }))
     vi.mocked(fetch)
-      .mockResolvedValueOnce(jsonResponse(fullPage))
-      .mockResolvedValueOnce(jsonResponse([{ id: 999, name: 'last', status: 'open', created_at: '2024' }]))
-    const jobs = await greenhouseFetchJobs('k')
-    expect(jobs).toHaveLength(101)
+      .mockResolvedValueOnce(jsonResponse([{ id: 1, name: 'A' }], 200, { link: '<https://harvest.greenhouse.io/v3/jobs?cursor=C2>; rel="next"' }))
+      .mockResolvedValueOnce(jsonResponse([{ id: 2, name: 'B' }]))
+    const jobs = await greenhouseFetchJobs('JWT')
+    expect(jobs.map(j => j.id)).toEqual([1, 2])
+    const call = vi.mocked(fetch).mock.calls[0]
+    expect(call[0]).toContain('harvest.greenhouse.io/v3/jobs')
+    expect((call[1] as any).headers.Authorization).toBe('Bearer JWT')
+    expect(vi.mocked(fetch).mock.calls[1][0]).toBe('https://harvest.greenhouse.io/v3/jobs?cursor=C2')
   })
 
-  it('greenhouseFetchCandidates: appends updated_after for since', async () => {
+  it('greenhouseFetchCandidates: appends updated_at[gte] for since', async () => {
     const { greenhouseFetchCandidates } = await import('../greenhouse')
     vi.mocked(fetch).mockResolvedValueOnce(jsonResponse([]))
-    await greenhouseFetchCandidates('k', new Date('2024-06-01'))
-    expect(vi.mocked(fetch).mock.calls[0][0]).toContain('updated_after=')
+    await greenhouseFetchCandidates('JWT', new Date('2024-06-01'))
+    expect(vi.mocked(fetch).mock.calls[0][0]).toContain('updated_at[gte]=')
+  })
+
+  it('greenhouseFetchApplications: hits /v3/applications', async () => {
+    const { greenhouseFetchApplications } = await import('../greenhouse')
+    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse([{ id: 1, candidate_id: 5, job_id: 9, status: 'in_process', stage_name: 'Review' }]))
+    const apps = await greenhouseFetchApplications('JWT')
+    expect(vi.mocked(fetch).mock.calls[0][0]).toContain('/v3/applications')
+    expect(apps[0].candidate_id).toBe(5)
+  })
+
+  it('greenhouseFetchResumes: filters by type=resume + candidate_ids', async () => {
+    const { greenhouseFetchResumes } = await import('../greenhouse')
+    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse([{ id: 1, candidate_id: 5, type: 'resume', filename: 'cv.pdf', url: 'https://x' }]))
+    const atts = await greenhouseFetchResumes('JWT', [5, 6])
+    const url = vi.mocked(fetch).mock.calls[0][0] as string
+    expect(url).toContain('/v3/attachments')
+    expect(url).toContain('type=resume')
+    expect(url).toContain('candidate_ids=5,6')
+    expect(atts[0].filename).toBe('cv.pdf')
+  })
+
+  it('greenhouseFetchResumes: no candidates -> no request', async () => {
+    const { greenhouseFetchResumes } = await import('../greenhouse')
+    expect(await greenhouseFetchResumes('JWT', [])).toEqual([])
+    expect(vi.mocked(fetch)).not.toHaveBeenCalled()
+  })
+
+  it('greenhouseDownloadResume: downloads the signed url', async () => {
+    const { greenhouseDownloadResume } = await import('../greenhouse')
+    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse('binary'))
+    const r = await greenhouseDownloadResume({ id: 1, type: 'resume', filename: 'cv.pdf', url: 'https://files/cv.pdf' })
+    expect(r?.filename).toBe('cv.pdf')
+    expect(vi.mocked(fetch).mock.calls[0][0]).toBe('https://files/cv.pdf')
+  })
+
+  it('greenhouseDownloadResume: returns null when no attachment', async () => {
+    const { greenhouseDownloadResume } = await import('../greenhouse')
+    expect(await greenhouseDownloadResume(null)).toBeNull()
   })
 
   it('greenhouseFetchJobs: throws on 401', async () => {
     const { greenhouseFetchJobs } = await import('../greenhouse')
     vi.mocked(fetch).mockResolvedValueOnce(errorResponse(401))
     await expect(greenhouseFetchJobs('bad')).rejects.toThrow(/401/)
-  })
-
-  it('greenhouseDownloadCV: returns null when no resume found', async () => {
-    const { greenhouseDownloadCV } = await import('../greenhouse')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse([{ filename: 'other.txt', url: 'x', type: 'other' }]))
-    const r = await greenhouseDownloadCV('k', 123)
-    expect(r).toBeNull()
-  })
-
-  it('greenhouseDownloadCV: returns buffer when resume present', async () => {
-    const { greenhouseDownloadCV } = await import('../greenhouse')
-    vi.mocked(fetch)
-      .mockResolvedValueOnce(jsonResponse([{ filename: 'cv.pdf', url: 'https://x/y', type: 'resume' }]))
-      .mockResolvedValueOnce(jsonResponse('binary'))
-    const r = await greenhouseDownloadCV('k', 123)
-    expect(r).not.toBeNull()
-    expect(r?.filename).toBe('cv.pdf')
   })
 })
 
@@ -1179,32 +1207,42 @@ describe('Sync orchestration (sync.ts)', () => {
 
   // ── Greenhouse sync ───────────────────────────────────────────────────────
   describe('syncGreenhouse', () => {
-    it('imports candidate per application', async () => {
+    it('imports candidate per application (token -> jobs/candidates/applications -> resumes)', async () => {
       const { syncGreenhouse } = await import('../sync')
       vi.mocked(fetch)
-        .mockResolvedValueOnce(jsonResponse([ // jobs
-          { id: 5, name: 'Eng', status: 'open', created_at: '2024' },
-        ]))
-        .mockResolvedValueOnce(jsonResponse([ // candidates
-          {
-            id: 11, first_name: 'A', last_name: 'B',
-            emails: [{ value: 'a@b.com', type: 'personal' }],
-            applications: [{ id: 200, job: { id: 5, name: 'Eng' }, status: 'active', current_stage: { name: 'Phone' } }],
-            updated_at: '2024',
-          },
-        ]))
-        .mockResolvedValueOnce(jsonResponse([])) // attachments empty -> null cv
+        .mockResolvedValueOnce(jsonResponse({ token_type: 'Bearer', access_token: 'JWT' })) // token
+        .mockResolvedValueOnce(jsonResponse([{ id: 5, name: 'Eng', status: 'open' }]))        // jobs
+        .mockResolvedValueOnce(jsonResponse([{ id: 11, first_name: 'A', last_name: 'B', email_addresses: [{ value: 'a@b.com' }] }])) // candidates
+        .mockResolvedValueOnce(jsonResponse([{ id: 200, candidate_id: 11, job_id: 5, status: 'in_process', stage_name: 'Phone Interview' }])) // applications
+        .mockResolvedValueOnce(jsonResponse([])) // attachments (no resume)
 
-      const r = await syncGreenhouse('k', 'u')
+      const r = await syncGreenhouse('cid', 'secret', 'u')
       expect(r.imported).toBe(1)
       expect(r.errors).toEqual([])
     })
 
-    it('captures auth error', async () => {
+    it('attaches the résumé + LinkedIn from the separate v3 endpoints', async () => {
+      const { syncGreenhouse } = await import('../sync')
+      vi.mocked(fetch)
+        .mockResolvedValueOnce(jsonResponse({ access_token: 'JWT' }))                          // token
+        .mockResolvedValueOnce(jsonResponse([{ id: 5, name: 'Eng', status: 'open' }]))          // jobs
+        .mockResolvedValueOnce(jsonResponse([{ id: 11, first_name: 'Jane', last_name: 'Doe', email_addresses: [{ value: 'j@d.com' }], social_media_addresses: [{ value: 'https://linkedin.com/in/jane' }] }])) // candidates
+        .mockResolvedValueOnce(jsonResponse([{ id: 200, candidate_id: 11, job_id: 5, status: 'in_process', stage_name: 'Phone' }])) // applications
+        .mockResolvedValueOnce(jsonResponse([{ id: 9, candidate_id: 11, type: 'resume', filename: 'jane_cv.pdf', url: 'https://files/cv.pdf' }])) // attachments
+        .mockResolvedValueOnce(jsonResponse('binary'))                                          // CV download
+      const r = await syncGreenhouse('cid', 'secret', 'u')
+      expect(r.imported).toBe(1)
+      const data = prismaMock.candidate.create.mock.calls[0][0].data
+      expect(data.cvFileName).toBe('jane_cv.pdf')
+      expect(data.linkedIn).toBe('https://linkedin.com/in/jane')
+    })
+
+    it('captures auth error (token exchange fails)', async () => {
       const { syncGreenhouse } = await import('../sync')
       vi.mocked(fetch).mockResolvedValue(errorResponse(401))
-      const r = await syncGreenhouse('k', 'u')
+      const r = await syncGreenhouse('cid', 'secret', 'u')
       expect(r.errors.length).toBeGreaterThan(0)
+      expect(r.imported).toBe(0)
     })
   })
 
@@ -1539,9 +1577,8 @@ describe('Cross-cutting edge cases', () => {
   })
 
   it('Greenhouse: handles candidate with no CV (returns null without crash)', async () => {
-    const { greenhouseDownloadCV } = await import('../greenhouse')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse([]))
-    const r = await greenhouseDownloadCV('k', 1)
+    const { greenhouseDownloadResume } = await import('../greenhouse')
+    const r = await greenhouseDownloadResume(undefined)
     expect(r).toBeNull()
   })
 

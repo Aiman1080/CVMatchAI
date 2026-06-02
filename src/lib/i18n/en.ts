@@ -391,9 +391,11 @@ export const en = {
         },
         greenhouse: {
           tagline: 'Leading ATS for scaling companies worldwide',
-          apiKeyLabel: 'Greenhouse API Key (Harvest)',
-          howToGet: ['Log in to Greenhouse', 'Go to Settings → Dev Center → API Credentials', 'Click "Create New API Key" and select Harvest', 'Copy the API key and paste it here'],
-          whatItDoes: 'Imports your candidates, jobs and CVs from Greenhouse via the Harvest API. Each CV is analyzed by AI automatically.',
+          apiKeyLabel: 'Greenhouse Client ID',
+          slugLabel: 'Greenhouse Client Secret',
+          slugTooltip: 'Harvest v3 uses OAuth2 client credentials. Create them in Greenhouse under Configure → Dev Center → API Credentials (Harvest, OAuth2 / client credentials) — you get a Client ID and a Client Secret.',
+          howToGet: ['Log in to Greenhouse', 'Go to Configure → Dev Center → API Credentials', 'Create a Harvest v3 credential (OAuth2 client credentials)', 'Copy the Client ID and Client Secret into the two fields'],
+          whatItDoes: 'Imports your candidates, jobs and CVs from Greenhouse via the Harvest v3 API. Each CV is analyzed by AI automatically.',
         },
         lever: {
           tagline: 'Modern ATS for fast-growing teams',

@@ -47,7 +47,8 @@ export async function POST(_req: Request, context: { params: Promise<{ id: strin
     } else if (integration.platform === 'smartrecruiters') {
       result = await syncSmartRecruiters(userId, integration.apiKey, since)
     } else if (integration.platform === 'greenhouse') {
-      result = await syncGreenhouse(integration.apiKey, userId, since)
+      if (!integration.companySlug) return NextResponse.json({ error: 'Client Secret missing' }, { status: 400 })
+      result = await syncGreenhouse(integration.apiKey, integration.companySlug, userId, since)
     } else if (integration.platform === 'lever') {
       result = await syncLever(integration.apiKey, userId, since)
     } else if (integration.platform === 'bullhorn') {
