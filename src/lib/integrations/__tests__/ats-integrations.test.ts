@@ -401,6 +401,27 @@ describe('Lever integration', () => {
     const r = await leverTestConnection('k')
     expect(r.ok).toBe(false)
   })
+
+  it('leverFetchResume: lists the opportunity resumes and returns one with a file', async () => {
+    const { leverFetchResume } = await import('../lever')
+    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({
+      data: [{ id: 'r1', file: { name: 'cv.pdf', ext: 'pdf', downloadUrl: 'https://hire.lever.co/x/download' } }],
+    }))
+    const r = await leverFetchResume('k', 'opp1')
+    expect(vi.mocked(fetch).mock.calls[0][0]).toContain('/opportunities/opp1/resumes')
+    expect(r?.id).toBe('r1')
+    expect(r?.file?.name).toBe('cv.pdf')
+  })
+
+  it('leverDownloadCV: hits the resume download endpoint with Basic auth', async () => {
+    const { leverDownloadCV } = await import('../lever')
+    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse('binary'))
+    const buf = await leverDownloadCV('k', 'opp1', 'r1')
+    const call = vi.mocked(fetch).mock.calls[0]
+    expect(call[0]).toContain('/opportunities/opp1/resumes/r1/download')
+    expect((call[1] as any).headers.Authorization).toContain('Basic ')
+    expect(buf).toBeInstanceOf(Buffer)
+  })
 })
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1029,11 +1050,11 @@ describe('Sync orchestration (sync.ts)', () => {
           data: [{ id: 'p1', text: 'Eng', state: 'published', content: { description: 'd' }, createdAt: 1 }],
           hasNext: false,
         }))
-        .mockResolvedValueOnce(jsonResponse({ // opportunities
+        .mockResolvedValueOnce(jsonResponse({ // opportunities (posting is on the application)
           data: [{
             id: 'o1', name: 'John Smith',
             emails: ['j@s.com'], phones: [{ value: '+1' }],
-            postings: ['p1'], createdAt: 1, updatedAt: 1,
+            applications: [{ posting: 'p1' }], createdAt: 1, updatedAt: 1,
           }],
           hasNext: false,
         }))
@@ -1042,12 +1063,12 @@ describe('Sync orchestration (sync.ts)', () => {
       expect(r.imported).toBe(1)
     })
 
-    it('skips opportunities without postings', async () => {
+    it('skips opportunities whose applications have no posting', async () => {
       const { syncLever } = await import('../sync')
       vi.mocked(fetch)
         .mockResolvedValueOnce(jsonResponse({ data: [], hasNext: false }))
         .mockResolvedValueOnce(jsonResponse({
-          data: [{ id: 'o1', name: 'X Y', postings: [], createdAt: 1, updatedAt: 1 }],
+          data: [{ id: 'o1', name: 'X Y', applications: [], createdAt: 1, updatedAt: 1 }],
           hasNext: false,
         }))
       const r = await syncLever('k', 'u')

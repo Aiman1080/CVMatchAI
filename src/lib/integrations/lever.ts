@@ -19,18 +19,34 @@ export interface LeverPosting {
   createdAt: number
 }
 
+export interface LeverApplication {
+  posting?: string
+  comments?: string
+  resume?: string | null
+  email?: string
+  phone?: { value?: string }
+}
+
 export interface LeverOpportunity {
   id: string
   name?: string
   emails?: string[]
   phones?: Array<{ value: string }>
   links?: string[]
-  stage?: string
-  stageChanges?: Array<{ toStageId: string }>
-  applications?: string[]
-  postings?: string[]
+  // A string UID by default; a { id, text } object when expand=stage is used.
+  stage?: string | { id: string; text: string }
+  // String ids by default; full application objects when expand=applications is used.
+  // NOTE: the opportunity has NO top-level `postings` field - the posting lives on
+  // each application (app.posting).
+  applications?: Array<string | LeverApplication>
+  resume?: string | null
   updatedAt: number
   createdAt: number
+}
+
+export interface LeverResume {
+  id: string
+  file?: { name?: string; ext?: string; downloadUrl?: string }
 }
 
 const LEVER_BASE = 'https://api.lever.co/v1'
@@ -81,7 +97,8 @@ export async function leverFetchOpportunities(apiKey: string, since?: Date): Pro
   const opportunities: LeverOpportunity[] = []
   let offset: string | undefined
   while (true) {
-    let url = '/opportunities?limit=100&expand=applications'
+    // expand applications (to reach the posting) AND stage (to get its display name).
+    let url = '/opportunities?limit=100&expand=applications&expand=stage'
     if (since) url += `&updated_at_start=${since.getTime()}`
     if (offset) url += `&offset=${offset}`
     const data = await leverFetch(url, apiKey)
@@ -90,4 +107,29 @@ export async function leverFetchOpportunities(apiKey: string, since?: Date): Pro
     offset = data.next
   }
   return opportunities
+}
+
+// List the opportunity's resumes (most recent first is not guaranteed, so we just
+// take one with a downloadable file).
+export async function leverFetchResume(apiKey: string, opportunityId: string): Promise<LeverResume | null> {
+  try {
+    const data = await leverFetch(`/opportunities/${opportunityId}/resumes`, apiKey)
+    const resumes: LeverResume[] = data.data || []
+    return resumes.find(r => r.file?.downloadUrl) || resumes[0] || null
+  } catch {
+    return null
+  }
+}
+
+// Download a resume's binary via the dedicated download endpoint (Basic auth).
+export async function leverDownloadCV(apiKey: string, opportunityId: string, resumeId: string): Promise<Buffer | null> {
+  try {
+    const res = await fetch(`${LEVER_BASE}/opportunities/${opportunityId}/resumes/${resumeId}/download`, {
+      headers: { Authorization: leverAuthHeader(apiKey) },
+    })
+    if (!res.ok) return null
+    return Buffer.from(await res.arrayBuffer())
+  } catch {
+    return null
+  }
 }
