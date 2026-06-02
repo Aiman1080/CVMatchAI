@@ -282,6 +282,13 @@ export const nl = {
       planPro: 'Pro-plan',
     },
     integrations: {
+      demoTitle: 'Geen ATS-account? Probeer het met demodata',
+      demoDesc: 'Importeer voorbeeldvacatures en -kandidaten (door AI geanalyseerd) zonder een echte ATS te koppelen. Ideaal voor een snelle test of een klantdemo.',
+      demoBtn: 'Demodata importeren',
+      demoLoading: 'Importeren...',
+      demoDone: 'Demodata geïmporteerd',
+      demoCheck: 'Open de tabbladen Kandidaten en Kanban om ze te zien.',
+      demoAlready: 'Demodata was al geïmporteerd - check het tabblad Kandidaten.',
       apiKeyRequired: 'API-sleutel vereist',
       connected: 'verbonden!',
       companyFound: 'Bedrijf gevonden: ',

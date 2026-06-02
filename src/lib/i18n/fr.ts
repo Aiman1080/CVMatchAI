@@ -282,6 +282,13 @@ export const fr = {
       planPro: 'Plan Pro',
     },
     integrations: {
+      demoTitle: 'Pas de compte ATS ? Teste avec des données démo',
+      demoDesc: 'Importe des offres et des candidats fictifs (analysés par IA) sans connecter de vrai ATS. Parfait pour un test rapide ou une démo client.',
+      demoBtn: 'Importer les données démo',
+      demoLoading: 'Importation...',
+      demoDone: 'Données démo importées',
+      demoCheck: 'Ouvre les onglets Candidats et Kanban pour les voir.',
+      demoAlready: 'Les données démo étaient déjà importées - va dans l\'onglet Candidats.',
       apiKeyRequired: 'Clé API requise',
       connected: 'connecté !',
       companyFound: 'Société détectée : ',
