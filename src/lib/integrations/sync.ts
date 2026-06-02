@@ -18,7 +18,8 @@ import {
   greenhouseFetchJobs, greenhouseFetchCandidates, greenhouseDownloadCV,
 } from './greenhouse'
 import {
-  leverFetchPostings, leverFetchOpportunities,
+  leverFetchPostings, leverFetchOpportunities, leverFetchResume, leverDownloadCV,
+  type LeverApplication,
 } from './lever'
 import {
   bullhornFetchJobs, bullhornFetchCandidates, bullhornFetchJobSubmissions,
@@ -550,51 +551,69 @@ export async function syncLever(apiKey: string, userId: string, since?: Date): P
 
     for (const opp of opportunities) {
       try {
-        const postingIds = opp.postings || []
-        if (postingIds.length === 0) continue
+        // The opportunity has no `postings` field; the posting is on its applications
+        // (expanded). Use the first application that references a posting.
+        const apps = Array.isArray(opp.applications) ? opp.applications : []
+        const app = apps.find((a): a is LeverApplication => !!a && typeof a === 'object' && !!a.posting)
+        const postingId = app?.posting
+        if (!postingId) { result.skipped++; continue }
 
-        for (const postingId of postingIds) {
-          const posting = postingMap.get(postingId)
-          if (!posting) continue
+        const posting = postingMap.get(postingId)
+        if (!posting) { result.skipped++; continue }
 
-          const description = posting.content?.description || posting.text
-          const requirements = posting.content?.lists
-            ?.map(l => `${l.text}: ${l.content}`)
-            .join('\n') || ''
+        const description = posting.content?.description || posting.text
+        const requirements = posting.content?.lists
+          ?.map(l => `${l.text}: ${l.content}`)
+          .join('\n') || ''
 
-          const vacancyResult = await upsertVacancy(userId, posting.id, 'lever', {
-            title: posting.text,
-            description,
-            requirements,
-            company: 'Lever',
-            location: posting.categories?.location,
-          })
-          const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
+        const vacancyResult = await upsertVacancy(userId, posting.id, 'lever', {
+          title: posting.text,
+          description,
+          requirements,
+          company: 'Lever',
+          location: posting.categories?.location,
+        })
+        const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
 
-          const nameParts = opp.name?.split(' ') || []
-          const firstName = nameParts[0] || 'Unknown'
-          const lastName = nameParts.slice(1).join(' ') || 'Candidate'
+        const nameParts = opp.name?.split(' ') || []
+        const firstName = nameParts[0] || 'Unknown'
+        const lastName = nameParts.slice(1).join(' ') || 'Candidate'
 
-          const email = opp.emails?.[0]
-          const phone = opp.phones?.[0]?.value
-          const linkedIn = opp.links?.find(l => l.includes('linkedin'))
+        const email = opp.emails?.[0] || app?.email
+        const phone = opp.phones?.[0]?.value || app?.phone?.value
+        const linkedIn = opp.links?.find(l => l.includes('linkedin'))
+        // `stage` is a UID string unless expanded; with expand=stage it is { id, text }.
+        const stageName = typeof opp.stage === 'object' && opp.stage ? opp.stage.text : undefined
 
-          const status = await upsertCandidate(userId, 'lever', {
-            externalId: opp.id,
-            firstName,
-            lastName,
-            email,
-            phone,
-            linkedIn,
-            cvBuffer: null,
-            vacancyId,
-            atsStatus: opp.stage,
-          })
-
-          if (status === 'imported') result.imported++
-          else if (status === 'updated') result.updated++
-          else result.skipped++
+        // CV: fetch the resume only when one is referenced (avoids an extra call per
+        // resume-less candidate). resumes -> download endpoint -> binary.
+        let cvBuffer: Buffer | null = null
+        let cvFileName: string | undefined
+        if (opp.resume || app?.resume) {
+          const resume = await leverFetchResume(apiKey, opp.id)
+          if (resume?.id) {
+            cvBuffer = await leverDownloadCV(apiKey, opp.id, resume.id)
+            cvFileName = resume.file?.name || (resume.file?.ext ? `cv.${resume.file.ext}` : undefined)
+          }
         }
+
+        const status = await upsertCandidate(userId, 'lever', {
+          externalId: opp.id,
+          firstName,
+          lastName,
+          email,
+          phone,
+          linkedIn,
+          cvBuffer,
+          cvFileName,
+          motivationText: app?.comments,
+          vacancyId,
+          atsStatus: stageName,
+        })
+
+        if (status === 'imported') result.imported++
+        else if (status === 'updated') result.updated++
+        else result.skipped++
       } catch (e: any) {
         result.errors.push(`Opportunity ${opp.id}: ${e.message}`)
       }
