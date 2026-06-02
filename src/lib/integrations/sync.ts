@@ -16,7 +16,9 @@ import {
   smartrecruitersFetchCandidate, smartrecruitersDownloadCV,
 } from './smartrecruiters'
 import {
-  greenhouseFetchJobs, greenhouseFetchCandidates, greenhouseDownloadCV,
+  greenhouseGetToken, greenhouseFetchJobs, greenhouseFetchCandidates,
+  greenhouseFetchApplications, greenhouseFetchResumes, greenhouseDownloadResume,
+  type GHJob, type GHAttachment,
 } from './greenhouse'
 import {
   leverFetchPostings, leverFetchOpportunities, leverFetchResume, leverDownloadCV,
@@ -485,62 +487,72 @@ export async function syncSmartRecruiters(userId: string, apiKey: string, since?
 
 // ── Greenhouse ───────────────────────────────────────────────────────────────
 
-export async function syncGreenhouse(apiKey: string, userId: string, since?: Date): Promise<SyncResult> {
+export async function syncGreenhouse(clientId: string, clientSecret: string, userId: string, since?: Date): Promise<SyncResult> {
   const result: SyncResult = { imported: 0, updated: 0, skipped: 0, errors: [], duplicatesDetected: 0 }
   try {
-    const [jobs, candidates] = await Promise.all([
-      greenhouseFetchJobs(apiKey),
-      greenhouseFetchCandidates(apiKey, since),
+    const token = await greenhouseGetToken(clientId, clientSecret)
+
+    // v3: candidate, job and application are separate resources. The application
+    // is the candidate<->job bridge (and carries the status), so it drives the loop.
+    const [jobs, candidates, applications] = await Promise.all([
+      greenhouseFetchJobs(token).catch(() => [] as GHJob[]),
+      greenhouseFetchCandidates(token, since),
+      greenhouseFetchApplications(token, since),
     ])
 
     const jobMap = new Map(jobs.map(j => [j.id, j]))
+    const candidateMap = new Map(candidates.map(c => [c.id, c]))
 
-    for (const candidate of candidates) {
+    // Real (non-prospect) applications attached to a job + a known candidate.
+    const relevant = applications.filter(a => !a.prospect && a.job_id && candidateMap.has(a.candidate_id))
+
+    // Résumés for just those candidates, batched (candidate_ids caps at 50).
+    const resumeMap = new Map<number, GHAttachment>()
+    const candidateIds = [...new Set(relevant.map(a => a.candidate_id))]
+    for (let i = 0; i < candidateIds.length; i += 50) {
+      const atts = await greenhouseFetchResumes(token, candidateIds.slice(i, i + 50)).catch(() => [] as GHAttachment[])
+      for (const a of atts) {
+        if (a.candidate_id && !resumeMap.has(a.candidate_id)) resumeMap.set(a.candidate_id, a)
+      }
+    }
+
+    for (const app of relevant) {
       try {
-        const applications = candidate.applications || []
-        if (applications.length === 0) continue
+        const candidate = candidateMap.get(app.candidate_id)!
+        const job = jobMap.get(app.job_id!)
+        const title = job?.name || 'Position'
 
-        for (const app of applications) {
-          const jobId = app.job?.id
-          if (!jobId) continue
+        const vacancyResult = await upsertVacancy(userId, `${app.job_id}`, 'greenhouse', {
+          title,
+          description: job?.notes || title,
+          requirements: '',
+          company: 'Greenhouse',
+        })
+        const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
 
-          const job = jobMap.get(jobId)
-          if (!job) continue
+        const cv = await greenhouseDownloadResume(resumeMap.get(app.candidate_id))
+        const linkedIn = candidate.social_media_addresses?.map(s => s.value).find(v => /linkedin\.com/i.test(v))
+        // Terminal states come from `status`; in-process ones from the stage name.
+        const atsStatus = (app.status === 'rejected' || app.status === 'hired') ? app.status : (app.stage_name || app.status)
 
-          const vacancyResult = await upsertVacancy(userId, `${job.id}`, 'greenhouse', {
-            title: job.name,
-            description: job.notes || job.name,
-            requirements: '',
-            company: 'Greenhouse',
-            location: job.offices?.[0]?.location || job.offices?.[0]?.name,
-          })
-          const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
+        const status = await upsertCandidate(userId, 'greenhouse', {
+          externalId: `${app.id}`,
+          firstName: candidate.first_name || 'Unknown',
+          lastName: candidate.last_name || 'Candidate',
+          email: candidate.email_addresses?.[0]?.value,
+          phone: candidate.phone_numbers?.[0]?.value,
+          linkedIn,
+          cvBuffer: cv?.buffer || null,
+          cvFileName: cv?.filename,
+          vacancyId,
+          atsStatus,
+        })
 
-          const cv = await greenhouseDownloadCV(apiKey, candidate.id)
-
-          const email = candidate.emails?.[0]?.value
-          const phone = candidate.phone_numbers?.[0]?.value
-          const linkedIn = candidate.social_media_addresses?.[0]?.value
-
-          const status = await upsertCandidate(userId, 'greenhouse', {
-            externalId: `${app.id}`,
-            firstName: candidate.first_name || 'Unknown',
-            lastName: candidate.last_name || 'Candidate',
-            email,
-            phone,
-            linkedIn,
-            cvBuffer: cv?.buffer || null,
-            cvFileName: cv?.filename || (cv ? 'cv.pdf' : undefined),
-            vacancyId,
-            atsStatus: app.current_stage?.name || app.status,
-          })
-
-          if (status === 'imported') result.imported++
-          else if (status === 'updated') result.updated++
-          else result.skipped++
-        }
+        if (status === 'imported') result.imported++
+        else if (status === 'updated') result.updated++
+        else result.skipped++
       } catch (e: any) {
-        result.errors.push(`Candidate ${candidate.id}: ${e.message}`)
+        result.errors.push(`Application ${app.id}: ${e.message}`)
       }
     }
   } catch (e: any) {

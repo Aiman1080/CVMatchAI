@@ -224,6 +224,13 @@ LinkedIn / cover letter / summary come from `GET /candidates/:id` (the list
 omits them, and its `profile_url` is an internal Workable link, NOT LinkedIn);
 and candidates are listed via `GET /candidates?shortcode=` (the `/jobs/:shortcode/
 candidates` path is the POST *create* endpoint), paginating on `paging.next`.
+**Greenhouse is on Harvest v3** (v1/v2 die 2026-08-31): auth is OAuth2
+client-credentials — the connect form's two fields are the **Client ID** (`apiKey`)
+and **Client Secret** (`companySlug`); `greenhouseGetToken` exchanges them at
+`auth.greenhouse.io/token` for a JWT, then `harvest.greenhouse.io/v3/...` uses
+`Bearer`. v3 paginates by cursor (the `Link` response header), and the candidate
+no longer inlines applications/attachments — `/v3/applications` is the
+candidate↔job+status bridge and `/v3/attachments?type=resume` is the CV.
 
 ---
 

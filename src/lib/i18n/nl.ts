@@ -391,9 +391,11 @@ export const nl = {
         },
         greenhouse: {
           tagline: 'Toonaangevend ATS voor groeiende bedrijven wereldwijd',
-          apiKeyLabel: 'Greenhouse API-sleutel (Harvest)',
-          howToGet: ['Log in op Greenhouse', 'Ga naar Settings → Dev Center → API Credentials', 'Klik op "Create New API Key" en selecteer Harvest', 'Kopieer de API-sleutel en plak hem hier'],
-          whatItDoes: 'Importeert uw kandidaten, vacatures en cv\'s van Greenhouse via de Harvest API. Elk cv wordt automatisch door AI geanalyseerd.',
+          apiKeyLabel: 'Greenhouse Client ID',
+          slugLabel: 'Greenhouse Client Secret',
+          slugTooltip: 'Harvest v3 gebruikt OAuth2 (client credentials). Maak ze aan in Greenhouse: Configure → Dev Center → API Credentials (Harvest, OAuth2 / client credentials) — u krijgt een Client ID en een Client Secret.',
+          howToGet: ['Log in op Greenhouse', 'Ga naar Configure → Dev Center → API Credentials', 'Maak een Harvest v3-credential (OAuth2 client credentials)', 'Kopieer de Client ID en Client Secret naar de twee velden'],
+          whatItDoes: 'Importeert uw kandidaten, vacatures en cv\'s van Greenhouse via de Harvest v3 API. Elk cv wordt automatisch door AI geanalyseerd.',
         },
         lever: {
           tagline: 'Modern ATS voor snelgroeiende teams',

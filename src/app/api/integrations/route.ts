@@ -58,6 +58,9 @@ export async function POST(req: Request) {
   if (platform === 'recruitee' && !companySlug) {
     return NextResponse.json({ error: 'Company slug required for Recruitee' }, { status: 400 })
   }
+  if (platform === 'greenhouse' && !companySlug) {
+    return NextResponse.json({ error: 'Client Secret required for Greenhouse' }, { status: 400 })
+  }
   if (platform === 'bullhorn' && !companySlug) {
     return NextResponse.json({ error: 'REST URL required for Bullhorn' }, { status: 400 })
   }
@@ -76,7 +79,7 @@ export async function POST(req: Request) {
   if (platform === 'teamtailor') testResult = await teamtailorTestConnection(apiKey)
   else if (platform === 'recruitee') testResult = await recruiteeTestConnection(apiKey, companySlug)
   else if (platform === 'smartrecruiters') testResult = await smartrecruitersTestConnection(apiKey)
-  else if (platform === 'greenhouse') testResult = await greenhouseTestConnection(apiKey)
+  else if (platform === 'greenhouse') testResult = await greenhouseTestConnection(apiKey, companySlug)
   else if (platform === 'lever') testResult = await leverTestConnection(apiKey)
   else if (platform === 'bullhorn') testResult = await bullhornTestConnection(apiKey, companySlug)
   else if (platform === 'workable') testResult = await workableTestConnection(apiKey, companySlug)

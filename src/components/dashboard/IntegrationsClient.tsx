@@ -68,9 +68,9 @@ const PLATFORM_STATIC = [
     textColor: 'text-green-600 dark:text-green-400',
     bgColor: 'bg-green-50 dark:bg-green-950/30',
     borderColor: 'border-green-200 dark:border-green-800',
-    docsUrl: 'https://developers.greenhouse.io/harvest.html',
-    apiKeyPlaceholder: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-    needsSlug: false,
+    docsUrl: 'https://developers.greenhouse.io',
+    apiKeyPlaceholder: 'Client ID',
+    needsSlug: true,
   },
   {
     id: 'lever' as const,
