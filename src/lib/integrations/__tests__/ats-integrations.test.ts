@@ -549,12 +549,13 @@ describe('Ashby integration', () => {
     expect(call[0]).toContain('api.ashbyhq.com/jobPosting.list')
   })
 
-  it('ashbyFetchJobs: sends isLive in body', async () => {
+  it('ashbyFetchJobs: does not send the (invalid) isLive param', async () => {
     const { ashbyFetchJobs } = await import('../ashby')
     vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ results: [], moreDataAvailable: false }))
     await ashbyFetchJobs('k')
     const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as any).body)
-    expect(body.isLive).toBe(true)
+    expect(body.isLive).toBeUndefined()
+    expect(body.limit).toBe(100)
   })
 
   it('ashbyFetchJobs: paginates via cursor', async () => {
@@ -568,22 +569,44 @@ describe('Ashby integration', () => {
     expect(body2.cursor).toBe('CUR')
   })
 
-  it('ashbyFetchCandidates: passes createdAfter when since given', async () => {
+  it('ashbyFetchCandidates: posts to candidate.list and paginates', async () => {
     const { ashbyFetchCandidates } = await import('../ashby')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ results: [], moreDataAvailable: false }))
-    await ashbyFetchCandidates('k', new Date('2024-02-02'))
-    const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as any).body)
-    expect(body.createdAfter).toBeTruthy()
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(jsonResponse({ results: [{ id: 'c1' }], moreDataAvailable: true, nextCursor: 'CUR' }))
+      .mockResolvedValueOnce(jsonResponse({ results: [{ id: 'c2' }], moreDataAvailable: false }))
+    const r = await ashbyFetchCandidates('k')
+    expect(vi.mocked(fetch).mock.calls[0][0]).toContain('api.ashbyhq.com/candidate.list')
+    expect(r).toHaveLength(2)
+    expect(JSON.parse((vi.mocked(fetch).mock.calls[1][1] as any).body).cursor).toBe('CUR')
   })
 
-  it('ashbyFetchApplications: parses applications array', async () => {
+  it('ashbyFetchApplications: flattens the nested candidate + job', async () => {
     const { ashbyFetchApplications } = await import('../ashby')
     vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({
-      results: [{ id: 'a1', candidateId: 'c1', jobId: 'j1', status: 'Active' }],
+      results: [{
+        id: 'a1',
+        candidate: { id: 'c1', name: 'Jane Doe', primaryEmailAddress: { value: 'jane@x.com' } },
+        job: { id: 'j1', title: 'Engineer' },
+        status: 'Active',
+        currentInterviewStage: { title: 'Phone Screen' },
+      }],
       moreDataAvailable: false,
     }))
     const r = await ashbyFetchApplications('k')
     expect(r[0].candidateId).toBe('c1')
+    expect(r[0].jobId).toBe('j1')
+    expect(r[0].jobTitle).toBe('Engineer')
+    expect(r[0].email).toBe('jane@x.com')
+    expect(r[0].stageName).toBe('Phone Screen')
+  })
+
+  it('ashbyFileUrl: posts the fileHandle to file.info and returns the url', async () => {
+    const { ashbyFileUrl } = await import('../ashby')
+    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ results: { url: 'https://s3/cv.pdf' } }))
+    const url = await ashbyFileUrl('k', 'HANDLE123')
+    expect(vi.mocked(fetch).mock.calls[0][0]).toContain('api.ashbyhq.com/file.info')
+    expect(JSON.parse((vi.mocked(fetch).mock.calls[0][1] as any).body).fileHandle).toBe('HANDLE123')
+    expect(url).toBe('https://s3/cv.pdf')
   })
 
   it('ashbyFetchJobs: throws on 401', async () => {
@@ -1114,37 +1137,34 @@ describe('Sync orchestration (sync.ts)', () => {
 
   // ── Ashby sync ────────────────────────────────────────────────────────────
   describe('syncAshby', () => {
-    it('links candidates to jobs via applications', async () => {
+    // syncAshby fetches in this order: candidate.list, application.list, jobPosting.list
+    it('links candidates to jobs via the nested application payload', async () => {
       const { syncAshby } = await import('../sync')
       vi.mocked(fetch)
-        .mockResolvedValueOnce(jsonResponse({ // jobs
-          results: [{ id: 'j1', title: 'Eng' }],
-          moreDataAvailable: false,
-        }))
-        .mockResolvedValueOnce(jsonResponse({ // candidates
+        .mockResolvedValueOnce(jsonResponse({ // candidates (candidate.list)
           results: [{ id: 'c1', name: 'A B', primaryEmailAddress: { value: 'a@b.com' } }],
           moreDataAvailable: false,
         }))
-        .mockResolvedValueOnce(jsonResponse({ // applications
-          results: [{ id: 'a1', candidateId: 'c1', jobId: 'j1', status: 'Active', createdAt: '2024' }],
+        .mockResolvedValueOnce(jsonResponse({ // applications (application.list) - candidate + job inline
+          results: [{ id: 'a1', candidate: { id: 'c1' }, job: { id: 'j1', title: 'Eng' }, status: 'Active', createdAt: '2024' }],
+          moreDataAvailable: false,
+        }))
+        .mockResolvedValueOnce(jsonResponse({ // jobs (jobPosting.list) - location enrichment
+          results: [{ id: 'jp1', jobId: 'j1', title: 'Eng', locationName: 'NYC' }],
           moreDataAvailable: false,
         }))
       const r = await syncAshby('k', 'u')
       expect(r.imported).toBe(1)
     })
 
-    it('skips candidates with no application link', async () => {
+    it('imports nothing when there are no applications', async () => {
       const { syncAshby } = await import('../sync')
       vi.mocked(fetch)
-        .mockResolvedValueOnce(jsonResponse({ results: [], moreDataAvailable: false }))
-        .mockResolvedValueOnce(jsonResponse({
-          results: [{ id: 'c1', name: 'A B' }],
-          moreDataAvailable: false,
-        }))
-        .mockResolvedValueOnce(jsonResponse({ results: [], moreDataAvailable: false }))
+        .mockResolvedValueOnce(jsonResponse({ results: [{ id: 'c1', name: 'A B' }], moreDataAvailable: false })) // candidates
+        .mockResolvedValueOnce(jsonResponse({ results: [], moreDataAvailable: false })) // applications (none)
+        .mockResolvedValueOnce(jsonResponse({ results: [], moreDataAvailable: false })) // jobs
       const r = await syncAshby('k', 'u')
       expect(r.imported).toBe(0)
-      expect(r.skipped).toBe(1)
     })
   })
 
