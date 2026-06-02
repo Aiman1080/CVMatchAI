@@ -645,7 +645,7 @@ describe('Homerun integration', () => {
     vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ data: [] }))
     await homerunFetchJobs('tk')
     const call = vi.mocked(fetch).mock.calls[0]
-    expect(call[0]).toContain('api.homerun.co/v2/jobs')
+    expect(call[0]).toContain('api.homerun.co/v2/vacancies')
     expect((call[1] as any).headers.Authorization).toBe('Bearer tk')
   })
 
@@ -671,7 +671,9 @@ describe('Homerun integration', () => {
     const { homerunFetchApplications } = await import('../homerun')
     vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ data: [] }))
     await homerunFetchApplications('k', 'JOB1')
-    expect(vi.mocked(fetch).mock.calls[0][0]).toContain('/jobs/JOB1/applications')
+    const appUrl = vi.mocked(fetch).mock.calls[0][0] as string
+    expect(appUrl).toContain('/job-applications')
+    expect(appUrl).toContain('JOB1')
   })
 
   it('homerunFetchJobs: throws on 429', async () => {
