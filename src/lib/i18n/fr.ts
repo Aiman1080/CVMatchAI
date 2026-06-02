@@ -457,12 +457,6 @@ export const fr = {
           howToGet: ['Connectez-vous à iCIMS', 'Allez dans Admin → Platform → API → Create Integration', 'Copiez les identifiants API', "Votre Customer ID est votre ID dans l'URL iCIMS"],
           whatItDoes: "Importe vos candidats, postes et CVs depuis iCIMS Talent Cloud. Chaque CV est téléchargé et analysé par l'IA automatiquement.",
         },
-        softgarden: {
-          tagline: 'ATS leader dans la region DACH',
-          apiKeyLabel: 'Clé API Softgarden',
-          howToGet: ['Connectez-vous à Softgarden', 'Allez dans Einstellungen → API', 'Cliquez "API-Schlüssel generieren"', 'Copiez la clé API et collez-la ici'],
-          whatItDoes: "Importe vos postes et candidatures depuis Softgarden. Les CVs sont téléchargés et analysés par l'IA automatiquement.",
-        },
       },
     },
     settings: {

@@ -8,7 +8,7 @@ import {
   teamtailorDownloadCV, teamtailorFetchCompanyName,
 } from './teamtailor'
 import {
-  recruiteeFetchOffers, recruiteeFetchCandidates,
+  recruiteeFetchOffers, recruiteeFetchCandidates, recruiteeFetchCandidate, recruiteeDownloadCV,
   type RCOffer, type RCReference,
 } from './recruitee'
 import {
@@ -26,7 +26,7 @@ import {
   bullhornFetchJobs, bullhornFetchCandidates, bullhornFetchJobSubmissions,
 } from './bullhorn'
 import {
-  workableFetchJobs, workableFetchCandidates,
+  workableFetchJobs, workableFetchJob, workableFetchCandidates, workableFetchCandidate, workableDownloadCV,
 } from './workable'
 import {
   flatchrFetchJobs, flatchrFetchCandidates, flatchrDownloadCV,
@@ -47,9 +47,6 @@ import {
 import {
   icimsFetchJobs, icimsFetchCandidates, icimsDownloadCV,
 } from './icims'
-import {
-  softgardenFetchJobs, softgardenFetchApplications, softgardenDownloadCV,
-} from './softgarden'
 
 export interface SyncResult {
   imported: number
@@ -363,6 +360,14 @@ export async function syncRecruitee(userId: string, apiKey: string, companySlug:
         const placements = candidate.placements || []
         if (placements.length === 0) { result.skipped++; continue }
 
+        // CV / cover letter / LinkedIn live only on the single-candidate endpoint.
+        // Fetch once per candidate and reuse across all their placements.
+        const detail = await recruiteeFetchCandidate(apiKey, companySlug, candidate.id)
+        const cvUrl = detail?.cv_original_url || detail?.cv_url || undefined
+        const cv = cvUrl ? await recruiteeDownloadCV(cvUrl, apiKey) : null
+        const coverLetter = detail?.cover_letter || undefined
+        const linkedIn = detail?.social_links?.find(l => /linkedin\.com/i.test(l)) || undefined
+
         for (const placement of placements) {
           const offer = offerMap.get(placement.offer_id)
           const ref = offerRefMap.get(placement.offer_id)
@@ -378,8 +383,8 @@ export async function syncRecruitee(userId: string, apiKey: string, companySlug:
           })
           const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
 
-          // emails/phones are arrays of strings. The CV / linkedIn / cover letter
-          // are NOT in the list response (they live on GET /candidates/:id).
+          // emails/phones are arrays of strings (from the list); the CV / cover
+          // letter / LinkedIn were resolved from the detail fetch above.
           const email = candidate.emails?.[0]
           const phone = candidate.phones?.[0]
           const nameParts = candidate.name?.split(' ') || []
@@ -393,7 +398,10 @@ export async function syncRecruitee(userId: string, apiKey: string, companySlug:
             lastName,
             email,
             phone,
-            cvBuffer: null,
+            linkedIn,
+            cvBuffer: cv?.buffer || null,
+            cvFileName: cv?.filename,
+            motivationText: coverLetter,
             vacancyId,
             atsStatus: stageName,
           })
@@ -716,12 +724,14 @@ export async function syncWorkable(apiKey: string, subdomain: string, userId: st
 
     for (const job of jobs) {
       try {
+        // The /jobs list omits description/requirements - read the full record.
+        const detail = await workableFetchJob(apiKey, subdomain, job.shortcode)
         const vacancyResult = await upsertVacancy(userId, job.id, 'workable', {
-          title: job.title,
-          description: job.description || job.title,
-          requirements: job.requirements || '',
+          title: detail?.title || job.title,
+          description: detail?.description || job.title,
+          requirements: detail?.requirements || '',
           company: subdomain,
-          location: job.location?.city,
+          location: detail?.location?.city || job.location?.city,
         })
         const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
 
@@ -735,15 +745,29 @@ export async function syncWorkable(apiKey: string, subdomain: string, userId: st
             const firstName = candidate.firstname || nameParts[0] || 'Unknown'
             const lastName = candidate.lastname || nameParts.slice(1).join(' ') || 'Candidate'
 
+            // LinkedIn / cover letter / summary are only on the single-candidate
+            // record (the list's profile_url is an internal Workable link, not
+            // LinkedIn). Best-effort enrichment - null on failure.
+            const detail = await workableFetchCandidate(apiKey, subdomain, candidate.id)
+            const linkedIn = detail?.social_profiles?.find(p => p.type === 'linkedin')?.url || undefined
+            const motivationText = detail?.cover_letter || detail?.summary || undefined
+
+            // CV is not inline; pull it from the candidate's files (only when the
+            // candidate actually has a résumé, to avoid a wasted request).
+            const cv = candidate.resume_metadata?.filename
+              ? await workableDownloadCV(apiKey, subdomain, candidate.id, candidate.resume_metadata.filename)
+              : null
+
             const status = await upsertCandidate(userId, 'workable', {
               externalId: candidate.id,
               firstName,
               lastName,
-              email: candidate.email,
-              phone: candidate.phone,
-              linkedIn: candidate.profile_url,
-              cvBuffer: null,
-              motivationText: candidate.summary,
+              email: candidate.email || detail?.email,
+              phone: candidate.phone || detail?.phone,
+              linkedIn,
+              cvBuffer: cv?.buffer || null,
+              cvFileName: cv?.filename,
+              motivationText,
               vacancyId,
               atsStatus: candidate.disqualified ? 'disqualified' : candidate.stage,
             })
@@ -1137,61 +1161,6 @@ export async function syncIcims(apiKey: string, customerId: string, userId: stri
             else result.skipped++
           } catch (e: any) {
             result.errors.push(`Workflow ${wf.id}: ${e.message}`)
-          }
-        }
-      } catch (e: any) {
-        result.errors.push(`Job ${job.id}: ${e.message}`)
-      }
-    }
-  } catch (e: any) {
-    result.errors.push(e.message)
-  }
-  return result
-}
-
-// ── Softgarden ────────────────────────────────────────────────────────────
-
-export async function syncSoftgarden(apiKey: string, userId: string, since?: Date): Promise<SyncResult> {
-  const result: SyncResult = { imported: 0, updated: 0, skipped: 0, errors: [], duplicatesDetected: 0 }
-  try {
-    const jobs = await softgardenFetchJobs(apiKey)
-
-    for (const job of jobs) {
-      try {
-        const vacancyResult = await upsertVacancy(userId, `${job.id}`, 'softgarden', {
-          title: job.jobName,
-          description: job.jobDescription || job.jobName,
-          requirements: '',
-          company: 'Softgarden',
-          location: job.jobLocation,
-        })
-        const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
-
-        const applications = await softgardenFetchApplications(apiKey, job.id)
-
-        for (const app of applications) {
-          try {
-            if (since && new Date(app.createdOn) < since) continue
-
-            const cv = await softgardenDownloadCV(apiKey, app.id)
-
-            const status = await upsertCandidate(userId, 'softgarden', {
-              externalId: `${app.id}`,
-              firstName: app.firstname || 'Unknown',
-              lastName: app.lastname || 'Candidate',
-              email: app.email,
-              phone: app.phone,
-              cvBuffer: cv?.buffer || null,
-              cvFileName: cv?.filename || (cv ? 'cv.pdf' : undefined),
-              vacancyId,
-              atsStatus: app.status,
-            })
-
-            if (status === 'imported') result.imported++
-            else if (status === 'updated') result.updated++
-            else result.skipped++
-          } catch (e: any) {
-            result.errors.push(`Application ${app.id}: ${e.message}`)
           }
         }
       } catch (e: any) {

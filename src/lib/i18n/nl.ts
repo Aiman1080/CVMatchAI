@@ -457,12 +457,6 @@ export const nl = {
           howToGet: ['Log in op iCIMS', 'Ga naar Admin → Platform → API → Create Integration', 'Kopieer de API-credentials', 'Uw Customer ID is uw ID in de iCIMS-URL'],
           whatItDoes: 'Importeert uw kandidaten, vacatures en cv\'s vanuit iCIMS Talent Cloud. Elk cv wordt gedownload en automatisch door AI geanalyseerd.',
         },
-        softgarden: {
-          tagline: 'Toonaangevend ATS in de DACH-regio',
-          apiKeyLabel: 'Softgarden API Key',
-          howToGet: ['Log in op Softgarden', 'Ga naar Einstellungen → API', 'Klik op "API-Schlüssel generieren"', 'Kopieer de API key en plak die hier'],
-          whatItDoes: 'Importeert uw vacatures en sollicitaties vanuit Softgarden. Cv\'s worden gedownload en automatisch door AI geanalyseerd.',
-        },
       },
     },
     settings: {

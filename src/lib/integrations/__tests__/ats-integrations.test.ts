@@ -244,6 +244,46 @@ describe('Recruitee integration', () => {
     const r = await recruiteeTestConnection('k', 'co')
     expect(r.ok).toBe(true)
   })
+
+  it('recruiteeFetchCandidate: GETs /candidates/:id and unwraps the candidate', async () => {
+    const { recruiteeFetchCandidate } = await import('../recruitee')
+    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({
+      candidate: { id: 27746490, name: 'John Smith', cv_original_url: 'https://s3/cv.pdf', cover_letter: 'Hi' },
+      references: [],
+    }))
+    const c = await recruiteeFetchCandidate('k', 'co', 27746490)
+    expect(vi.mocked(fetch).mock.calls[0][0]).toContain('/c/co/candidates/27746490')
+    expect(c?.cv_original_url).toBe('https://s3/cv.pdf')
+  })
+
+  it('recruiteeFetchCandidate: returns null on 404 (no crash)', async () => {
+    const { recruiteeFetchCandidate } = await import('../recruitee')
+    vi.mocked(fetch).mockResolvedValueOnce(errorResponse(404))
+    expect(await recruiteeFetchCandidate('k', 'co', 1)).toBeNull()
+  })
+
+  it('recruiteeDownloadCV: downloads the S3 url WITHOUT the API token and derives the filename', async () => {
+    const { recruiteeDownloadCV } = await import('../recruitee')
+    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse('binary'))
+    const r = await recruiteeDownloadCV('https://recruitee-main.s3.eu-central-1.amazonaws.com/candidates/1/john_cv.pdf', 'tok')
+    expect(r?.filename).toBe('john_cv.pdf')
+    const opts = vi.mocked(fetch).mock.calls[0][1] as any
+    expect(opts?.headers?.Authorization).toBeUndefined()
+  })
+
+  it('recruiteeDownloadCV: sends Bearer auth for api.recruitee.com URLs', async () => {
+    const { recruiteeDownloadCV } = await import('../recruitee')
+    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse('binary'))
+    await recruiteeDownloadCV('https://api.recruitee.com/c/co/candidates/1/cv', 'tok')
+    const opts = vi.mocked(fetch).mock.calls[0][1] as any
+    expect(opts?.headers?.Authorization).toBe('Bearer tok')
+  })
+
+  it('recruiteeDownloadCV: returns null on download failure', async () => {
+    const { recruiteeDownloadCV } = await import('../recruitee')
+    vi.mocked(fetch).mockResolvedValueOnce(errorResponse(403))
+    expect(await recruiteeDownloadCV('https://s3/x.pdf', 'tok')).toBeNull()
+  })
 })
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -494,11 +534,47 @@ describe('Workable integration', () => {
     expect(r[0].shortcode).toBe('sc1')
   })
 
-  it('workableFetchCandidates: uses job shortcode in URL', async () => {
+  it('workableFetchJobs: follows the absolute paging.next URL verbatim', async () => {
+    const { workableFetchJobs } = await import('../workable')
+    const next = 'https://www.workable.com/spi/v3/accounts/acme/jobs?since_id=j1'
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(jsonResponse({
+        jobs: [{ id: 'j1', shortcode: 'sc1', title: 'A', state: 'published', created_at: '2024' }],
+        paging: { next },
+      }))
+      .mockResolvedValueOnce(jsonResponse({
+        jobs: [{ id: 'j2', shortcode: 'sc2', title: 'B', state: 'published', created_at: '2024' }],
+        paging: {},
+      }))
+    const r = await workableFetchJobs('k', 'acme')
+    expect(r.map(j => j.shortcode)).toEqual(['sc1', 'sc2'])
+    expect(vi.mocked(fetch).mock.calls[1][0]).toBe(next)
+  })
+
+  it('workableFetchJob: reads the full record from /jobs/:shortcode', async () => {
+    const { workableFetchJob } = await import('../workable')
+    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({
+      id: 'j1', shortcode: 'sc1', title: 'Dev', state: 'published', created_at: '2024',
+      description: '<p>desc</p>', requirements: '<ul><li>react</li></ul>',
+    }))
+    const r = await workableFetchJob('k', 'acme', 'sc1')
+    expect(vi.mocked(fetch).mock.calls[0][0]).toContain('acme.workable.com/spi/v3/jobs/sc1')
+    expect(r?.requirements).toContain('react')
+  })
+
+  it('workableFetchJob: returns null on failure (one bad job must not abort the sync)', async () => {
+    const { workableFetchJob } = await import('../workable')
+    vi.mocked(fetch).mockResolvedValueOnce(errorResponse(404))
+    expect(await workableFetchJob('k', 's', 'nope')).toBeNull()
+  })
+
+  it('workableFetchCandidates: lists via /candidates?shortcode= (NOT the POST create path)', async () => {
     const { workableFetchCandidates } = await import('../workable')
     vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ candidates: [], paging: {} }))
     await workableFetchCandidates('k', 'acme', 'SHORT1')
-    expect(vi.mocked(fetch).mock.calls[0][0]).toContain('/jobs/SHORT1/candidates')
+    const url = vi.mocked(fetch).mock.calls[0][0] as string
+    expect(url).toContain('/candidates?shortcode=SHORT1')
+    expect(url).not.toContain('/jobs/SHORT1/candidates')
   })
 
   it('workableFetchCandidates: handles special unicode names', async () => {
@@ -509,6 +585,42 @@ describe('Workable integration', () => {
     }))
     const r = await workableFetchCandidates('k', 's', 'SC')
     expect(r[0].name).toBe('Émilie Müller 中')
+  })
+
+  it('workableDownloadCV: picks the résumé file and downloads its pre-signed url', async () => {
+    const { workableDownloadCV } = await import('../workable')
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(jsonResponse({ files: [
+        { name: 'portfolio.png', preview_url: 'https://s3/x.png', source: 'other' },
+        { name: 'jane-cv.pdf', preview_url: 'https://s3/cv.pdf', source: 'resume' },
+      ] }))
+      .mockResolvedValueOnce(jsonResponse('binary'))
+    const r = await workableDownloadCV('k', 'acme', 'c1', 'jane-cv.pdf')
+    expect(r?.filename).toBe('jane-cv.pdf')
+    // The 2nd fetch must hit the pre-signed url directly (no auth-base prefixing).
+    expect(vi.mocked(fetch).mock.calls[1][0]).toBe('https://s3/cv.pdf')
+  })
+
+  it('workableDownloadCV: returns null when the candidate has no files (no crash)', async () => {
+    const { workableDownloadCV } = await import('../workable')
+    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ files: [] }))
+    expect(await workableDownloadCV('k', 's', 'c1')).toBeNull()
+  })
+
+  it('workableFetchCandidate: GETs /candidates/:id and unwraps the candidate', async () => {
+    const { workableFetchCandidate } = await import('../workable')
+    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({
+      candidate: { id: 'c1', cover_letter: 'Hire me', social_profiles: [{ type: 'linkedin', url: 'http://linkedin.com/in/x' }] },
+    }))
+    const c = await workableFetchCandidate('k', 'acme', 'c1')
+    expect(vi.mocked(fetch).mock.calls[0][0]).toContain('acme.workable.com/spi/v3/candidates/c1')
+    expect(c?.social_profiles?.[0].url).toBe('http://linkedin.com/in/x')
+  })
+
+  it('workableFetchCandidate: returns null on failure (enrichment never aborts a sync)', async () => {
+    const { workableFetchCandidate } = await import('../workable')
+    vi.mocked(fetch).mockResolvedValueOnce(errorResponse(404))
+    expect(await workableFetchCandidate('k', 's', 'c1')).toBeNull()
   })
 
   it('workableFetchJobs: throws on 401', async () => {
@@ -829,49 +941,6 @@ describe('iCIMS integration', () => {
 })
 
 // ════════════════════════════════════════════════════════════════════════════
-// 14. SOFTGARDEN
-// ════════════════════════════════════════════════════════════════════════════
-describe('Softgarden integration', () => {
-  it('softgardenFetchJobs: uses Bearer auth', async () => {
-    const { softgardenFetchJobs } = await import('../softgarden')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ data: [] }))
-    await softgardenFetchJobs('tk')
-    const call = vi.mocked(fetch).mock.calls[0]
-    expect(call[0]).toContain('api.softgarden.de/api/rest/2.0/jobs')
-    expect((call[1] as any).headers.Authorization).toBe('Bearer tk')
-  })
-
-  it('softgardenFetchJobs: parses data array', async () => {
-    const { softgardenFetchJobs } = await import('../softgarden')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({
-      data: [{ id: 1, jobName: 'Dev', jobDescription: 'desc', status: 'ACTIVE' }],
-    }))
-    const r = await softgardenFetchJobs('k')
-    expect(r[0].jobName).toBe('Dev')
-  })
-
-  it('softgardenFetchApplications: uses job id in URL', async () => {
-    const { softgardenFetchApplications } = await import('../softgarden')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ data: [] }))
-    await softgardenFetchApplications('k', 77)
-    expect(vi.mocked(fetch).mock.calls[0][0]).toContain('/jobs/77/applications')
-  })
-
-  it('softgardenFetchJobs: throws on 500', async () => {
-    const { softgardenFetchJobs } = await import('../softgarden')
-    vi.mocked(fetch).mockResolvedValueOnce(errorResponse(500))
-    await expect(softgardenFetchJobs('k')).rejects.toThrow(/500/)
-  })
-
-  it('softgardenFetchJobs: handles empty array response', async () => {
-    const { softgardenFetchJobs } = await import('../softgarden')
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse([]))
-    const r = await softgardenFetchJobs('k')
-    expect(r).toEqual([])
-  })
-})
-
-// ════════════════════════════════════════════════════════════════════════════
 // SYNC ORCHESTRATION
 // ════════════════════════════════════════════════════════════════════════════
 describe('Sync orchestration (sync.ts)', () => {
@@ -956,9 +1025,41 @@ describe('Sync orchestration (sync.ts)', () => {
           }],
           references: [{ id: 7, type: 'Stage', name: 'New' }],
         }))
+        .mockResolvedValueOnce(jsonResponse({ // GET /candidates/1 detail (no CV on file)
+          candidate: { id: 1, name: 'Jane Doe', cv_original_url: null, cv_url: null, cover_letter: null, social_links: [] },
+          references: [],
+        }))
       const r = await syncRecruitee('u', 'k', 'co')
       expect(r.imported).toBe(1)
       expect(r.errors).toEqual([])
+    })
+
+    it('downloads the CV + cover letter + LinkedIn from the single-candidate endpoint', async () => {
+      const { syncRecruitee } = await import('../sync')
+      vi.mocked(fetch)
+        .mockResolvedValueOnce(jsonResponse({
+          offers: [{ id: 100, title: 'Dev', description: 'd', requirements: 'r', status: 'published' }],
+        }))
+        .mockResolvedValueOnce(jsonResponse({
+          candidates: [{ id: 1, name: 'Jane Doe', emails: ['j@d.com'], phones: ['+1'], created_at: '2024', placements: [{ id: 50, offer_id: 100, stage_id: 7 }] }],
+          references: [{ id: 7, type: 'Stage', name: 'New' }],
+        }))
+        .mockResolvedValueOnce(jsonResponse({ // GET /candidates/1
+          candidate: {
+            id: 1, name: 'Jane Doe',
+            cv_original_url: 'https://recruitee-main.s3.eu-central-1.amazonaws.com/candidates/1/jane_cv.pdf',
+            cover_letter: 'Motivated!',
+            social_links: ['https://www.facebook.com/jane', 'https://linkedin.com/in/jane'],
+          },
+          references: [],
+        }))
+        .mockResolvedValueOnce(jsonResponse('binary')) // CV download (S3)
+      const r = await syncRecruitee('u', 'k', 'co')
+      expect(r.imported).toBe(1)
+      const data = prismaMock.candidate.create.mock.calls[0][0].data
+      expect(data.cvFileName).toBe('jane_cv.pdf')
+      expect(data.linkedIn).toBe('https://linkedin.com/in/jane')
+      expect(data.motivationText).toBe('Motivated!')
     })
 
     it('skips candidates without placements', async () => {
@@ -1111,20 +1212,72 @@ describe('Sync orchestration (sync.ts)', () => {
 
   // ── Workable sync ─────────────────────────────────────────────────────────
   describe('syncWorkable', () => {
-    it('imports candidates for each job', async () => {
+    it('imports candidates for each job (enriching the vacancy from /jobs/:shortcode)', async () => {
       const { syncWorkable } = await import('../sync')
       vi.mocked(fetch)
-        .mockResolvedValueOnce(jsonResponse({ // jobs
-          jobs: [{ id: 'j1', shortcode: 'SC1', title: 'Eng', description: 'd', state: 'published', created_at: '2024' }],
+        .mockResolvedValueOnce(jsonResponse({ // jobs list (no description)
+          jobs: [{ id: 'j1', shortcode: 'SC1', title: 'Eng', state: 'published', created_at: '2024' }],
           paging: {},
+        }))
+        .mockResolvedValueOnce(jsonResponse({ // /jobs/SC1 detail (carries description/requirements)
+          id: 'j1', shortcode: 'SC1', title: 'Eng', description: 'd', requirements: 'r', state: 'published', created_at: '2024',
         }))
         .mockResolvedValueOnce(jsonResponse({ // candidates for SC1
           candidates: [{ id: 'c1', name: 'A B', email: 'a@b.com', created_at: '2024-01-15' }],
           paging: {},
         }))
+        .mockResolvedValueOnce(jsonResponse({ candidate: { id: 'c1' } })) // /candidates/c1 detail (enrichment)
 
       const r = await syncWorkable('k', 'sub', 'u')
       expect(r.imported).toBe(1)
+      // 2nd call is the per-job detail fetch.
+      expect(vi.mocked(fetch).mock.calls[1][0]).toContain('/jobs/SC1')
+    })
+
+    it('enriches candidates with LinkedIn + cover letter from /candidates/:id', async () => {
+      const { syncWorkable } = await import('../sync')
+      vi.mocked(fetch)
+        .mockResolvedValueOnce(jsonResponse({
+          jobs: [{ id: 'j1', shortcode: 'SC1', title: 'Eng', state: 'published', created_at: '2024' }],
+          paging: {},
+        }))
+        .mockResolvedValueOnce(jsonResponse({ id: 'j1', shortcode: 'SC1', title: 'Eng', state: 'published', created_at: '2024' }))
+        .mockResolvedValueOnce(jsonResponse({
+          candidates: [{ id: 'c1', name: 'A B', email: 'a@b.com', created_at: '2024-01-15' }],
+          paging: {},
+        }))
+        .mockResolvedValueOnce(jsonResponse({ candidate: {
+          id: 'c1',
+          cover_letter: 'I would love this role',
+          social_profiles: [
+            { type: 'twitter', url: 'http://twitter.com/ab' },
+            { type: 'linkedin', url: 'http://www.linkedin.com/in/ab' },
+          ],
+        } }))
+      const r = await syncWorkable('k', 'sub', 'u')
+      expect(r.imported).toBe(1)
+      const data = prismaMock.candidate.create.mock.calls[0][0].data
+      expect(data.linkedIn).toBe('http://www.linkedin.com/in/ab')
+      expect(data.motivationText).toBe('I would love this role')
+    })
+
+    it('fetches the candidate files when a résumé exists', async () => {
+      const { syncWorkable } = await import('../sync')
+      vi.mocked(fetch)
+        .mockResolvedValueOnce(jsonResponse({
+          jobs: [{ id: 'j1', shortcode: 'SC1', title: 'Eng', state: 'published', created_at: '2024' }],
+          paging: {},
+        }))
+        .mockResolvedValueOnce(jsonResponse({ id: 'j1', shortcode: 'SC1', title: 'Eng', state: 'published', created_at: '2024' }))
+        .mockResolvedValueOnce(jsonResponse({
+          candidates: [{ id: 'c1', name: 'A B', email: 'a@b.com', created_at: '2024-01-15', resume_metadata: { filename: 'cv.pdf' } }],
+          paging: {},
+        }))
+        .mockResolvedValueOnce(jsonResponse({ candidate: { id: 'c1' } })) // detail (enrichment)
+        .mockResolvedValueOnce(jsonResponse({ files: [] })) // /candidates/c1/files -> no downloadable file
+      const r = await syncWorkable('k', 'sub', 'u')
+      expect(r.imported).toBe(1)
+      expect(vi.mocked(fetch).mock.calls.some(c => String(c[0]).includes('/candidates/c1/files'))).toBe(true)
     })
 
     it('respects since filter (filters out older candidates)', async () => {
@@ -1134,6 +1287,7 @@ describe('Sync orchestration (sync.ts)', () => {
           jobs: [{ id: 'j1', shortcode: 'SC1', title: 'Eng', state: 'published', created_at: '2024' }],
           paging: {},
         }))
+        .mockResolvedValueOnce(jsonResponse({ id: 'j1', shortcode: 'SC1', title: 'Eng', state: 'published', created_at: '2024' }))
         .mockResolvedValueOnce(jsonResponse({
           candidates: [{ id: 'c1', name: 'A B', email: 'a@b.com', created_at: '2020-01-01' }],
           paging: {},
@@ -1295,31 +1449,6 @@ describe('Sync orchestration (sync.ts)', () => {
       expect(r.errors.length).toBeGreaterThan(0)
     })
   })
-
-  // ── Softgarden sync ──────────────────────────────────────────────────────
-  describe('syncSoftgarden', () => {
-    it('imports applications per job', async () => {
-      const { syncSoftgarden } = await import('../sync')
-      vi.mocked(fetch)
-        .mockResolvedValueOnce(jsonResponse({ // jobs
-          data: [{ id: 1, jobName: 'Eng', jobDescription: 'd', status: 'ACTIVE' }],
-        }))
-        .mockResolvedValueOnce(jsonResponse({ // applications
-          data: [{ id: 100, firstname: 'A', lastname: 'B', email: 'a@b.com', status: 'NEW', createdOn: '2024' }],
-        }))
-        .mockResolvedValueOnce(jsonResponse({ data: [] })) // docs (no CV)
-
-      const r = await syncSoftgarden('k', 'u')
-      expect(r.imported).toBe(1)
-    })
-
-    it('captures error on auth failure', async () => {
-      const { syncSoftgarden } = await import('../sync')
-      vi.mocked(fetch).mockResolvedValue(errorResponse(401))
-      const r = await syncSoftgarden('k', 'u')
-      expect(r.errors.length).toBeGreaterThan(0)
-    })
-  })
 })
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1405,15 +1534,6 @@ describe('Cross-cutting edge cases', () => {
       .mockResolvedValueOnce(jsonResponse('content'))
     const r = await icimsDownloadCV('k', 'c', 1)
     expect(r?.filename).toBe('resume.pdf')
-  })
-
-  it('Softgarden: handles document with .docx extension as fallback CV', async () => {
-    const { softgardenDownloadCV } = await import('../softgarden')
-    vi.mocked(fetch)
-      .mockResolvedValueOnce(jsonResponse({ data: [{ id: 1, filename: 'my-cv.docx', url: 'https://x', type: 'OTHER' }] }))
-      .mockResolvedValueOnce(jsonResponse('content'))
-    const r = await softgardenDownloadCV('k', 1)
-    expect(r?.filename).toBe('my-cv.docx')
   })
 
   it('Breezy: candidate without resume returns null (no crash)', async () => {

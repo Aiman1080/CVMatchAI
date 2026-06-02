@@ -457,12 +457,6 @@ export const en = {
           howToGet: ['Log in to iCIMS', 'Go to Admin → Platform → API → Create Integration', 'Copy the API credentials', 'Your Customer ID is your ID in the iCIMS URL'],
           whatItDoes: 'Imports your candidates, jobs and CVs from iCIMS Talent Cloud. Each CV is downloaded and analyzed by AI automatically.',
         },
-        softgarden: {
-          tagline: 'Leading ATS in DACH region',
-          apiKeyLabel: 'Softgarden API Key',
-          howToGet: ['Log in to Softgarden', 'Go to Einstellungen → API', 'Click "API-Schlüssel generieren"', 'Copy the API key and paste it here'],
-          whatItDoes: 'Imports your jobs and applications from Softgarden. CVs are downloaded and analyzed by AI automatically.',
-        },
       },
     },
     settings: {

@@ -94,7 +94,7 @@ src/components/         layout/, dashboard/, admin/, support/, ui/ (shadcn)
 src/lib/                ai.ts, ai-usage.ts, auth.ts, plans.ts, demo-guard.ts,
                         crypto.ts, logger.ts, email.ts, pdf-parser.ts, prisma.ts,
                         activity.ts, notifications.ts, export.ts, i18n(.ts + /en|nl|fr)
-src/lib/integrations/   sync.ts + 14 ATS adapters
+src/lib/integrations/   sync.ts + 13 ATS adapters
 src/middleware.ts       rate limiting
 prisma/schema.prisma    14 models
 ```
@@ -210,14 +210,20 @@ check **Vercel Runtime Logs** to debug a scan; the final
 
 ## ATS integrations (`src/lib/integrations/`, Pro-only)
 
-`sync.ts` orchestrates **14 adapters**: teamtailor, recruitee, smartrecruiters,
+`sync.ts` orchestrates **13 adapters**: teamtailor, recruitee, smartrecruiters,
 greenhouse, lever, bullhorn, workable, flatchr, ashby, breezyhr, homerun,
-personio, icims, softgarden. Per platform: fetch jobs → candidates → CV binary
+personio, icims. Per platform: fetch jobs → candidates → CV binary
 (MIME sniffed by extension then magic bytes `%PDF` / `504b0304`) → AI analysis →
 upsert. Dedup by `(externalId, externalSource, userId)`; manual-vacancy
 duplicate detection by Jaccard similarity > 0.7 (`upsertVacancy`). Status strings
 mapped (multilingual) → `new|reviewing|shortlisted|rejected|hired`.
-Note: lever/bullhorn/workable/ashby do NOT return CV binaries.
+Note: bullhorn is the only adapter that does NOT download a CV binary (no
+usable resume endpoint); every other adapter fetches the CV. For Workable the
+CV is not inline — it comes from `/candidates/:id/files` (pre-signed URLs);
+LinkedIn / cover letter / summary come from `GET /candidates/:id` (the list
+omits them, and its `profile_url` is an internal Workable link, NOT LinkedIn);
+and candidates are listed via `GET /candidates?shortcode=` (the `/jobs/:shortcode/
+candidates` path is the POST *create* endpoint), paginating on `paging.next`.
 
 ---
 
@@ -287,6 +293,12 @@ and links to its billing page.
   `serverExternalPackages` (left over from the pre-Gemini era; not a dependency).
 - **`/api/admin/cleanup` is NOT admin-only** despite the path (any user can clean
   their own duplicate candidates).
+- **Softgarden was removed** (was the 14th ATS adapter). Its public API
+  (`dev.softgarden.de`) is the *frontend / apply* API: company-side auth only
+  lists jobs + channels, and all application/attachment data requires a
+  **per-applicant User Access Token** — there is **no recruiter endpoint to list
+  a job's candidates**, so it cannot power candidate import. Don't re-add it
+  without a different (recruiter/backend) Softgarden API.
 - `src/test/setup.ts` injects a dummy `NEXTAUTH_SECRET` so tests can import
   crypto/auth.
 - Default locale is **`fr`** (cookie `deltamatch-locale`). Admin/System-tab UI is
