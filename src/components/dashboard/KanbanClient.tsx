@@ -51,6 +51,16 @@ export function KanbanClient({ initialCandidates }: { initialCandidates: any[] }
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2 items-center">
+        {/* Horizontal / vertical layout toggle - kept on the LEFT so it stays
+            visible without horizontal scrolling */}
+        <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 shrink-0 self-start">
+          <button onClick={() => setOrientation('horizontal')} className={toggleBtn(orientation === 'horizontal')} title="Horizontal" aria-label="Horizontal">
+            <Columns size={16} />
+          </button>
+          <button onClick={() => setOrientation('vertical')} className={toggleBtn(orientation === 'vertical')} title="Vertical" aria-label="Vertical">
+            <Rows3 size={16} />
+          </button>
+        </div>
         <div className="relative flex-1 min-w-[180px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input placeholder={tc.search} value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
@@ -73,15 +83,6 @@ export function KanbanClient({ initialCandidates }: { initialCandidates: any[] }
             <SelectItem value="low">{tcp.scoreLow}</SelectItem>
           </SelectContent>
         </Select>
-        {/* Horizontal / vertical layout toggle */}
-        <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 self-start">
-          <button onClick={() => setOrientation('horizontal')} className={toggleBtn(orientation === 'horizontal')} title="Horizontal" aria-label="Horizontal">
-            <Columns size={16} />
-          </button>
-          <button onClick={() => setOrientation('vertical')} className={toggleBtn(orientation === 'vertical')} title="Vertical" aria-label="Vertical">
-            <Rows3 size={16} />
-          </button>
-        </div>
       </div>
 
       <KanbanView candidates={filtered} onCandidatesChange={setCandidates} orientation={orientation} />
