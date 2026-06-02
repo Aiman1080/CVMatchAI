@@ -26,7 +26,7 @@ import {
   bullhornFetchJobs, bullhornFetchCandidates, bullhornFetchJobSubmissions,
 } from './bullhorn'
 import {
-  workableFetchJobs, workableFetchCandidates,
+  workableFetchJobs, workableFetchJob, workableFetchCandidates, workableDownloadCV,
 } from './workable'
 import {
   flatchrFetchJobs, flatchrFetchCandidates, flatchrDownloadCV,
@@ -713,12 +713,14 @@ export async function syncWorkable(apiKey: string, subdomain: string, userId: st
 
     for (const job of jobs) {
       try {
+        // The /jobs list omits description/requirements - read the full record.
+        const detail = await workableFetchJob(apiKey, subdomain, job.shortcode)
         const vacancyResult = await upsertVacancy(userId, job.id, 'workable', {
-          title: job.title,
-          description: job.description || job.title,
-          requirements: job.requirements || '',
+          title: detail?.title || job.title,
+          description: detail?.description || job.title,
+          requirements: detail?.requirements || '',
           company: subdomain,
-          location: job.location?.city,
+          location: detail?.location?.city || job.location?.city,
         })
         const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
 
@@ -732,15 +734,20 @@ export async function syncWorkable(apiKey: string, subdomain: string, userId: st
             const firstName = candidate.firstname || nameParts[0] || 'Unknown'
             const lastName = candidate.lastname || nameParts.slice(1).join(' ') || 'Candidate'
 
+            // CV is not inline; pull it from the candidate's files (only when the
+            // candidate actually has a résumé, to avoid a wasted request).
+            const cv = candidate.resume_metadata?.filename
+              ? await workableDownloadCV(apiKey, subdomain, candidate.id, candidate.resume_metadata.filename)
+              : null
+
             const status = await upsertCandidate(userId, 'workable', {
               externalId: candidate.id,
               firstName,
               lastName,
               email: candidate.email,
               phone: candidate.phone,
-              linkedIn: candidate.profile_url,
-              cvBuffer: null,
-              motivationText: candidate.summary,
+              cvBuffer: cv?.buffer || null,
+              cvFileName: cv?.filename,
               vacancyId,
               atsStatus: candidate.disqualified ? 'disqualified' : candidate.stage,
             })

@@ -217,7 +217,11 @@ personio, icims. Per platform: fetch jobs → candidates → CV binary
 upsert. Dedup by `(externalId, externalSource, userId)`; manual-vacancy
 duplicate detection by Jaccard similarity > 0.7 (`upsertVacancy`). Status strings
 mapped (multilingual) → `new|reviewing|shortlisted|rejected|hired`.
-Note: lever/bullhorn/workable/ashby do NOT return CV binaries.
+Note: bullhorn is the only adapter that does NOT download a CV binary (no
+usable resume endpoint); every other adapter fetches the CV. For Workable the
+CV is not inline — it comes from `/candidates/:id/files` (pre-signed URLs), and
+candidates are listed via `GET /candidates?shortcode=` (the `/jobs/:shortcode/
+candidates` path is the POST *create* endpoint), paginating on `paging.next`.
 
 ---
 

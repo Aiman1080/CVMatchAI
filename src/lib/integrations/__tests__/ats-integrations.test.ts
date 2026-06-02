@@ -494,11 +494,47 @@ describe('Workable integration', () => {
     expect(r[0].shortcode).toBe('sc1')
   })
 
-  it('workableFetchCandidates: uses job shortcode in URL', async () => {
+  it('workableFetchJobs: follows the absolute paging.next URL verbatim', async () => {
+    const { workableFetchJobs } = await import('../workable')
+    const next = 'https://www.workable.com/spi/v3/accounts/acme/jobs?since_id=j1'
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(jsonResponse({
+        jobs: [{ id: 'j1', shortcode: 'sc1', title: 'A', state: 'published', created_at: '2024' }],
+        paging: { next },
+      }))
+      .mockResolvedValueOnce(jsonResponse({
+        jobs: [{ id: 'j2', shortcode: 'sc2', title: 'B', state: 'published', created_at: '2024' }],
+        paging: {},
+      }))
+    const r = await workableFetchJobs('k', 'acme')
+    expect(r.map(j => j.shortcode)).toEqual(['sc1', 'sc2'])
+    expect(vi.mocked(fetch).mock.calls[1][0]).toBe(next)
+  })
+
+  it('workableFetchJob: reads the full record from /jobs/:shortcode', async () => {
+    const { workableFetchJob } = await import('../workable')
+    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({
+      id: 'j1', shortcode: 'sc1', title: 'Dev', state: 'published', created_at: '2024',
+      description: '<p>desc</p>', requirements: '<ul><li>react</li></ul>',
+    }))
+    const r = await workableFetchJob('k', 'acme', 'sc1')
+    expect(vi.mocked(fetch).mock.calls[0][0]).toContain('acme.workable.com/spi/v3/jobs/sc1')
+    expect(r?.requirements).toContain('react')
+  })
+
+  it('workableFetchJob: returns null on failure (one bad job must not abort the sync)', async () => {
+    const { workableFetchJob } = await import('../workable')
+    vi.mocked(fetch).mockResolvedValueOnce(errorResponse(404))
+    expect(await workableFetchJob('k', 's', 'nope')).toBeNull()
+  })
+
+  it('workableFetchCandidates: lists via /candidates?shortcode= (NOT the POST create path)', async () => {
     const { workableFetchCandidates } = await import('../workable')
     vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ candidates: [], paging: {} }))
     await workableFetchCandidates('k', 'acme', 'SHORT1')
-    expect(vi.mocked(fetch).mock.calls[0][0]).toContain('/jobs/SHORT1/candidates')
+    const url = vi.mocked(fetch).mock.calls[0][0] as string
+    expect(url).toContain('/candidates?shortcode=SHORT1')
+    expect(url).not.toContain('/jobs/SHORT1/candidates')
   })
 
   it('workableFetchCandidates: handles special unicode names', async () => {
@@ -509,6 +545,26 @@ describe('Workable integration', () => {
     }))
     const r = await workableFetchCandidates('k', 's', 'SC')
     expect(r[0].name).toBe('Émilie Müller 中')
+  })
+
+  it('workableDownloadCV: picks the résumé file and downloads its pre-signed url', async () => {
+    const { workableDownloadCV } = await import('../workable')
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(jsonResponse({ files: [
+        { name: 'portfolio.png', preview_url: 'https://s3/x.png', source: 'other' },
+        { name: 'jane-cv.pdf', preview_url: 'https://s3/cv.pdf', source: 'resume' },
+      ] }))
+      .mockResolvedValueOnce(jsonResponse('binary'))
+    const r = await workableDownloadCV('k', 'acme', 'c1', 'jane-cv.pdf')
+    expect(r?.filename).toBe('jane-cv.pdf')
+    // The 2nd fetch must hit the pre-signed url directly (no auth-base prefixing).
+    expect(vi.mocked(fetch).mock.calls[1][0]).toBe('https://s3/cv.pdf')
+  })
+
+  it('workableDownloadCV: returns null when the candidate has no files (no crash)', async () => {
+    const { workableDownloadCV } = await import('../workable')
+    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ files: [] }))
+    expect(await workableDownloadCV('k', 's', 'c1')).toBeNull()
   })
 
   it('workableFetchJobs: throws on 401', async () => {
@@ -1068,12 +1124,15 @@ describe('Sync orchestration (sync.ts)', () => {
 
   // ── Workable sync ─────────────────────────────────────────────────────────
   describe('syncWorkable', () => {
-    it('imports candidates for each job', async () => {
+    it('imports candidates for each job (enriching the vacancy from /jobs/:shortcode)', async () => {
       const { syncWorkable } = await import('../sync')
       vi.mocked(fetch)
-        .mockResolvedValueOnce(jsonResponse({ // jobs
-          jobs: [{ id: 'j1', shortcode: 'SC1', title: 'Eng', description: 'd', state: 'published', created_at: '2024' }],
+        .mockResolvedValueOnce(jsonResponse({ // jobs list (no description)
+          jobs: [{ id: 'j1', shortcode: 'SC1', title: 'Eng', state: 'published', created_at: '2024' }],
           paging: {},
+        }))
+        .mockResolvedValueOnce(jsonResponse({ // /jobs/SC1 detail (carries description/requirements)
+          id: 'j1', shortcode: 'SC1', title: 'Eng', description: 'd', requirements: 'r', state: 'published', created_at: '2024',
         }))
         .mockResolvedValueOnce(jsonResponse({ // candidates for SC1
           candidates: [{ id: 'c1', name: 'A B', email: 'a@b.com', created_at: '2024-01-15' }],
@@ -1082,6 +1141,26 @@ describe('Sync orchestration (sync.ts)', () => {
 
       const r = await syncWorkable('k', 'sub', 'u')
       expect(r.imported).toBe(1)
+      // 2nd call is the per-job detail fetch.
+      expect(vi.mocked(fetch).mock.calls[1][0]).toContain('/jobs/SC1')
+    })
+
+    it('fetches the candidate files when a résumé exists', async () => {
+      const { syncWorkable } = await import('../sync')
+      vi.mocked(fetch)
+        .mockResolvedValueOnce(jsonResponse({
+          jobs: [{ id: 'j1', shortcode: 'SC1', title: 'Eng', state: 'published', created_at: '2024' }],
+          paging: {},
+        }))
+        .mockResolvedValueOnce(jsonResponse({ id: 'j1', shortcode: 'SC1', title: 'Eng', state: 'published', created_at: '2024' }))
+        .mockResolvedValueOnce(jsonResponse({
+          candidates: [{ id: 'c1', name: 'A B', email: 'a@b.com', created_at: '2024-01-15', resume_metadata: { filename: 'cv.pdf' } }],
+          paging: {},
+        }))
+        .mockResolvedValueOnce(jsonResponse({ files: [] })) // /candidates/c1/files -> no downloadable file
+      const r = await syncWorkable('k', 'sub', 'u')
+      expect(r.imported).toBe(1)
+      expect(vi.mocked(fetch).mock.calls.some(c => String(c[0]).includes('/candidates/c1/files'))).toBe(true)
     })
 
     it('respects since filter (filters out older candidates)', async () => {
@@ -1091,6 +1170,7 @@ describe('Sync orchestration (sync.ts)', () => {
           jobs: [{ id: 'j1', shortcode: 'SC1', title: 'Eng', state: 'published', created_at: '2024' }],
           paging: {},
         }))
+        .mockResolvedValueOnce(jsonResponse({ id: 'j1', shortcode: 'SC1', title: 'Eng', state: 'published', created_at: '2024' }))
         .mockResolvedValueOnce(jsonResponse({
           candidates: [{ id: 'c1', name: 'A B', email: 'a@b.com', created_at: '2020-01-01' }],
           paging: {},
