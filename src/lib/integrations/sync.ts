@@ -8,7 +8,7 @@ import {
   teamtailorDownloadCV, teamtailorFetchCompanyName,
 } from './teamtailor'
 import {
-  recruiteeFetchOffers, recruiteeFetchCandidates,
+  recruiteeFetchOffers, recruiteeFetchCandidates, recruiteeFetchCandidate, recruiteeDownloadCV,
   type RCOffer, type RCReference,
 } from './recruitee'
 import {
@@ -360,6 +360,14 @@ export async function syncRecruitee(userId: string, apiKey: string, companySlug:
         const placements = candidate.placements || []
         if (placements.length === 0) { result.skipped++; continue }
 
+        // CV / cover letter / LinkedIn live only on the single-candidate endpoint.
+        // Fetch once per candidate and reuse across all their placements.
+        const detail = await recruiteeFetchCandidate(apiKey, companySlug, candidate.id)
+        const cvUrl = detail?.cv_original_url || detail?.cv_url || undefined
+        const cv = cvUrl ? await recruiteeDownloadCV(cvUrl, apiKey) : null
+        const coverLetter = detail?.cover_letter || undefined
+        const linkedIn = detail?.social_links?.find(l => /linkedin\.com/i.test(l)) || undefined
+
         for (const placement of placements) {
           const offer = offerMap.get(placement.offer_id)
           const ref = offerRefMap.get(placement.offer_id)
@@ -375,8 +383,8 @@ export async function syncRecruitee(userId: string, apiKey: string, companySlug:
           })
           const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
 
-          // emails/phones are arrays of strings. The CV / linkedIn / cover letter
-          // are NOT in the list response (they live on GET /candidates/:id).
+          // emails/phones are arrays of strings (from the list); the CV / cover
+          // letter / LinkedIn were resolved from the detail fetch above.
           const email = candidate.emails?.[0]
           const phone = candidate.phones?.[0]
           const nameParts = candidate.name?.split(' ') || []
@@ -390,7 +398,10 @@ export async function syncRecruitee(userId: string, apiKey: string, companySlug:
             lastName,
             email,
             phone,
-            cvBuffer: null,
+            linkedIn,
+            cvBuffer: cv?.buffer || null,
+            cvFileName: cv?.filename,
+            motivationText: coverLetter,
             vacancyId,
             atsStatus: stageName,
           })

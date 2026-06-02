@@ -244,6 +244,46 @@ describe('Recruitee integration', () => {
     const r = await recruiteeTestConnection('k', 'co')
     expect(r.ok).toBe(true)
   })
+
+  it('recruiteeFetchCandidate: GETs /candidates/:id and unwraps the candidate', async () => {
+    const { recruiteeFetchCandidate } = await import('../recruitee')
+    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({
+      candidate: { id: 27746490, name: 'John Smith', cv_original_url: 'https://s3/cv.pdf', cover_letter: 'Hi' },
+      references: [],
+    }))
+    const c = await recruiteeFetchCandidate('k', 'co', 27746490)
+    expect(vi.mocked(fetch).mock.calls[0][0]).toContain('/c/co/candidates/27746490')
+    expect(c?.cv_original_url).toBe('https://s3/cv.pdf')
+  })
+
+  it('recruiteeFetchCandidate: returns null on 404 (no crash)', async () => {
+    const { recruiteeFetchCandidate } = await import('../recruitee')
+    vi.mocked(fetch).mockResolvedValueOnce(errorResponse(404))
+    expect(await recruiteeFetchCandidate('k', 'co', 1)).toBeNull()
+  })
+
+  it('recruiteeDownloadCV: downloads the S3 url WITHOUT the API token and derives the filename', async () => {
+    const { recruiteeDownloadCV } = await import('../recruitee')
+    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse('binary'))
+    const r = await recruiteeDownloadCV('https://recruitee-main.s3.eu-central-1.amazonaws.com/candidates/1/john_cv.pdf', 'tok')
+    expect(r?.filename).toBe('john_cv.pdf')
+    const opts = vi.mocked(fetch).mock.calls[0][1] as any
+    expect(opts?.headers?.Authorization).toBeUndefined()
+  })
+
+  it('recruiteeDownloadCV: sends Bearer auth for api.recruitee.com URLs', async () => {
+    const { recruiteeDownloadCV } = await import('../recruitee')
+    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse('binary'))
+    await recruiteeDownloadCV('https://api.recruitee.com/c/co/candidates/1/cv', 'tok')
+    const opts = vi.mocked(fetch).mock.calls[0][1] as any
+    expect(opts?.headers?.Authorization).toBe('Bearer tok')
+  })
+
+  it('recruiteeDownloadCV: returns null on download failure', async () => {
+    const { recruiteeDownloadCV } = await import('../recruitee')
+    vi.mocked(fetch).mockResolvedValueOnce(errorResponse(403))
+    expect(await recruiteeDownloadCV('https://s3/x.pdf', 'tok')).toBeNull()
+  })
 })
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -969,9 +1009,41 @@ describe('Sync orchestration (sync.ts)', () => {
           }],
           references: [{ id: 7, type: 'Stage', name: 'New' }],
         }))
+        .mockResolvedValueOnce(jsonResponse({ // GET /candidates/1 detail (no CV on file)
+          candidate: { id: 1, name: 'Jane Doe', cv_original_url: null, cv_url: null, cover_letter: null, social_links: [] },
+          references: [],
+        }))
       const r = await syncRecruitee('u', 'k', 'co')
       expect(r.imported).toBe(1)
       expect(r.errors).toEqual([])
+    })
+
+    it('downloads the CV + cover letter + LinkedIn from the single-candidate endpoint', async () => {
+      const { syncRecruitee } = await import('../sync')
+      vi.mocked(fetch)
+        .mockResolvedValueOnce(jsonResponse({
+          offers: [{ id: 100, title: 'Dev', description: 'd', requirements: 'r', status: 'published' }],
+        }))
+        .mockResolvedValueOnce(jsonResponse({
+          candidates: [{ id: 1, name: 'Jane Doe', emails: ['j@d.com'], phones: ['+1'], created_at: '2024', placements: [{ id: 50, offer_id: 100, stage_id: 7 }] }],
+          references: [{ id: 7, type: 'Stage', name: 'New' }],
+        }))
+        .mockResolvedValueOnce(jsonResponse({ // GET /candidates/1
+          candidate: {
+            id: 1, name: 'Jane Doe',
+            cv_original_url: 'https://recruitee-main.s3.eu-central-1.amazonaws.com/candidates/1/jane_cv.pdf',
+            cover_letter: 'Motivated!',
+            social_links: ['https://www.facebook.com/jane', 'https://linkedin.com/in/jane'],
+          },
+          references: [],
+        }))
+        .mockResolvedValueOnce(jsonResponse('binary')) // CV download (S3)
+      const r = await syncRecruitee('u', 'k', 'co')
+      expect(r.imported).toBe(1)
+      const data = prismaMock.candidate.create.mock.calls[0][0].data
+      expect(data.cvFileName).toBe('jane_cv.pdf')
+      expect(data.linkedIn).toBe('https://linkedin.com/in/jane')
+      expect(data.motivationText).toBe('Motivated!')
     })
 
     it('skips candidates without placements', async () => {

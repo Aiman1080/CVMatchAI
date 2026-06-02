@@ -28,6 +28,16 @@ export interface RCCandidate {
   placements?: RCPlacement[]
 }
 
+// The single-candidate endpoint (GET /candidates/:id) returns far more than the
+// list - including the CV URLs, cover letter and social links. `cv_original_url`
+// is the file the candidate uploaded; `cv_url` is a parsed/normalised version.
+export interface RCCandidateDetail extends RCCandidate {
+  cv_original_url?: string | null
+  cv_url?: string | null
+  cover_letter?: string | null
+  social_links?: string[]
+}
+
 // Top-level `references` entries - offers (type "Offer") and stages (type "Stage").
 export interface RCReference {
   id: number
@@ -104,13 +114,37 @@ export async function recruiteeFetchCandidates(
   return { candidates, references }
 }
 
-// Download a CV from its (token-authenticated) URL. The CV URL comes from the
-// single-candidate endpoint, not the list.
-export async function recruiteeDownloadCV(cvUrl: string, apiKey: string): Promise<Buffer | null> {
+// Single candidate (GET /candidates/:id) - the only place the CV / cover letter /
+// social links are exposed. Returns null on failure so one bad record never
+// aborts the whole sync.
+export async function recruiteeFetchCandidate(
+  apiKey: string,
+  companySlug: string,
+  id: number,
+): Promise<RCCandidateDetail | null> {
   try {
-    const res = await fetch(cvUrl, { headers: { Authorization: `Bearer ${apiKey}` } })
+    const data = await rcFetch(`/candidates/${id}`, apiKey, companySlug)
+    return data.candidate || null
+  } catch {
+    return null
+  }
+}
+
+// Download a CV from the URL exposed on the single-candidate endpoint
+// (cv_original_url / cv_url). These point at Recruitee's S3 bucket and must be
+// fetched WITHOUT the API token; only api.recruitee.com URLs take the Bearer
+// header. Returns null on any failure so a missing CV never aborts a sync.
+export async function recruiteeDownloadCV(cvUrl: string, apiKey: string): Promise<{ buffer: Buffer; filename: string } | null> {
+  try {
+    const onApi = /\/\/api\.recruitee\.com/i.test(cvUrl)
+    const res = await fetch(cvUrl, onApi ? { headers: { Authorization: `Bearer ${apiKey}` } } : {})
     if (!res.ok) return null
-    return Buffer.from(await res.arrayBuffer())
+    let filename = 'cv.pdf'
+    try {
+      const base = new URL(cvUrl).pathname.split('/').pop()
+      if (base) filename = decodeURIComponent(base)
+    } catch { /* keep default filename */ }
+    return { buffer: Buffer.from(await res.arrayBuffer()), filename }
   } catch {
     return null
   }
