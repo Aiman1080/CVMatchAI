@@ -30,7 +30,8 @@ import {
   flatchrFetchJobs, flatchrFetchCandidates, flatchrDownloadCV,
 } from './flatchr'
 import {
-  ashbyFetchJobs, ashbyFetchCandidates, ashbyFetchApplications,
+  ashbyFetchJobs, ashbyFetchCandidates, ashbyFetchApplications, ashbyFileUrl, ashbyDownloadCV,
+  type AshbyJobPosting, type AshbyApplication,
 } from './ashby'
 import {
   breezyFetchPositions, breezyFetchCandidates, breezyDownloadCV,
@@ -808,87 +809,90 @@ export async function syncFlatchr(apiKey: string, userId: string, since?: Date):
 export async function syncAshby(apiKey: string, userId: string, since?: Date): Promise<SyncResult> {
   const result: SyncResult = { imported: 0, updated: 0, skipped: 0, errors: [], duplicatesDetected: 0 }
   try {
-    const [jobs, candidates, applications] = await Promise.all([
-      ashbyFetchJobs(apiKey),
-      ashbyFetchCandidates(apiKey, since),
+    // Applications carry the candidate + job inline; candidates carry the resume
+    // file handle; postings are only used to enrich the vacancy location.
+    const [candidates, applications, postings] = await Promise.all([
+      ashbyFetchCandidates(apiKey),
       ashbyFetchApplications(apiKey, since),
+      ashbyFetchJobs(apiKey).catch(() => [] as AshbyJobPosting[]),
     ])
 
-    const jobMap = new Map(jobs.map(j => [j.jobId || j.id, j]))
-
-    // Build candidateId -> most recent application mapping
-    const candidateAppMap = new Map<string, { jobId: string; createdAt: number; status: string; stageName?: string }>()
-    for (const app of applications) {
-      if (!app.candidateId || !app.jobId) continue
-      const createdTs = app.createdAt ? new Date(app.createdAt).getTime() : 0
-      const existing = candidateAppMap.get(app.candidateId)
-      if (!existing || createdTs > existing.createdAt) {
-        candidateAppMap.set(app.candidateId, {
-          jobId: app.jobId,
-          createdAt: createdTs,
-          status: app.status,
-          stageName: app.currentInterviewStage?.name,
-        })
-      }
+    const candById = new Map(candidates.map(c => [c.id, c]))
+    const postingByJobId = new Map<string, AshbyJobPosting>()
+    for (const p of postings) {
+      const key = p.jobId || p.id
+      if (key && !postingByJobId.has(key)) postingByJobId.set(key, p)
     }
 
-    // Pre-create vacancies for all referenced jobs to avoid duplicate work
+    // Keep only the most recent application per candidate (a candidate may apply
+    // to several jobs). Applications without a candidate+job are unusable.
+    const bestApp = new Map<string, AshbyApplication>()
+    for (const a of applications) {
+      if (!a.candidateId || !a.jobId) continue
+      const prev = bestApp.get(a.candidateId)
+      const ts = a.createdAt ? new Date(a.createdAt).getTime() : 0
+      const prevTs = prev?.createdAt ? new Date(prev.createdAt).getTime() : 0
+      if (!prev || ts >= prevTs) bestApp.set(a.candidateId, a)
+    }
+
     const jobVacancyMap = new Map<string, string>()
-
-    for (const candidate of candidates) {
+    for (const [candidateId, app] of bestApp) {
       try {
-        const link = candidateAppMap.get(candidate.id)
-        if (!link) {
-          // No application linking this candidate to a job - skip rather than guessing
-          result.skipped++
-          continue
-        }
-
-        const job = jobMap.get(link.jobId)
-        if (!job) {
-          // The job for this candidate isn't in our synced list - skip
-          result.skipped++
-          continue
-        }
-
-        let vacancyId = jobVacancyMap.get(job.id)
+        const jobId = app.jobId as string
+        let vacancyId = jobVacancyMap.get(jobId)
         if (!vacancyId) {
-          const vacancyResult = await upsertVacancy(userId, job.id, 'ashby', {
-            title: job.title,
-            description: job.content || job.title,
+          const posting = postingByJobId.get(jobId)
+          const vacancyResult = await upsertVacancy(userId, jobId, 'ashby', {
+            title: app.jobTitle || posting?.title || 'Untitled role',
+            description: app.jobTitle || posting?.title || 'Imported from Ashby',
             requirements: '',
             company: 'Ashby',
-            location: job.locationName,
+            location: posting?.locationName,
           })
           vacancyId = vacancyResult.id
           if (vacancyResult.similarMatch) result.duplicatesDetected++
-          jobVacancyMap.set(job.id, vacancyId)
+          jobVacancyMap.set(jobId, vacancyId)
         }
 
-        const nameParts = candidate.name?.split(' ') || []
+        const cand = candById.get(candidateId)
+        const fullName = (app.candidateName || cand?.name || '').trim()
+        const nameParts = fullName ? fullName.split(/\s+/) : []
         const firstName = nameParts[0] || 'Unknown'
         const lastName = nameParts.slice(1).join(' ') || 'Candidate'
-        const email = candidate.primaryEmailAddress?.value
-        const phone = candidate.primaryPhoneNumber?.value
-        const linkedIn = candidate.socialLinks?.find(l => l.type === 'LinkedIn')?.url
+        const email = app.email || cand?.primaryEmailAddress?.value
+        const phone = app.phone || cand?.primaryPhoneNumber?.value
+        const linkedIn = cand?.socialLinks?.find(l => /linkedin/i.test(l.type || '') || /linkedin/i.test(l.url || ''))?.url
+
+        // Resume: resumeFileHandle.handle -> file.info -> pre-signed URL -> download.
+        let cvBuffer: Buffer | null = null
+        let cvFileName: string | undefined
+        const handle = cand?.resumeFileHandle?.handle
+        if (handle) {
+          const url = await ashbyFileUrl(apiKey, handle)
+          if (url) {
+            cvBuffer = await ashbyDownloadCV(url)
+            cvFileName = cand?.resumeFileHandle?.name
+          }
+        }
 
         const status = await upsertCandidate(userId, 'ashby', {
-          externalId: candidate.id,
+          externalId: candidateId,
           firstName,
           lastName,
           email,
           phone,
           linkedIn,
-          cvBuffer: null,
+          cvBuffer,
+          cvFileName,
           vacancyId,
-          atsStatus: link.stageName || link.status,
+          atsStatus: app.stageName || app.status,
         })
 
         if (status === 'imported') result.imported++
         else if (status === 'updated') result.updated++
         else result.skipped++
       } catch (e: any) {
-        result.errors.push(`Candidate ${candidate.id}: ${e.message}`)
+        result.errors.push(`Candidate ${candidateId}: ${e.message}`)
       }
     }
   } catch (e: any) {
