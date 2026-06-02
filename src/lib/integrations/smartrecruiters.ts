@@ -133,36 +133,32 @@ export async function smartrecruitersFetchCandidate(apiKey: string, candidateId:
   }
 }
 
-// Download the candidate's CV. The detail exposes actions.attachments (a URL to
-// the attachments list); we follow it, pick the résumé and download it via the
-// per-file endpoint.
-// NOTE: the attachments-LIST response shape is not yet verified against the docs
-// (we only have "Get a candidate's attachment" by id), so this parses
-// defensively and returns null on anything unexpected - never aborts a sync.
+// Download the candidate's CV. The candidate detail exposes actions.attachments
+// (a URL to GET /candidates/:id/attachments), which returns
+// { content: [{ id, name, type, contentType, actions: { download: { url } } }] }.
+// We pick the résumé (type "RESUME", else a PDF/Word file, else the first) and
+// download it via its actions.download.url. Returns null on anything unexpected
+// so a missing CV never aborts a sync.
 export async function smartrecruitersDownloadCV(apiKey: string, attachmentsUrl?: string): Promise<{ buffer: Buffer; filename: string } | null> {
   if (!attachmentsUrl) return null
   try {
     const data = await srFetch(attachmentsUrl, apiKey)
-    const list: any[] = Array.isArray(data) ? data : (data.content || data.attachments || [])
+    const list: any[] = Array.isArray(data) ? data : (data.content || [])
     if (!list.length) return null
 
     const isDoc = (n?: string) => /\.(pdf|docx?|rtf|odt)$/i.test(n || '')
     const isResumeMime = (m?: string) => /pdf|msword|officedocument|rtf/i.test(m || '')
     const item =
-      list.find(a => /resume|cv|curriculum/i.test(`${a?.category || ''} ${a?.type || ''} ${a?.name || ''}`)) ||
-      list.find(a => isDoc(a?.name) || isResumeMime(a?.mimeType || a?.contentType)) ||
+      list.find(a => /resume|cv|curriculum/i.test(`${a?.type || ''} ${a?.name || ''}`)) ||
+      list.find(a => isDoc(a?.name) || isResumeMime(a?.contentType)) ||
       list[0]
-    if (!item) return null
 
-    const base = attachmentsUrl.split('?')[0].replace(/\/$/, '')
-    const downloadUrl: string | undefined =
-      item.actions?.download?.url || item.actions?.original?.url || item.url ||
-      (item.id ? `${base}/${item.id}` : undefined)
+    const downloadUrl: string | undefined = item?.actions?.download?.url
     if (!downloadUrl) return null
 
     const res = await fetch(downloadUrl, { headers: { 'X-SmartToken': apiKey } })
     if (!res.ok) return null
-    return { buffer: Buffer.from(await res.arrayBuffer()), filename: item.name || item.fileName || 'cv.pdf' }
+    return { buffer: Buffer.from(await res.arrayBuffer()), filename: item.name || 'cv.pdf' }
   } catch {
     return null
   }

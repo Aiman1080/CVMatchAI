@@ -356,17 +356,17 @@ describe('SmartRecruiters integration', () => {
     expect(d?.web?.linkedin).toBe('http://lnkd.in/x')
   })
 
-  it('smartrecruitersDownloadCV: follows the attachments url, picks the résumé, downloads it', async () => {
+  it('smartrecruitersDownloadCV: picks the résumé and downloads via actions.download.url', async () => {
     const { smartrecruitersDownloadCV } = await import('../smartrecruiters')
     vi.mocked(fetch)
       .mockResolvedValueOnce(jsonResponse({ content: [
-        { id: 'a1', name: 'photo.png', mimeType: 'image/png' },
-        { id: 'a2', name: 'jane_cv.pdf', mimeType: 'application/pdf' },
+        { id: 'a1', name: 'photo.png', type: 'OTHER', contentType: 'image/png', actions: { download: { url: 'https://files/x.png', method: 'GET' } } },
+        { id: 'a2', name: 'jane_cv.pdf', type: 'RESUME', contentType: 'application/pdf', actions: { download: { url: 'https://files/cv.pdf', method: 'GET' } } },
       ] }))
       .mockResolvedValueOnce(jsonResponse('binary'))
     const r = await smartrecruitersDownloadCV('k', 'https://api.smartrecruiters.com/candidates/c1/attachments')
     expect(r?.filename).toBe('jane_cv.pdf')
-    expect(vi.mocked(fetch).mock.calls[1][0]).toContain('/candidates/c1/attachments/a2')
+    expect(vi.mocked(fetch).mock.calls[1][0]).toBe('https://files/cv.pdf')
   })
 
   it('smartrecruitersDownloadCV: returns null when there is no attachments url', async () => {
@@ -1155,7 +1155,7 @@ describe('Sync orchestration (sync.ts)', () => {
           id: 'c1', phoneNumber: '+33', web: { linkedin: 'http://lnkd/jane' },
           actions: { attachments: { url: 'https://api.smartrecruiters.com/candidates/c1/attachments', method: 'GET' } },
         }))
-        .mockResolvedValueOnce(jsonResponse({ content: [{ id: 'a2', name: 'jane_cv.pdf', mimeType: 'application/pdf' }] })) // attachments list
+        .mockResolvedValueOnce(jsonResponse({ content: [{ id: 'a2', name: 'jane_cv.pdf', type: 'RESUME', contentType: 'application/pdf', actions: { download: { url: 'https://files/cv.pdf', method: 'GET' } } }] })) // attachments list
         .mockResolvedValueOnce(jsonResponse('binary')) // download
       const r = await syncSmartRecruiters('u', 'k')
       expect(r.imported).toBe(1)
