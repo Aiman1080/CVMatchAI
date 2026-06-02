@@ -420,10 +420,13 @@ export default function LandingPage() {
               <div className="flex flex-wrap gap-2">
                 {[
                   { name: 'Teamtailor', dot: 'bg-green-400' },
+                  { name: 'Recruitee', dot: 'bg-pink-400' },
+                  { name: 'SmartRecruiters', dot: 'bg-cyan-400' },
                   { name: 'Greenhouse', dot: 'bg-emerald-400' },
                   { name: 'Lever', dot: 'bg-blue-400' },
+                  { name: 'Homerun', dot: 'bg-orange-400' },
                   { name: 'Workable', dot: 'bg-purple-400' },
-                  { name: '+4 more', dot: 'bg-gray-400' },
+                  { name: 'Ashby', dot: 'bg-amber-400' },
                 ].map(ats => (
                   <div key={ats.name} className="flex items-center gap-1.5 bg-blue-100 dark:bg-white/10 rounded-full px-3 py-1">
                     <div className={`w-1.5 h-1.5 rounded-full ${ats.dot}`} />
