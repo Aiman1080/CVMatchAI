@@ -408,7 +408,7 @@ export const en = {
           apiKeyLabel: 'Workable Access Token',
           slugLabel: 'Subdomain',
           slugTooltip: 'Your subdomain is the first part of your Workable URL. Example: if your URL is acme.workable.com, the subdomain is "acme".',
-          howToGet: ['Log in to Workable', 'Go to Settings → Integrations → Access Token', 'Generate an access token', 'Copy the token and enter your subdomain (your-company in your-company.workable.com)'],
+          howToGet: ['Log in to Workable', 'Go to Settings → Integrations → Access Token', 'Generate a token — select the read scopes "r_jobs" and "r_candidates" (or all read scopes)', 'Copy the token and enter your subdomain (your-company in your-company.workable.com)'],
           whatItDoes: 'Imports your published jobs and their candidates from Workable. Enter your company subdomain to connect.',
         },
         ashby: {
