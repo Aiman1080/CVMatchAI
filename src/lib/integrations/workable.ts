@@ -90,7 +90,9 @@ export async function workableTestConnection(apiKey: string, subdomain: string):
 
 export async function workableFetchJobs(apiKey: string, subdomain: string): Promise<WKJob[]> {
   const jobs: WKJob[] = []
-  let url: string | undefined = '/jobs?state=published&limit=100'
+  // No state filter: fetch jobs in ALL states (draft/published/closed/archived)
+  // so we also import candidates from non-published jobs (e.g. drafts, closed reqs).
+  let url: string | undefined = '/jobs?limit=100'
   while (url) {
     const data = await wkFetch(url, apiKey, subdomain)
     jobs.push(...(data.jobs || []))

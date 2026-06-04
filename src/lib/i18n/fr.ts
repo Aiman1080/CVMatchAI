@@ -411,7 +411,7 @@ export const fr = {
           slugLabel: 'Sous-domaine',
           slugTooltip: "Votre sous-domaine est la première partie de votre URL Workable. Exemple : si votre URL est acme.workable.com, le sous-domaine est 'acme'.",
           howToGet: ['Connectez-vous à Workable', 'Allez dans Settings → Integrations → Access Token', 'Générez un token — cochez les scopes en lecture "r_jobs" et "r_candidates" (ou tous les scopes en lecture)', 'Copiez le token et entrez votre sous-domaine (votre-entreprise dans votre-entreprise.workable.com)'],
-          whatItDoes: 'Importe vos postes publiés et leurs candidats depuis Workable. Entrez votre sous-domaine pour vous connecter.',
+          whatItDoes: 'Importe vos postes et leurs candidats depuis Workable. Entrez votre sous-domaine pour vous connecter.',
         },
         ashby: {
           tagline: 'ATS moderne pour entreprises en forte croissance',
