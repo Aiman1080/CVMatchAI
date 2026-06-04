@@ -12,6 +12,10 @@
 //  - CVs are not inline: /candidates/:id/files returns the documents with
 //    temporary pre-signed (S3) download URLs.
 
+import { createLogger } from '@/lib/logger'
+
+const log = createLogger('workable')
+
 export interface WKJob {
   id: string
   shortcode: string
@@ -135,20 +139,41 @@ export async function workableFetchCandidate(apiKey: string, subdomain: string, 
   }
 }
 
-// CVs are not inline in the candidate payload. /candidates/:id/files lists the
-// candidate's documents; each carries a temporary pre-signed download URL. We
-// prefer the file matching the candidate's resume_metadata filename, then fall
-// back to anything that looks like a résumé / a document. Returns null (never
-// throws) so a missing CV never aborts a sync.
+// Download a Workable file URL. Pre-signed S3 links need no auth; workable.com
+// URLs need the Bearer token - so try plain first, then with auth.
+async function wkDownload(url: string, apiKey: string): Promise<Buffer | null> {
+  for (const opts of [undefined, { headers: { Authorization: `Bearer ${apiKey}` } }]) {
+    try {
+      const res = await fetch(url, opts as any)
+      if (res.ok) return Buffer.from(await res.arrayBuffer())
+    } catch { /* try next */ }
+  }
+  return null
+}
+
+// Download a candidate's CV. Prefer the candidate detail's `resume_url` (the
+// canonical résumé link); fall back to scanning /candidates/:id/files for a
+// résumé. Returns null (never throws) so a missing CV never aborts a sync.
 export async function workableDownloadCV(
   apiKey: string,
   subdomain: string,
   candidateId: string,
   resumeFilename?: string,
+  resumeUrl?: string,
 ): Promise<{ buffer: Buffer; filename: string } | null> {
+  // 1) Direct resume_url from the candidate detail.
+  if (resumeUrl) {
+    const buf = await wkDownload(resumeUrl, apiKey)
+    if (buf) {
+      log.info('cv via resume_url', { candidateId })
+      return { buffer: buf, filename: resumeFilename || 'cv.pdf' }
+    }
+  }
+  // 2) Fall back to the candidate's files list.
   try {
     const data = await wkFetch(`/candidates/${candidateId}/files`, apiKey, subdomain)
-    const files: WKFile[] = data.files || []
+    const files: WKFile[] = data.files || (Array.isArray(data) ? data : [])
+    log.info('cv files lookup', { candidateId, fileCount: files.length, names: files.map(f => f.name) })
     if (!files.length) return null
 
     const isDoc = (n?: string) => /\.(pdf|docx?|rtf|odt)$/i.test(n || '')
@@ -156,14 +181,15 @@ export async function workableDownloadCV(
       (resumeFilename ? files.find(f => f.name === resumeFilename) : undefined) ||
       files.find(f => /resume|cv|curriculum/i.test(`${f.source || ''} ${f.kind || ''}`)) ||
       files.find(f => isDoc(f.name)) ||
-      null
-    if (!file?.preview_url) return null
+      files[0]
+    const url = file?.preview_url || (file as any)?.url
+    if (!url) { log.warn('cv file has no url', { candidateId, file }); return null }
 
-    // preview_url is a pre-signed S3 link - fetch it plain, without the API auth header.
-    const res = await fetch(file.preview_url)
-    if (!res.ok) return null
-    return { buffer: Buffer.from(await res.arrayBuffer()), filename: file.name || resumeFilename || 'cv.pdf' }
-  } catch {
+    const buf = await wkDownload(url, apiKey)
+    if (!buf) { log.warn('cv download failed', { candidateId, url: url.split('?')[0] }); return null }
+    return { buffer: buf, filename: file.name || resumeFilename || 'cv.pdf' }
+  } catch (e: any) {
+    log.warn('cv files error', { candidateId, error: e.message })
     return null
   }
 }
