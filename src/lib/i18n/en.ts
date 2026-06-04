@@ -336,7 +336,7 @@ export const en = {
       errorStatus: 'Error',
       errorTooltip: 'The last sync failed. Check your API key or reconnect.',
       slugLabel: 'Company Slug',
-      slugTooltip: 'The "company slug" is the subdomain of your Recruitee careers site: if your site is my-company.recruitee.com, the slug is "my-company". Since the Tellent migration it no longer appears in the app URL — just paste your careers-site URL (or subdomain) and DeltaMatch extracts the slug.',
+      slugTooltip: 'On the Recruitee API keys page, the "Current company details" box (right above the key) shows your Subdomain (e.g. mydelta.recruitee.com → "mydelta") and your ID — copy the Subdomain here. You can also paste the full URL or the numeric ID; DeltaMatch handles it.',
       securityNote: 'Your API key is encrypted and stored securely. DeltaMatch only reads candidates - no changes will be made in your ATS.',
       footerNote: 'No ATS? Use the Email tab to scan applications received by email, or upload CVs directly from the Candidates page.',
       syncError: 'Sync error',
@@ -384,8 +384,8 @@ export const en = {
         recruitee: {
           tagline: 'Popular in Belgium and the Netherlands',
           apiKeyLabel: 'Recruitee API Token',
-          howToGet: ['Log in to Recruitee (app.tellent.com)', 'Settings → Apps and plugins → API keys', 'Click "New token", name it (e.g. DeltaMatch) and copy it', 'Company slug = the subdomain of your careers site (my-company.recruitee.com). You can also just paste the careers-site URL and we extract the slug.'],
-          whatItDoes: 'Syncs all your Recruitee candidates with their CV and job. The "company slug" is the subdomain of your careers site (my-company.recruitee.com), not the Tellent app URL.',
+          howToGet: ['Log in to Recruitee (app.tellent.com)', 'Settings → Apps and plugins → API keys', 'Click "New token", name it (e.g. DeltaMatch) and copy it', 'On the same page, the "Current company details" box shows your Subdomain (e.g. mydelta in mydelta.recruitee.com) — copy it into "Company slug" (the numeric ID works too)'],
+          whatItDoes: 'Syncs all your Recruitee candidates with their CV and job. The "company slug" is your Recruitee Subdomain (e.g. mydelta), shown in the "Current company details" box on the API keys page — not the ts_org_guid in the Tellent URL.',
         },
         smartrecruiters: {
           tagline: 'Enterprise ATS for mid-size and large companies',
