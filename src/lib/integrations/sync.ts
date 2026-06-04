@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma'
 import { parseDocument } from '@/lib/pdf-parser'
 import { persistDocument } from '@/lib/storage'
 import { analyzeCVAgainstVacancy } from '@/lib/ai'
+import { createLogger } from '@/lib/logger'
 import {
   teamtailorFetchJobs, teamtailorFetchApplications, teamtailorFetchCandidate,
   teamtailorDownloadCV, teamtailorFetchCompanyName,
@@ -34,6 +35,8 @@ import {
 import {
   homerunFetchJobs, homerunFetchApplications, homerunDownloadCV,
 } from './homerun'
+
+const log = createLogger('ats-sync')
 
 export interface SyncResult {
   imported: number
@@ -639,6 +642,7 @@ export async function syncWorkable(apiKey: string, subdomain: string, userId: st
   const result: SyncResult = { imported: 0, updated: 0, skipped: 0, errors: [], duplicatesDetected: 0 }
   try {
     const jobs = await workableFetchJobs(apiKey, subdomain)
+    log.info('workable: jobs fetched (state=published)', { subdomain, count: jobs.length })
 
     for (const job of jobs) {
       try {
@@ -654,6 +658,7 @@ export async function syncWorkable(apiKey: string, subdomain: string, userId: st
         const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
 
         const candidates = await workableFetchCandidates(apiKey, subdomain, job.shortcode)
+        log.info('workable: candidates for job', { shortcode: job.shortcode, count: candidates.length })
 
         for (const candidate of candidates) {
           try {
