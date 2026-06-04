@@ -346,6 +346,8 @@ export const fr = {
       errorsCount: 'erreur(s)',
       jobsFound: 'offre(s) trouvée(s)',
       candidatesFound: 'candidat(s) trouvé(s)',
+      analysisLang: 'Analyser les CV en',
+      analysisLangTooltip: "Langue dans laquelle l'IA rédige l'analyse de chaque candidat",
       connectedCount: '{count} connecté(s)',
       disconnectBtn: 'Déconnecter {name}',
       autoSyncTooltip: 'Dernière synchronisation. Cliquez "Synchroniser" pour récupérer manuellement les nouveaux candidats.',

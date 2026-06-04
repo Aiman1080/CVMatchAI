@@ -43,7 +43,10 @@ const log = createLogger('ats-sync')
 // out of non-request contexts (tests); falls back to undefined (English) if unset.
 async function analysisLocale(): Promise<string | undefined> {
   try {
-    const { cookies } = await import('next/headers')
+    const { headers, cookies } = await import('next/headers')
+    // Explicit choice from the sync UI's language picker wins over the site locale.
+    const chosen = (await headers()).get('x-analysis-locale')
+    if (chosen) return chosen
     return (await cookies()).get('deltamatch-locale')?.value
   } catch {
     return undefined

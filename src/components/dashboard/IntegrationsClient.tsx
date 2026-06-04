@@ -202,8 +202,9 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
     setAtsTipDismissed(true)
   }
 
-  const { t } = useLanguage()
+  const { t, locale } = useLanguage()
   const ti = t.dashboard.integrations
+  const [analysisLang, setAnalysisLang] = useState<string>(locale)
 
   const getIntegration = (platform: string) => integrations.find(i => i.platform === platform)
   const connectedCount = integrations.length
@@ -260,7 +261,7 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
   const handleSync = async (integrationId: string, platformId: string) => {
     setSyncing(integrationId)
     try {
-      const res = await fetch(`/api/integrations/${integrationId}/sync`, { method: 'POST' })
+      const res = await fetch(`/api/integrations/${integrationId}/sync`, { method: 'POST', headers: { 'x-analysis-locale': analysisLang } })
       const data = await res.json()
       if (res.ok) {
         setIntegrations(prev => prev.map(i => i.id === integrationId
@@ -340,7 +341,7 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
     let totalDuplicates = 0
     for (const integration of integrations) {
       try {
-        const res = await fetch(`/api/integrations/${integration.id}/sync`, { method: 'POST' })
+        const res = await fetch(`/api/integrations/${integration.id}/sync`, { method: 'POST', headers: { 'x-analysis-locale': analysisLang } })
         const data = await res.json()
         if (res.ok) {
           totalImported += data.imported || 0
@@ -465,6 +466,21 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
             <p className="text-sm text-indigo-600 dark:text-indigo-400 break-words">
               {ti.atsConnectedLabel.replace('{count}', String(connectedCount))}
             </p>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="text-xs text-indigo-700 dark:text-indigo-300 whitespace-nowrap">{(ti as any).analysisLang || 'Analyze CVs in'}</span>
+            <select
+              value={analysisLang}
+              onChange={e => setAnalysisLang(e.target.value)}
+              disabled={syncAll || !!syncing}
+              className="text-xs rounded-md border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-2 py-1.5"
+              title={(ti as any).analysisLangTooltip || 'Language the AI uses to write the analysis'}
+            >
+              <option value="fr">Français</option>
+              <option value="nl">Nederlands</option>
+              <option value="en">English</option>
+              <option value="de">Deutsch</option>
+            </select>
           </div>
           <Button
             onClick={handleSyncAll}
