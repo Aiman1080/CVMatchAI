@@ -22,6 +22,12 @@ export default async function CandidateDetailPage({ params }: { params: Promise<
 
   if (!raw) notFound()
 
+  // Mark as viewed so the "unread" blue dot in the candidate list clears for
+  // good (the list only updated it optimistically). Best-effort, owner only.
+  if (!raw.viewedAt && raw.userId === userId) {
+    prisma.candidate.update({ where: { id: raw.id }, data: { viewedAt: new Date() } }).catch(() => {})
+  }
+
   // The raw binary fields (cvFile, motivationFile) would otherwise get
   // base64-serialized into the SSR HTML - bloating the page by 100s of KB.
   // Strip them out and pass booleans the client uses to render the PDF
