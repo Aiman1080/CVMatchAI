@@ -411,9 +411,9 @@ export const fr = {
           tagline: "Plateforme de recrutement tout-en-un",
           apiKeyLabel: 'Access Token Workable',
           slugLabel: 'Sous-domaine',
-          slugTooltip: "Votre sous-domaine est la première partie de votre URL Workable. Exemple : si votre URL est acme.workable.com, le sous-domaine est 'acme'.",
-          howToGet: ['Connectez-vous à Workable', 'Allez dans Settings → Integrations → Access Token', 'Générez un token — cochez les scopes en lecture "r_jobs" et "r_candidates" (ou tous les scopes en lecture)', 'Copiez le token et entrez votre sous-domaine (votre-entreprise dans votre-entreprise.workable.com)'],
-          whatItDoes: 'Importe vos postes et leurs candidats depuis Workable. Entrez votre sous-domaine pour vous connecter.',
+          slugTooltip: "Le sous-domaine est la première partie de votre URL Workable : si votre URL est acme.workable.com, le sous-domaine est « acme ». Vous pouvez aussi coller l'URL complète, DeltaMatch en extrait le sous-domaine.",
+          howToGet: ['Connectez-vous à Workable (compte admin)', 'Paramètres → Intégrations → Access token, puis « Générer un nouveau token »', 'Cochez les DEUX scopes en lecture : « r_jobs » (offres) ET « r_candidates » (candidats + CV) — les deux sont obligatoires : sans r_jobs la connexion échoue, sans r_candidates aucun candidat n\'est importé', 'Copiez le token et entrez votre sous-domaine (acme dans acme.workable.com)'],
+          whatItDoes: 'Importe vos postes et leurs candidats depuis Workable, avec leur CV. Cochez bien « r_jobs » + « r_candidates » pour que tout fonctionne.',
         },
         ashby: {
           tagline: 'ATS moderne pour entreprises en forte croissance',

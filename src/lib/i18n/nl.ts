@@ -411,9 +411,9 @@ export const nl = {
           tagline: 'Alles-in-één wervingsplatform',
           apiKeyLabel: 'Workable Access Token',
           slugLabel: 'Subdomein',
-          slugTooltip: 'Uw subdomein is het eerste deel van uw Workable-URL. Voorbeeld: als uw URL acme.workable.com is, is het subdomein "acme".',
-          howToGet: ['Log in op Workable', 'Ga naar Settings → Integrations → Access Token', 'Genereer een token — selecteer de leesscopes "r_jobs" en "r_candidates" (of alle leesscopes)', 'Kopieer het token en voer uw subdomein in (uw-bedrijf in uw-bedrijf.workable.com)'],
-          whatItDoes: 'Importeert uw vacatures en hun kandidaten van Workable. Voer uw bedrijfssubdomein in om verbinding te maken.',
+          slugTooltip: 'Uw subdomein is het eerste deel van uw Workable-URL: als uw URL acme.workable.com is, is het subdomein "acme". U kunt ook de volledige URL plakken, DeltaMatch haalt het subdomein eruit.',
+          howToGet: ['Log in op Workable (adminaccount)', 'Instellingen → Integraties → Access token, klik op "Nieuw token genereren"', 'Vink BEIDE leesscopes aan: "r_jobs" (vacatures) ÉN "r_candidates" (kandidaten + cv) — beide zijn verplicht: zonder r_jobs mislukt de verbinding, zonder r_candidates worden er geen kandidaten geïmporteerd', 'Kopieer het token en voer uw subdomein in (acme in acme.workable.com)'],
+          whatItDoes: 'Importeert uw vacatures en hun kandidaten van Workable, met hun cv. Vink "r_jobs" + "r_candidates" aan zodat alles werkt.',
         },
         ashby: {
           tagline: 'Modern ATS voor snelgroeiende bedrijven',

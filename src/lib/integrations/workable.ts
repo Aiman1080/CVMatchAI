@@ -61,6 +61,19 @@ export interface WKFile {
   source?: string
 }
 
+// Like Recruitee's slug, users frequently paste the whole Workable URL instead of
+// the bare subdomain. Reduce acme.workable.com / https://acme.workable.com/... to
+// "acme". A value that isn't a workable.com host is left as-is (minus any path) so
+// the connection test fails loudly rather than storing a silently-wrong value.
+export function normalizeWorkableSubdomain(raw: string): string {
+  let s = (raw || '').trim()
+  if (!s) return s
+  s = s.replace(/^https?:\/\//i, '') // drop scheme so host/path parsing is predictable
+  const m = s.match(/^([a-z0-9-]+)\.workable\.com/i)
+  if (m) return m[1]
+  return s.split(/[/?#]/)[0] // bare subdomain: drop any trailing path/query/hash
+}
+
 function wkBase(subdomain: string) {
   return `https://${subdomain}.workable.com/spi/v3`
 }

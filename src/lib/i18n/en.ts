@@ -411,9 +411,9 @@ export const en = {
           tagline: 'All-in-one hiring platform',
           apiKeyLabel: 'Workable Access Token',
           slugLabel: 'Subdomain',
-          slugTooltip: 'Your subdomain is the first part of your Workable URL. Example: if your URL is acme.workable.com, the subdomain is "acme".',
-          howToGet: ['Log in to Workable', 'Go to Settings → Integrations → Access Token', 'Generate a token — select the read scopes "r_jobs" and "r_candidates" (or all read scopes)', 'Copy the token and enter your subdomain (your-company in your-company.workable.com)'],
-          whatItDoes: 'Imports your jobs and their candidates from Workable. Enter your company subdomain to connect.',
+          slugTooltip: 'Your subdomain is the first part of your Workable URL: if your URL is acme.workable.com, the subdomain is "acme". You can also paste the full URL and DeltaMatch extracts the subdomain.',
+          howToGet: ['Log in to Workable (admin account)', 'Settings → Integrations → Access token, then "Generate new token"', 'Tick BOTH read scopes: "r_jobs" (jobs) AND "r_candidates" (candidates + CV) — both are required: without r_jobs the connection fails, without r_candidates no candidates are imported', 'Copy the token and enter your subdomain (acme in acme.workable.com)'],
+          whatItDoes: 'Imports your jobs and their candidates from Workable, with their CV. Be sure to tick "r_jobs" + "r_candidates" so everything works.',
         },
         ashby: {
           tagline: 'Modern ATS for high-growth companies',

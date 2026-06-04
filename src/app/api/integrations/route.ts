@@ -9,7 +9,7 @@ import { recruiteeTestConnection, normalizeRecruiteeCompany } from '@/lib/integr
 import { smartrecruitersTestConnection } from '@/lib/integrations/smartrecruiters'
 import { greenhouseTestConnection } from '@/lib/integrations/greenhouse'
 import { leverTestConnection } from '@/lib/integrations/lever'
-import { workableTestConnection } from '@/lib/integrations/workable'
+import { workableTestConnection, normalizeWorkableSubdomain } from '@/lib/integrations/workable'
 import { ashbyTestConnection } from '@/lib/integrations/ashby'
 import { homerunTestConnection } from '@/lib/integrations/homerun'
 
@@ -65,6 +65,10 @@ export async function POST(req: Request) {
   // form (URL / subdomain / numeric id) and reduce it to the bare {company} token.
   if (platform === 'recruitee' && companySlug) {
     companySlug = normalizeRecruiteeCompany(companySlug)
+  }
+  // Same convenience for Workable: accept the full URL, store the bare subdomain.
+  if (platform === 'workable' && companySlug) {
+    companySlug = normalizeWorkableSubdomain(companySlug)
   }
 
   // Test the connection before saving

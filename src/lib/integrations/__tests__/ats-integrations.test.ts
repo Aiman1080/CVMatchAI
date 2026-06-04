@@ -676,6 +676,16 @@ describe('Workable integration', () => {
     vi.mocked(fetch).mockResolvedValueOnce(errorResponse(401))
     await expect(workableFetchJobs('k', 's')).rejects.toThrow(/401/)
   })
+
+  it('normalizeWorkableSubdomain: reduces a pasted URL to the bare subdomain', async () => {
+    const { normalizeWorkableSubdomain } = await import('../workable')
+    expect(normalizeWorkableSubdomain('acme')).toBe('acme')
+    expect(normalizeWorkableSubdomain('  acme  ')).toBe('acme')
+    expect(normalizeWorkableSubdomain('acme.workable.com')).toBe('acme')
+    expect(normalizeWorkableSubdomain('https://acme.workable.com')).toBe('acme')
+    expect(normalizeWorkableSubdomain('https://acme.workable.com/spi/v3/jobs')).toBe('acme')
+    expect(normalizeWorkableSubdomain('')).toBe('')
+  })
 })
 
 // ════════════════════════════════════════════════════════════════════════════
