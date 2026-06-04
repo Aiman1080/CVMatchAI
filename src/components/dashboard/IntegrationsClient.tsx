@@ -276,6 +276,7 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
             data.updated ? `${data.updated} ${ti.updated}` : null,
             data.skipped ? `${data.skipped} ${ti.skipped}` : null,
             data.errors?.length ? `${data.errors.length} ${ti.errorsCount}` : null,
+            data.errors?.length ? `⚠️ ${String(data.errors[0]).slice(0, 220)}` : null,
           ].filter(Boolean).join(' · ') || ti.noNewCandidates,
         })
         if (data.duplicatesDetected > 0) {
