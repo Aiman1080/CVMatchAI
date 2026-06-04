@@ -231,6 +231,25 @@ and **Client Secret** (`companySlug`); `greenhouseGetToken` exchanges them at
 no longer inlines applications/attachments — `/v3/applications` is the
 candidate↔job+status bridge and `/v3/attachments?type=resume` is the CV.
 
+**Live-validation status (2026-06 doc audit vs current APIs):** Workable + Recruitee
+verified end-to-end against live accounts; Lever / SmartRecruiters / Ashby audited as
+matching current docs (Ashby's `resumeFileHandle`→`file.info` path confirmed).
+- **Teamtailor is region-aware:** a key only works on its own stack, so
+  `teamtailorResolveBase` probes EU→NA→APAC (`api[.na|.au].teamtailor.com`) and threads
+  the host through `syncTeamtailor` (EU default = unchanged for existing users).
+- **Greenhouse v3 `since` filter uses the pipe operator** (`updated_at=gte|<iso>`, NOT
+  the v1/v2 `[gte]=`). The `GET /v3/attachments?type=resume` list endpoint is
+  **unverified** (v3 reference is 403-walled; resumes may be inline on the
+  candidate/application) — `syncGreenhouse` logs a warning if 0 resumes resolve. Needs a
+  live key to confirm before changing the retrieval path.
+- **Homerun API is paid-gated (Plus, ~€249/mo)**; the `filter[vacancy_id]` syntax, the
+  inline-`files[]` CV model, and the `/ping` test endpoint are **unverified** — validate
+  with a live key at first client. `homerunFetch` retries with back-off on 429 (60/min cap).
+- **Recruitee:** prefer the numeric **company ID** in `companySlug` (the careers
+  subdomain can fail on trial accounts with no published careers site);
+  `normalizeRecruiteeCompany` accepts URL/subdomain/ID. Recruitee migrated to **Tellent**
+  (`app.tellent.com`) — the slug/ID is in the "Current company details" panel, NOT the URL.
+
 ---
 
 ## Rate limiting (`src/middleware.ts`)

@@ -190,6 +190,18 @@ describe('Teamtailor integration', () => {
     const r = await teamtailorDownloadCV('https://x/y', 'k')
     expect(r).toBeNull()
   })
+
+  it('teamtailorResolveBase: falls back from the EU host to NA when the EU key check fails', async () => {
+    const { teamtailorResolveBase } = await import('../teamtailor')
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(errorResponse(401)) // EU rejects this key
+      .mockResolvedValueOnce(jsonResponse({ data: { attributes: { name: 'ACME-NA' } } })) // NA works
+    const r = await teamtailorResolveBase('k')
+    expect(r.baseUrl).toContain('api.na.teamtailor.com')
+    expect(r.company).toBe('ACME-NA')
+    expect(vi.mocked(fetch).mock.calls[0][0] as string).toContain('api.teamtailor.com/v1/company') // EU tried first
+    expect(vi.mocked(fetch).mock.calls[1][0] as string).toContain('api.na.teamtailor.com/v1/company')
+  })
 })
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -431,11 +443,11 @@ describe('Greenhouse integration (Harvest v3)', () => {
     expect(vi.mocked(fetch).mock.calls[1][0]).toBe('https://harvest.greenhouse.io/v3/jobs?cursor=C2')
   })
 
-  it('greenhouseFetchCandidates: appends updated_at[gte] for since', async () => {
+  it('greenhouseFetchCandidates: appends the v3 pipe-operator updated_at filter for since', async () => {
     const { greenhouseFetchCandidates } = await import('../greenhouse')
     vi.mocked(fetch).mockResolvedValueOnce(jsonResponse([]))
     await greenhouseFetchCandidates('JWT', new Date('2024-06-01'))
-    expect(vi.mocked(fetch).mock.calls[0][0]).toContain('updated_at[gte]=')
+    expect(vi.mocked(fetch).mock.calls[0][0]).toContain('updated_at=gte|')
   })
 
   it('greenhouseFetchApplications: hits /v3/applications', async () => {
@@ -810,10 +822,21 @@ describe('Homerun integration', () => {
     expect(appUrl).toContain('JOB1')
   })
 
-  it('homerunFetchJobs: throws on 429', async () => {
-    const { homerunFetchJobs } = await import('../homerun')
-    vi.mocked(fetch).mockResolvedValueOnce(errorResponse(429))
-    await expect(homerunFetchJobs('k')).rejects.toThrow(/429/)
+  it('homerunFetchJobs: backs off and retries on 429, then succeeds', async () => {
+    vi.useFakeTimers()
+    try {
+      const { homerunFetchJobs } = await import('../homerun')
+      vi.mocked(fetch)
+        .mockResolvedValueOnce(errorResponse(429)) // rate limited once
+        .mockResolvedValueOnce(jsonResponse([{ id: 'j1', title: 'Dev', status: 'published', created_at: '2024' }]))
+      const p = homerunFetchJobs('k')
+      await vi.runAllTimersAsync() // flush the back-off delay
+      const r = await p
+      expect(r).toHaveLength(1)
+      expect(fetch).toHaveBeenCalledTimes(2)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })
 
@@ -826,8 +849,9 @@ describe('Sync orchestration (sync.ts)', () => {
     it('creates vacancy and candidate records for valid response', async () => {
       const { syncTeamtailor } = await import('../sync')
 
-      // Order: jobs, applications, companyName, then candidate fetch
+      // Order: region-resolve (/company), then jobs, applications, candidate fetch
       vi.mocked(fetch)
+        .mockResolvedValueOnce(jsonResponse({ data: { attributes: { name: 'ACME' } } })) // resolve base + company
         .mockResolvedValueOnce(jsonResponse({ // jobs
           data: [{ id: 'job1', attributes: { title: 'Engineer', body: 'desc', status: 'open', 'human-status': 'published', 'created-at': '2024' } }],
           links: {},
@@ -840,7 +864,6 @@ describe('Sync orchestration (sync.ts)', () => {
           }],
           links: {},
         }))
-        .mockResolvedValueOnce(jsonResponse({ data: { attributes: { name: 'ACME' } } })) // company
         .mockResolvedValueOnce(jsonResponse({ // candidate fetch
           data: { id: 'cand1', attributes: { 'first-name': 'Jan', 'last-name': 'Doe', email: 'j@d.com', 'created-at': '2024' } },
         }))
@@ -870,9 +893,9 @@ describe('Sync orchestration (sync.ts)', () => {
     it('passes since parameter through to API', async () => {
       const { syncTeamtailor } = await import('../sync')
       vi.mocked(fetch)
+        .mockResolvedValueOnce(jsonResponse({ data: { attributes: { name: 'X' } } })) // resolve base + company
         .mockResolvedValueOnce(jsonResponse({ data: [], links: {} })) // jobs
         .mockResolvedValueOnce(jsonResponse({ data: [], links: {} })) // applications (uses since)
-        .mockResolvedValueOnce(jsonResponse({ data: { attributes: { name: 'X' } } })) // company
 
       await syncTeamtailor('u', 'k', new Date('2024-05-01'))
 

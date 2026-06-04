@@ -33,17 +33,26 @@ export interface HomerunApplication {
 const HOMERUN_BASE = 'https://api.homerun.co/v2'
 
 async function homerunFetch(path: string, apiKey: string) {
-  const res = await fetch(`${HOMERUN_BASE}${path}`, {
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-  })
-  if (!res.ok) {
-    const text = await res.text()
-    throw new Error(`Homerun API ${res.status}: ${text.slice(0, 200)}`)
+  // Homerun caps the API at 60 req/min and we make one detail call per candidate,
+  // so back off and retry on 429 (honour Retry-After when present) before giving up.
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(`${HOMERUN_BASE}${path}`, {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+    })
+    if (res.status === 429 && attempt < 3) {
+      const retryAfter = Number(res.headers?.get('retry-after')) || 0
+      await new Promise(r => setTimeout(r, retryAfter > 0 ? retryAfter * 1000 : 1500 * (attempt + 1)))
+      continue
+    }
+    if (!res.ok) {
+      const text = await res.text()
+      throw new Error(`Homerun API ${res.status}: ${text.slice(0, 200)}`)
+    }
+    return res.json()
   }
-  return res.json()
 }
 
 // /ping is Homerun's dedicated "is this key valid?" endpoint ({ pong: true }).
