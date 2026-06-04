@@ -38,6 +38,18 @@ import {
 
 const log = createLogger('ats-sync')
 
+// The AI analysis output language follows the recruiter's current site locale
+// (deltamatch-locale cookie), read at sync time. Dynamic import keeps next/headers
+// out of non-request contexts (tests); falls back to undefined (English) if unset.
+async function analysisLocale(): Promise<string | undefined> {
+  try {
+    const { cookies } = await import('next/headers')
+    return (await cookies()).get('deltamatch-locale')?.value
+  } catch {
+    return undefined
+  }
+}
+
 export interface SyncResult {
   imported: number
   updated: number
@@ -202,6 +214,7 @@ async function upsertCandidate(userId: string, platform: string, data: {
           vacancy.description,
           vacancy.requirements,
           data.motivationText || undefined,
+          await analysisLocale(),
         )
         const contactPatch: any = {}
         if (analysis.firstName && candidate.firstName === 'Unknown') contactPatch.firstName = analysis.firstName
@@ -237,16 +250,13 @@ async function upsertCandidate(userId: string, platform: string, data: {
 function mapAtsStatus(atsStatus?: string): string {
   if (!atsStatus) return 'new'
   const s = atsStatus.toLowerCase()
-  // Hired / Offer
+  // Conservative: only CLEAR states override the default. Anything early or
+  // ambiguous (applied, sourced, qualified, selected, lead, new...) stays 'new'
+  // so the ATS never silently pre-classifies a candidate the recruiter didn't move.
   if (s.includes('hired') || s.includes('offer') || s.includes('accepted') || s.includes('onboarding') || s.includes('placed') || s.includes('aangenomen') || s.includes('embauché') || s.includes('eingestellt')) return 'hired'
-  // Rejected
-  if (s.includes('reject') || s.includes('declined') || s.includes('disqualified') || s.includes('withdrawn') || s.includes('not selected') || s.includes('afgewezen') || s.includes('refusé') || s.includes('abgelehnt') || s.includes('closed') || s.includes('archived')) return 'rejected'
-  // Shortlisted / Interview
-  if (s.includes('interview') || s.includes('shortlist') || s.includes('assessment') || s.includes('final') || s.includes('second') || s.includes('on-site') || s.includes('onsite') || s.includes('entretien') || s.includes('gesprek') || s.includes('vorstellungsgespräch') || s.includes('selected') || s.includes('qualified')) return 'shortlisted'
-  // Reviewing / Screening
-  if (s.includes('review') || s.includes('screen') || s.includes('phone') || s.includes('applied') || s.includes('received') || s.includes('submitted') || s.includes('in progress') || s.includes('in behandeling') || s.includes('en cours') || s.includes('consideration') || s.includes('pre-screen') || s.includes('initial')) return 'reviewing'
-  // New / Default
-  if (s.includes('new') || s.includes('lead') || s.includes('prospect') || s.includes('sourced') || s.includes('open') || s.includes('active') || s.includes('nieuw') || s.includes('nouveau')) return 'new'
+  if (s.includes('reject') || s.includes('declined') || s.includes('disqualified') || s.includes('withdrawn') || s.includes('not selected') || s.includes('afgewezen') || s.includes('refusé') || s.includes('abgelehnt')) return 'rejected'
+  if (s.includes('interview') || s.includes('shortlist') || s.includes('on-site') || s.includes('onsite') || s.includes('entretien') || s.includes('gesprek') || s.includes('vorstellungsgespräch')) return 'shortlisted'
+  if (s.includes('screen') || s.includes('assessment') || s.includes('review')) return 'reviewing'
   return 'new'
 }
 
