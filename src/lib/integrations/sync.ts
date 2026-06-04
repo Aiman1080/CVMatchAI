@@ -679,11 +679,11 @@ export async function syncWorkable(apiKey: string, subdomain: string, userId: st
             const linkedIn = detail?.social_profiles?.find(p => p.type === 'linkedin')?.url || undefined
             const motivationText = detail?.cover_letter || detail?.summary || undefined
 
-            // CV is not inline; pull it from the candidate's files (only when the
-            // candidate actually has a résumé, to avoid a wasted request).
-            const cv = candidate.resume_metadata?.filename
-              ? await workableDownloadCV(apiKey, subdomain, candidate.id, candidate.resume_metadata.filename)
-              : null
+            // CV is not inline. Always check the candidate's files (the list does
+            // not reliably include resume_metadata, so don't gate on it). Returns
+            // null when there's no downloadable résumé; the filename is a hint.
+            const cv = await workableDownloadCV(apiKey, subdomain, candidate.id, candidate.resume_metadata?.filename)
+            log.info('workable: candidate cv', { id: candidate.id, cv: cv ? cv.filename : null })
 
             const status = await upsertCandidate(userId, 'workable', {
               externalId: candidate.id,
