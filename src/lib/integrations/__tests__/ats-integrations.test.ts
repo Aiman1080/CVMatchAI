@@ -288,6 +288,29 @@ describe('Recruitee integration', () => {
     vi.mocked(fetch).mockResolvedValueOnce(errorResponse(403))
     expect(await recruiteeDownloadCV('https://s3/x.pdf', 'tok')).toBeNull()
   })
+
+  it('normalizeRecruiteeCompany: reduces every form a user might paste to the bare slug', async () => {
+    const { normalizeRecruiteeCompany } = await import('../recruitee')
+    // bare slug + numeric company id pass through untouched (trimmed)
+    expect(normalizeRecruiteeCompany('acme-corp')).toBe('acme-corp')
+    expect(normalizeRecruiteeCompany('  acme-corp  ')).toBe('acme-corp')
+    expect(normalizeRecruiteeCompany('123456')).toBe('123456')
+    // careers-site subdomain, with or without scheme / path
+    expect(normalizeRecruiteeCompany('acme-corp.recruitee.com')).toBe('acme-corp')
+    expect(normalizeRecruiteeCompany('https://acme-corp.recruitee.com')).toBe('acme-corp')
+    expect(normalizeRecruiteeCompany('https://acme-corp.recruitee.com/o/dev-job')).toBe('acme-corp')
+    // app / api urls that carry the /c/{company} segment
+    expect(normalizeRecruiteeCompany('https://app.recruitee.com/c/acme-corp/#/overview')).toBe('acme-corp')
+    expect(normalizeRecruiteeCompany('api.recruitee.com/c/acme-corp/candidates')).toBe('acme-corp')
+    // empty stays empty
+    expect(normalizeRecruiteeCompany('')).toBe('')
+  })
+
+  it('normalizeRecruiteeCompany: never mistakes the reserved app/api subdomain for a slug', async () => {
+    const { normalizeRecruiteeCompany } = await import('../recruitee')
+    // app.recruitee.com WITHOUT a /c/ segment has no slug to extract -> must not yield "app"
+    expect(normalizeRecruiteeCompany('https://app.recruitee.com/#/settings/api_tokens')).not.toBe('app')
+  })
 })
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -652,6 +675,16 @@ describe('Workable integration', () => {
     const { workableFetchJobs } = await import('../workable')
     vi.mocked(fetch).mockResolvedValueOnce(errorResponse(401))
     await expect(workableFetchJobs('k', 's')).rejects.toThrow(/401/)
+  })
+
+  it('normalizeWorkableSubdomain: reduces a pasted URL to the bare subdomain', async () => {
+    const { normalizeWorkableSubdomain } = await import('../workable')
+    expect(normalizeWorkableSubdomain('acme')).toBe('acme')
+    expect(normalizeWorkableSubdomain('  acme  ')).toBe('acme')
+    expect(normalizeWorkableSubdomain('acme.workable.com')).toBe('acme')
+    expect(normalizeWorkableSubdomain('https://acme.workable.com')).toBe('acme')
+    expect(normalizeWorkableSubdomain('https://acme.workable.com/spi/v3/jobs')).toBe('acme')
+    expect(normalizeWorkableSubdomain('')).toBe('')
   })
 })
 

@@ -5,11 +5,11 @@ import prisma from '@/lib/prisma'
 import { getPlanLimits, getEffectiveSubscription } from '@/lib/plans'
 import { isDemoAccount } from '@/lib/demo-guard'
 import { teamtailorTestConnection } from '@/lib/integrations/teamtailor'
-import { recruiteeTestConnection } from '@/lib/integrations/recruitee'
+import { recruiteeTestConnection, normalizeRecruiteeCompany } from '@/lib/integrations/recruitee'
 import { smartrecruitersTestConnection } from '@/lib/integrations/smartrecruiters'
 import { greenhouseTestConnection } from '@/lib/integrations/greenhouse'
 import { leverTestConnection } from '@/lib/integrations/lever'
-import { workableTestConnection } from '@/lib/integrations/workable'
+import { workableTestConnection, normalizeWorkableSubdomain } from '@/lib/integrations/workable'
 import { ashbyTestConnection } from '@/lib/integrations/ashby'
 import { homerunTestConnection } from '@/lib/integrations/homerun'
 
@@ -44,7 +44,8 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json()
-  const { platform, apiKey, companySlug } = body
+  const { platform, apiKey } = body
+  let { companySlug } = body
   if (!platform || !apiKey) return NextResponse.json({ error: 'Missing platform or apiKey' }, { status: 400 })
 
   const allowed = ['teamtailor', 'recruitee', 'smartrecruiters', 'greenhouse', 'lever', 'workable', 'ashby', 'homerun']
@@ -58,6 +59,16 @@ export async function POST(req: Request) {
   }
   if (platform === 'workable' && !companySlug) {
     return NextResponse.json({ error: 'Subdomain required for Workable' }, { status: 400 })
+  }
+
+  // Recruitee's slug is hard to find post-Tellent migration; accept any pasted
+  // form (URL / subdomain / numeric id) and reduce it to the bare {company} token.
+  if (platform === 'recruitee' && companySlug) {
+    companySlug = normalizeRecruiteeCompany(companySlug)
+  }
+  // Same convenience for Workable: accept the full URL, store the bare subdomain.
+  if (platform === 'workable' && companySlug) {
+    companySlug = normalizeWorkableSubdomain(companySlug)
   }
 
   // Test the connection before saving

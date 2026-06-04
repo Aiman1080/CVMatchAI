@@ -336,7 +336,7 @@ export const fr = {
       errorStatus: 'Erreur',
       errorTooltip: 'La dernière synchronisation a échoué. Vérifiez votre clé API ou reconnectez.',
       slugLabel: 'Company Slug',
-      slugTooltip: "Le slug est le nom de votre société dans l'URL Recruitee. Exemple : si votre URL est app.recruitee.com/c/acme-corp, le slug est 'acme-corp'.",
+      slugTooltip: "Le « company slug » est le sous-domaine de votre site carrière Recruitee : si votre site est mon-entreprise.recruitee.com, le slug est « mon-entreprise ». Depuis la migration vers Tellent, il n'apparaît plus dans l'URL de l'app — collez simplement l'URL de votre site carrière (ou votre sous-domaine), DeltaMatch en extrait le slug.",
       securityNote: "Votre clé API est chiffrée et stockée de façon sécurisée. DeltaMatch ne lit que les candidats - aucune modification ne sera faite dans votre ATS.",
       footerNote: "Vous n'avez pas d'ATS ? Utilisez l'onglet Email pour scanner vos candidatures reçues par email, ou uploadez les CVs directement depuis la page Candidats.",
       syncError: 'Erreur de synchronisation',
@@ -384,8 +384,8 @@ export const fr = {
         recruitee: {
           tagline: 'Populaire en Belgique et Pays-Bas',
           apiKeyLabel: 'API Token Recruitee',
-          howToGet: ["Connectez-vous à Recruitee", 'Allez dans Settings → API Tokens', 'Cliquez "New API token", donnez un nom', "Copiez le token et votre company slug (l'URL : app.recruitee.com/c/MON-SLUG)"],
-          whatItDoes: "Synchronise tous vos candidats Recruitee avec leur CV et leur poste. Le \"company slug\" est le nom de votre société dans l'URL Recruitee.",
+          howToGet: ["Connectez-vous à Recruitee (app.tellent.com)", 'Paramètres → Applications et plugins → Clés API', 'Cliquez « Nouveau token », nommez-le (ex. DeltaMatch) et copiez-le', "Company slug = le sous-domaine de votre site carrière (mon-entreprise.recruitee.com). Vous pouvez aussi coller directement l'URL du site carrière, on en extrait le slug."],
+          whatItDoes: "Synchronise tous vos candidats Recruitee avec leur CV et leur poste. Le « company slug » est le sous-domaine de votre site carrière (mon-entreprise.recruitee.com), pas l'URL Tellent de l'app.",
         },
         smartrecruiters: {
           tagline: 'ATS enterprise pour moyennes et grandes entreprises',
@@ -411,9 +411,9 @@ export const fr = {
           tagline: "Plateforme de recrutement tout-en-un",
           apiKeyLabel: 'Access Token Workable',
           slugLabel: 'Sous-domaine',
-          slugTooltip: "Votre sous-domaine est la première partie de votre URL Workable. Exemple : si votre URL est acme.workable.com, le sous-domaine est 'acme'.",
-          howToGet: ['Connectez-vous à Workable', 'Allez dans Settings → Integrations → Access Token', 'Générez un token — cochez les scopes en lecture "r_jobs" et "r_candidates" (ou tous les scopes en lecture)', 'Copiez le token et entrez votre sous-domaine (votre-entreprise dans votre-entreprise.workable.com)'],
-          whatItDoes: 'Importe vos postes et leurs candidats depuis Workable. Entrez votre sous-domaine pour vous connecter.',
+          slugTooltip: "Le sous-domaine est la première partie de votre URL Workable : si votre URL est acme.workable.com, le sous-domaine est « acme ». Vous pouvez aussi coller l'URL complète, DeltaMatch en extrait le sous-domaine.",
+          howToGet: ['Connectez-vous à Workable (compte admin)', 'Paramètres → Intégrations → Access token, puis « Générer un nouveau token »', 'Cochez les DEUX scopes en lecture : « r_jobs » (offres) ET « r_candidates » (candidats + CV) — les deux sont obligatoires : sans r_jobs la connexion échoue, sans r_candidates aucun candidat n\'est importé', 'Copiez le token et entrez votre sous-domaine (acme dans acme.workable.com)'],
+          whatItDoes: 'Importe vos postes et leurs candidats depuis Workable, avec leur CV. Cochez bien « r_jobs » + « r_candidates » pour que tout fonctionne.',
         },
         ashby: {
           tagline: 'ATS moderne pour entreprises en forte croissance',

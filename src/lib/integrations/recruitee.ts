@@ -59,6 +59,30 @@ export interface RCOffer {
 
 const RC_BASE = 'https://api.recruitee.com/c'
 
+// Users routinely can't find the bare "company slug" - especially since Recruitee
+// migrated to Tellent (app.tellent.com), where the slug no longer appears in the
+// app URL (it shows an internal `ts_org_guid` instead). Accept whatever they paste
+// - a careers-site URL, a {slug}.recruitee.com subdomain, the numeric company id,
+// or an api/app.recruitee.com/c/{company} path - and reduce it to the bare
+// {company} token the API path needs. Best-effort: if we guess wrong the
+// connection test fails loudly, so nothing bad is ever stored silently.
+export function normalizeRecruiteeCompany(raw: string): string {
+  let s = (raw || '').trim()
+  if (!s) return s
+  s = s.replace(/^https?:\/\//i, '') // drop scheme so host/path parsing is predictable
+  // .../c/{company}/... (api.recruitee.com or app.recruitee.com)
+  const cMatch = s.match(/\/c\/([^/?#]+)/i)
+  if (cMatch) return cMatch[1].trim()
+  // {slug}.recruitee.com (careers site) - but ignore the reserved app/api/www hosts
+  const subMatch = s.match(/^([a-z0-9-]+)\.recruitee\.com/i)
+  if (subMatch && !['app', 'api', 'www'].includes(subMatch[1].toLowerCase())) return subMatch[1]
+  // Bare slug / numeric id: drop any trailing path/query/hash and we're done. An
+  // unrelated host (e.g. the Tellent app URL, which simply does NOT contain the
+  // slug) is left intact so the connection test fails loudly instead of storing a
+  // silently-wrong value.
+  return s.split(/[/?#]/)[0]
+}
+
 async function rcFetch(path: string, apiKey: string, companySlug: string) {
   const res = await fetch(`${RC_BASE}/${companySlug}${path}`, {
     headers: {
