@@ -346,6 +346,8 @@ export const en = {
       errorsCount: 'error(s)',
       jobsFound: 'job(s) found',
       candidatesFound: 'candidate(s) found',
+      analysisLang: 'Analyze CVs in',
+      analysisLangTooltip: 'Language the AI uses to write each candidate analysis',
       connectedCount: '{count} connected',
       disconnectBtn: 'Disconnect {name}',
       autoSyncTooltip: 'Last sync time. Click "Sync" to manually fetch new candidates.',
