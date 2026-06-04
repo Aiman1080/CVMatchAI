@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -205,6 +206,25 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
   const { t, locale } = useLanguage()
   const ti = t.dashboard.integrations
   const [analysisLang, setAnalysisLang] = useState<string>(locale)
+
+  // A sync is a single long POST (fetch jobs -> candidates -> CVs -> AI analysis)
+  // with no streamed progress, so we can't show a real percentage. Instead we
+  // animate a bar climbing toward ~92% plus an elapsed-seconds counter while a
+  // sync runs; both reset when it ends. Honest "it's working, give it a moment"
+  // feedback, since a full ATS sync can take a minute or two.
+  const [syncProgress, setSyncProgress] = useState(0)
+  const [syncElapsed, setSyncElapsed] = useState(0)
+  useEffect(() => {
+    const active = syncing !== null || syncAll
+    if (!active) { setSyncProgress(0); setSyncElapsed(0); return }
+    const start = Date.now()
+    setSyncProgress(p => (p < 8 ? 8 : p))
+    const id = setInterval(() => {
+      setSyncProgress(p => (p >= 92 ? p : Math.min(92, p + (p < 50 ? 5 : p < 75 ? 2.5 : 1))))
+      setSyncElapsed(Math.round((Date.now() - start) / 1000))
+    }, 500)
+    return () => clearInterval(id)
+  }, [syncing, syncAll])
 
   const getIntegration = (platform: string) => integrations.find(i => i.platform === platform)
   const connectedCount = integrations.length
@@ -492,6 +512,15 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
               ? <><Loader2 size={13} className="animate-spin shrink-0" /> {ti.syncing}</>
               : <><RefreshCw size={13} className="shrink-0" /> {ti.syncAllBtn}</>}
           </Button>
+          {/* Sync progress bar (sync all) - wraps to its own full-width row */}
+          {syncAll && (
+            <div className="basis-full w-full">
+              <Progress value={syncProgress} className="h-2" />
+              <p className="mt-1.5 text-xs text-indigo-700 dark:text-indigo-400">
+                {((ti as any).syncProgressHint || 'Import in progress… this can take 1-2 minutes')} · {syncElapsed}s
+              </p>
+            </div>
+          )}
         </div>
       )}
 
@@ -682,6 +711,16 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
                   </div>
                 </div>
 
+                {/* Sync progress bar (single platform) */}
+                {isSyncing && (
+                  <div className="px-4 pb-3">
+                    <Progress value={syncProgress} className="h-2" />
+                    <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                      {((ti as any).syncProgressHint || 'Import in progress… this can take 1-2 minutes')} · {syncElapsed}s
+                    </p>
+                  </div>
+                )}
+
                 {/* Connection form */}
                 {!connected && isExpanded && (
                   <div className="px-4 pb-4 pt-0 border-t border-gray-100 dark:border-gray-800 space-y-3 mt-0">
@@ -707,7 +746,7 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
                           <InfoTooltip text={slugTooltip} />
                         </div>
                         <Input
-                          placeholder={platform.id === 'workable' ? 'your-company' : 'acme-corp'}
+                          placeholder={platform.id === 'workable' ? 'your-company' : platform.id === 'recruitee' ? '132149' : 'acme-corp'}
                           value={f.companySlug}
                           onChange={e => setForm(prev => ({ ...prev, [platform.id]: { ...f, companySlug: e.target.value } }))}
                           className="text-sm h-9"
