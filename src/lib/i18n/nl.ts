@@ -344,6 +344,8 @@ export const nl = {
       updated: 'bijgewerkt',
       skipped: 'al aanwezig',
       errorsCount: 'fout(en)',
+      jobsFound: 'vacature(s) gevonden',
+      candidatesFound: 'kandida(a)t(en) gevonden',
       connectedCount: '{count} verbonden',
       disconnectBtn: '{name} loskoppelen',
       autoSyncTooltip: 'Laatste synchronisatietijd. Klik op "Synchroniseren" om handmatig nieuwe kandidaten op te halen.',

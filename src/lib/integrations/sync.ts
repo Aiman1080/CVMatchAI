@@ -44,6 +44,8 @@ export interface SyncResult {
   skipped: number
   errors: string[]
   duplicatesDetected: number
+  jobsFound?: number
+  candidatesFound?: number
 }
 
 function calculateSimilarity(a: string, b: string): number {
@@ -642,6 +644,7 @@ export async function syncWorkable(apiKey: string, subdomain: string, userId: st
   const result: SyncResult = { imported: 0, updated: 0, skipped: 0, errors: [], duplicatesDetected: 0 }
   try {
     const jobs = await workableFetchJobs(apiKey, subdomain)
+    result.jobsFound = jobs.length
     log.info('workable: jobs fetched (state=published)', { subdomain, count: jobs.length })
 
     for (const job of jobs) {
@@ -658,11 +661,12 @@ export async function syncWorkable(apiKey: string, subdomain: string, userId: st
         const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
 
         const candidates = await workableFetchCandidates(apiKey, subdomain, job.shortcode)
+        result.candidatesFound = (result.candidatesFound ?? 0) + candidates.length
         log.info('workable: candidates for job', { shortcode: job.shortcode, count: candidates.length })
 
         for (const candidate of candidates) {
           try {
-            if (since && new Date(candidate.created_at) < since) continue
+            if (since && new Date(candidate.created_at) < since) { result.skipped++; continue }
 
             const nameParts = candidate.name?.split(' ') || []
             const firstName = candidate.firstname || nameParts[0] || 'Unknown'
