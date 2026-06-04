@@ -645,7 +645,7 @@ export async function syncWorkable(apiKey: string, subdomain: string, userId: st
   try {
     const jobs = await workableFetchJobs(apiKey, subdomain)
     result.jobsFound = jobs.length
-    log.info('workable: jobs fetched (state=published)', { subdomain, count: jobs.length })
+    log.info('workable: jobs fetched (all states)', { subdomain, count: jobs.length })
 
     for (const job of jobs) {
       try {

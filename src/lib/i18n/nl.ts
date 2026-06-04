@@ -411,7 +411,7 @@ export const nl = {
           slugLabel: 'Subdomein',
           slugTooltip: 'Uw subdomein is het eerste deel van uw Workable-URL. Voorbeeld: als uw URL acme.workable.com is, is het subdomein "acme".',
           howToGet: ['Log in op Workable', 'Ga naar Settings → Integrations → Access Token', 'Genereer een token — selecteer de leesscopes "r_jobs" en "r_candidates" (of alle leesscopes)', 'Kopieer het token en voer uw subdomein in (uw-bedrijf in uw-bedrijf.workable.com)'],
-          whatItDoes: 'Importeert uw gepubliceerde vacatures en hun kandidaten van Workable. Voer uw bedrijfssubdomein in om verbinding te maken.',
+          whatItDoes: 'Importeert uw vacatures en hun kandidaten van Workable. Voer uw bedrijfssubdomein in om verbinding te maken.',
         },
         ashby: {
           tagline: 'Modern ATS voor snelgroeiende bedrijven',
