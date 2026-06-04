@@ -336,7 +336,7 @@ export const fr = {
       errorStatus: 'Erreur',
       errorTooltip: 'La dernière synchronisation a échoué. Vérifiez votre clé API ou reconnectez.',
       slugLabel: 'Company Slug',
-      slugTooltip: "Le « company slug » est le sous-domaine de votre site carrière Recruitee : si votre site est mon-entreprise.recruitee.com, le slug est « mon-entreprise ». Depuis la migration vers Tellent, il n'apparaît plus dans l'URL de l'app — collez simplement l'URL de votre site carrière (ou votre sous-domaine), DeltaMatch en extrait le slug.",
+      slugTooltip: "Sur la page des clés API Recruitee, l'encart « Détails sur l'entreprise actuelle » (juste au-dessus de la clé) affiche votre Sous-domaine (ex. mydelta.recruitee.com → « mydelta ») et votre ID — copiez le Sous-domaine ici. Vous pouvez aussi coller l'URL complète ou l'ID numérique, DeltaMatch s'en sort.",
       securityNote: "Votre clé API est chiffrée et stockée de façon sécurisée. DeltaMatch ne lit que les candidats - aucune modification ne sera faite dans votre ATS.",
       footerNote: "Vous n'avez pas d'ATS ? Utilisez l'onglet Email pour scanner vos candidatures reçues par email, ou uploadez les CVs directement depuis la page Candidats.",
       syncError: 'Erreur de synchronisation',
@@ -384,8 +384,8 @@ export const fr = {
         recruitee: {
           tagline: 'Populaire en Belgique et Pays-Bas',
           apiKeyLabel: 'API Token Recruitee',
-          howToGet: ["Connectez-vous à Recruitee (app.tellent.com)", 'Paramètres → Applications et plugins → Clés API', 'Cliquez « Nouveau token », nommez-le (ex. DeltaMatch) et copiez-le', "Company slug = le sous-domaine de votre site carrière (mon-entreprise.recruitee.com). Vous pouvez aussi coller directement l'URL du site carrière, on en extrait le slug."],
-          whatItDoes: "Synchronise tous vos candidats Recruitee avec leur CV et leur poste. Le « company slug » est le sous-domaine de votre site carrière (mon-entreprise.recruitee.com), pas l'URL Tellent de l'app.",
+          howToGet: ["Connectez-vous à Recruitee (app.tellent.com)", 'Paramètres → Applications et plugins → Clés API', 'Cliquez « Nouveau token », nommez-le (ex. DeltaMatch) et copiez-le', "Sur la même page, l'encart « Détails sur l'entreprise actuelle » affiche votre Sous-domaine (ex. mydelta dans mydelta.recruitee.com) — copiez-le dans « Company slug » (l'ID numérique marche aussi)"],
+          whatItDoes: "Synchronise tous vos candidats Recruitee avec leur CV et leur poste. Le « company slug » est votre Sous-domaine Recruitee (ex. mydelta), affiché dans l'encart « Détails sur l'entreprise actuelle » sur la page des clés API — pas le ts_org_guid de l'URL Tellent.",
         },
         smartrecruiters: {
           tagline: 'ATS enterprise pour moyennes et grandes entreprises',

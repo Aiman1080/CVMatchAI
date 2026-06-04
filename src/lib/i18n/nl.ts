@@ -336,7 +336,7 @@ export const nl = {
       errorStatus: 'Fout',
       errorTooltip: 'De laatste synchronisatie is mislukt. Controleer uw API-sleutel of koppel opnieuw.',
       slugLabel: 'Company Slug',
-      slugTooltip: 'De "company slug" is het subdomein van uw Recruitee-carrièresite: als uw site mijn-bedrijf.recruitee.com is, is de slug "mijn-bedrijf". Sinds de migratie naar Tellent staat hij niet meer in de app-URL — plak gewoon de URL van uw carrièresite (of uw subdomein) en DeltaMatch haalt de slug eruit.',
+      slugTooltip: 'Op de Recruitee API-sleutelspagina toont het kader "Gegevens van huidig bedrijf" (net boven de sleutel) uw Subdomein (bijv. mydelta.recruitee.com → "mydelta") en uw ID — kopieer het Subdomein hier. U kunt ook de volledige URL of het numerieke ID plakken; DeltaMatch verwerkt het.',
       securityNote: 'Uw API-sleutel wordt versleuteld en veilig opgeslagen. DeltaMatch leest alleen kandidaten - er worden geen wijzigingen aangebracht in uw ATS.',
       footerNote: 'Geen ATS? Gebruik het tabblad E-mail om sollicitaties per e-mail te scannen, of upload cv\'s rechtstreeks via de pagina Kandidaten.',
       syncError: 'Synchronisatiefout',
@@ -384,8 +384,8 @@ export const nl = {
         recruitee: {
           tagline: 'Populair in België en Nederland',
           apiKeyLabel: 'Recruitee API-token',
-          howToGet: ['Log in op Recruitee (app.tellent.com)', 'Instellingen → Apps en plugins → API-sleutels', 'Klik op "Nieuw token", geef het een naam (bijv. DeltaMatch) en kopieer het', 'Company slug = het subdomein van uw carrièresite (mijn-bedrijf.recruitee.com). U kunt ook gewoon de URL van de carrièresite plakken, dan halen wij de slug eruit.'],
-          whatItDoes: 'Synchroniseert al uw Recruitee-kandidaten met hun cv en vacature. De "company slug" is het subdomein van uw carrièresite (mijn-bedrijf.recruitee.com), niet de Tellent app-URL.',
+          howToGet: ['Log in op Recruitee (app.tellent.com)', 'Instellingen → Apps en plugins → API-sleutels', 'Klik op "Nieuw token", geef het een naam (bijv. DeltaMatch) en kopieer het', 'Op dezelfde pagina toont het kader "Gegevens van huidig bedrijf" uw Subdomein (bijv. mydelta in mydelta.recruitee.com) — kopieer dit naar "Company slug" (het numerieke ID werkt ook)'],
+          whatItDoes: 'Synchroniseert al uw Recruitee-kandidaten met hun cv en vacature. De "company slug" is uw Recruitee-subdomein (bijv. mydelta), te zien in het kader "Gegevens van huidig bedrijf" op de API-sleutelspagina — niet de ts_org_guid in de Tellent-URL.',
         },
         smartrecruiters: {
           tagline: 'Enterprise ATS voor middelgrote en grote bedrijven',
