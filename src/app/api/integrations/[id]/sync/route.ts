@@ -38,8 +38,11 @@ export async function POST(_req: Request, context: { params: Promise<{ id: strin
     return NextResponse.json({ error: 'ATS integrations require a Pro plan', upgrade: true }, { status: 403 })
   }
 
-  const since = integration.lastSyncAt || undefined
-  log.info('sync requested', { platform: integration.platform, integrationId: integration.id, since: since ? new Date(since).toISOString() : null })
+  // Full re-scan on every sync: dedup by externalId prevents re-imports. The old
+  // incremental filter (since = last sync time) permanently skipped candidates
+  // created before the first sync - e.g. after a failed import or a deleted vacancy.
+  const since = undefined
+  log.info('sync requested', { platform: integration.platform, integrationId: integration.id })
 
   let result
   try {
