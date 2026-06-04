@@ -4,11 +4,14 @@ import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { isDemoAccount } from '@/lib/demo-guard'
 import { getPlanLimits, getEffectiveSubscription } from '@/lib/plans'
+import { createLogger } from '@/lib/logger'
 import {
   syncTeamtailor, syncRecruitee, syncSmartRecruiters,
   syncGreenhouse, syncLever, syncWorkable,
   syncAshby, syncHomerun,
 } from '@/lib/integrations/sync'
+
+const log = createLogger('integration/sync')
 
 export async function POST(_req: Request, context: { params: Promise<{ id: string }> }) {
   const params = await context.params
@@ -36,6 +39,7 @@ export async function POST(_req: Request, context: { params: Promise<{ id: strin
   }
 
   const since = integration.lastSyncAt || undefined
+  log.info('sync requested', { platform: integration.platform, integrationId: integration.id, since: since ? new Date(since).toISOString() : null })
 
   let result
   try {
@@ -71,9 +75,11 @@ export async function POST(_req: Request, context: { params: Promise<{ id: strin
       },
     })
 
+    log.info('sync result', { platform: integration.platform, imported: result.imported, updated: result.updated, skipped: result.skipped, errorCount: result.errors.length, errors: result.errors.slice(0, 20) })
     return NextResponse.json({ success: true, ...result })
   } catch (e: any) {
     const errorMessage = e.message || 'Sync failed'
+    log.error('sync threw', { platform: integration.platform, error: errorMessage })
     const isAuthError = errorMessage.includes('401') || errorMessage.includes('403') || errorMessage.includes('Unauthorized') || errorMessage.includes('Forbidden') || errorMessage.includes('invalid') || errorMessage.includes('expired')
 
     await prisma.integration.update({
