@@ -46,7 +46,7 @@ const PLATFORM_STATIC = [
     textColor: 'text-blue-600 dark:text-blue-400',
     bgColor: 'bg-blue-50 dark:bg-blue-950/30',
     borderColor: 'border-blue-200 dark:border-blue-800',
-    docsUrl: 'https://app.recruitee.com/#/settings/apps',
+    docsUrl: 'https://app.tellent.com/ats/settings/api_tokens',
     apiKeyPlaceholder: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
     needsSlug: true,
   },

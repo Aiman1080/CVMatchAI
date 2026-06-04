@@ -336,7 +336,7 @@ export const nl = {
       errorStatus: 'Fout',
       errorTooltip: 'De laatste synchronisatie is mislukt. Controleer uw API-sleutel of koppel opnieuw.',
       slugLabel: 'Company Slug',
-      slugTooltip: 'De slug is uw bedrijfsnaam in de Recruitee-URL. Voorbeeld: als uw URL app.recruitee.com/c/acme-corp is, is de slug "acme-corp".',
+      slugTooltip: 'De "company slug" is het subdomein van uw Recruitee-carrièresite: als uw site mijn-bedrijf.recruitee.com is, is de slug "mijn-bedrijf". Sinds de migratie naar Tellent staat hij niet meer in de app-URL — plak gewoon de URL van uw carrièresite (of uw subdomein) en DeltaMatch haalt de slug eruit.',
       securityNote: 'Uw API-sleutel wordt versleuteld en veilig opgeslagen. DeltaMatch leest alleen kandidaten - er worden geen wijzigingen aangebracht in uw ATS.',
       footerNote: 'Geen ATS? Gebruik het tabblad E-mail om sollicitaties per e-mail te scannen, of upload cv\'s rechtstreeks via de pagina Kandidaten.',
       syncError: 'Synchronisatiefout',
@@ -384,8 +384,8 @@ export const nl = {
         recruitee: {
           tagline: 'Populair in België en Nederland',
           apiKeyLabel: 'Recruitee API-token',
-          howToGet: ['Log in op Recruitee', 'Ga naar Instellingen → API-tokens', 'Klik op "New API token" en geef het een naam', 'Kopieer het token en uw company slug (uit URL: app.recruitee.com/c/MIJN-SLUG)'],
-          whatItDoes: 'Synchroniseert al uw Recruitee-kandidaten met hun cv en vacature. De "company slug" is uw bedrijfsnaam in de Recruitee-URL.',
+          howToGet: ['Log in op Recruitee (app.tellent.com)', 'Instellingen → Apps en plugins → API-sleutels', 'Klik op "Nieuw token", geef het een naam (bijv. DeltaMatch) en kopieer het', 'Company slug = het subdomein van uw carrièresite (mijn-bedrijf.recruitee.com). U kunt ook gewoon de URL van de carrièresite plakken, dan halen wij de slug eruit.'],
+          whatItDoes: 'Synchroniseert al uw Recruitee-kandidaten met hun cv en vacature. De "company slug" is het subdomein van uw carrièresite (mijn-bedrijf.recruitee.com), niet de Tellent app-URL.',
         },
         smartrecruiters: {
           tagline: 'Enterprise ATS voor middelgrote en grote bedrijven',

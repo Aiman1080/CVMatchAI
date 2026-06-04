@@ -336,7 +336,7 @@ export const en = {
       errorStatus: 'Error',
       errorTooltip: 'The last sync failed. Check your API key or reconnect.',
       slugLabel: 'Company Slug',
-      slugTooltip: 'The slug is your company name in the Recruitee URL. Example: if your URL is app.recruitee.com/c/acme-corp, the slug is "acme-corp".',
+      slugTooltip: 'The "company slug" is the subdomain of your Recruitee careers site: if your site is my-company.recruitee.com, the slug is "my-company". Since the Tellent migration it no longer appears in the app URL — just paste your careers-site URL (or subdomain) and DeltaMatch extracts the slug.',
       securityNote: 'Your API key is encrypted and stored securely. DeltaMatch only reads candidates - no changes will be made in your ATS.',
       footerNote: 'No ATS? Use the Email tab to scan applications received by email, or upload CVs directly from the Candidates page.',
       syncError: 'Sync error',
@@ -384,8 +384,8 @@ export const en = {
         recruitee: {
           tagline: 'Popular in Belgium and the Netherlands',
           apiKeyLabel: 'Recruitee API Token',
-          howToGet: ['Log in to Recruitee', 'Go to Settings → API Tokens', 'Click "New API token" and give it a name', 'Copy the token and your company slug (from URL: app.recruitee.com/c/MY-SLUG)'],
-          whatItDoes: 'Syncs all your Recruitee candidates with their CV and job. The "company slug" is your company name in the Recruitee URL.',
+          howToGet: ['Log in to Recruitee (app.tellent.com)', 'Settings → Apps and plugins → API keys', 'Click "New token", name it (e.g. DeltaMatch) and copy it', 'Company slug = the subdomain of your careers site (my-company.recruitee.com). You can also just paste the careers-site URL and we extract the slug.'],
+          whatItDoes: 'Syncs all your Recruitee candidates with their CV and job. The "company slug" is the subdomain of your careers site (my-company.recruitee.com), not the Tellent app URL.',
         },
         smartrecruiters: {
           tagline: 'Enterprise ATS for mid-size and large companies',
