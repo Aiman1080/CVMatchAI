@@ -270,6 +270,8 @@ export function IntegrationsClient({ initialIntegrations, isDemo }: { initialInt
         toast({
           title: `${p?.name} ${ti.syncDone}`,
           description: [
+            data.jobsFound != null ? `${data.jobsFound} ${(ti as any).jobsFound || 'jobs'}` : null,
+            data.candidatesFound != null ? `${data.candidatesFound} ${(ti as any).candidatesFound || 'candidates'}` : null,
             data.imported ? `${data.imported} ${ti.imported}` : null,
             data.updated ? `${data.updated} ${ti.updated}` : null,
             data.skipped ? `${data.skipped} ${ti.skipped}` : null,

@@ -344,6 +344,8 @@ export const fr = {
       updated: 'mis à jour',
       skipped: 'déjà présent(s)',
       errorsCount: 'erreur(s)',
+      jobsFound: 'offre(s) trouvée(s)',
+      candidatesFound: 'candidat(s) trouvé(s)',
       connectedCount: '{count} connecté(s)',
       disconnectBtn: 'Déconnecter {name}',
       autoSyncTooltip: 'Dernière synchronisation. Cliquez "Synchroniser" pour récupérer manuellement les nouveaux candidats.',

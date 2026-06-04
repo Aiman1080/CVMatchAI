@@ -344,6 +344,8 @@ export const en = {
       updated: 'updated',
       skipped: 'already present',
       errorsCount: 'error(s)',
+      jobsFound: 'job(s) found',
+      candidatesFound: 'candidate(s) found',
       connectedCount: '{count} connected',
       disconnectBtn: 'Disconnect {name}',
       autoSyncTooltip: 'Last sync time. Click "Sync" to manually fetch new candidates.',
