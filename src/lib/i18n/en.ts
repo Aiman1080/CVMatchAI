@@ -1734,6 +1734,8 @@ export const en = {
     forgotPassword: 'Forgot password?',
     demoFree: 'Demo Free',
     demoPro: 'Demo Pro',
+    tryDemo: 'Try the demo',
+    loadingDemo: 'Loading the demo…',
     demoAdmin: 'Demo Admin',
     email: 'Email',
     password: 'Password',

@@ -123,17 +123,24 @@ export async function greenhouseFetchJobs(token: string): Promise<GHJob[]> {
 
 export async function greenhouseFetchCandidates(token: string, since?: Date): Promise<GHCandidate[]> {
   let path = '/v3/candidates?per_page=100'
-  if (since) path += `&updated_at[gte]=${encodeURIComponent(since.toISOString())}`
+  // v3 filter syntax is pipe-delimited (`field=gte|value`), NOT the v1/v2 `field[gte]=`.
+  if (since) path += `&updated_at=gte|${since.toISOString()}`
   return ghFetchAll(path, token)
 }
 
 export async function greenhouseFetchApplications(token: string, since?: Date): Promise<GHApplication[]> {
   let path = '/v3/applications?per_page=100'
-  if (since) path += `&updated_at[gte]=${encodeURIComponent(since.toISOString())}`
+  // v3 filter syntax is pipe-delimited (`field=gte|value`), NOT the v1/v2 `field[gte]=`.
+  if (since) path += `&updated_at=gte|${since.toISOString()}`
   return ghFetchAll(path, token)
 }
 
 // Résumé attachments for a batch of candidates (candidate_ids is capped at 50).
+// NOTE (2026-06 audit): the v3 `GET /v3/attachments` list endpoint could not be
+// confirmed in the (403-walled) v3 reference - resumes may instead be inlined on
+// the candidate/application object in v3. syncGreenhouse logs a warning if this
+// returns nothing for known candidates, so a prod run will reveal it. Needs a live
+// Greenhouse key to verify before changing the retrieval path.
 export async function greenhouseFetchResumes(token: string, candidateIds: number[]): Promise<GHAttachment[]> {
   if (!candidateIds.length) return []
   const path = `/v3/attachments?per_page=100&type=resume&candidate_ids=${candidateIds.join(',')}`

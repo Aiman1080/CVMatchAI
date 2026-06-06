@@ -6,7 +6,7 @@ import { analyzeCVAgainstVacancy } from '@/lib/ai'
 import { createLogger } from '@/lib/logger'
 import {
   teamtailorFetchJobs, teamtailorFetchApplications, teamtailorFetchCandidate,
-  teamtailorDownloadCV, teamtailorFetchCompanyName,
+  teamtailorDownloadCV, teamtailorResolveBase,
 } from './teamtailor'
 import {
   recruiteeFetchOffers, recruiteeFetchCandidates, recruiteeFetchCandidate, recruiteeDownloadCV,
@@ -268,10 +268,12 @@ function mapAtsStatus(atsStatus?: string): string {
 export async function syncTeamtailor(userId: string, apiKey: string, since?: Date): Promise<SyncResult> {
   const result: SyncResult = { imported: 0, updated: 0, skipped: 0, errors: [], duplicatesDetected: 0 }
   try {
-    const [jobs, applications, companyName] = await Promise.all([
-      teamtailorFetchJobs(apiKey),
-      teamtailorFetchApplications(apiKey, since),
-      teamtailorFetchCompanyName(apiKey),
+    // Resolve the regional host (EU/NA/APAC) once - a key only works on its own
+    // region - and reuse it (and the company name it returns) for every call.
+    const { baseUrl, company: companyName } = await teamtailorResolveBase(apiKey)
+    const [jobs, applications] = await Promise.all([
+      teamtailorFetchJobs(apiKey, baseUrl),
+      teamtailorFetchApplications(apiKey, since, baseUrl),
     ])
 
     const jobMap = new Map(jobs.map(j => [j.id, j]))
@@ -301,7 +303,7 @@ export async function syncTeamtailor(userId: string, apiKey: string, since?: Dat
         })
         const vacancyId = vacancyResult.id; if (vacancyResult.similarMatch) result.duplicatesDetected++
 
-        const candidate = await teamtailorFetchCandidate(apiKey, candidateId)
+        const candidate = await teamtailorFetchCandidate(apiKey, candidateId, baseUrl)
         if (!candidate) continue
 
         // The CV lives on the candidate (resume = converted PDF, original-resume =
@@ -517,6 +519,12 @@ export async function syncGreenhouse(clientId: string, clientSecret: string, use
       for (const a of atts) {
         if (a.candidate_id && !resumeMap.has(a.candidate_id)) resumeMap.set(a.candidate_id, a)
       }
+    }
+    // Diagnostic: if we have candidates but zero resumes, the v3 /v3/attachments
+    // endpoint is likely wrong/unavailable (see greenhouse.ts note). Surface it in
+    // the Vercel logs rather than silently importing every candidate with no CV.
+    if (candidateIds.length && !resumeMap.size) {
+      log.warn('greenhouse: 0 resumes resolved for candidates - verify /v3/attachments', { candidates: candidateIds.length })
     }
 
     for (const app of relevant) {

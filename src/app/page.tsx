@@ -365,7 +365,7 @@ export default function LandingPage() {
                 {t.hero.startFree} <ArrowRight size={18} className="shrink-0" />
               </Button>
             </Link>
-            <Link href="/login?demo=true" className="w-full sm:w-auto">
+            <Link href="/demo" className="w-full sm:w-auto">
               <Button size="lg" variant="outline" className="border-blue-300 dark:border-white/30 text-blue-700 dark:text-white bg-blue-50 dark:bg-white/10 hover:bg-blue-100 dark:hover:bg-white/20 backdrop-blur-sm w-full sm:w-auto h-auto py-3 whitespace-normal text-center leading-tight">
                 {t.hero.viewDemo}
               </Button>
