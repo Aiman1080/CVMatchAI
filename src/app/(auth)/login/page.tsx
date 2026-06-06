@@ -31,12 +31,6 @@ export default function LoginPage() {
     else { toast({ title: t.auth.loginFailed, description: t.auth.invalidCredentials, variant: 'destructive' }) }
   }
 
-  const fillDemo = (type: 'free' | 'pro' | 'admin') => {
-    if (type === 'admin') setForm({ email: 'admin@cvmatch.ai', password: 'admin123' })
-    else if (type === 'pro') setForm({ email: 'pro@cvmatch.ai', password: 'pro123' })
-    else setForm({ email: 'demo@cvmatch.ai', password: 'recruiter123' })
-  }
-
   return (
     <div className="relative z-10 w-full max-w-md">
       <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-white/70 hover:text-white mb-4 transition-colors">
@@ -95,24 +89,11 @@ export default function LoginPage() {
           </>
         )}
         {showDemo && (
-        <div className="flex flex-col sm:flex-row gap-2 mb-6">
-          <button
-            onClick={() => fillDemo('free')}
-            title="demo@cvmatch.ai / recruiter123"
-            className="flex-1 text-xs bg-blue-50 text-blue-700 px-3 py-2 rounded-lg hover:bg-blue-100 transition-colors font-medium"
-          >
-            {t.auth.demoFree}
-            <span className="block text-blue-400 font-normal" style={{ fontSize: '10px' }}>recruiter123</span>
-          </button>
-          <button
-            onClick={() => fillDemo('pro')}
-            title="pro@cvmatch.ai / pro123"
-            className="flex-1 text-xs bg-green-50 text-green-700 px-3 py-2 rounded-lg hover:bg-green-100 transition-colors font-medium"
-          >
-            {t.auth.demoPro}
-            <span className="block text-green-400 font-normal" style={{ fontSize: '10px' }}>pro123</span>
-          </button>
-        </div>
+        <Link href="/demo" className="block mb-6">
+          <span className="flex items-center justify-center w-full text-sm bg-green-50 text-green-700 px-3 py-2.5 rounded-lg hover:bg-green-100 transition-colors font-medium">
+            {t.auth.tryDemo}
+          </span>
+        </Link>
         )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">

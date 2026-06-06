@@ -1725,6 +1725,8 @@ export const fr = {
     forgotPassword: 'Mot de passe oublié ?',
     demoFree: 'Démo Gratuit',
     demoPro: 'Démo Pro',
+    tryDemo: 'Essayer la démo',
+    loadingDemo: 'Chargement de la démo…',
     demoAdmin: 'Démo Admin',
     email: 'E-mail',
     password: 'Mot de passe',

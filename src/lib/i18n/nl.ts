@@ -1725,6 +1725,8 @@ export const nl = {
     forgotPassword: 'Wachtwoord vergeten?',
     demoFree: 'Demo Gratis',
     demoPro: 'Demo Pro',
+    tryDemo: 'Demo proberen',
+    loadingDemo: 'Demo laden…',
     demoAdmin: 'Demo Admin',
     email: 'E-mail',
     password: 'Wachtwoord',
