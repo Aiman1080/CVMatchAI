@@ -268,8 +268,8 @@ export default function RegisterPage() {
                 <p className="font-semibold text-gray-900 text-sm break-words">Free</p>
                 <p className="text-lg font-bold text-gray-900 mt-1 break-words">&euro;0</p>
                 <ul className="mt-2 space-y-1 text-xs text-gray-500">
-                  <li className="break-words">3 vacancies</li>
-                  <li className="break-words">20 candidates/month</li>
+                  <li className="break-words">1 vacancy</li>
+                  <li className="break-words">10 candidates/month</li>
                   <li className="break-words">AI scoring</li>
                 </ul>
               </button>

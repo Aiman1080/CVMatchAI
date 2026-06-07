@@ -48,7 +48,7 @@ export const en = {
     subtitle: 'Start free, upgrade when you need more',
     mostPopular: 'Most Popular',
     plans: [
-      { name: 'Free', price: '€0', period: 'forever', cta: 'Get started free', features: ['3 active vacancies', '20 candidates/month', 'AI match scoring', 'Basic dashboard', 'CV upload & analysis'] },
+      { name: 'Free', price: '€0', period: 'forever', cta: 'Get started free', features: ['1 active vacancy', '10 candidates/month', 'AI match scoring', 'Basic dashboard', 'CV upload & analysis'] },
       { name: 'Pro', price: '€55', period: '/month', cta: 'Start Pro trial', features: ['Unlimited vacancies', 'Unlimited candidates', 'AI interview questions', 'AI hiring reports', 'AI candidate ranking', 'Email inbox scanning', '8 ATS integrations (Greenhouse, Lever, Workable...)', 'Analytics & export', 'Priority support'] },
     ],
   },
@@ -1821,7 +1821,7 @@ export const en = {
     freePeriod: 'forever',
     proPrice: '€55',
     proPeriod: '/month',
-    freeFeatures: ['3 active vacancies', '20 candidates/month', 'AI match scoring', 'CV upload & analysis', 'Basic dashboard'],
+    freeFeatures: ['1 active vacancy', '10 candidates/month', 'AI match scoring', 'CV upload & analysis', 'Basic dashboard'],
     proFeatures: [
       'Unlimited vacancies', 'Unlimited candidates',
       'AI interview questions', 'AI hiring reports', 'AI candidate ranking',

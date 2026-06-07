@@ -464,7 +464,7 @@ export function AdminClient({
 
   // ── Plan limits (mirrored from plans.ts for display) ───────────────────
   const planLimits = [
-    { plan: 'Free', price: '0', maxVacancies: '3', maxCandidates: `25${ta.actions?.perMonthShort || '/mo'}`, aiAnalysis: true, emailInbox: false, atsIntegrations: false, analytics: false },
+    { plan: 'Free', price: '0', maxVacancies: '1', maxCandidates: `10${ta.actions?.perMonthShort || '/mo'}`, aiAnalysis: true, emailInbox: false, atsIntegrations: false, analytics: false },
     { plan: 'Pro', price: '55', maxVacancies: ta.actions?.unlimited || 'Unlimited', maxCandidates: ta.actions?.unlimited || 'Unlimited', aiAnalysis: true, emailInbox: true, atsIntegrations: true, analytics: true },
   ]
 

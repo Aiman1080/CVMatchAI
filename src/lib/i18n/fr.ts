@@ -48,7 +48,7 @@ export const fr = {
     subtitle: 'Commencez gratuitement, passez en Pro quand vous en avez besoin',
     mostPopular: 'Le Plus Populaire',
     plans: [
-      { name: 'Gratuit', price: '€0', period: 'pour toujours', cta: 'Commencer gratuitement', features: ['3 offres actives', '20 candidats/mois', 'Score de correspondance IA', 'Tableau de bord de base', 'Upload & analyse de CV'] },
+      { name: 'Gratuit', price: '€0', period: 'pour toujours', cta: 'Commencer gratuitement', features: ['1 offre active', '10 candidats/mois', 'Score de correspondance IA', 'Tableau de bord de base', 'Upload & analyse de CV'] },
       { name: 'Pro', price: '€55', period: '/mois', cta: 'Essayer Pro', features: ['Offres illimitées', 'Candidats illimités', "Questions d'entretien IA", 'Rapports de recrutement IA', 'Classement IA des candidats', 'Scan de la boîte mail', '8 intégrations ATS (Greenhouse, Lever, Workable...)', 'Analytics & export', 'Support prioritaire'] },
     ],
   },
@@ -1812,7 +1812,7 @@ export const fr = {
     freePeriod: 'pour toujours',
     proPrice: '€55',
     proPeriod: '/mois',
-    freeFeatures: ['3 offres actives', '20 candidats/mois', 'Score de correspondance IA', 'Upload & analyse de CV', 'Tableau de bord de base'],
+    freeFeatures: ['1 offre active', '10 candidats/mois', 'Score de correspondance IA', 'Upload & analyse de CV', 'Tableau de bord de base'],
     proFeatures: [
       'Offres illimitées', 'Candidats illimités',
       "Questions d'entretien IA", 'Rapports de recrutement IA', 'Classement IA des candidats',

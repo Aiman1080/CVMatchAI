@@ -142,8 +142,8 @@ Dedup constraints: `@@unique([email, vacancyId])` and
 
 | Feature | free | pro | demo | demo_pro |
 |---|---|---|---|---|
-| maxVacancies | 3 | ∞ | 3 | 8 |
-| candidates/mo | 20 | ∞ | 20 | 50 |
+| maxVacancies | 1 | ∞ | 1 | 8 |
+| candidates/mo | 10 | ∞ | 10 | 50 |
 | aiAnalysis | ✓ | ✓ | ✓ | ✓ |
 | emailInbox / atsIntegrations / analytics / interviewQuestions / hiringReport / candidateRanking / csvImport / export | ✗ | ✓ | ✗ | ✓ |
 
