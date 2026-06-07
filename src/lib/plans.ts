@@ -1,7 +1,7 @@
 export const PLAN_LIMITS = {
   free: {
-    maxVacancies: 3,
-    maxCandidatesPerMonth: 20,
+    maxVacancies: 1,
+    maxCandidatesPerMonth: 10,
     aiAnalysis: true,
     emailInbox: false,
     atsIntegrations: false,
@@ -26,8 +26,8 @@ export const PLAN_LIMITS = {
     export: true,
   },
   demo: {
-    maxVacancies: 3,
-    maxCandidatesPerMonth: 20,
+    maxVacancies: 1,
+    maxCandidatesPerMonth: 10,
     aiAnalysis: true,
     emailInbox: false,
     atsIntegrations: false,

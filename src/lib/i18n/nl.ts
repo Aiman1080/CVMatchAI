@@ -48,7 +48,7 @@ export const nl = {
     subtitle: 'Start gratis, upgrade wanneer je meer nodig hebt',
     mostPopular: 'Meest Populair',
     plans: [
-      { name: 'Gratis', price: '€0', period: 'voor altijd', cta: 'Gratis starten', features: ['3 actieve vacatures', '20 kandidaten/maand', 'AI match scoring', 'Basis dashboard', 'CV upload & analyse'] },
+      { name: 'Gratis', price: '€0', period: 'voor altijd', cta: 'Gratis starten', features: ['1 actieve vacature', '10 kandidaten/maand', 'AI match scoring', 'Basis dashboard', 'CV upload & analyse'] },
       { name: 'Pro', price: '€55', period: '/maand', cta: 'Pro proberen', features: ['Onbeperkte vacatures', 'Onbeperkte kandidaten', 'AI interviewvragen', 'AI wervingsrapporten', 'AI kandidaatrangschikking', 'E-mail inbox scanning', '8 ATS-integraties (Greenhouse, Lever, Workable...)', 'Analytics & export', 'Prioriteitsondersteuning'] },
     ],
   },
@@ -1812,7 +1812,7 @@ export const nl = {
     freePeriod: 'voor altijd',
     proPrice: '€55',
     proPeriod: '/maand',
-    freeFeatures: ['3 actieve vacatures', '20 kandidaten/maand', 'AI match scoring', 'CV upload & analyse', 'Basis dashboard'],
+    freeFeatures: ['1 actieve vacature', '10 kandidaten/maand', 'AI match scoring', 'CV upload & analyse', 'Basis dashboard'],
     proFeatures: [
       'Onbeperkte vacatures', 'Onbeperkte kandidaten',
       'AI interviewvragen', 'AI wervingsrapporten', 'AI kandidaatrangschikking',
