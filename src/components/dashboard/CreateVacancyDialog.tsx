@@ -18,7 +18,7 @@ interface Props {
 }
 
 export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
-  const { t } = useLanguage()
+  const { t, locale } = useLanguage()
   const cv = t.dashboard.createVacancy
   // Validation strings; fallback in case translations are not loaded yet (during tests)
   const vmsg = (cv as any).validation || {
@@ -35,7 +35,9 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
   const [form, setForm] = useState({
     title: '', company: '', department: '', location: '',
     type: 'full-time', description: '', requirements: '',
-    niceToHave: '', salary: '', language: 'en',
+    // Default the generation language to the current UI locale (fr/nl/en),
+    // not a hardcoded 'en' - a French recruiter shouldn't get English output by default.
+    niceToHave: '', salary: '', language: locale as string,
   })
 
   // Pure validator - returns the full error map for a given form
@@ -112,7 +114,7 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
       const vacancy = await res.json()
       onCreated(vacancy)
       toast({ title: cv.created, description: `"${vacancy.title}" ${cv.isNowLive}`, variant: 'default' })
-      setForm({ title: '', company: '', department: '', location: '', type: 'full-time', description: '', requirements: '', niceToHave: '', salary: '', language: 'en' })
+      setForm({ title: '', company: '', department: '', location: '', type: 'full-time', description: '', requirements: '', niceToHave: '', salary: '', language: locale })
       setErrors({})
       setTouched({})
     } catch {
@@ -173,7 +175,7 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
               {errors.location && <p className="text-xs text-red-500" role="alert">{errors.location}</p>}
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>{cv.type}</Label>
               <Select value={form.type} onValueChange={v => setForm(p => ({ ...p, type: v }))}>
@@ -188,6 +190,14 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
               </Select>
             </div>
             <div className="space-y-1.5">
+              <Label>{cv.salary}</Label>
+              <Input placeholder={cv.salaryPlaceholder} value={form.salary} onChange={e => setForm(p => ({ ...p, salary: e.target.value }))} />
+            </div>
+          </div>
+          {/* Language picker sits next to the AI button so it's clear it controls the
+              language of the generated description/requirements/nice-to-have. */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
+            <div className="space-y-1.5 sm:w-44 shrink-0">
               <Label>{cv.language}</Label>
               <Select value={form.language} onValueChange={v => setForm(p => ({ ...p, language: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -198,40 +208,36 @@ export function CreateVacancyDialog({ open, onClose, onCreated }: Props) {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
-              <Label>{cv.salary}</Label>
-              <Input placeholder={cv.salaryPlaceholder} value={form.salary} onChange={e => setForm(p => ({ ...p, salary: e.target.value }))} />
-            </div>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={generating || !form.title.trim()}
+              onClick={async () => {
+                setGenerating(true)
+                try {
+                  const res = await fetch('/api/vacancies/generate-description', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title: form.title, keywords: form.department, language: form.language, company: form.company }),
+                  })
+                  const data = await res.json().catch(() => ({}))
+                  if (res.ok && data.description) {
+                    setForm(p => ({ ...p, description: data.description, requirements: data.requirements || p.requirements, niceToHave: data.niceToHave || p.niceToHave }))
+                    // Clear any stale validation errors now that the fields are filled
+                    setErrors(prev => ({ ...prev, description: '', requirements: '' }))
+                    toast({ title: cv.descGenerated })
+                  } else {
+                    toast({ title: data.error || cv.genFailed, variant: 'destructive' })
+                  }
+                } catch { toast({ title: cv.genFailed, variant: 'destructive' }) }
+                finally { setGenerating(false) }
+              }}
+              className="flex-1 gap-2 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-400 h-auto py-2 whitespace-normal text-center leading-tight"
+            >
+              {generating ? <Loader2 size={14} className="animate-spin shrink-0" /> : <Sparkles size={14} className="shrink-0" />}
+              {generating ? cv.generatingAIBtn : cv.generateAIBtn}
+            </Button>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={generating || !form.title.trim()}
-            onClick={async () => {
-              setGenerating(true)
-              try {
-                const res = await fetch('/api/vacancies/generate-description', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ title: form.title, keywords: form.department, language: form.language, company: form.company }),
-                })
-                const data = await res.json().catch(() => ({}))
-                if (res.ok && data.description) {
-                  setForm(p => ({ ...p, description: data.description, requirements: data.requirements || p.requirements, niceToHave: data.niceToHave || p.niceToHave }))
-                  // Clear any stale validation errors now that the fields are filled
-                  setErrors(prev => ({ ...prev, description: '', requirements: '' }))
-                  toast({ title: cv.descGenerated })
-                } else {
-                  toast({ title: data.error || cv.genFailed, variant: 'destructive' })
-                }
-              } catch { toast({ title: cv.genFailed, variant: 'destructive' }) }
-              finally { setGenerating(false) }
-            }}
-            className="w-full gap-2 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-400 h-auto py-2 whitespace-normal text-center leading-tight"
-          >
-            {generating ? <Loader2 size={14} className="animate-spin shrink-0" /> : <Sparkles size={14} className="shrink-0" />}
-            {generating ? cv.generatingAIBtn : cv.generateAIBtn}
-          </Button>
           <div className="space-y-1.5">
             <Label>{cv.description} <span className="text-red-500">*</span></Label>
             <Textarea
